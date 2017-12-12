@@ -46,9 +46,9 @@ awscli
 
 ### Structure:
 
-geotrellis-server-core: server-agnostic code.
-geotrellis-server-routes: library of akka routes, that you can pull into your own projects.
-geotrellis-server: runnable web server packaged with each GeoTrellis backend capability.
+- geotrellis-server-core: server-agnostic code.
+- geotrellis-server-routes: library of akka routes, that you can pull into your own projects.
+- geotrellis-server: runnable web server packaged with each GeoTrellis backend capability.
 
 Docker container builds in akka-server
 
