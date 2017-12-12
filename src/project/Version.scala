@@ -1,0 +1,16 @@
+object Version {
+  val scala            = "2.11.11"
+  val geotrellisServer = "0.1.0"
+  val geotrellis       = "1.2.0-RC2"
+  val spark            = "2.2.0"
+  val hadoop           = "2.8.0"
+  val akka             = "10.0.10"
+  val akkaCirceJson    = "1.18.1"
+  val decline          = "0.4.0-RC1"
+  val ficus            = "1.4.3"
+  val cats             = "0.9.0"
+  val circe            = "0.8.0"
+  val typesafeLogging  = "3.5.0"
+  val logbackClassic   = "1.2.3"
+  val scalaTest        = "3.0.4"
+}
