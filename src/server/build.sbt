@@ -9,6 +9,10 @@ libraryDependencies ++= Seq(
   circeCore,
   circeGeneric,
   circeParser,
+  commonsIO,
   ficus,
-  scalatest
+  geotrellisS3,
+  geotrellisSpark,
+  scalatest,
+  spark
 )

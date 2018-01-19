@@ -3,6 +3,7 @@ import sbt._
 object Dependencies {
   val spark             = "org.apache.spark"            %% "spark-core"       % Version.spark % "provided"
   val hadoop            = "org.apache.hadoop"            % "hadoop-client"    % Version.hadoop % "provided"
+  val commonsIO         = "commons-io"                   % "commons-io"       % "2.6"
   val geotrellisS3      = "org.locationtech.geotrellis" %% "geotrellis-s3"    % Version.geotrellis
   val geotrellisSpark   = "org.locationtech.geotrellis" %% "geotrellis-spark" % Version.geotrellis
   val decline           = "com.monovore"                %% "decline"          % Version.decline
