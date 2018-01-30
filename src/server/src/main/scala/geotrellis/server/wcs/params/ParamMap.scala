@@ -44,14 +44,15 @@ private[params] case class ParamMap(params: Map[String, List[String]]) {
       case Some(version :: Nil) => Valid(version)
       case Some(s) => Invalid(RepeatedParam("version"))
       case None =>
-        // Can send "acceptedversions" instead
-        getParam("acceptedversions") match {
+        // Can send "acceptversions" instead
+        getParam("acceptversions") match {
           case Some(versions :: Nil) =>
             Valid(versions.split(",").max)
           case Some(s) =>
-            Invalid(RepeatedParam("acceptedversions"))
+            Invalid(RepeatedParam("acceptversions"))
           case None =>
-            Invalid(MissingMultiParam(Seq("acceptedversions", "version")))
+            // Version string is optional, reply with highest supported version if omitted
+            Valid("1.1.1")
         }
     }).toValidatedNel
 
