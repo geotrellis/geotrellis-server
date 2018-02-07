@@ -1,7 +1,7 @@
 object Version {
   val scala            = "2.11.11"
   val geotrellisServer = "0.1.0"
-  val geotrellis       = "1.2.0-RC2"
+  val geotrellis       = "2.0.0-SNAPSHOT"
   val spark            = "2.2.0"
   val hadoop           = "2.8.0"
   val akka             = "10.0.10"

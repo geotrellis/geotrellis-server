@@ -17,11 +17,11 @@ import scala.util.Try
 
 object GetCoverage {
   def build(catalog: WcsRoute.MetadataCatalog, params: GetCoverageWCSParams): Array[Byte] = {
-    def valueReader = Try(ConfigFactory.load().getString("server.catalog")).toOption match {
-      case Some(uri) => ValueReader(uri)
+    def collectionReader = Try(ConfigFactory.load().getString("server.catalog")).toOption match {
+      case Some(uri) => CollectionLayerReader(uri) //ValueReader(uri)
       case None => throw new IllegalArgumentException("""Must specify a value for "server.catalog" in application.conf""")
     }
-    def as = valueReader.attributeStore
+    def as = collectionReader.attributeStore
 
     val (zooms, _) = catalog(params.identifier)
     val allMD = zooms.sorted.map{ z => (z, as.readMetadata[TileLayerMetadata[SpatialKey]](LayerId(params.identifier, z))) }
@@ -44,7 +44,7 @@ object GetCoverage {
                  dh.find{ case (_, d) => d < 0 }.map(_._1).getOrElse( allMD.last._1 ))
       }
 
-    def reader = valueReader.reader[SpatialKey, Tile](LayerId(params.identifier, requestedZoom))
+    //def reader = collectionReader.reader[SpatialKey, Tile](LayerId(params.identifier, requestedZoom))
 
     val metadata = allMD.find{ x => x._1 == requestedZoom }.get._2
     val crs = metadata.crs
@@ -53,8 +53,10 @@ object GetCoverage {
 
     println(s"Requested zoom level=$requestedZoom (AOI has ${srcRE.cellSize}, target has ${metadata.cellSize})")
 
-    val regionTile = gridBounds.coordsIter.toSeq.flatMap{ case (x, y) => Try(SpatialKey(x, y) -> reader.read(SpatialKey(x, y))).toOption }.stitch
-    val region = Raster(regionTile, maptrans(gridBounds)).reproject(srcCrs, LatLng)
+    //val regionTile = gridBounds.coordsIter.toSeq.flatMap{ case (x, y) => Try(SpatialKey(x, y) -> reader.read(SpatialKey(x, y))).toOption }.stitch
+    val query = new LayerQuery[SpatialKey, TileLayerMetadata[SpatialKey]].where(Intersects(gridBounds))
+    val regionTile = collectionReader.read[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](LayerId(params.identifier, requestedZoom), query).stitch
+    val region = regionTile.reproject(srcCrs, LatLng)
     val extract = region.crop(re.extent)
 
     GeoTiff(extract, LatLng).toByteArray
