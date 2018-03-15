@@ -1,5 +1,7 @@
 import Dependencies._
 
+scalaVersion in ThisBuild := Version.scala
+
 lazy val commonSettings = Seq(
   organization := "com.azavea",
   version := Version.geotrellisServer,
@@ -21,7 +23,8 @@ lazy val commonSettings = Seq(
   ),
   resolvers ++= Seq(
     Resolver.bintrayRepo("bkirwi", "maven"), // Required for `decline` dependency
-    "locationtech-releases" at "https://repo.locationtech.org/content/repositories/releases/"
+    "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
+    "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots"
   ),
   addCompilerPlugin("org.spire-math" % "kind-projector" % "0.9.4" cross CrossVersion.binary),
   addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),

@@ -19,4 +19,6 @@ object Dependencies {
   val circeParser       = "io.circe"                    %% "circe-parser"     % Version.circe
   val typesafeLogging   = "com.typesafe.scala-logging"  %% "scala-logging"    % Version.typesafeLogging
   val logbackClassic    = "ch.qos.logback"               % "logback-classic"  % Version.logbackClassic
+  val caffeine          = "com.github.ben-manes.caffeine" % "caffeine"        % Version.caffeine
+  val scaffeine         = "com.github.blemale"           %% "scaffeine"      % Version.scaffeine
 }

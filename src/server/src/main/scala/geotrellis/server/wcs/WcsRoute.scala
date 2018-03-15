@@ -14,6 +14,8 @@ import com.typesafe.scalalogging.LazyLogging
 import com.typesafe.config.ConfigFactory
 import geotrellis.spark.io.AttributeStore
 
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Try
 import scala.xml.NodeSeq
 
@@ -58,18 +60,21 @@ object WcsRoute extends LazyLogging {
                 case p: GetCapabilitiesWCSParams =>
                   val link = s"${uri.scheme}://${uri.authority}${uri.path}?"
                   println(s"GetCapabilities request arrived at $link")
-                  complete {
-                    GetCapabilities.build(link, catalogMetadata, p)
+                  val request = Future[NodeSeq](GetCapabilities.build(link, catalogMetadata, p))
+                  onSuccess(request) {
+                    case xml => complete(xml)
                   }
                 case p: DescribeCoverageWCSParams =>
                   println(s"DescribeCoverage request arrived at $uri")
-                  complete {
-                    DescribeCoverage.build(catalogMetadata, p)
+                  val request = Future[NodeSeq](DescribeCoverage.build(catalogMetadata, p))
+                  onSuccess(request) {
+                    case xml => complete(xml)
                   }
                 case p: GetCoverageWCSParams =>
                   println(s"GetCoverage request arrived at $uri")
-                  complete {
-                    GetCoverage.build(catalogMetadata, p)
+                  val request = Future[Array[Byte]](GetCoverage.build(catalogMetadata, p))
+                  onSuccess(request) {
+                    case bytes => complete(bytes)
                   }
               }
           }
