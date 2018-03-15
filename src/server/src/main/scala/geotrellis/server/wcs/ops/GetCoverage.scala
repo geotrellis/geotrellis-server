@@ -12,15 +12,35 @@ import geotrellis.spark.io._
 import geotrellis.spark.stitch._
 
 import com.typesafe.config.ConfigFactory
+import com.github.blemale.scaffeine.{Cache, Scaffeine}
 
 import scala.util.Try
+import scala.concurrent.duration._
 
 object GetCoverage {
+  /*
+  QGIS appears to sample WCS service by placing low and high resolution requests at coverage center. 
+  These sampling requests happen for every actual WCS request, we can get really great cache hit rates.
+  */
+  val requestCache: Cache[(LayerId, GridBounds, RasterExtent), Raster[Tile]] =
+      Scaffeine()
+        .recordStats()
+        .expireAfterWrite(1.hour)
+        .maximumSize(32)
+        .build()
+
+  /*
+  CollectionReader holds AttributeStore which has request cache.
+  For weirdness with frequently changing layers inquire within.
+  */
+  lazy val collectionReader = Try(ConfigFactory.load().getString("server.catalog")).toOption match {
+    case Some(uri) => 
+      CollectionLayerReader(uri)
+    case None => 
+      throw new IllegalArgumentException("""Must specify a value for "server.catalog" in application.conf""")
+  }
+
   def build(catalog: WcsRoute.MetadataCatalog, params: GetCoverageWCSParams): Array[Byte] = {
-    def collectionReader = Try(ConfigFactory.load().getString("server.catalog")).toOption match {
-      case Some(uri) => CollectionLayerReader(uri) //ValueReader(uri)
-      case None => throw new IllegalArgumentException("""Must specify a value for "server.catalog" in application.conf""")
-    }
     def as = collectionReader.attributeStore
 
     val (zooms, _) = catalog(params.identifier)
@@ -44,21 +64,28 @@ object GetCoverage {
                  dh.find{ case (_, d) => d < 0 }.map(_._1).getOrElse( allMD.last._1 ))
       }
 
-    //def reader = collectionReader.reader[SpatialKey, Tile](LayerId(params.identifier, requestedZoom))
-
     val metadata = allMD.find{ x => x._1 == requestedZoom }.get._2
     val crs = metadata.crs
-    val maptrans = metadata.layout.mapTransform
-    val gridBounds = maptrans(srcRE.extent)
+    val gridBounds = metadata.layout.mapTransform(srcRE.extent)
 
-    println(s"Requested zoom level=$requestedZoom (AOI has ${srcRE.cellSize}, target has ${metadata.cellSize})")
+    println(s"Request: zoom=$requestedZoom $gridBounds (Query: ${srcRE.cellSize}, Catalog: ${metadata.cellSize})")
 
-    //val regionTile = gridBounds.coordsIter.toSeq.flatMap{ case (x, y) => Try(SpatialKey(x, y) -> reader.read(SpatialKey(x, y))).toOption }.stitch
     val query = new LayerQuery[SpatialKey, TileLayerMetadata[SpatialKey]].where(Intersects(gridBounds))
-    val regionTile = collectionReader.read[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](LayerId(params.identifier, requestedZoom), query).stitch
-    val region = regionTile.reproject(srcCrs, LatLng)
-    val extract = region.crop(re.extent)
+    val layerId = LayerId(params.identifier, requestedZoom)
 
-    GeoTiff(extract, LatLng).toByteArray
+    def regionTile(): Raster[Tile] = {
+      collectionReader
+        .read[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](layerId, query)
+        .stitch
+        .reproject(srcCrs, LatLng, options=Reproject.Options(targetRasterExtent=Some(re)))
+    }
+
+    val responseRaster: Raster[Tile] = 
+      if (gridBounds.sizeLong < 4)
+        requestCache.get((layerId, gridBounds, re), _ => regionTile())
+      else 
+        regionTile()
+
+    GeoTiff(responseRaster, LatLng).toByteArray
   }
 }

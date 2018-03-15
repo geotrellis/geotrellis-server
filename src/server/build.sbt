@@ -14,5 +14,7 @@ libraryDependencies ++= Seq(
   geotrellisS3,
   geotrellisSpark,
   scalatest,
-  spark
+  spark,
+  caffeine,
+  scaffeine
 )

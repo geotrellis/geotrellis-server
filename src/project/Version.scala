@@ -13,4 +13,6 @@ object Version {
   val typesafeLogging  = "3.5.0"
   val logbackClassic   = "1.2.3"
   val scalaTest        = "3.0.4"
+  val scaffeine        = "2.0.0"
+  val caffeine         = "2.3.5"
 }
