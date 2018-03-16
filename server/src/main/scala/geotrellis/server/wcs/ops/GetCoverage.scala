@@ -29,16 +29,21 @@ object GetCoverage {
         .maximumSize(32)
         .build()
 
+
+  val catalogUri: String = 
+    Try(ConfigFactory.load().getString("server.catalog")).toOption.getOrElse {
+      throw new IllegalArgumentException("""Must specify a value for "server.catalog" in application.conf""")
+    }
+  
+
   /*
   CollectionReader holds AttributeStore which has request cache.
   For weirdness with frequently changing layers inquire within.
   */
-  lazy val collectionReader = Try(ConfigFactory.load().getString("server.catalog")).toOption match {
-    case Some(uri) => 
-      CollectionLayerReader(uri)
-    case None => 
-      throw new IllegalArgumentException("""Must specify a value for "server.catalog" in application.conf""")
-  }
+  lazy val collectionReader = CollectionLayerReader(catalogUri)
+
+  /* This is a workaround for a caching but in AttributeStore*/
+  lazy val altAttributeStore = AttributeStore(catalogUri)
 
   def build(catalog: WcsRoute.MetadataCatalog, params: GetCoverageWCSParams): Array[Byte] = {
     def as = collectionReader.attributeStore
@@ -73,19 +78,40 @@ object GetCoverage {
     val query = new LayerQuery[SpatialKey, TileLayerMetadata[SpatialKey]].where(Intersects(gridBounds))
     val layerId = LayerId(params.identifier, requestedZoom)
 
-    def regionTile(): Raster[Tile] = {
-      collectionReader
-        .read[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](layerId, query)
-        .stitch
-        .reproject(srcCrs, LatLng, options=Reproject.Options(targetRasterExtent=Some(re)))
+    val header = altAttributeStore.readHeader[LayerHeader](layerId)
+    val read = header.valueClass match {
+      case "geotrellis.raster.Tile" =>
+        readSinglebandTile _
+      case "geotrellis.raster.MultibandTile" =>
+        readMultibandTile _
     }
 
-    val responseRaster: Raster[Tile] = 
-      if (gridBounds.sizeLong < 4)
-        requestCache.get((layerId, gridBounds, re), _ => regionTile())
-      else 
-        regionTile()
-
-    GeoTiff(responseRaster, LatLng).toByteArray
+    if (gridBounds.sizeLong < 4)
+      read(layerId, gridBounds, srcCrs, re)
+    else 
+      read(layerId, gridBounds, srcCrs, re)
   }
+
+  def readSinglebandTile(layerId: LayerId, gb: GridBounds, srcCrs: CRS, targetRaster: RasterExtent): Array[Byte] = {
+    val raster = collectionReader
+      .query[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](layerId)
+      .where(Intersects(gb))
+      .result
+      .stitch
+      .reproject(srcCrs, LatLng, options=Reproject.Options(targetRasterExtent=Some(targetRaster)))
+    
+    GeoTiff(raster, LatLng).toByteArray
+  }
+
+  def readMultibandTile(layerId: LayerId, gb: GridBounds, srcCrs: CRS, targetRaster: RasterExtent): Array[Byte] = {
+    val raster = collectionReader
+      .query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](layerId)
+      .where(Intersects(gb))
+      .result
+      .stitch
+      .reproject(srcCrs, LatLng, options=Reproject.Options(targetRasterExtent=Some(targetRaster)))
+    
+    GeoTiff(raster, LatLng).toByteArray
+  }
+
 }
