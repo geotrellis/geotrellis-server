@@ -6,7 +6,7 @@ import geotrellis.raster.crop._
 import geotrellis.raster.reproject._
 import geotrellis.raster.io.geotiff._
 import geotrellis.server.wcs.WcsService
-import geotrellis.server.wcs.params.GetCoverageWCSParams
+import geotrellis.server.wcs.params.GetCoverageWcsParams
 import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.stitch._
@@ -30,7 +30,7 @@ object GetCoverage {
         .build()
 
 
-  val catalogUri: String = 
+  val catalogUri: String =
     Try(ConfigFactory.load().getString("server.catalog")).toOption.getOrElse {
       throw new IllegalArgumentException("""Must specify a value for "server.catalog" in application.conf""")
     }
@@ -44,7 +44,7 @@ object GetCoverage {
   /* This is a workaround for a caching but in AttributeStore*/
   lazy val altAttributeStore = AttributeStore(catalogUri)
 
-  def build(catalog: WcsService.MetadataCatalog, params: GetCoverageWCSParams): Array[Byte] = {
+  def build(catalog: WcsService.MetadataCatalog, params: GetCoverageWcsParams): Array[Byte] = {
     def as = collectionReader.attributeStore
 
     val (zooms, _) = catalog(params.identifier)

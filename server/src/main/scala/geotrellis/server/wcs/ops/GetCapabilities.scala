@@ -1,7 +1,7 @@
 package geotrellis.server.wcs.ops
 
 import geotrellis.server.wcs.WcsService
-import geotrellis.server.wcs.params.GetCapabilitiesWCSParams
+import geotrellis.server.wcs.params.GetCapabilitiesWcsParams
 
 import geotrellis.spark._
 import geotrellis.spark.io._
@@ -78,7 +78,7 @@ object GetCapabilities {
     }}
   }
 
-  def build(requestURL: String, metadata: WcsService.MetadataCatalog, params: GetCapabilitiesWCSParams): Elem = {
+  def build(requestURL: String, metadata: WcsService.MetadataCatalog, params: GetCapabilitiesWcsParams): Elem = {
     if (params.version < "1.1.0") {
       <WCS_Capabilities xmlns="http://www.opengis.net/wcs"
                         xmlns:xlink="http://www.w3.org/1999/xlink"

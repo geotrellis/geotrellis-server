@@ -4,7 +4,7 @@ import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.raster.reproject.ReprojectRasterExtent
 import geotrellis.server.wcs.WcsService
-import geotrellis.server.wcs.params.DescribeCoverageWCSParams
+import geotrellis.server.wcs.params.DescribeCoverageWcsParams
 import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.json._
@@ -135,7 +135,7 @@ object DescribeCoverage {
     }
   }
 
-  def build(metadata: WcsService.MetadataCatalog, params: DescribeCoverageWCSParams): Elem = {
+  def build(metadata: WcsService.MetadataCatalog, params: DescribeCoverageWcsParams): Elem = {
     if (params.version < "1.1") {
       <CoverageDescription xmlns="http://www.opengis.net/wcs"
                            xmlns:xlink="http://www.w3.org/1999/xlink"

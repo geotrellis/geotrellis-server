@@ -11,7 +11,7 @@ private[params] case class ParamMap(params: Map[String, Seq[String]]) {
     _params.get(field).map(_.map(_.toLowerCase))
 
   /** Get a field that must appear only once, otherwise error */
-  def validatedParam(field: String): ValidatedNel[WCSParamsError, String] =
+  def validatedParam(field: String): ValidatedNel[WcsParamsError, String] =
     (getParams(field) match {
       case Some(v :: Nil) => Valid(v)
       case Some(vs) => Invalid(RepeatedParam(field))
@@ -19,7 +19,7 @@ private[params] case class ParamMap(params: Map[String, Seq[String]]) {
     }).toValidatedNel
 
   /** Get a field that must appear only once, parse the value successfully, otherwise error */
-  def validatedParam[T](field: String, parseValue: String => Option[T]): ValidatedNel[WCSParamsError, T] =
+  def validatedParam[T](field: String, parseValue: String => Option[T]): ValidatedNel[WcsParamsError, T] =
     (getParams(field) match {
       case Some(v :: Nil) =>
         parseValue(v) match {
@@ -31,7 +31,7 @@ private[params] case class ParamMap(params: Map[String, Seq[String]]) {
     }).toValidatedNel
 
   /** Get a field that must appear only once, and should be one of a list of values, otherwise error */
-  def validatedParam(field: String, validValues: Set[String]): ValidatedNel[WCSParamsError, String] =
+  def validatedParam(field: String, validValues: Set[String]): ValidatedNel[WcsParamsError, String] =
     (getParams(field) match {
       case Some(v :: Nil) if validValues.contains(v) => Valid(v)
       case Some(v :: Nil) => Invalid(InvalidValue(field, v, validValues.toList))
@@ -39,7 +39,7 @@ private[params] case class ParamMap(params: Map[String, Seq[String]]) {
       case None => Invalid(MissingParam(field))
     }).toValidatedNel
 
-  def validatedVersion: ValidatedNel[WCSParamsError, String] =
+  def validatedVersion: ValidatedNel[WcsParamsError, String] =
     (getParams("version") match {
       case Some(version :: Nil) => Valid(version)
       case Some(s) => Invalid(RepeatedParam("version"))

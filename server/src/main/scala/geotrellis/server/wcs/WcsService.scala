@@ -49,21 +49,21 @@ class WcsService(catalog: URI) extends Http4sDsl[IO] with LazyLogging {
   def routes: HttpService[IO] = HttpService[IO] {
     case req @ GET -> Root =>
       logger.info(s"Request received: ${req.uri}")
-      WCSParams(req.multiParams) match {
+      WcsParams(req.multiParams) match {
         case Invalid(errors) =>
-          val msg = WCSParamsError.generateErrorMessage(errors.toList)
+          val msg = WcsParamsError.generateErrorMessage(errors.toList)
           logger.debug(s"""Error parsing parameters: ${msg}""")
           Ok(s"""Error parsing parameters: ${msg}""")
         case Valid(wcsParams) =>
           wcsParams match {
-            case p: GetCapabilitiesWCSParams =>
+            case p: GetCapabilitiesWcsParams =>
               val link = s"${req.uri.scheme}://${req.uri.authority}${req.uri.path}?"
               println(s"GetCapabilities request arrived at $link")
               Ok(GetCapabilities.build(link, catalogMetadata, p))
-            case p: DescribeCoverageWCSParams =>
+            case p: DescribeCoverageWcsParams =>
               println(s"DescribeCoverage request arrived at $req.uri")
               Ok(DescribeCoverage.build(catalogMetadata, p))
-            case p: GetCoverageWCSParams =>
+            case p: GetCoverageWcsParams =>
               println(s"GetCoverage request arrived at $req.uri")
               Ok(GetCoverage.build(catalogMetadata, p))
           }
