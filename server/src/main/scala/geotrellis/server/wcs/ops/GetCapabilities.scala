@@ -1,6 +1,6 @@
 package geotrellis.server.wcs.ops
 
-import geotrellis.server.wcs.WcsRoute
+import geotrellis.server.wcs.WcsService
 import geotrellis.server.wcs.params.GetCapabilitiesWCSParams
 
 import geotrellis.spark._
@@ -34,7 +34,7 @@ object GetCapabilities {
     </ows:Operation>
   }
 
-  private def addLayers100(metadata: WcsRoute.MetadataCatalog) = {
+  private def addLayers100(metadata: WcsService.MetadataCatalog) = {
     metadata.map { case (identifier, (zooms, maybeMetadata)) => {
       println(s"Adding v1.0.0 tag for $identifier")
       maybeMetadata match {
@@ -51,7 +51,7 @@ object GetCapabilities {
     }}
   }
 
-  private def addLayers110(metadata: WcsRoute.MetadataCatalog) = {
+  private def addLayers110(metadata: WcsService.MetadataCatalog) = {
     metadata.map { case (identifier, (zooms, maybeMetadata)) => {
       println(s"Adding v1.1.0 tag for $identifier")
       maybeMetadata match {
@@ -78,7 +78,7 @@ object GetCapabilities {
     }}
   }
 
-  def build(requestURL: String, metadata: WcsRoute.MetadataCatalog, params: GetCapabilitiesWCSParams): NodeSeq = {
+  def build(requestURL: String, metadata: WcsService.MetadataCatalog, params: GetCapabilitiesWCSParams): Elem = {
     if (params.version < "1.1.0") {
       <WCS_Capabilities xmlns="http://www.opengis.net/wcs"
                         xmlns:xlink="http://www.w3.org/1999/xlink"

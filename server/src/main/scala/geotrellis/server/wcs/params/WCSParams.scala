@@ -40,7 +40,7 @@ object WCSParams {
 
   private val validRequests = requestMap.keys.toSet
 
-  def apply(queryParams: Map[String, List[String]]): ValidatedNel[WCSParamsError, WCSParams] = {
+  def apply(queryParams: Map[String, Seq[String]]): ValidatedNel[WCSParamsError, WCSParams] = {
     val params = ParamMap(queryParams)
 
     val serviceParam =

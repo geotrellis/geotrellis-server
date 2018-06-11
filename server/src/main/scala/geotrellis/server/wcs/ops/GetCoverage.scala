@@ -5,7 +5,7 @@ import geotrellis.raster._
 import geotrellis.raster.crop._
 import geotrellis.raster.reproject._
 import geotrellis.raster.io.geotiff._
-import geotrellis.server.wcs.WcsRoute
+import geotrellis.server.wcs.WcsService
 import geotrellis.server.wcs.params.GetCoverageWCSParams
 import geotrellis.spark._
 import geotrellis.spark.io._
@@ -34,7 +34,6 @@ object GetCoverage {
     Try(ConfigFactory.load().getString("server.catalog")).toOption.getOrElse {
       throw new IllegalArgumentException("""Must specify a value for "server.catalog" in application.conf""")
     }
-  
 
   /*
   CollectionReader holds AttributeStore which has request cache.
@@ -45,7 +44,7 @@ object GetCoverage {
   /* This is a workaround for a caching but in AttributeStore*/
   lazy val altAttributeStore = AttributeStore(catalogUri)
 
-  def build(catalog: WcsRoute.MetadataCatalog, params: GetCoverageWCSParams): Array[Byte] = {
+  def build(catalog: WcsService.MetadataCatalog, params: GetCoverageWCSParams): Array[Byte] = {
     def as = collectionReader.attributeStore
 
     val (zooms, _) = catalog(params.identifier)
@@ -86,9 +85,9 @@ object GetCoverage {
         readMultibandTile _
     }
 
-    if (gridBounds.sizeLong < 4)
+    if (gridBounds.size < 4)
       read(layerId, gridBounds, srcCrs, re)
-    else 
+    else
       read(layerId, gridBounds, srcCrs, re)
   }
 
@@ -99,7 +98,7 @@ object GetCoverage {
       .result
       .stitch
       .reproject(srcCrs, LatLng, options=Reproject.Options(targetRasterExtent=Some(targetRaster)))
-    
+
     GeoTiff(raster, LatLng).toByteArray
   }
 
@@ -110,7 +109,7 @@ object GetCoverage {
       .result
       .stitch
       .reproject(srcCrs, LatLng, options=Reproject.Options(targetRasterExtent=Some(targetRaster)))
-    
+
     GeoTiff(raster, LatLng).toByteArray
   }
 
