@@ -54,6 +54,7 @@ lazy val server =
     .dependsOn(core)
     .settings(
       name := "geotrellis-server",
+      assemblyJarName in assembly := "geotrellis-server.jar",
       libraryDependencies ++= Seq(
         http4sDsl,
         http4sBlaze,
@@ -62,6 +63,7 @@ lazy val server =
         scalaXml,
         geotrellisS3,
         decline,
-        cats
+        cats,
+        scalatest
       )
     )
