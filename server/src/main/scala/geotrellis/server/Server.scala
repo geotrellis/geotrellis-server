@@ -1,5 +1,7 @@
 package geotrellis.server
 
+import geotrellis.server.wcs.WcsService
+
 import cats.effect._
 import io.circe._
 import io.circe.syntax._
@@ -35,10 +37,13 @@ object Server extends StreamApp[IO] {
   def stream(args: List[String], requestShutdown: IO[Unit]): Stream[IO, ExitCode] = {
     for {
       config     <- Stream.eval(Config.load())
+      _          <- Stream.eval(IO { println(s"Serving at ${config.http.interface}:${config.http.port}") })
+      wcs = new WcsService(config.catalog.uri)
       exitCode   <- BlazeBuilder[IO]
         .enableHttp2(true)
         .bindHttp(config.http.port, config.http.interface)
         .mountService(middleware(pingpong.routes), "/ping")
+        .mountService(middleware(wcs.routes), "/wcs")
         .serve
     } yield exitCode
   }

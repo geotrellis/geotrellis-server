@@ -136,6 +136,7 @@ object DescribeCoverage {
   }
 
   def build(metadata: WcsService.MetadataCatalog, params: DescribeCoverageWcsParams): Elem = {
+    println("BUILDING COVERAGE", metadata, params)
     if (params.version < "1.1") {
       <CoverageDescription xmlns="http://www.opengis.net/wcs"
                            xmlns:xlink="http://www.w3.org/1999/xlink"

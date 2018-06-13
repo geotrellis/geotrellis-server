@@ -17,23 +17,17 @@ import com.github.blemale.scaffeine.{Cache, Scaffeine}
 import scala.util.Try
 import scala.concurrent.duration._
 
-object GetCoverage {
+class GetCoverage(catalogUri: => String) {
   /*
   QGIS appears to sample WCS service by placing low and high resolution requests at coverage center. 
   These sampling requests happen for every actual WCS request, we can get really great cache hit rates.
   */
-  val requestCache: Cache[(LayerId, GridBounds, RasterExtent), Raster[Tile]] =
+  lazy val requestCache: Cache[(LayerId, GridBounds, RasterExtent), Raster[Tile]] =
       Scaffeine()
         .recordStats()
         .expireAfterWrite(1.hour)
         .maximumSize(32)
         .build()
-
-
-  val catalogUri: String =
-    Try(ConfigFactory.load().getString("server.catalog")).toOption.getOrElse {
-      throw new IllegalArgumentException("""Must specify a value for "server.catalog" in application.conf""")
-    }
 
   /*
   CollectionReader holds AttributeStore which has request cache.
@@ -49,7 +43,6 @@ object GetCoverage {
 
     val (zooms, _) = catalog(params.identifier)
     val allMD = zooms.sorted.map{ z => (z, as.readMetadata[TileLayerMetadata[SpatialKey]](LayerId(params.identifier, z))) }
-
     val re = RasterExtent(params.boundingBox, params.width, params.height)
     val srcCrs = allMD.head._2.crs
     val srcRE = ReprojectRasterExtent(re, LatLng, srcCrs)

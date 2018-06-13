@@ -64,6 +64,7 @@ lazy val server =
         geotrellisS3,
         decline,
         cats,
+        commonsIO,
         scalatest
       )
     )

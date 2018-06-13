@@ -11,6 +11,8 @@ import cats.effect._
 import Validated._
 import com.typesafe.scalalogging.LazyLogging
 import com.typesafe.config.ConfigFactory
+import io.circe._
+import io.circe.syntax._
 
 import geotrellis.spark.io.AttributeStore
 import geotrellis.server.wcs.params._
@@ -30,6 +32,13 @@ object WcsService {
 
 class WcsService(catalog: URI) extends Http4sDsl[IO] with LazyLogging {
 
+  def handleError[Result](result: Either[Throwable, Result])(implicit ee: EntityEncoder[IO, Result]) = result match {
+    case Right(res) =>
+      println(res)
+      Ok(res)
+    case Left(err) => InternalServerError(err.toString)
+  }
+
   val catalogMetadata = {
     val as: AttributeStore = AttributeStore(catalog)
 
@@ -45,6 +54,7 @@ class WcsService(catalog: URI) extends Http4sDsl[IO] with LazyLogging {
         name -> (zooms, metadata)
       }}
   }
+  val getCoverage = new GetCoverage(catalog.toString)
 
   def routes: HttpService[IO] = HttpService[IO] {
     case req @ GET -> Root =>
@@ -61,11 +71,17 @@ class WcsService(catalog: URI) extends Http4sDsl[IO] with LazyLogging {
               println(s"GetCapabilities request arrived at $link")
               Ok(GetCapabilities.build(link, catalogMetadata, p))
             case p: DescribeCoverageWcsParams =>
-              println(s"DescribeCoverage request arrived at $req.uri")
-              Ok(DescribeCoverage.build(catalogMetadata, p))
+              println(s"DescribeCoverage request arrived at ${req.uri}")
+              for {
+                getCoverage <- IO { DescribeCoverage.build(catalogMetadata, p) }.attempt
+                result <- handleError(getCoverage)
+              } yield {println("describecoverage result", result); result}
             case p: GetCoverageWcsParams =>
-              println(s"GetCoverage request arrived at $req.uri")
-              Ok(GetCoverage.build(catalogMetadata, p))
+              println(s"GetCoverage request arrived at ${req.uri}")
+              for {
+                getCoverage <- IO { getCoverage.build(catalogMetadata, p) }.attempt
+                result <- handleError(getCoverage)
+              } yield {println("getcoverage result", result); result}
           }
       }
   }

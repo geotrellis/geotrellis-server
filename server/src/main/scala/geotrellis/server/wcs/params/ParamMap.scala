@@ -7,8 +7,9 @@ import Validated._
 
 private[params] case class ParamMap(params: Map[String, Seq[String]]) {
   private val _params = params.map { case (k, v) => (k.toLowerCase, v) }.toMap
-  def getParams(field: String): Option[Seq[String]] =
-    _params.get(field).map(_.map(_.toLowerCase))
+  println("PARAMS", _params)
+  def getParams(field: String): Option[List[String]] =
+    _params.get(field).map(_.map(_.toLowerCase).toList)
 
   /** Get a field that must appear only once, otherwise error */
   def validatedParam(field: String): ValidatedNel[WcsParamsError, String] =
