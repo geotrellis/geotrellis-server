@@ -40,20 +40,19 @@ class WcsService(catalog: URI) extends Http4sDsl[IO] with LazyLogging {
   }
 
   val catalogMetadata = {
-    val as: AttributeStore = AttributeStore(catalog)
-
+    val as = AttributeStore(catalog)
     logger.info(s"Loading metadata for catalog at ${catalog} ...")
-    as
-      .layerIds
+    as.layerIds
       .sortWith{ (a, b) => a.name < b.name || (a.name == b.name && a.zoom > b.zoom) }
       .groupBy(_.name)
       .mapValues(_.map(_.zoom))
-      .map{ case (name, zooms) => {
+      .map { case (name, zooms) =>
         println(s"  -> $name @ zoom=${zooms.head}")
         val metadata = Try(as.readMetadata[TileLayerMetadata[SpatialKey]](LayerId(name, zooms.head))).toOption
         name -> (zooms, metadata)
-      }}
+      }
   }
+
   val getCoverage = new GetCoverage(catalog.toString)
 
   def routes: HttpService[IO] = HttpService[IO] {
