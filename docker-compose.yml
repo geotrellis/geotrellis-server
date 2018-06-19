@@ -1,0 +1,17 @@
+version: '3'
+services:
+  server:
+    image: quay.io/geotrellis/server:latest
+    ports:
+      - "9876:9876"
+    volumes:
+      - ~/.aws:/root/.aws
+    environment:
+      TEST_VAR: "env_var"
+      HTTP_PORT: 9876
+      HTTP_INTERFACE: "0.0.0.0"
+    build:
+      context: docker/server
+      dockerfile: Dockerfile
+
+
