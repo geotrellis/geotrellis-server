@@ -1,5 +1,7 @@
 package geotrellis.server
 
+import geotrellis.server.core.cache.CacheConfig
+
 import cats.effect.IO
 import com.typesafe.config.ConfigFactory
 import pureconfig.error.ConfigReaderException
@@ -7,7 +9,7 @@ import pureconfig.error.ConfigReaderException
 import java.net.URI
 
 
-case class Config(http: Config.Http, catalog: Config.Catalog)
+case class Config(http: Config.Http, catalog: Config.Catalog, cache: CacheConfig)
 
 object Config {
   case class Catalog(uri: URI)

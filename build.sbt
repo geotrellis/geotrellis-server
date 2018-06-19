@@ -45,7 +45,17 @@ lazy val core =
   Project(id = "core", base = file("core"))
     .settings(commonSettings: _*)
     .settings(
-      name := "geotrellis-server-core"
+      name := "geotrellis-server-core",
+      libraryDependencies ++= Seq(
+        scaffeine,
+        cats,
+        http4sDsl,
+guava,
+typesafeLogging,
+memcachedClient,
+pureConfig,
+pureConfigEnum
+      )
     )
 
 lazy val server =
@@ -65,6 +75,8 @@ lazy val server =
         decline,
         cats,
         commonsIO,
-        scalatest
+        scalatest,
+pureConfig,
+pureConfigEnum
       )
     )
