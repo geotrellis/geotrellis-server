@@ -5,11 +5,12 @@ import geotrellis.raster._
 import geotrellis.raster.crop._
 import geotrellis.raster.reproject._
 import geotrellis.raster.io.geotiff._
-import geotrellis.server.wcs.WcsRoute
-import geotrellis.server.wcs.params.GetCoverageWCSParams
+import geotrellis.server.wcs.WcsService
+import geotrellis.server.wcs.params.GetCoverageWcsParams
 import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.stitch._
+import com.typesafe.scalalogging.LazyLogging
 
 import com.typesafe.config.ConfigFactory
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
@@ -17,24 +18,17 @@ import com.github.blemale.scaffeine.{Cache, Scaffeine}
 import scala.util.Try
 import scala.concurrent.duration._
 
-object GetCoverage {
+class GetCoverage(catalogUri: => String) extends LazyLogging {
   /*
   QGIS appears to sample WCS service by placing low and high resolution requests at coverage center. 
   These sampling requests happen for every actual WCS request, we can get really great cache hit rates.
   */
-  val requestCache: Cache[(LayerId, GridBounds, RasterExtent), Raster[Tile]] =
+  lazy val requestCache: Cache[(LayerId, GridBounds, RasterExtent), Raster[Tile]] =
       Scaffeine()
         .recordStats()
         .expireAfterWrite(1.hour)
         .maximumSize(32)
         .build()
-
-
-  val catalogUri: String = 
-    Try(ConfigFactory.load().getString("server.catalog")).toOption.getOrElse {
-      throw new IllegalArgumentException("""Must specify a value for "server.catalog" in application.conf""")
-    }
-  
 
   /*
   CollectionReader holds AttributeStore which has request cache.
@@ -45,12 +39,11 @@ object GetCoverage {
   /* This is a workaround for a caching but in AttributeStore*/
   lazy val altAttributeStore = AttributeStore(catalogUri)
 
-  def build(catalog: WcsRoute.MetadataCatalog, params: GetCoverageWCSParams): Array[Byte] = {
+  def build(catalog: WcsService.MetadataCatalog, params: GetCoverageWcsParams): Array[Byte] = {
     def as = collectionReader.attributeStore
 
     val (zooms, _) = catalog(params.identifier)
     val allMD = zooms.sorted.map{ z => (z, as.readMetadata[TileLayerMetadata[SpatialKey]](LayerId(params.identifier, z))) }
-
     val re = RasterExtent(params.boundingBox, params.width, params.height)
     val srcCrs = allMD.head._2.crs
     val srcRE = ReprojectRasterExtent(re, LatLng, srcCrs)
@@ -73,7 +66,7 @@ object GetCoverage {
     val crs = metadata.crs
     val gridBounds = metadata.layout.mapTransform(srcRE.extent)
 
-    println(s"Request: zoom=$requestedZoom $gridBounds (Query: ${srcRE.cellSize}, Catalog: ${metadata.cellSize})")
+    logger.info(s"Request: zoom=$requestedZoom $gridBounds (Query: ${srcRE.cellSize}, Catalog: ${metadata.cellSize})")
 
     val query = new LayerQuery[SpatialKey, TileLayerMetadata[SpatialKey]].where(Intersects(gridBounds))
     val layerId = LayerId(params.identifier, requestedZoom)
@@ -86,9 +79,9 @@ object GetCoverage {
         readMultibandTile _
     }
 
-    if (gridBounds.sizeLong < 4)
+    if (gridBounds.size < 4)
       read(layerId, gridBounds, srcCrs, re)
-    else 
+    else
       read(layerId, gridBounds, srcCrs, re)
   }
 
@@ -99,7 +92,7 @@ object GetCoverage {
       .result
       .stitch
       .reproject(srcCrs, LatLng, options=Reproject.Options(targetRasterExtent=Some(targetRaster)))
-    
+
     GeoTiff(raster, LatLng).toByteArray
   }
 
@@ -110,7 +103,7 @@ object GetCoverage {
       .result
       .stitch
       .reproject(srcCrs, LatLng, options=Reproject.Options(targetRasterExtent=Some(targetRaster)))
-    
+
     GeoTiff(raster, LatLng).toByteArray
   }
 

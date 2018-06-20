@@ -11,13 +11,13 @@ import geotrellis.vector.Extent
 
 import scala.util.Try
 
-abstract sealed class WCSParams
+abstract sealed class WcsParams
 
-case class GetCapabilitiesWCSParams(version: String) extends WCSParams
+case class GetCapabilitiesWcsParams(version: String) extends WcsParams
 
-case class DescribeCoverageWCSParams(version: String, identifiers: Seq[String]) extends WCSParams
+case class DescribeCoverageWcsParams(version: String, identifiers: Seq[String]) extends WcsParams
 
-case class GetCoverageWCSParams(
+case class GetCoverageWcsParams(
   version: String,
   identifier: String,
   boundingBox: Extent,
@@ -25,22 +25,22 @@ case class GetCoverageWCSParams(
   width: Int,
   height: Int,
   crs: CRS
-) extends WCSParams
+) extends WcsParams
 
-// Companion objects below define parsing logic from parameter map to WCSParams //
+// Companion objects below define parsing logic from parameter map to WcsParams //
 
-object WCSParams {
-  /** Defines valid request types, and the WCSParams to build from them. */
-  private val requestMap: Map[String, ParamMap => ValidatedNel[WCSParamsError, WCSParams]] =
+object WcsParams {
+  /** Defines valid request types, and the WcsParams to build from them. */
+  private val requestMap: Map[String, ParamMap => ValidatedNel[WcsParamsError, WcsParams]] =
     Map(
-      "getcapabilities" -> GetCapabilitiesWCSParams.build _,
-      "describecoverage" -> DescribeCoverageWCSParams.build _,
-      "getcoverage" -> GetCoverageWCSParams.build _
+      "getcapabilities" -> GetCapabilitiesWcsParams.build _,
+      "describecoverage" -> DescribeCoverageWcsParams.build _,
+      "getcoverage" -> GetCoverageWcsParams.build _
     )
 
   private val validRequests = requestMap.keys.toSet
 
-  def apply(queryParams: Map[String, List[String]]): ValidatedNel[WCSParamsError, WCSParams] = {
+  def apply(queryParams: Map[String, Seq[String]]): ValidatedNel[WcsParamsError, WcsParams] = {
     val params = ParamMap(queryParams)
 
     val serviceParam =
@@ -50,10 +50,7 @@ object WCSParams {
       params.validatedParam("request", validValues=validRequests)
 
     val firstStageValidation =
-      Apply[ValidatedNel[WCSParamsError, ?]].map2(
-        serviceParam,
-        requestParam
-      ) { case (a, b) => b }
+      (serviceParam, requestParam).mapN { case (a, b) => b }
 
     firstStageValidation
       .andThen { request =>
@@ -63,19 +60,19 @@ object WCSParams {
   }
 }
 
-object GetCapabilitiesWCSParams {
-  def build(params: ParamMap): ValidatedNel[WCSParamsError, WCSParams] = {
+object GetCapabilitiesWcsParams {
+  def build(params: ParamMap): ValidatedNel[WcsParamsError, WcsParams] = {
     val versionParam =
       params.validatedVersion
 
     versionParam.map { version: String =>
-      GetCapabilitiesWCSParams(version)
+      GetCapabilitiesWcsParams(version)
     }
   }
 }
 
-object DescribeCoverageWCSParams {
-  def build(params: ParamMap): ValidatedNel[WCSParamsError, WCSParams] = {
+object DescribeCoverageWcsParams {
+  def build(params: ParamMap): ValidatedNel[WcsParamsError, WcsParams] = {
     val versionParam =
       params.validatedVersion
 
@@ -92,14 +89,14 @@ object DescribeCoverageWCSParams {
         identifiers.map { ids => (version, ids) }
       }
       .map { case (version, identifiers) =>
-        DescribeCoverageWCSParams(version, identifiers)
+        DescribeCoverageWcsParams(version, identifiers)
       }
   }
 }
 
-object GetCoverageWCSParams {
+object GetCoverageWcsParams {
 
-  private def getBboxAndCrsOption(params: ParamMap, field: String): ValidatedNel[WCSParamsError, (Vector[Double], Option[String])] =
+  private def getBboxAndCrsOption(params: ParamMap, field: String): ValidatedNel[WcsParamsError, (Vector[Double], Option[String])] =
     params.validatedParam[(Vector[Double], Option[String])](field, { bboxStr =>
       // Sometimes the CRS was a 5th element in the bbox param.
       try {
@@ -117,7 +114,7 @@ object GetCoverageWCSParams {
       }
     })
 
-  private[params] def build(params: ParamMap): ValidatedNel[WCSParamsError, WCSParams] = {
+  private[params] def build(params: ParamMap): ValidatedNel[WcsParamsError, WcsParams] = {
     val versionParam =
       params.validatedVersion
 
@@ -133,10 +130,9 @@ object GetCoverageWCSParams {
             val bboxAndCrsOption =
               getBboxAndCrsOption(params, "bbox")
 
-            Apply[ValidatedNel[WCSParamsError, ?]]
-              .map2(identifier, bboxAndCrsOption) { case (id, (bbox, crsOption)) =>
-                (id, bbox, crsOption)
-              }
+            (identifier, bboxAndCrsOption).mapN { case (id, (bbox, crsOption)) =>
+              (id, bbox, crsOption)
+            }
           } else {
             val identifier =
               params.validatedParam("identifier")
@@ -144,9 +140,8 @@ object GetCoverageWCSParams {
             val bboxAndCrsOption =
               getBboxAndCrsOption(params, "boundingbox")
 
-            Apply[ValidatedNel[WCSParamsError, ?]]
-              .map2(identifier, bboxAndCrsOption) { case (id, (bbox, crsOption)) =>
-                (id, bbox, crsOption)
+            (identifier, bboxAndCrsOption).mapN { case (id, (bbox, crsOption)) =>
+              (id, bbox, crsOption)
             }
           }
 
@@ -157,11 +152,11 @@ object GetCoverageWCSParams {
               // If the CRS wasn't in the boundingbox parameter, pull it out of the CRS field.
               crsOption match {
                 case Some(crsDesc) =>
-                  CRSUtils.ogcToCRS(crsDesc).map { crs => (id, bbox, crs) }
+                  CrsUtils.ogcToCRS(crsDesc).map { crs => (id, bbox, crs) }
                 case None =>
                   params.validatedParam("crs")
                     .andThen { crsDesc =>
-                      CRSUtils.ogcToCRS(crsDesc).map { crs => (id, bbox, crs) }
+                      CrsUtils.ogcToCRS(crsDesc).map { crs => (id, bbox, crs) }
                     }
               }
             }
@@ -186,10 +181,9 @@ object GetCoverageWCSParams {
             Try(s.toInt).toOption
           })
 
-      Apply[ValidatedNel[WCSParamsError, ?]]
-        .map4(idAndBboxAndCrs, format, width, height) { case ((id, bbox, crs), format, width, height) =>
+        (idAndBboxAndCrs, format, width, height).mapN { case ((id, bbox, crs), format, width, height) =>
           val extent = Extent(bbox(0), bbox(1), bbox(2), bbox(3))
-          GetCoverageWCSParams(version, id, extent, format, width, height, crs)
+          GetCoverageWcsParams(version, id, extent, format, width, height, crs)
         }
       }
   }

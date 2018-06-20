@@ -1,15 +1,15 @@
 package geotrellis.server.wcs.ops
 
-import geotrellis.server.wcs.WcsRoute
-import geotrellis.server.wcs.params.GetCapabilitiesWCSParams
-
+import geotrellis.server.wcs.WcsService
+import geotrellis.server.wcs.params.GetCapabilitiesWcsParams
 import geotrellis.spark._
 import geotrellis.spark.io._
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.util.Try
 import scala.xml._
 
-object GetCapabilities {
+object GetCapabilities extends LazyLogging {
   // Cribbed from https://github.com/ngageoint/mrgeo/blob/master/mrgeo-services/mrgeo-services-wcs/src/main/java/org/mrgeo/services/wcs/WcsCapabilities.java
 
   private def makeElement100(requestURL: String) = {
@@ -34,9 +34,9 @@ object GetCapabilities {
     </ows:Operation>
   }
 
-  private def addLayers100(metadata: WcsRoute.MetadataCatalog) = {
+  private def addLayers100(metadata: WcsService.MetadataCatalog) = {
     metadata.map { case (identifier, (zooms, maybeMetadata)) => {
-      println(s"Adding v1.0.0 tag for $identifier")
+      logger.info(s"Adding v1.0.0 tag for $identifier")
       maybeMetadata match {
         case Some(metadata) =>
           val crs = metadata.crs
@@ -51,9 +51,9 @@ object GetCapabilities {
     }}
   }
 
-  private def addLayers110(metadata: WcsRoute.MetadataCatalog) = {
+  private def addLayers110(metadata: WcsService.MetadataCatalog) = {
     metadata.map { case (identifier, (zooms, maybeMetadata)) => {
-      println(s"Adding v1.1.0 tag for $identifier")
+      logger.info(s"Adding v1.1.0 tag for $identifier")
       maybeMetadata match {
         case Some(metadata) =>
           val crs = metadata.crs
@@ -78,7 +78,7 @@ object GetCapabilities {
     }}
   }
 
-  def build(requestURL: String, metadata: WcsRoute.MetadataCatalog, params: GetCapabilitiesWCSParams): NodeSeq = {
+  def build(requestURL: String, metadata: WcsService.MetadataCatalog, params: GetCapabilitiesWcsParams): Elem = {
     if (params.version < "1.1.0") {
       <WCS_Capabilities xmlns="http://www.opengis.net/wcs"
                         xmlns:xlink="http://www.w3.org/1999/xlink"

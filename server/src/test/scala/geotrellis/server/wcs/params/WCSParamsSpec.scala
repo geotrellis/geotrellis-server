@@ -10,16 +10,16 @@ import org.scalatest._
 
 import scala.reflect.ClassTag
 
-class WCSParamsSpec extends FunSpec with Matchers {
-  def validateAs[T <: WCSParams: ClassTag](paramMap: Map[String, List[String]]): T = {
-    val params = WCSParams(paramMap)
+class WcsParamsSpec extends FunSpec with Matchers {
+  def validateAs[T <: WcsParams: ClassTag](paramMap: Map[String, List[String]]): T = {
+    val params = WcsParams(paramMap)
     params should be (an[Valid[_]])
     val p = params.toOption.get
     p should be (an[T])
     p.asInstanceOf[T]
   }
 
-  describe("WCSParams parseing GetCapabilities requests") {
+  describe("WcsParams parsing GetCapabilities requests") {
     it("should parse a GetCapabilities request") {
       val paramMap =
         Map(
@@ -28,7 +28,7 @@ class WCSParamsSpec extends FunSpec with Matchers {
           "Version" -> List("1.1.0")
         )
 
-      val params = validateAs[GetCapabilitiesWCSParams](paramMap)
+      val params = validateAs[GetCapabilitiesWcsParams](paramMap)
       params.version should be ("1.1.0")
     }
 
@@ -37,15 +37,15 @@ class WCSParamsSpec extends FunSpec with Matchers {
         Map(
           "Service" -> List("wcs"),
           "Request" -> List("GetCapabilities"),
-          "AcceptedVersions" -> List("1.0.0,1.1.0,1.3.0")
+          "AcceptVersions" -> List("1.0.0,1.1.0,1.3.0")
         )
 
-      val params = validateAs[GetCapabilitiesWCSParams](paramMap)
+      val params = validateAs[GetCapabilitiesWcsParams](paramMap)
       params.version should be ("1.3.0")
     }
   }
 
-  describe("WCSParams parsing DescribeCoverage request") {
+  describe("WcsParams parsing DescribeCoverage request") {
     it("should parse a 1.1.0 DescribeCoverage request") {
       val paramMap =
         Map(
@@ -55,7 +55,7 @@ class WCSParamsSpec extends FunSpec with Matchers {
           "identifiers" -> List("a,b,c")
         )
 
-      val params = validateAs[DescribeCoverageWCSParams](paramMap)
+      val params = validateAs[DescribeCoverageWcsParams](paramMap)
       params.version should be ("1.1.0")
       params.identifiers.sorted.toSeq should be (Seq("a", "b", "c"))
     }
@@ -69,13 +69,13 @@ class WCSParamsSpec extends FunSpec with Matchers {
           "coverage" -> List("a")
         )
 
-      val params = validateAs[DescribeCoverageWCSParams](paramMap)
+      val params = validateAs[DescribeCoverageWcsParams](paramMap)
       params.version should be ("1.0.0")
       params.identifiers.sorted.toSeq should be (Seq("a"))
     }
   }
 
-  describe("WCSParams parsing GetCoverage request") {
+  describe("WcsParams parsing GetCoverage request") {
     it("should parse a 1.1.0 DescribeCoverage request") {
       val paramMap =
         Map(
@@ -90,7 +90,7 @@ class WCSParamsSpec extends FunSpec with Matchers {
           "format" -> List("geotif")
         )
 
-      val params = validateAs[GetCoverageWCSParams](paramMap)
+      val params = validateAs[GetCoverageWcsParams](paramMap)
       params.version should be ("1.1.0")
       params.identifier should be ("layer")
       params.crs should be (LatLng)
@@ -113,7 +113,7 @@ class WCSParamsSpec extends FunSpec with Matchers {
           "format" -> List("geotif")
         )
 
-      val params = validateAs[GetCoverageWCSParams](paramMap)
+      val params = validateAs[GetCoverageWcsParams](paramMap)
       params.version should be ("1.0.0")
       params.identifier should be ("layer")
       params.crs should be (LatLng)
@@ -135,7 +135,7 @@ class WCSParamsSpec extends FunSpec with Matchers {
           "format" -> List("geotif")
         )
 
-      val params = validateAs[GetCoverageWCSParams](paramMap)
+      val params = validateAs[GetCoverageWcsParams](paramMap)
       params.version should be ("1.1.0")
       params.identifier should be ("layer")
       params.crs should be (LatLng)

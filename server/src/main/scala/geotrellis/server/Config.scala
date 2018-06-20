@@ -1,16 +1,26 @@
 package geotrellis.server
 
+import cats.effect.IO
 import com.typesafe.config.ConfigFactory
-import net.ceedubs.ficus.Ficus
-import net.ceedubs.ficus.readers.ArbitraryTypeReader
+import pureconfig.error.ConfigReaderException
 
-trait Config {
-  import ArbitraryTypeReader._
-  import Ficus._
+import java.net.URI
 
-  protected case class HttpConfig(interface: String, port: Int)
 
-  private val config = ConfigFactory.load()
-  protected val httpConfig = config.as[HttpConfig]("http")
-  val catalogPath = config.as[String]("server.catalog")
+case class Config(http: Config.Http, catalog: Config.Catalog)
+
+object Config {
+  case class Catalog(uri: URI)
+  case class Http(interface: String, port: Int)
+
+  import pureconfig._
+
+  def load(configFile: String = "application.conf"): IO[Config] = {
+    IO {
+      loadConfig[Config](ConfigFactory.load(configFile))
+    }.flatMap {
+      case Left(e) => IO.raiseError[Config](new ConfigReaderException[Config](e))
+      case Right(config) => IO.pure(config)
+    }
+  }
 }

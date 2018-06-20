@@ -3,17 +3,18 @@ package geotrellis.server.wcs.ops
 import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.raster.reproject.ReprojectRasterExtent
-import geotrellis.server.wcs.WcsRoute
-import geotrellis.server.wcs.params.DescribeCoverageWCSParams
+import geotrellis.server.wcs.WcsService
+import geotrellis.server.wcs.params.DescribeCoverageWcsParams
 import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.json._
+import com.typesafe.scalalogging.LazyLogging
 
-import scala.xml.NodeSeq
+import scala.xml._
 
-object DescribeCoverage {
-  private def addDescriptions110(catalog: WcsRoute.MetadataCatalog)(identifier: String) = {
-    println(s"Received v1.1.0 DescribeCoverage request for layer $identifier")
+object DescribeCoverage extends LazyLogging {
+  private def addDescriptions110(catalog: WcsService.MetadataCatalog)(identifier: String) = {
+    logger.info(s"Received v1.1.0 DescribeCoverage request for layer $identifier")
 
     catalog(identifier)._2 match {
       case Some(metadata) =>
@@ -67,8 +68,8 @@ object DescribeCoverage {
     }
   }
 
-  private def addDescriptions100(catalog: WcsRoute.MetadataCatalog)(identifier: String) = {
-    println(s"Received v1.0.0 DescribeCoverage request for layer $identifier")
+  private def addDescriptions100(catalog: WcsService.MetadataCatalog)(identifier: String) = {
+    logger.info(s"Received v1.0.0 DescribeCoverage request for layer $identifier")
 
     catalog(identifier)._2 match {
       case Some(metadata) =>
@@ -135,7 +136,8 @@ object DescribeCoverage {
     }
   }
 
-  def build(metadata: WcsRoute.MetadataCatalog, params: DescribeCoverageWCSParams): NodeSeq = {
+  def build(metadata: WcsService.MetadataCatalog, params: DescribeCoverageWcsParams): Elem = {
+    logger.info("BUILDING COVERAGE", metadata, params)
     if (params.version < "1.1") {
       <CoverageDescription xmlns="http://www.opengis.net/wcs"
                            xmlns:xlink="http://www.w3.org/1999/xlink"
