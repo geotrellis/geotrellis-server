@@ -50,11 +50,12 @@ lazy val core =
         scaffeine,
         cats,
         http4sDsl,
-guava,
-typesafeLogging,
-memcachedClient,
-pureConfig,
-pureConfigEnum
+        guava,
+        typesafeLogging,
+        memcachedClient,
+        pureConfig,
+        pureConfigEnum,
+        scalatest
       )
     )
 
@@ -76,7 +77,7 @@ lazy val server =
         cats,
         commonsIO,
         scalatest,
-pureConfig,
-pureConfigEnum
+        pureConfig,
+        pureConfigEnum
       )
     )
