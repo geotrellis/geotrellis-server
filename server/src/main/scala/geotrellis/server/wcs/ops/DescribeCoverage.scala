@@ -8,12 +8,13 @@ import geotrellis.server.wcs.params.DescribeCoverageWcsParams
 import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.io.json._
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.xml._
 
-object DescribeCoverage {
+object DescribeCoverage extends LazyLogging {
   private def addDescriptions110(catalog: WcsService.MetadataCatalog)(identifier: String) = {
-    println(s"Received v1.1.0 DescribeCoverage request for layer $identifier")
+    logger.info(s"Received v1.1.0 DescribeCoverage request for layer $identifier")
 
     catalog(identifier)._2 match {
       case Some(metadata) =>
@@ -68,7 +69,7 @@ object DescribeCoverage {
   }
 
   private def addDescriptions100(catalog: WcsService.MetadataCatalog)(identifier: String) = {
-    println(s"Received v1.0.0 DescribeCoverage request for layer $identifier")
+    logger.info(s"Received v1.0.0 DescribeCoverage request for layer $identifier")
 
     catalog(identifier)._2 match {
       case Some(metadata) =>
@@ -136,7 +137,7 @@ object DescribeCoverage {
   }
 
   def build(metadata: WcsService.MetadataCatalog, params: DescribeCoverageWcsParams): Elem = {
-    println("BUILDING COVERAGE", metadata, params)
+    logger.info("BUILDING COVERAGE", metadata, params)
     if (params.version < "1.1") {
       <CoverageDescription xmlns="http://www.opengis.net/wcs"
                            xmlns:xlink="http://www.w3.org/1999/xlink"

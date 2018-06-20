@@ -4,10 +4,12 @@ import cats._
 import cats.implicits._
 import cats.data.{NonEmptyList, Validated, ValidatedNel}
 import Validated._
+import com.typesafe.scalalogging.LazyLogging
 
-private[params] case class ParamMap(params: Map[String, Seq[String]]) {
+
+private[params] case class ParamMap(params: Map[String, Seq[String]]) extends LazyLogging {
   private val _params = params.map { case (k, v) => (k.toLowerCase, v) }.toMap
-  println("PARAMS", _params)
+  logger.debug("ParamMap._params", _params)
   def getParams(field: String): Option[List[String]] =
     _params.get(field).map(_.map(_.toLowerCase).toList)
 

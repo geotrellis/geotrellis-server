@@ -34,9 +34,11 @@ class WcsService(catalog: URI) extends Http4sDsl[IO] with LazyLogging {
 
   def handleError[Result](result: Either[Throwable, Result])(implicit ee: EntityEncoder[IO, Result]) = result match {
     case Right(res) =>
-      println(res)
+      logger.info(res.toString)
       Ok(res)
-    case Left(err) => InternalServerError(err.toString)
+    case Left(err) =>
+      logger.error(err.toString)
+      InternalServerError(err.toString)
   }
 
   val catalogMetadata = {
@@ -47,7 +49,7 @@ class WcsService(catalog: URI) extends Http4sDsl[IO] with LazyLogging {
       .groupBy(_.name)
       .mapValues(_.map(_.zoom))
       .map { case (name, zooms) =>
-        println(s"  -> $name @ zoom=${zooms.head}")
+        logger.info(s"  -> $name @ zoom=${zooms.head}")
         val metadata = Try(as.readMetadata[TileLayerMetadata[SpatialKey]](LayerId(name, zooms.head))).toOption
         name -> (zooms, metadata)
       }
@@ -67,20 +69,26 @@ class WcsService(catalog: URI) extends Http4sDsl[IO] with LazyLogging {
           wcsParams match {
             case p: GetCapabilitiesWcsParams =>
               val link = s"${req.uri.scheme}://${req.uri.authority}${req.uri.path}?"
-              println(s"GetCapabilities request arrived at $link")
+              logger.info(s"GetCapabilities request arrived at $link")
               Ok(GetCapabilities.build(link, catalogMetadata, p))
             case p: DescribeCoverageWcsParams =>
-              println(s"DescribeCoverage request arrived at ${req.uri}")
+              logger.info(s"DescribeCoverage request arrived at ${req.uri}")
               for {
                 getCoverage <- IO { DescribeCoverage.build(catalogMetadata, p) }.attempt
                 result <- handleError(getCoverage)
-              } yield {println("describecoverage result", result); result}
+              } yield {
+                logger.info("describecoverage result", result)
+                result
+              }
             case p: GetCoverageWcsParams =>
-              println(s"GetCoverage request arrived at ${req.uri}")
+              logger.info(s"GetCoverage request arrived at ${req.uri}")
               for {
                 getCoverage <- IO { getCoverage.build(catalogMetadata, p) }.attempt
                 result <- handleError(getCoverage)
-              } yield {println("getcoverage result", result); result}
+              } yield {
+                logger.info("getcoverage result", result)
+                result
+              }
           }
       }
   }

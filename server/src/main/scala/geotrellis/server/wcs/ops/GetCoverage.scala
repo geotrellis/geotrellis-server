@@ -10,6 +10,7 @@ import geotrellis.server.wcs.params.GetCoverageWcsParams
 import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.stitch._
+import com.typesafe.scalalogging.LazyLogging
 
 import com.typesafe.config.ConfigFactory
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
@@ -17,7 +18,7 @@ import com.github.blemale.scaffeine.{Cache, Scaffeine}
 import scala.util.Try
 import scala.concurrent.duration._
 
-class GetCoverage(catalogUri: => String) {
+class GetCoverage(catalogUri: => String) extends LazyLogging {
   /*
   QGIS appears to sample WCS service by placing low and high resolution requests at coverage center. 
   These sampling requests happen for every actual WCS request, we can get really great cache hit rates.
@@ -65,7 +66,7 @@ class GetCoverage(catalogUri: => String) {
     val crs = metadata.crs
     val gridBounds = metadata.layout.mapTransform(srcRE.extent)
 
-    println(s"Request: zoom=$requestedZoom $gridBounds (Query: ${srcRE.cellSize}, Catalog: ${metadata.cellSize})")
+    logger.info(s"Request: zoom=$requestedZoom $gridBounds (Query: ${srcRE.cellSize}, Catalog: ${metadata.cellSize})")
 
     val query = new LayerQuery[SpatialKey, TileLayerMetadata[SpatialKey]].where(Intersects(gridBounds))
     val layerId = LayerId(params.identifier, requestedZoom)

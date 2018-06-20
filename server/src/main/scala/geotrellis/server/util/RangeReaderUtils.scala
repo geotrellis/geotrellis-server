@@ -5,7 +5,9 @@ import geotrellis.util.{FileRangeReader, RangeReader}
 import geotrellis.spark.io.s3.util.S3RangeReader
 import geotrellis.spark.io.s3.AmazonS3Client
 import geotrellis.spark.io.http.util.HttpRangeReader
-
+import cats._
+import cats.effect.IO
+import cats.implicits._
 import com.amazonaws.services.s3.{AmazonS3URI, AmazonS3Client => AWSAmazonS3Client}
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import org.apache.http.client.utils.URLEncodedUtils
@@ -17,7 +19,7 @@ import java.net.URL
 
 
 object RangeReaderUtils extends LazyLogging {
-  def fromUri(uri: String): Either[String, RangeReader] = {
+  def fromUri(uri: String): IO[RangeReader] = IO {
     val javaUri = new URI(uri)
 
     /**
@@ -35,21 +37,21 @@ object RangeReaderUtils extends LazyLogging {
 
     javaUri.getScheme match {
       case "file" | null =>
-        Right(FileRangeReader(Paths.get(javaUri).toFile))
+        FileRangeReader(Paths.get(javaUri).toFile)
 
       case "http" | "https" if noQueryParams =>
-        Right(HttpRangeReader(new URL(uri)))
+        HttpRangeReader(new URL(uri))
 
       case "http" | "https" =>
-        Right(new HttpRangeReader(new URL(uri), false))
+        new HttpRangeReader(new URL(uri), false)
 
       case "s3" =>
         val s3Uri = new AmazonS3URI(java.net.URLDecoder.decode(uri, "UTF-8"))
         val s3Client = new AmazonS3Client(new AWSAmazonS3Client(new DefaultAWSCredentialsProviderChain))
-        Right(S3RangeReader(s3Uri.getBucket, s3Uri.getKey, s3Client))
+        S3RangeReader(s3Uri.getBucket, s3Uri.getKey, s3Client)
 
       case scheme =>
-        Left(s"Unrecognized scheme: $scheme")
+        throw new java.lang.IllegalArgumentException(s"Unrecognized scheme found for range reader: $scheme")
     }
   }
 

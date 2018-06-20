@@ -2,14 +2,14 @@ package geotrellis.server.wcs.ops
 
 import geotrellis.server.wcs.WcsService
 import geotrellis.server.wcs.params.GetCapabilitiesWcsParams
-
 import geotrellis.spark._
 import geotrellis.spark.io._
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.util.Try
 import scala.xml._
 
-object GetCapabilities {
+object GetCapabilities extends LazyLogging {
   // Cribbed from https://github.com/ngageoint/mrgeo/blob/master/mrgeo-services/mrgeo-services-wcs/src/main/java/org/mrgeo/services/wcs/WcsCapabilities.java
 
   private def makeElement100(requestURL: String) = {
@@ -36,7 +36,7 @@ object GetCapabilities {
 
   private def addLayers100(metadata: WcsService.MetadataCatalog) = {
     metadata.map { case (identifier, (zooms, maybeMetadata)) => {
-      println(s"Adding v1.0.0 tag for $identifier")
+      logger.info(s"Adding v1.0.0 tag for $identifier")
       maybeMetadata match {
         case Some(metadata) =>
           val crs = metadata.crs
@@ -53,7 +53,7 @@ object GetCapabilities {
 
   private def addLayers110(metadata: WcsService.MetadataCatalog) = {
     metadata.map { case (identifier, (zooms, maybeMetadata)) => {
-      println(s"Adding v1.1.0 tag for $identifier")
+      logger.info(s"Adding v1.1.0 tag for $identifier")
       maybeMetadata match {
         case Some(metadata) =>
           val crs = metadata.crs

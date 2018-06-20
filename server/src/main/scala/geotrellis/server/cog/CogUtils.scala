@@ -27,7 +27,7 @@ object CogUtils {
   }.toArray
 
   /** Read GeoTiff from URI while caching the header bytes in memcache */
-  def fromUri(uri: String): Either[String, GeoTiff[MultibandTile]] = {
+  def fromUri(uri: String): IO[GeoTiff[MultibandTile]] = {
     val cacheSize = 1<<18
     for {
       headerBytes <- RangeReaderUtils.fromUri(uri).map(_.readRange(0, cacheSize))
@@ -38,7 +38,7 @@ object CogUtils {
     }
   }
 
-  def fetch(uri: String, zoom: Int, x: Int, y: Int): Either[String, MultibandTile] =
+  def fetch(uri: String, zoom: Int, x: Int, y: Int): IO[MultibandTile] =
     CogUtils.fromUri(uri).flatMap { tiff =>
       val transform = Proj4Transform(tiff.crs, WebMercator)
       val inverseTransform = Proj4Transform(WebMercator, tiff.crs)
@@ -53,7 +53,7 @@ object CogUtils {
       }
     }
 
-  def cropForZoomExtent(tiff: GeoTiff[MultibandTile], zoom: Int, extent: Option[Extent]): Either[String, MultibandTile] = {
+  def cropForZoomExtent(tiff: GeoTiff[MultibandTile], zoom: Int, extent: Option[Extent]): IO[MultibandTile] = {
     val transform = Proj4Transform(tiff.crs, WebMercator)
     val inverseTransform = Proj4Transform(WebMercator, tiff.crs)
     val actualExtent = extent.getOrElse(tiff.extent.reproject(tiff.crs, WebMercator))
@@ -72,7 +72,7 @@ object CogUtils {
   }
 
 
-  def getTiffExtent(uri: String): Either[String, Projected[MultiPolygon]] =
+  def getTiffExtent(uri: String): IO[Projected[MultiPolygon]] =
     RangeReaderUtils.fromUri(uri).map { rr =>
       val tiff = GeoTiffReader.readMultiband(rr, streaming = true)
       val crs = tiff.crs
@@ -80,13 +80,13 @@ object CogUtils {
     }
 
   /** Work around bug in GeoTiff.crop(extent) method */
-  def cropGeoTiff[T <: CellGrid](tiff: GeoTiff[T], extent: Extent): Either[String, Raster[T]] = {
+  def cropGeoTiff[T <: CellGrid](tiff: GeoTiff[T], extent: Extent): IO[Raster[T]] = IO {
     if (extent.intersects(tiff.extent)) {
       val bounds = tiff.rasterExtent.gridBoundsFor(extent)
       val clipExtent = tiff.rasterExtent.extentFor(bounds)
       val clip = tiff.crop(List(bounds)).next._2
-      Right(Raster(clip, clipExtent))
-    } else Left(s"no intersection with geotiff and extent $extent")
+      Raster(clip, clipExtent)
+    } else throw new java.lang.IllegalArgumentException(s"no intersection with geotiff and extent $extent")
   }
 
   def geoTiffHistogram(tiff: GeoTiff[MultibandTile], buckets: Int = 80, size: Int = 128): Array[StreamingHistogram] = {
