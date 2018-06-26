@@ -47,7 +47,7 @@ class MamlPersistenceService[ExpressionStore: MamlStore](val store: ExpressionSt
         case Right(created) =>
           Created()
         case Left(err) =>
-          logger.debug(err.toString)
+          logger.debug(err.toString, err)
           InternalServerError(err.toString)
       }
 

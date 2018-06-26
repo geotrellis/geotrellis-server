@@ -60,6 +60,7 @@ lazy val core =
         circeCore,
         circeGeneric,
         circeParser,
+        circeOptics,
         geotrellisS3,
         geotrellisSpark,
         cats,
@@ -82,7 +83,8 @@ lazy val http4s =
       assemblyJarName in assembly := "geotrellis-server-http4s.jar",
       libraryDependencies ++= Seq(
         http4sDsl,
-        http4sBlaze,
+        http4sBlazeServer,
+        http4sBlazeClient,
         http4sCirce,
         http4sXml,
         scalaXml,
@@ -96,6 +98,10 @@ lazy val http4s =
         pureConfig,
         typesafeLogging,
         logbackClassic,
+        kamonCore,
+        kamonSysMetrics,
+        kamonPrometheus,
+        kamonHttp4s,
         scalatest
       )
     )
