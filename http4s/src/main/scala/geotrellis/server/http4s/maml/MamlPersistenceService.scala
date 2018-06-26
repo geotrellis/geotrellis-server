@@ -1,4 +1,4 @@
-package geotrellis.server.http4s.storage
+package geotrellis.server.http4s.maml
 
 import geotrellis.server.core.persistence.MamlStore
 import MamlStore.ops._
@@ -24,7 +24,7 @@ import java.util.UUID
 import scala.util.Try
 import scala.collection.mutable
 
-class StorageDemoService[ExpressionStore: MamlStore](val store: ExpressionStore) extends Http4sDsl[IO] with LazyLogging {
+class MamlPersistenceService[ExpressionStore: MamlStore](val store: ExpressionStore) extends Http4sDsl[IO] with LazyLogging {
 
   implicit val expressionDecoder = jsonOf[IO, Expression]
 
@@ -36,8 +36,6 @@ class StorageDemoService[ExpressionStore: MamlStore](val store: ExpressionStore)
         None
     }
   }
-
-  def logEitherT(str: String): EitherT[IO, Any, Unit] = EitherT.rightT(logger.info(str))
 
   def routes: HttpService[IO] = HttpService[IO] {
     case req @ POST -> Root / IdVar(key) =>

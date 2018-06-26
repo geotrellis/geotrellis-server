@@ -2,7 +2,7 @@ package geotrellis.server.http4s
 
 import geotrellis.server.http4s.wcs.WcsService
 import geotrellis.server.http4s.cog.CogService
-import geotrellis.server.http4s.storage.StorageDemoService
+import geotrellis.server.http4s.maml.MamlPersistenceService
 import geotrellis.server.core.persistence._
 
 import com.azavea.maml.ast.Expression
@@ -46,12 +46,12 @@ object Server extends StreamApp[IO] with LazyLogging {
       _          <- Stream.eval(IO.pure(logger.info(s"Initializing server at ${config.http.interface}:${config.http.port}")))
       cog         = new CogService
       wcs         = new WcsService(config.catalog.uri)
-      storageDemo = {
+      mamlPersistence = {
         val hashmapStore = new ConcurrentLinkedHashMap.Builder[UUID, Expression]()
           .maximumWeightedCapacity(1000)
           .build();
 
-        new StorageDemoService(hashmapStore)
+        new MamlPersistenceService(hashmapStore)
       }
       pingpong = new PingPongService
       exitCode   <- BlazeBuilder[IO]
@@ -60,7 +60,7 @@ object Server extends StreamApp[IO] with LazyLogging {
         .mountService(middleware(pingpong.routes), "/ping")
         .mountService(middleware(wcs.routes), "/wcs")
         .mountService(middleware(cog.routes), "/cog")
-        .mountService(middleware(storageDemo.routes), "/json-store")
+        .mountService(middleware(mamlPersistence.routes), "/maml")
         .serve
     } yield exitCode
   }
