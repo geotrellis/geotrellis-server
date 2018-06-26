@@ -1,6 +1,6 @@
 FROM openjdk:8-jre
 
-COPY geotrellis-server.jar /opt/geotrellis-server.jar
+COPY geotrellis-server-http4s.jar /opt/geotrellis-server-http4s.jar
 WORKDIR /opt
 
-ENTRYPOINT ["java", "-jar", "/opt/geotrellis-server.jar"]
+ENTRYPOINT ["java", "-jar", "/opt/geotrellis-server-http4s.jar"]
