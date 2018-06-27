@@ -1,5 +1,7 @@
 package geotrellis.server.http4s.maml
 
+import geotrellis.server.http4s.util.UriDestructurers._
+import geotrellis.server.http4s.util.QueryParamDecoders._
 import geotrellis.server.core.error.RequirementNotFound
 import geotrellis.server.core.persistence.MamlStore
 import MamlStore.ops._
@@ -38,22 +40,8 @@ class MamlTmsService[ExpressionStore: MamlStore](
   interpreter: BufferingInterpreter
 ) extends Http4sDsl[IO] with LazyLogging {
 
-  object IdVar {
-    def unapply(str: String): Option[UUID] = {
-      if (!str.isEmpty)
-        Try(UUID.fromString(str)).toOption
-      else
-        None
-    }
-  }
-
-  implicit val uriQueryParamDecoder: QueryParamDecoder[UUID] =
-    QueryParamDecoder[String].map(UUID.fromString)
-
-  object OptionalNodeIdQueryParam extends OptionalQueryParamDecoderMatcher[UUID]("opacity")
-
   def routes: HttpService[IO] = HttpService[IO] {
-    case req @ GET -> Root / IdVar(mamlId) / IntVar(z) / IntVar(x) / IntVar(y) :? OptionalNodeIdQueryParam(subNode) =>
+    case req @ GET -> Root / UuidVar(mamlId) / IntVar(z) / IntVar(x) / IntVar(y) =>
       (for {
         maybeExpression  <- store.getMaml(mamlId)
         expression       <- maybeExpression.liftTo[IO](throw new RequirementNotFound(s"No maml found at id $mamlId"))
