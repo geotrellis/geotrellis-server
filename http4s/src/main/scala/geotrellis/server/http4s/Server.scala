@@ -2,10 +2,11 @@ package geotrellis.server.http4s
 
 import geotrellis.server.http4s.wcs.WcsService
 import geotrellis.server.http4s.cog.CogService
-import geotrellis.server.http4s.maml.MamlPersistenceService
+import geotrellis.server.http4s.maml.{MamlPersistenceService, MamlTmsService}
 import geotrellis.server.core.persistence._
 
 import com.azavea.maml.ast.Expression
+import com.azavea.maml.eval.BufferingInterpreter
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
 import cats.effect._
 import io.circe._
@@ -55,14 +56,12 @@ object Server extends StreamApp[IO] with LazyLogging {
       _          <- Stream.eval(IO.pure(logger.info(s"Initializing server at ${config.http.interface}:${config.http.port}")))
       cog         = new CogService
       wcs         = new WcsService(config.catalog.uri)
-      mamlPersistence = {
-        val hashmapStore = new ConcurrentLinkedHashMap.Builder[UUID, Expression]()
-          .maximumWeightedCapacity(1000)
-          .build();
-
-        new MamlPersistenceService(hashmapStore)
-      }
-      pingpong = new PingPongService
+      pingpong    = new PingPongService
+      mamlStore   = new ConcurrentLinkedHashMap.Builder[UUID, Expression]()
+        .maximumWeightedCapacity(1000)
+        .build();
+      mamlPersistence = new MamlPersistenceService(mamlStore)
+      maml        = new MamlTmsService(mamlStore, BufferingInterpreter.DEFAULT)
       _          <- Stream.eval(IO { Kamon.addReporter(new PrometheusReporter()) })
       exitCode   <- BlazeBuilder[IO]
         .enableHttp2(true)
@@ -70,7 +69,8 @@ object Server extends StreamApp[IO] with LazyLogging {
         .mountService(commonMiddleware(pingpong.routes), "/ping")
         .mountService(commonMiddleware(wcs.routes), "/wcs")
         .mountService(commonMiddleware(cog.routes), "/cog")
-        .mountService(commonMiddleware(mamlPersistence.routes), "/maml")
+        .mountService(commonMiddleware(mamlPersistence.routes), "/maml/expression")
+        .mountService(commonMiddleware(maml.routes), "/maml/tiled")
         .serve
     } yield exitCode
   }
