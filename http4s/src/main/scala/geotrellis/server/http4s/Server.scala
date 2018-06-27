@@ -2,10 +2,11 @@ package geotrellis.server.http4s
 
 import geotrellis.server.http4s.wcs.WcsService
 import geotrellis.server.http4s.cog.CogService
-import geotrellis.server.http4s.maml.MamlPersistenceService
+import geotrellis.server.http4s.maml.{MamlPersistenceService, MamlTmsService}
 import geotrellis.server.core.persistence._
 
 import com.azavea.maml.ast.Expression
+import com.azavea.maml.eval.BufferingInterpreter
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
 import cats.effect._
 import io.circe._
@@ -53,14 +54,14 @@ object Server extends StreamApp[IO] with LazyLogging {
       config     <- Stream.eval(Config.load())
       client     <- Http1Client.stream[IO]().map(KamonClientSupport(_))
       _          <- Stream.eval(IO.pure(logger.info(s"Initializing server at ${config.http.interface}:${config.http.port}")))
-      cogSvc      = new CogService
-      wcsSvc      = new WcsService(config.catalog.uri)
-      pingpongSvc = new PingPongService
+      cog         = new CogService
+      wcs         = new WcsService(config.catalog.uri)
+      pingpong    = new PingPongService
       mamlStore   = new ConcurrentLinkedHashMap.Builder[UUID, Expression]()
         .maximumWeightedCapacity(1000)
         .build();
       mamlPersistence = new MamlPersistenceService(mamlStore)
-      maml        = new MamlTmsService(mamlStore)
+      maml        = new MamlTmsService(mamlStore, BufferingInterpreter.DEFAULT)
       _          <- Stream.eval(IO { Kamon.addReporter(new PrometheusReporter()) })
       exitCode   <- BlazeBuilder[IO]
         .enableHttp2(true)
