@@ -1,9 +1,10 @@
 version: '3'
 services:
-  server:
+  geotrellis-server:
     image: quay.io/geotrellis/server:latest
     ports:
       - "9000:9000"
+      - "9095:9095"
     volumes:
       - ~/.aws:/root/.aws
     environment:
@@ -13,5 +14,12 @@ services:
     build:
       context: docker/server
       dockerfile: Dockerfile
-
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    links:
+      - geotrellis-server
 
