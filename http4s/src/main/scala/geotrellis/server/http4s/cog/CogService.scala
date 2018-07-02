@@ -1,6 +1,7 @@
 package geotrellis.server.http4s.cog
 
 import geotrellis.server.core.cog.CogUtils
+import geotrellis.server.http4s.auth.{User, Rejector}
 
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
@@ -16,7 +17,7 @@ import scala.math._
 import java.net.URI
 
 
-class CogService extends Http4sDsl[IO] with LazyLogging {
+class CogService extends Http4sDsl[IO] with LazyLogging with Rejector {
 
   object OptionalOpacityQueryParamMatcher extends OptionalQueryParamDecoderMatcher[Double]("opacity")
 
@@ -27,25 +28,26 @@ class CogService extends Http4sDsl[IO] with LazyLogging {
 
   val emptyTile = IntConstantNoDataArrayTile(Array(0), 1, 1).renderPng()
 
-  def routes: HttpService[IO] = HttpService[IO] {
-    case req @ GET -> Root / IntVar(zoom) / IntVar(x) / IntVar(y) :? UriQueryParamMatcher(uri) +& OptionalOpacityQueryParamMatcher(opaque) =>
+  def routes: AuthedService[Either[String, User], IO] = AuthedService[Either[String, User], IO] {
+    case req @ GET -> Root / IntVar(zoom) / IntVar(x) / IntVar(y) :? UriQueryParamMatcher(uri) +& OptionalOpacityQueryParamMatcher(opaque) as user => rejectUnauthorized(user) {
       val opacity = max(min(opaque.getOrElse(100.0), 100.0), 0.0)
       val tileBytes: EitherT[IO, Throwable, Array[Byte]] = for {
         mbtile      <- EitherT(CogUtils.fetch(uri.toString, zoom, x, y).attempt)
-        _           <- EitherT.pure[IO, Throwable](logger.debug(s"uri: ${req.uri}; opacity: $opacity; zoom: $zoom, x: $x, y: $y"))
+        _           <- EitherT.pure[IO, Throwable](logger.debug(s"uri: $uri; opacity: $opacity; zoom: $zoom, x: $x, y: $y"))
         coloredTile <- EitherT(IO { mbtile.color().map({ clr =>
-                         val current = RGBA(clr)
-                         RGBA(current.red, current.green, current.blue, opacity)
-                       }) }.attempt)
+                                                         val current = RGBA(clr)
+                                                         RGBA(current.red, current.green, current.blue, opacity)
+                                                       }) }.attempt)
       } yield coloredTile.renderPng().bytes
 
       tileBytes.value.flatMap({
-        case Right(bytes) =>
-          Ok(bytes)
-        case Left(err) =>
-          logger.debug(err.toString)
-          err.getStackTrace.foreach({ line => logger.debug(line.toString) })
-          InternalServerError(err.toString)
-      })
+                                case Right(bytes) =>
+                                  Ok(bytes)
+                                case Left(err) =>
+                                  logger.debug(err.toString)
+                                  err.getStackTrace.foreach({ line => logger.debug(line.toString) })
+                                  InternalServerError(err.toString)
+                              })
+    }
   }
 }

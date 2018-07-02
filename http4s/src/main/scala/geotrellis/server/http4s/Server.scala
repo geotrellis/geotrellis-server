@@ -1,5 +1,6 @@
 package geotrellis.server.http4s
 
+import geotrellis.server.http4s.auth._
 import geotrellis.server.http4s.wcs.WcsService
 import geotrellis.server.http4s.cog.CogService
 import geotrellis.server.http4s.maml.MamlPersistenceService
@@ -7,6 +8,7 @@ import geotrellis.server.core.persistence._
 
 import com.azavea.maml.ast.Expression
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
+import cats.data._
 import cats.effect._
 import io.circe._
 import io.circe.syntax._
@@ -16,7 +18,7 @@ import org.http4s.circe._
 import org.http4s._
 import org.http4s.client.blaze.Http1Client
 import org.http4s.server.blaze.BlazeBuilder
-import org.http4s.server.HttpMiddleware
+import org.http4s.server.{AuthMiddleware, HttpMiddleware}
 import org.http4s.server.middleware.{GZip, CORS, CORSConfig}
 import org.http4s.headers.{Location, `Content-Type`}
 import org.http4s.client.Client
@@ -48,6 +50,9 @@ object Server extends StreamApp[IO] with LazyLogging {
     KamonServerSupport(routes)
   }
 
+  private val authMiddleware =
+    AuthMiddleware(AuthenticationBackends.fromAuthHeader)
+
   def stream(args: List[String], requestShutdown: IO[Unit]): Stream[IO, ExitCode] = {
     for {
       config     <- Stream.eval(Config.load())
@@ -67,10 +72,10 @@ object Server extends StreamApp[IO] with LazyLogging {
       exitCode   <- BlazeBuilder[IO]
         .enableHttp2(true)
         .bindHttp(config.http.port, config.http.interface)
-        .mountService(commonMiddleware(pingpong.routes), "/ping")
-        .mountService(commonMiddleware(wcs.routes), "/wcs")
-        .mountService(commonMiddleware(cog.routes), "/cog")
-        .mountService(commonMiddleware(mamlPersistence.routes), "/maml")
+        .mountService(commonMiddleware(authMiddleware(pingpong.routes)), "/ping")
+        .mountService(commonMiddleware(authMiddleware(wcs.routes)), "/wcs")
+        .mountService(commonMiddleware(authMiddleware(cog.routes)), "/cog")
+        .mountService(commonMiddleware(authMiddleware(mamlPersistence.routes)), "/maml")
         .serve
     } yield exitCode
   }
