@@ -11,9 +11,7 @@ import org.http4s.implicits._
 
 class PingPongService extends Http4sDsl[IO] with Rejector {
   def routes: AuthedService[Either[String, User], IO] = AuthedService {
-    case GET -> Root as user => rejectUnauthorized(user)(
-      Ok(s"Good job, ${user.right.get}")
-    )
+    case GET -> Root as user => rejectUnauthorized(user)(Ok(s"pong"))
   }
 }
 
