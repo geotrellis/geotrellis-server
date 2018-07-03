@@ -7,11 +7,12 @@ import pureconfig.error.ConfigReaderException
 import java.net.URI
 
 
-case class Config(http: Config.Http, catalog: Config.Catalog)
+case class Config(http: Config.Http, catalog: Config.Catalog, auth: Config.Auth)
 
 object Config {
   case class Catalog(uri: URI)
   case class Http(interface: String, port: Int)
+  case class Auth(signingKey: Option[String])
 
   import pureconfig._
 
