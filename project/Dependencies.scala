@@ -7,6 +7,7 @@ object Dependencies {
   val gtServerVer      = "0.1.0"
   val http4sVer        = "0.18.12"
   val scalaVer         = "2.11.12"
+  val tsecV            = "0.0.1-M11"
 
   //val kamonZipkin       = "io.kamon"                      %% "kamon-zipkin"         % "1.0.1"
   val caffeine          = "com.github.ben-manes.caffeine" %  "caffeine"             % "2.3.5"
@@ -40,6 +41,7 @@ object Dependencies {
   val scalatest         = "org.scalatest"                 %%  "scalatest"           % "3.0.4" % "test"
   val simulacrum        = "com.github.mpilquist"          %% "simulacrum"           % "0.12.0"
   val spark             = "org.apache.spark"              %% "spark-core"           % "2.3.0" % "provided"
+  val tsecCommon        = "io.github.jmcardon"            %% "tsec-common"          % tsecV
+  val tsecHttp4s        = "io.github.jmcardon"            %% "tsec-http4s"          % tsecV
   val typesafeLogging   = "com.typesafe.scala-logging"    %% "scala-logging"        % "3.9.0"
-
 }

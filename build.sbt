@@ -102,7 +102,9 @@ lazy val http4s =
         kamonSysMetrics,
         kamonPrometheus,
         kamonHttp4s,
-        scalatest
+        scalatest,
+        tsecCommon,
+        tsecHttp4s
       )
     )
 
