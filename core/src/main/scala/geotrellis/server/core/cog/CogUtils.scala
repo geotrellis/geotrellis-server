@@ -1,7 +1,5 @@
 package geotrellis.server.core.cog
 
-import geotrellis.server.core.util.{RangeReaderUtils, CacheRangeReader}
-
 import geotrellis.vector._
 import geotrellis.raster._
 import geotrellis.raster.crop._
@@ -19,9 +17,10 @@ import cats.effect.IO
 import cats.data._
 import cats.implicits._
 
+
 object CogUtils {
 
-  private val TmsLevels: Array[LayoutDefinition] = {
+  val tmsLevels: Array[LayoutDefinition] = {
     val scheme = ZoomedLayoutScheme(WebMercator, 256)
     for (zoom <- 0 to 64) yield scheme.levelForZoom(zoom).layout
   }.toArray
@@ -43,7 +42,7 @@ object CogUtils {
       val transform = Proj4Transform(tiff.crs, WebMercator)
       val inverseTransform = Proj4Transform(WebMercator, tiff.crs)
       val tmsTileRE = RasterExtent(
-        extent = TmsLevels(zoom).mapTransform.keyToExtent(x, y),
+        extent = tmsLevels(zoom).mapTransform.keyToExtent(x, y),
         cols = 256, rows = 256
       )
       val tiffTileRE = ReprojectRasterExtent(tmsTileRE, inverseTransform)
@@ -57,7 +56,7 @@ object CogUtils {
     val transform = Proj4Transform(tiff.crs, WebMercator)
     val inverseTransform = Proj4Transform(WebMercator, tiff.crs)
     val actualExtent = extent.getOrElse(tiff.extent.reproject(tiff.crs, WebMercator))
-    val tmsTileRE = RasterExtent(extent = actualExtent, cellSize = TmsLevels(zoom).cellSize)
+    val tmsTileRE = RasterExtent(extent = actualExtent, cellSize = tmsLevels(zoom).cellSize)
     val tiffTileRE = ReprojectRasterExtent(tmsTileRE, inverseTransform)
     val overview = closestTiffOverview(tiff, tiffTileRE.cellSize, Auto(0))
 

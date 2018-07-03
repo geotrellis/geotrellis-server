@@ -1,4 +1,4 @@
-package geotrellis.server.core.util
+package geotrellis.server.core.cog
 
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.util.{FileRangeReader, RangeReader}
@@ -54,5 +54,4 @@ object RangeReaderUtils extends LazyLogging {
         throw new java.lang.IllegalArgumentException(s"Unrecognized scheme found for range reader: $scheme")
     }
   }
-
 }

@@ -26,6 +26,7 @@ lazy val commonSettings = Seq(
     Resolver.bintrayRepo("bkirwi", "maven"), // Required for `decline` dependency
     Resolver.bintrayRepo("azavea", "maven"),
     Resolver.sonatypeRepo("releases"),
+    Resolver.sonatypeRepo("snapshots"),
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
     "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots"
   ),
@@ -92,6 +93,8 @@ lazy val http4s =
         geotrellisSpark,
         decline,
         cats,
+        catsEffect,
+        mamlJvm,
         commonsIO,
         concHashMap,
         kindProjector,

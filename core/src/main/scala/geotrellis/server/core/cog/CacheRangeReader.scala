@@ -1,6 +1,7 @@
-package geotrellis.server.core.util
+package geotrellis.server.core.cog
 
 import geotrellis.util._
+
 
 case class CacheRangeReader(rr: RangeReader, cachedBytes: Array[Byte])
     extends RangeReader {
@@ -20,3 +21,4 @@ case class CacheRangeReader(rr: RangeReader, cachedBytes: Array[Byte])
     rr.readAll()
   }
 }
+

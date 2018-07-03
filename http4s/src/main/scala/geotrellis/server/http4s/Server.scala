@@ -3,8 +3,8 @@ package geotrellis.server.http4s
 import geotrellis.server.http4s.auth._
 import geotrellis.server.http4s.wcs.WcsService
 import geotrellis.server.http4s.cog.CogService
-import geotrellis.server.http4s.maml.MamlPersistenceService
-import geotrellis.server.core.persistence._
+import geotrellis.server.http4s.maml.{MamlPersistenceService, ExampleNdviMamlService}
+import geotrellis.server.core.maml._
 
 import com.azavea.maml.ast.Expression
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
@@ -62,13 +62,11 @@ object Server extends StreamApp[IO] with LazyLogging with Http4sDsl[IO] {
       _          <- Stream.eval(IO.pure(logger.info(s"Initializing server at ${config.http.interface}:${config.http.port}")))
       cog         = new CogService
       wcs         = new WcsService(config.catalog.uri)
-      mamlPersistence = {
-        val hashmapStore = new ConcurrentLinkedHashMap.Builder[UUID, Expression]()
-          .maximumWeightedCapacity(1000)
-          .build();
-
-        new MamlPersistenceService(hashmapStore)
-      }
+      mamlStore = new ConcurrentLinkedHashMap.Builder[UUID, Expression]()
+                    .maximumWeightedCapacity(1000)
+                    .build();
+      mamlPersistence = new MamlPersistenceService[HashMapMamlStore, CogNode](mamlStore)
+      mamlNdviRendering = new ExampleNdviMamlService[CogNode]()
       pingpong = new PingPongService
       _          <- Stream.eval(IO { Kamon.addReporter(new PrometheusReporter()) })
       exitCode   <- BlazeBuilder[IO]
@@ -77,7 +75,8 @@ object Server extends StreamApp[IO] with LazyLogging with Http4sDsl[IO] {
         .mountService(commonMiddleware(authM(pingpong.routes)), "/ping")
         .mountService(commonMiddleware(authM(wcs.routes)), "/wcs")
         .mountService(commonMiddleware(authM(cog.routes)), "/cog")
-        .mountService(commonMiddleware(authM(mamlPersistence.routes)), "/maml")
+        .mountService(commonMiddleware(authM(mamlPersistence.routes)), "/maml/store")
+        .mountService(commonMiddleware(mamlNdviRendering.routes), "/maml/ndvi")
         .serve
     } yield exitCode
   }
