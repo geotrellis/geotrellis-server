@@ -1,7 +1,7 @@
 package geotrellis.server.http4s.maml
 
 import geotrellis.server.core.persistence.MamlStore
-import geotrellis.server.http4s.auth.{User, Rejector}
+import geotrellis.server.http4s.auth.User
 import MamlStore.ops._
 
 import com.azavea.maml.ast.Expression
@@ -25,7 +25,7 @@ import java.util.UUID
 import scala.util.Try
 import scala.collection.mutable
 
-class MamlPersistenceService[ExpressionStore: MamlStore](val store: ExpressionStore) extends Http4sDsl[IO] with LazyLogging with Rejector {
+class MamlPersistenceService[ExpressionStore: MamlStore](val store: ExpressionStore) extends Http4sDsl[IO] with LazyLogging {
 
   implicit val expressionDecoder = jsonOf[IO, Expression]
 
@@ -38,8 +38,8 @@ class MamlPersistenceService[ExpressionStore: MamlStore](val store: ExpressionSt
     }
   }
 
-  def routes: AuthedService[Either[String, User], IO] = AuthedService[Either[String, User], IO] {
-    case authedReq @ POST -> Root / IdVar(key) as user => rejectUnauthorized(user) {
+  def routes = AuthedService[User, IO] {
+    case authedReq @ POST -> Root / IdVar(key) as user =>
       (for {
          expr <- EitherT(authedReq.req.as[Expression].attempt)
          _    <- EitherT.pure[IO, Throwable](logger.info(s"Attempting to store expression ($authedReq.req.bodyAsText) at key ($key)"))
@@ -51,15 +51,13 @@ class MamlPersistenceService[ExpressionStore: MamlStore](val store: ExpressionSt
           logger.debug(err.toString, err)
           InternalServerError(err.toString)
       }
-    }
 
-    case req @ GET -> Root / IdVar(key) as user => rejectUnauthorized(user) {
+    case req @ GET -> Root / IdVar(key) as user =>
       logger.info(s"Attempting to retrieve expression at key ($key)")
       store.getMaml(key) flatMap {
         case Some(expr) => Ok(expr.asJson)
         case None => NotFound()
       }
-    }
   }
 }
 

@@ -15,7 +15,7 @@ import io.circe._
 import io.circe.syntax._
 
 import geotrellis.spark.io.AttributeStore
-import geotrellis.server.http4s.auth.{Rejector, User}
+import geotrellis.server.http4s.auth. User
 import geotrellis.server.http4s.wcs.params._
 import geotrellis.server.http4s.wcs.ops._
 import geotrellis.spark._
@@ -31,7 +31,7 @@ object WcsService {
   type MetadataCatalog = Map[String, (Seq[Int], Option[TileLayerMetadata[SpatialKey]])]
 }
 
-class WcsService(catalog: URI) extends Http4sDsl[IO] with LazyLogging with Rejector {
+class WcsService(catalog: URI) extends Http4sDsl[IO] with LazyLogging {
 
   def handleError[Result](result: Either[Throwable, Result])(implicit ee: EntityEncoder[IO, Result]) = result match {
     case Right(res) =>
@@ -58,8 +58,8 @@ class WcsService(catalog: URI) extends Http4sDsl[IO] with LazyLogging with Rejec
 
   val getCoverage = new GetCoverage(catalog.toString)
 
-  def routes: AuthedService[Either[String, User], IO] = AuthedService[Either[String, User], IO] {
-    case authedReq @ GET -> Root as user => rejectUnauthorized(user) {
+  def routes = AuthedService[User, IO] {
+    case authedReq @ GET -> Root as user =>
       logger.info(s"Request received: ${authedReq.req.uri}")
       WcsParams(authedReq.req.multiParams) match {
         case Invalid(errors) =>
@@ -92,6 +92,5 @@ class WcsService(catalog: URI) extends Http4sDsl[IO] with LazyLogging with Rejec
               }
           }
       }
-    }
   }
 }

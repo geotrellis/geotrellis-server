@@ -1,7 +1,7 @@
 package geotrellis.server.http4s.cog
 
 import geotrellis.server.core.cog.CogUtils
-import geotrellis.server.http4s.auth.{User, Rejector}
+import geotrellis.server.http4s.auth.User
 
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
@@ -17,7 +17,7 @@ import scala.math._
 import java.net.URI
 
 
-class CogService extends Http4sDsl[IO] with LazyLogging with Rejector {
+class CogService extends Http4sDsl[IO] with LazyLogging {
 
   object OptionalOpacityQueryParamMatcher extends OptionalQueryParamDecoderMatcher[Double]("opacity")
 
@@ -28,8 +28,8 @@ class CogService extends Http4sDsl[IO] with LazyLogging with Rejector {
 
   val emptyTile = IntConstantNoDataArrayTile(Array(0), 1, 1).renderPng()
 
-  def routes: AuthedService[Either[String, User], IO] = AuthedService[Either[String, User], IO] {
-    case req @ GET -> Root / IntVar(zoom) / IntVar(x) / IntVar(y) :? UriQueryParamMatcher(uri) +& OptionalOpacityQueryParamMatcher(opaque) as user => rejectUnauthorized(user) {
+  def routes = AuthedService[User, IO] {
+    case req @ GET -> Root / IntVar(zoom) / IntVar(x) / IntVar(y) :? UriQueryParamMatcher(uri) +& OptionalOpacityQueryParamMatcher(opaque) as user =>
       val opacity = max(min(opaque.getOrElse(100.0), 100.0), 0.0)
       val tileBytes: EitherT[IO, Throwable, Array[Byte]] = for {
         mbtile      <- EitherT(CogUtils.fetch(uri.toString, zoom, x, y).attempt)
@@ -41,13 +41,12 @@ class CogService extends Http4sDsl[IO] with LazyLogging with Rejector {
       } yield coloredTile.renderPng().bytes
 
       tileBytes.value.flatMap({
-                                case Right(bytes) =>
-                                  Ok(bytes)
-                                case Left(err) =>
-                                  logger.debug(err.toString)
-                                  err.getStackTrace.foreach({ line => logger.debug(line.toString) })
-                                  InternalServerError(err.toString)
-                              })
-    }
+        case Right(bytes) =>
+          Ok(bytes)
+        case Left(err) =>
+          logger.debug(err.toString)
+          err.getStackTrace.foreach({ line => logger.debug(line.toString) })
+          InternalServerError(err.toString)
+      })
   }
 }

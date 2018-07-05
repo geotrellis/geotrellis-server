@@ -1,6 +1,6 @@
 package geotrellis.server.http4s
 
-import geotrellis.server.http4s.auth.{User, Rejector}
+import geotrellis.server.http4s.auth.User
 
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
@@ -9,9 +9,9 @@ import org.http4s.dsl.Http4sDsl
 import org.http4s.implicits._
 
 
-class PingPongService extends Http4sDsl[IO] with Rejector {
-  def routes: AuthedService[Either[String, User], IO] = AuthedService {
-    case GET -> Root as user => rejectUnauthorized(user)(Ok(s"pong"))
+class PingPongService extends Http4sDsl[IO] {
+  def routes = AuthedService[User, IO] {
+    case GET -> Root as user => Ok(s"pong")
   }
 }
 

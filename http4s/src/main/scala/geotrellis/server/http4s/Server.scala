@@ -16,6 +16,7 @@ import fs2._
 import fs2.StreamApp.ExitCode
 import org.http4s.circe._
 import org.http4s._
+import org.http4s.dsl.Http4sDsl
 import org.http4s.client.blaze.Http1Client
 import org.http4s.server.blaze.BlazeBuilder
 import org.http4s.server.{AuthMiddleware, HttpMiddleware}
@@ -34,7 +35,7 @@ import scala.collection.mutable
 import java.util.UUID
 
 
-object Server extends StreamApp[IO] with LazyLogging {
+object Server extends StreamApp[IO] with LazyLogging with Http4sDsl[IO] {
 
   private val corsConfig = CORSConfig(
     anyOrigin = true,
@@ -50,8 +51,11 @@ object Server extends StreamApp[IO] with LazyLogging {
     KamonServerSupport(routes)
   }
 
+  val onFailure: AuthedService[String, IO] =
+    Kleisli(req => OptionT.liftF(Forbidden(req.authInfo)))
+
   private val authMiddleware =
-    AuthMiddleware(AuthenticationBackends.fromAuthHeader)
+    AuthMiddleware(AuthenticationBackends.fromAuthHeader, onFailure)
 
   def stream(args: List[String], requestShutdown: IO[Unit]): Stream[IO, ExitCode] = {
     for {
