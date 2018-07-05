@@ -12,7 +12,7 @@ case class Config(http: Config.Http, catalog: Config.Catalog, auth: Config.Auth)
 object Config {
   case class Catalog(uri: URI)
   case class Http(interface: String, port: Int)
-  case class Auth(signingKey: Option[String])
+  case class Auth(signingKey: String)
 
   import pureconfig._
 

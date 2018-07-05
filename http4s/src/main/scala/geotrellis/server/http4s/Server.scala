@@ -56,6 +56,8 @@ object Server extends StreamApp[IO] with LazyLogging {
   def stream(args: List[String], requestShutdown: IO[Unit]): Stream[IO, ExitCode] = {
     for {
       config     <- Stream.eval(Config.load())
+      authM       = AuthMiddleware(AuthenticationBackends.fromConfig(config))
+      _ <- Stream.eval(IO(println(s"Config is: ${config.auth}")))
       client     <- Http1Client.stream[IO]().map(KamonClientSupport(_))
       _          <- Stream.eval(IO.pure(logger.info(s"Initializing server at ${config.http.interface}:${config.http.port}")))
       cog         = new CogService
@@ -72,10 +74,10 @@ object Server extends StreamApp[IO] with LazyLogging {
       exitCode   <- BlazeBuilder[IO]
         .enableHttp2(true)
         .bindHttp(config.http.port, config.http.interface)
-        .mountService(commonMiddleware(authMiddleware(pingpong.routes)), "/ping")
-        .mountService(commonMiddleware(authMiddleware(wcs.routes)), "/wcs")
-        .mountService(commonMiddleware(authMiddleware(cog.routes)), "/cog")
-        .mountService(commonMiddleware(authMiddleware(mamlPersistence.routes)), "/maml")
+        .mountService(commonMiddleware(authM(pingpong.routes)), "/ping")
+        .mountService(commonMiddleware(authM(wcs.routes)), "/wcs")
+        .mountService(commonMiddleware(authM(cog.routes)), "/cog")
+        .mountService(commonMiddleware(authM(mamlPersistence.routes)), "/maml")
         .serve
     } yield exitCode
   }
