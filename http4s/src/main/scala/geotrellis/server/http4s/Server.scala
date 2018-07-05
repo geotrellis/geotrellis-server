@@ -57,7 +57,6 @@ object Server extends StreamApp[IO] with LazyLogging {
     for {
       config     <- Stream.eval(Config.load())
       authM       = AuthMiddleware(AuthenticationBackends.fromConfig(config))
-      _ <- Stream.eval(IO(println(s"Config is: ${config.auth}")))
       client     <- Http1Client.stream[IO]().map(KamonClientSupport(_))
       _          <- Stream.eval(IO.pure(logger.info(s"Initializing server at ${config.http.interface}:${config.http.port}")))
       cog         = new CogService

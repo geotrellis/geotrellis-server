@@ -22,14 +22,6 @@ object AuthenticationBackends extends LazyLogging {
 
   def fromSigningKey(signingKey: String): Kleisli[OptionT[IO, ?], Request[IO], Either[String, User]] = {
     val sk = HMACSHA256.unsafeBuildKey(signingKey.toCharArray map { _.toByte })
-    val jwtIO = for {
-      claims <- IO(JWTClaims.apply(subject = Some("James Santucci"), expiration = Some(Instant.now.plusSeconds(3600))))
-      jwtString <- JWTMac.buildToString[IO, HMACSHA256](claims, sk)
-      verified <- JWTMac.verifyFromString[IO, HMACSHA256](jwtString, sk)
-    } yield {
-      println(s"A nice jwt for you to use: ${jwtString}")
-    }
-    jwtIO.unsafeRunSync
     Kleisli(
       req => {
         val message: EitherT[IO, String, User] = for {
@@ -47,7 +39,6 @@ object AuthenticationBackends extends LazyLogging {
   }
 
   def fromConfig(conf: Config): Kleisli[OptionT[IO, ?], Request[IO], Either[String, User]] = {
-    println(s"Signing key is: ${conf.auth.signingKey}")
     conf.auth.signingKey match {
       case "REPLACEME" => {
         logger.warn("Signing key not changed from default. Falling back to always successful authentication")
