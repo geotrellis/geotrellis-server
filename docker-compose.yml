@@ -6,7 +6,7 @@ services:
       - "9000:9000"
       - "9095:9095"
     volumes:
-      - ~/.aws:/root/.aws
+      - $HOME/.aws:/root/.aws
     environment:
       TEST_VAR: "env_var"
       HTTP_PORT: 9000
