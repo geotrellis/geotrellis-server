@@ -22,12 +22,20 @@ object AuthenticationBackends extends LazyLogging {
 
   def fromSigningKey(signingKey: String): Kleisli[OptionT[IO, ?], Request[IO], Either[String, User]] = {
     val sk = HMACSHA256.unsafeBuildKey(signingKey.toCharArray map { _.toByte })
+    val jwtIO = for {
+      claims <- IO(JWTClaims.apply(subject = Some("James Santucci"), expiration = Some(Instant.now.plusSeconds(3600))))
+      jwtString <- JWTMac.buildToString[IO, HMACSHA256](claims, sk)
+      verified <- JWTMac.verifyFromString[IO, HMACSHA256](jwtString, sk)
+    } yield {
+      println(s"A nice jwt for you to use: ${jwtString}")
+    }
+    jwtIO.unsafeRunSync
     Kleisli(
       req => {
         val message: EitherT[IO, String, User] = for {
           header <- EitherT[IO, String, String](IO(req.headers.get(Authorization).toRight("Couldn't find an Authorization header") map { _.value }))
           verifiedAndParsed <- EitherT[IO, String, JWTMac[HMACSHA256]](
-            JWTMac.verifyAndParse[IO, HMACSHA256](header, sk).attempt map {
+            JWTMac.verifyAndParse[IO, HMACSHA256](header.replace("Bearer ", ""), sk).attempt map {
               case Left(e) => Left(e.getMessage)
               case Right(p) => Right(p)
             }
