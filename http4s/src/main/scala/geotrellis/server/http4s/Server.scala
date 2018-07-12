@@ -54,13 +54,10 @@ object Server extends StreamApp[IO] with LazyLogging with Http4sDsl[IO] {
   val onFailure: AuthedService[String, IO] =
     Kleisli(req => OptionT.liftF(Forbidden(req.authInfo)))
 
-  private val authMiddleware =
-    AuthMiddleware(AuthenticationBackends.fromAuthHeader, onFailure)
-
   def stream(args: List[String], requestShutdown: IO[Unit]): Stream[IO, ExitCode] = {
     for {
       config     <- Stream.eval(Config.load())
-      authM       = AuthMiddleware(AuthenticationBackends.fromConfig(config))
+      authM       = AuthMiddleware(AuthenticationBackends.fromConfig(config), onFailure)
       client     <- Http1Client.stream[IO]().map(KamonClientSupport(_))
       _          <- Stream.eval(IO.pure(logger.info(s"Initializing server at ${config.http.interface}:${config.http.port}")))
       cog         = new CogService
