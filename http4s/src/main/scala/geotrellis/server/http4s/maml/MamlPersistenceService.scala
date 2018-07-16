@@ -1,6 +1,7 @@
 package geotrellis.server.http4s.maml
 
 import geotrellis.server.core.persistence.MamlStore
+import geotrellis.server.http4s.auth.User
 import MamlStore.ops._
 
 import com.azavea.maml.ast.Expression
@@ -37,13 +38,13 @@ class MamlPersistenceService[ExpressionStore: MamlStore](val store: ExpressionSt
     }
   }
 
-  def routes: HttpService[IO] = HttpService[IO] {
-    case req @ POST -> Root / IdVar(key) =>
+  def routes = AuthedService[User, IO] {
+    case authedReq @ POST -> Root / IdVar(key) as user =>
       (for {
-        expr <- EitherT(req.as[Expression].attempt)
-        _    <- EitherT.pure[IO, Throwable](logger.info(s"Attempting to store expression ($req.bodyAsText) at key ($key)"))
-        res  <- EitherT(store.putMaml(key, expr).attempt)
-      } yield res).value flatMap {
+         expr <- EitherT(authedReq.req.as[Expression].attempt)
+         _    <- EitherT.pure[IO, Throwable](logger.info(s"Attempting to store expression ($authedReq.req.bodyAsText) at key ($key)"))
+         res  <- EitherT(store.putMaml(key, expr).attempt)
+       } yield res).value flatMap {
         case Right(created) =>
           Created()
         case Left(err) =>
@@ -51,7 +52,7 @@ class MamlPersistenceService[ExpressionStore: MamlStore](val store: ExpressionSt
           InternalServerError(err.toString)
       }
 
-    case req @ GET -> Root / IdVar(key) =>
+    case req @ GET -> Root / IdVar(key) as user =>
       logger.info(s"Attempting to retrieve expression at key ($key)")
       store.getMaml(key) flatMap {
         case Some(expr) => Ok(expr.asJson)

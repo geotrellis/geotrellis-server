@@ -1,5 +1,6 @@
 package geotrellis.server.http4s
 
+import geotrellis.server.http4s.auth._
 import geotrellis.server.http4s.wcs.WcsService
 import geotrellis.server.http4s.cog.CogService
 import geotrellis.server.http4s.maml.MamlPersistenceService
@@ -7,6 +8,7 @@ import geotrellis.server.core.persistence._
 
 import com.azavea.maml.ast.Expression
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
+import cats.data._
 import cats.effect._
 import io.circe._
 import io.circe.syntax._
@@ -14,9 +16,10 @@ import fs2._
 import fs2.StreamApp.ExitCode
 import org.http4s.circe._
 import org.http4s._
+import org.http4s.dsl.Http4sDsl
 import org.http4s.client.blaze.Http1Client
 import org.http4s.server.blaze.BlazeBuilder
-import org.http4s.server.HttpMiddleware
+import org.http4s.server.{AuthMiddleware, HttpMiddleware}
 import org.http4s.server.middleware.{GZip, CORS, CORSConfig}
 import org.http4s.headers.{Location, `Content-Type`}
 import org.http4s.client.Client
@@ -32,7 +35,7 @@ import scala.collection.mutable
 import java.util.UUID
 
 
-object Server extends StreamApp[IO] with LazyLogging {
+object Server extends StreamApp[IO] with LazyLogging with Http4sDsl[IO] {
 
   private val corsConfig = CORSConfig(
     anyOrigin = true,
@@ -48,9 +51,13 @@ object Server extends StreamApp[IO] with LazyLogging {
     KamonServerSupport(routes)
   }
 
+  val onFailure: AuthedService[String, IO] =
+    Kleisli(req => OptionT.liftF(Forbidden(req.authInfo)))
+
   def stream(args: List[String], requestShutdown: IO[Unit]): Stream[IO, ExitCode] = {
     for {
       config     <- Stream.eval(Config.load())
+      authM       = AuthMiddleware(AuthenticationBackends.fromConfig(config), onFailure)
       client     <- Http1Client.stream[IO]().map(KamonClientSupport(_))
       _          <- Stream.eval(IO.pure(logger.info(s"Initializing server at ${config.http.interface}:${config.http.port}")))
       cog         = new CogService
@@ -67,10 +74,10 @@ object Server extends StreamApp[IO] with LazyLogging {
       exitCode   <- BlazeBuilder[IO]
         .enableHttp2(true)
         .bindHttp(config.http.port, config.http.interface)
-        .mountService(commonMiddleware(pingpong.routes), "/ping")
-        .mountService(commonMiddleware(wcs.routes), "/wcs")
-        .mountService(commonMiddleware(cog.routes), "/cog")
-        .mountService(commonMiddleware(mamlPersistence.routes), "/maml")
+        .mountService(commonMiddleware(authM(pingpong.routes)), "/ping")
+        .mountService(commonMiddleware(authM(wcs.routes)), "/wcs")
+        .mountService(commonMiddleware(authM(cog.routes)), "/cog")
+        .mountService(commonMiddleware(authM(mamlPersistence.routes)), "/maml")
         .serve
     } yield exitCode
   }

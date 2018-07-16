@@ -1,6 +1,7 @@
 package geotrellis.server.http4s.cog
 
 import geotrellis.server.core.cog.CogUtils
+import geotrellis.server.http4s.auth.User
 
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
@@ -27,16 +28,16 @@ class CogService extends Http4sDsl[IO] with LazyLogging {
 
   val emptyTile = IntConstantNoDataArrayTile(Array(0), 1, 1).renderPng()
 
-  def routes: HttpService[IO] = HttpService[IO] {
-    case req @ GET -> Root / IntVar(zoom) / IntVar(x) / IntVar(y) :? UriQueryParamMatcher(uri) +& OptionalOpacityQueryParamMatcher(opaque) =>
+  def routes = AuthedService[User, IO] {
+    case req @ GET -> Root / IntVar(zoom) / IntVar(x) / IntVar(y) :? UriQueryParamMatcher(uri) +& OptionalOpacityQueryParamMatcher(opaque) as user =>
       val opacity = max(min(opaque.getOrElse(100.0), 100.0), 0.0)
       val tileBytes: EitherT[IO, Throwable, Array[Byte]] = for {
         mbtile      <- EitherT(CogUtils.fetch(uri.toString, zoom, x, y).attempt)
-        _           <- EitherT.pure[IO, Throwable](logger.debug(s"uri: ${req.uri}; opacity: $opacity; zoom: $zoom, x: $x, y: $y"))
+        _           <- EitherT.pure[IO, Throwable](logger.debug(s"uri: $uri; opacity: $opacity; zoom: $zoom, x: $x, y: $y"))
         coloredTile <- EitherT(IO { mbtile.color().map({ clr =>
-                         val current = RGBA(clr)
-                         RGBA(current.red, current.green, current.blue, opacity)
-                       }) }.attempt)
+                                                         val current = RGBA(clr)
+                                                         RGBA(current.red, current.green, current.blue, opacity)
+                                                       }) }.attempt)
       } yield coloredTile.renderPng().bytes
 
       tileBytes.value.flatMap({

@@ -15,6 +15,7 @@ import io.circe._
 import io.circe.syntax._
 
 import geotrellis.spark.io.AttributeStore
+import geotrellis.server.http4s.auth. User
 import geotrellis.server.http4s.wcs.params._
 import geotrellis.server.http4s.wcs.ops._
 import geotrellis.spark._
@@ -57,10 +58,10 @@ class WcsService(catalog: URI) extends Http4sDsl[IO] with LazyLogging {
 
   val getCoverage = new GetCoverage(catalog.toString)
 
-  def routes: HttpService[IO] = HttpService[IO] {
-    case req @ GET -> Root =>
-      logger.info(s"Request received: ${req.uri}")
-      WcsParams(req.multiParams) match {
+  def routes = AuthedService[User, IO] {
+    case authedReq @ GET -> Root as user =>
+      logger.info(s"Request received: ${authedReq.req.uri}")
+      WcsParams(authedReq.req.multiParams) match {
         case Invalid(errors) =>
           val msg = WcsParamsError.generateErrorMessage(errors.toList)
           logger.debug(s"""Error parsing parameters: ${msg}""")
@@ -68,11 +69,11 @@ class WcsService(catalog: URI) extends Http4sDsl[IO] with LazyLogging {
         case Valid(wcsParams) =>
           wcsParams match {
             case p: GetCapabilitiesWcsParams =>
-              val link = s"${req.uri.scheme}://${req.uri.authority}${req.uri.path}?"
+              val link = s"${authedReq.req.uri.scheme}://${authedReq.req.uri.authority}${authedReq.req.uri.path}?"
               logger.info(s"GetCapabilities request arrived at $link")
               Ok(GetCapabilities.build(link, catalogMetadata, p))
             case p: DescribeCoverageWcsParams =>
-              logger.info(s"DescribeCoverage request arrived at ${req.uri}")
+              logger.info(s"DescribeCoverage request arrived at ${authedReq.req.uri}")
               for {
                 getCoverage <- IO { DescribeCoverage.build(catalogMetadata, p) }.attempt
                 result <- handleError(getCoverage)
@@ -81,7 +82,7 @@ class WcsService(catalog: URI) extends Http4sDsl[IO] with LazyLogging {
                 result
               }
             case p: GetCoverageWcsParams =>
-              logger.info(s"GetCoverage request arrived at ${req.uri}")
+              logger.info(s"GetCoverage request arrived at ${authedReq.req.uri}")
               for {
                 getCoverage <- IO { getCoverage.build(catalogMetadata, p) }.attempt
                 result <- handleError(getCoverage)
