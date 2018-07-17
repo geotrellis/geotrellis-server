@@ -63,21 +63,21 @@ class MamlPersistenceService[Store, Param](
           InternalServerError(err.toString)
       }
 
-    case req @ GET -> Root / IdVar(key) as user =>
+    case req @ GET -> Root / IdVar(key) as user=>
       logger.info(s"Attempting to retrieve expression at key ($key)")
       store.getMaml(key) flatMap {
         case Some(expr) => Ok(expr.asJson)
         case None => NotFound()
       }
 
-    case req @ GET -> Root / IdVar(key) / "parameters" =>
+    case req @ GET -> Root / IdVar(key) / "parameters" as user =>
       logger.info(s"Attempting to retrieve expression parameters at key ($key)")
       store.getMaml(key) flatMap {
         case Some(expr) => Ok(Vars.vars(expr).asJson)
         case None => NotFound()
       }
 
-    case req @ POST -> Root / IdVar(key) / "parameters" / ParamBindings(paramMap) =>
+    case req @ POST -> Root / IdVar(key) / "parameters" / ParamBindings(paramMap) as user =>
       logger.info(s"Attempting to retrieve expression parameters at key ($key)")
       (for {
         expr <- store.getMaml(key)
