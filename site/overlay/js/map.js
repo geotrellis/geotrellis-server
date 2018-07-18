@@ -1,20 +1,17 @@
 // GLOBAL STATE/MANAGEMENT FUNCS
 var cogForms = [];
-function addCog(cog) { cogForms.push(cog) }
+
+function addCog(cog) {
+  cogForms.push(cog)
+  $("#sidebody").append(cog.dom)
+}
 function removeCog(id) {
   cogForms = _.filter(cogForms, function(cf) { return cf.id !== id })
   $("#" + id).remove()
 }
 
-// render the HTML form (idempotent!)
-function instantiateForms(cogForms) {
-  _.each(cogForms, function(cf) {
-    $("#sidebody").append(cf.dom)
-  });
-}
-
 // debugging helper
-function printForms(cogForms) {
+function printForms() {
   _.each(cogForms, function(cf) {
     var cog = cf.getCog();
     var weight = cf.getWeight();
@@ -23,7 +20,7 @@ function printForms(cogForms) {
 }
 
 // for serialization of args to MAML
-function ParamMap(cogForms) {
+function paramMap() {
   var grouped = _.map(cogForms, function(cf) { return [cf.id, [cf.getCog(), cf.getWeight()]] })
   return _.object(grouped)
 }
@@ -120,10 +117,7 @@ function CogForm(uri, label, band, weight) {
     .append(
       $("<button>", { class: "btn btn-danger" }).append(
         $("<span>", { class: "fas fa-minus remove-btn" })
-      ).click(function(e) {
-        console.log("hit");
-        removeCog(id);
-      })
+      ).click(function(e) { removeCog(id); })
     )
 
   return {
@@ -137,20 +131,18 @@ function CogForm(uri, label, band, weight) {
 // End of the world
 var default1 = CogForm("https://my.cog.source/1");
 var default2 = CogForm("https://my.cog.source/2");
-addCog(default1)
-addCog(default2)
 
 $(window).ready(function() {
   $("#addCog").click(function() {
     if (cogForms.length < 7) {
       addCog(CogForm());
-      instantiateForms(cogForms);
     }
     if (cogForms.length == 6) {
       $("#addCog").attr("disabled", true)
     }
   });
   // Initialize with defaults
-  instantiateForms(cogForms);
+  addCog(default1)
+  addCog(default2)
 });
 
