@@ -1,4 +1,4 @@
-package geotrellis.server.http4s
+package geotrellis.server.core.conf
 
 import cats.effect.IO
 import com.typesafe.config.ConfigFactory
@@ -7,10 +7,9 @@ import pureconfig.error.ConfigReaderException
 import java.net.URI
 
 
-case class Config(http: Config.Http, catalog: Config.Catalog, auth: Config.Auth)
+case class Config(http: Config.Http, auth: Config.Auth)
 
 object Config {
-  case class Catalog(uri: URI)
   case class Http(interface: String, port: Int)
   case class Auth(signingKey: String)
 

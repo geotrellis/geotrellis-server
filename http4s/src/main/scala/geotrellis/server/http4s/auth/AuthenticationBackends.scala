@@ -1,6 +1,6 @@
 package geotrellis.server.http4s.auth
 
-import geotrellis.server.http4s.Config
+import geotrellis.server.core.conf.Config
 
 import cats._, cats.effect._, cats.implicits._, cats.data._
 import cats.syntax._

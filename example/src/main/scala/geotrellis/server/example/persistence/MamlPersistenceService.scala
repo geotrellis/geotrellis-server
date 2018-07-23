@@ -1,7 +1,6 @@
-package geotrellis.server.http4s.maml
+package geotrellis.server.example.persistence
 
 import geotrellis.server.core.maml.{MamlStore, MamlReification}
-import geotrellis.server.http4s.auth.User
 import MamlStore.ops._
 
 import com.azavea.maml.util.Vars
@@ -35,6 +34,16 @@ class MamlPersistenceService[Store, Param](
            pd: Decoder[Param],
            mr: MamlReification[Param]) extends Http4sDsl[IO] with LazyLogging {
 
+  // Unapply to handle UUIDs on path
+  object IdVar {
+    def unapply(str: String): Option[UUID] = {
+      if (!str.isEmpty)
+        Try(UUID.fromString(str)).toOption
+      else
+        None
+    }
+  }
+
   object ParamBindings {
     def unapply(str: String): Option[Map[String, Param]] =
       decode[Map[String, Param]](str) match {
@@ -45,17 +54,17 @@ class MamlPersistenceService[Store, Param](
 
   implicit val expressionDecoder = jsonOf[IO, Expression]
 
-  def routes = AuthedService[User, IO] {
-    case authedReq @ POST -> Root / IdVar(key) as user =>
+  def routes = HttpService[IO] {
+    case req @ POST -> Root / IdVar(key) =>
       (for {
-         expr <- EitherT(authedReq.req.as[Expression].attempt)
-         _    <- EitherT.pure[IO, Throwable](logger.info(s"Attempting to store expression (${authedReq.req.bodyAsText}) at key ($key)"))
+         expr <- EitherT(req.as[Expression].attempt)
+         _    <- EitherT.pure[IO, Throwable](logger.info(s"Attempting to store expression (${req.bodyAsText}) at key ($key)"))
          res  <- EitherT(store.putMaml(key, expr).attempt)
        } yield res).value flatMap {
         case Right(created) =>
           Created()
         case Left(InvalidMessageBodyFailure(_, _)) | Left(MalformedMessageBodyFailure(_, _)) =>
-          authedReq.req.bodyAsText.compile.toList flatMap { reqBody =>
+          req.bodyAsText.compile.toList flatMap { reqBody =>
             BadRequest(s"""Unable to parse ${reqBody.mkString("")} as a MAML expression""")
           }
         case Left(err) =>
@@ -63,33 +72,18 @@ class MamlPersistenceService[Store, Param](
           InternalServerError(err.toString)
       }
 
-    case req @ GET -> Root / IdVar(key) as user=>
+    case req @ GET -> Root / IdVar(key) =>
       logger.info(s"Attempting to retrieve expression at key ($key)")
       store.getMaml(key) flatMap {
         case Some(expr) => Ok(expr.asJson)
         case None => NotFound()
       }
 
-    case req @ GET -> Root / IdVar(key) / "parameters" as user =>
+    case req @ GET -> Root / IdVar(key) / "parameters" =>
       logger.info(s"Attempting to retrieve expression parameters at key ($key)")
       store.getMaml(key) flatMap {
         case Some(expr) => Ok(Vars.vars(expr).asJson)
         case None => NotFound()
-      }
-
-    case req @ POST -> Root / IdVar(key) / "parameters" / ParamBindings(paramMap) as user =>
-      logger.info(s"Attempting to retrieve expression parameters at key ($key)")
-      (for {
-        expr <- store.getMaml(key)
-        keys <- IO { Vars.vars(expr.get).keys }
-      } yield keys).attempt flatMap {
-        case Left(nse: NoSuchElementException) =>
-          NotFound()
-        case Right(keys) if (keys.foldLeft(true)(_ && paramMap.isDefinedAt(_))) =>
-          Ok("Valid parameter map")
-        case Right(keys) =>
-          val unbound = keys.flatMap { k => if (!paramMap.isDefinedAt(k)) List(k) else List() }.toList
-          BadRequest(s"The following keys lack bindings: ${unbound}")
       }
   }
 }

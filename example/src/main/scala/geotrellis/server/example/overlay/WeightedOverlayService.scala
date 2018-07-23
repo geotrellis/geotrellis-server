@@ -1,4 +1,4 @@
-package geotrellis.server.http4s.overlay
+package geotrellis.server.example.overlay
 
 import geotrellis.server.core.maml._
 import MamlStore.ops._
@@ -30,7 +30,7 @@ import scala.util.Try
 import scala.collection.mutable
 
 
-class MamlOverlayDemo(
+class WeightedOverlayService(
   interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
 )(implicit t: Timer[IO]) extends Http4sDsl[IO] with LazyLogging {
 

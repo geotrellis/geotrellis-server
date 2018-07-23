@@ -1,4 +1,4 @@
-package geotrellis.server.http4s.overlay
+package geotrellis.server.example.overlay
 
 import geotrellis.server.core.cog.CogUtils
 import geotrellis.server.core.maml.MamlReification

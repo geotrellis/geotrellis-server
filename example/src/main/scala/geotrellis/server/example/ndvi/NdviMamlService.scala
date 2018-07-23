@@ -1,6 +1,7 @@
-package geotrellis.server.http4s.maml
+package geotrellis.server.example.ndvi
 
 import geotrellis.server.core.maml._
+import MamlReification.ops._
 
 import com.azavea.maml.util.Vars
 import com.azavea.maml.ast._
@@ -69,8 +70,10 @@ class ExampleNdviMamlService[Param](
       (for {
         vars      <- IO.pure { Vars.varsWithBuffer(ndvi) }
         params    <- vars.toList.parTraverse { case (varName, (_, buffer)) =>
-                       reification.tmsReification(paramMap(varName), buffer)(t)(z, x, y).map(varName -> _)
-                     } map { _.toMap }
+                       paramMap(varName)
+                         .tmsReification(buffer)(t)(z, x, y)
+                         .map(varName -> _)
+                     }.map { _.toMap }
         reified   <- IO.pure { Expression.bindParams(ndvi, params) }
       } yield reified.andThen(interpreter(_)).andThen(_.as[Tile])).attempt flatMap {
         case Right(Valid(tile)) =>
