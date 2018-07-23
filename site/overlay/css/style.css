@@ -42,3 +42,18 @@ body {
   overflow: hidden;
   background-color: #e5e5e5;
 }
+
+.btn-bottom {
+  margin: 5px;
+  width: 45%;
+}
+
+#sidebody {
+  overflow: scroll;
+  height: 80%;
+}
+
+#bottom {
+  background: #ffffff;
+  z-index: 10;
+}

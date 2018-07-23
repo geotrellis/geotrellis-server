@@ -3,6 +3,7 @@ package geotrellis.server.http4s
 import geotrellis.server.http4s.auth._
 import geotrellis.server.http4s.wcs.WcsService
 import geotrellis.server.http4s.cog.CogService
+import geotrellis.server.http4s.overlay.MamlOverlayDemo
 import geotrellis.server.http4s.maml.{MamlPersistenceService, ExampleNdviMamlService}
 import geotrellis.server.core.maml._
 
@@ -67,6 +68,7 @@ object Server extends StreamApp[IO] with LazyLogging with Http4sDsl[IO] {
                     .build();
       mamlPersistence = new MamlPersistenceService[HashMapMamlStore, CogNode](mamlStore)
       mamlNdviRendering = new ExampleNdviMamlService[CogNode]()
+      mamlOverlayDemo = new MamlOverlayDemo()
       pingpong = new PingPongService
       _          <- Stream.eval(IO { Kamon.addReporter(new PrometheusReporter()) })
       exitCode   <- BlazeBuilder[IO]
@@ -77,6 +79,7 @@ object Server extends StreamApp[IO] with LazyLogging with Http4sDsl[IO] {
         .mountService(commonMiddleware(authM(cog.routes)), "/cog")
         .mountService(commonMiddleware(authM(mamlPersistence.routes)), "/maml/store")
         .mountService(commonMiddleware(mamlNdviRendering.routes), "/maml/ndvi")
+        .mountService(commonMiddleware(mamlOverlayDemo.routes), "/maml/overlay")
         .serve
     } yield exitCode
   }

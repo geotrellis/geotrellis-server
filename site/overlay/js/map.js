@@ -1,5 +1,9 @@
 // GLOBAL STATE/MANAGEMENT FUNCS
 var cogForms = [];
+var MAX_COGS = 5;
+var BASE_URL = "http://localhost:9000/maml/overlay/"
+var APP_ID;
+var overlayLayer;
 
 function addCog(cog) {
   cogForms.push(cog)
@@ -11,8 +15,8 @@ function removeCog(id) {
 }
 
 // debugging helper
-function printForms() {
-  _.each(cogForms, function(cf) {
+function printForms(cforms) {
+  _.each(cforms, function(cf) {
     var cog = cf.getCog();
     var weight = cf.getWeight();
     console.log("ID", cf.id, "URI", cog.uri, "BAND", cog.band, "WEIGHT", weight);
@@ -20,22 +24,24 @@ function printForms() {
 }
 
 // for serialization of args to MAML
-function paramMap() {
-  var grouped = _.map(cogForms, function(cf) { return [cf.id, [cf.getCog(), cf.getWeight()]] })
+function paramMap(cforms) {
+  var grouped = _.map(cforms, function(cf) { return [cf.id, { band: cf.getCog().band, uri: cf.getCog().uri, weight: cf.getWeight() }] })
   return _.object(grouped)
 }
 
 
 /** Spawn Map */
 var map = L.map('map', { center: [0, 0], zoom: 2, zoomControl: false });
-L.tileLayer('http://stamen-tiles-{s}.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}.{ext}', {
+var tileLayer = L.tileLayer('http://stamen-tiles-{s}.a.ssl.fastly.net/toner-lite/{z}/{x}/{y}.{ext}', {
   attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
   subdomains: 'abcd',
   minZoom: 0,
   maxZoom: 20,
   ext: 'png'
-}).addTo(map);
-L.control.zoom({ position: 'topright' }).addTo(map);
+})
+var leafletControl = L.control.zoom({ position: 'topright' })
+tileLayer.addTo(map);
+leafletControl.addTo(map);
 
 // a good-enough guid for keying JS to the dom
 function guid() {
@@ -79,20 +85,20 @@ function UriBox(id, uri, band) {
       currentBandLabel.text("Band " + update);
     }
   }
+  var mkOption = function(bandNo) {
+    return $("<li>")
+      .append($("<a>", { class: "dropdown-item", href: "#" })
+      .text(bandNo)
+      .click(changeBand(bandNo)))
+  }
+
   var uriForm = $("<div>", { class: "input-group cogform", id: id }).append(
     uriInput,
     currentBandLabel,
     $("<div>", { class: "input-group-btn" }).append(
       currentBandLabel,
       $("<ul>", { class: "dropdown-menu" }).append(
-        $("<li>").append($("<a>", { class: "dropdown-item", href: "#" }).text("1").click(changeBand("1"))),
-        $("<li>").append($("<a>", { class: "dropdown-item", href: "#" }).text("2").click(changeBand("2"))),
-        $("<li>").append($("<a>", { class: "dropdown-item", href: "#" }).text("3").click(changeBand("3"))),
-        $("<li>").append($("<a>", { class: "dropdown-item", href: "#" }).text("4").click(changeBand("4"))),
-        $("<li>").append($("<a>", { class: "dropdown-item", href: "#" }).text("5").click(changeBand("5"))),
-        $("<li>").append($("<a>", { class: "dropdown-item", href: "#" }).text("6").click(changeBand("6"))),
-        $("<li>").append($("<a>", { class: "dropdown-item", href: "#" }).text("7").click(changeBand("7"))),
-        $("<li>").append($("<a>", { class: "dropdown-item", href: "#" }).text("8").click(changeBand("8")))
+        _.map(_.range(1, 9), function(n) { return mkOption(n) })
       )
     )
   )
@@ -104,11 +110,11 @@ function UriBox(id, uri, band) {
 }
 
 // produce an HTML element which represents a cog source
-function CogForm(uri, label, band, weight) {
+function CogForm(uri, band, weight, id) {
   var weight = weight || 1;
   var uri = uri || ""
   var band = band || 1
-  var id = guid();
+  var id = id || guid();
 
   var weightSlider = $('<input>', { type: "range", class: "custom-range", min: "0", max: "1", step: "0.1", value: weight })
   var uriBox = UriBox(id, uri, band)
@@ -117,7 +123,10 @@ function CogForm(uri, label, band, weight) {
     .append(
       $("<button>", { class: "btn btn-danger" }).append(
         $("<span>", { class: "fas fa-minus remove-btn" })
-      ).click(function(e) { removeCog(id); })
+      ).click(function(e) {
+        removeCog(id);
+        if (cogForms.length == MAX_COGS) { $("#addCog").attr("disabled", true) };
+      })
     )
 
   return {
@@ -128,21 +137,64 @@ function CogForm(uri, label, band, weight) {
   }
 }
 
-// End of the world
-var default1 = CogForm("https://my.cog.source/1");
-var default2 = CogForm("https://my.cog.source/2");
+function generateTms() {
+  return L.tileLayer(BASE_URL + APP_ID + "/{z}/{x}/{y}")
+}
 
-$(window).ready(function() {
-  $("#addCog").click(function() {
-    if (cogForms.length < 7) {
-      addCog(CogForm());
-    }
-    if (cogForms.length == 6) {
-      $("#addCog").attr("disabled", true)
-    }
-  });
-  // Initialize with defaults
+function initFromJson(json) {
+  var parsed = JSON.parse(json)
+  _.map(parsed, function(cog, id) {
+    console.log(id, cog)
+    var uri = cog.uri;
+    var band = cog.band;
+    var weight = cog.weight;
+    addCog(CogForm(uri, band, weight, id));
+  })
+}
+
+function initFresh() {
+  var default1 = CogForm("https://my.cog.source/1");
+  var default2 = CogForm("https://my.cog.source/2");
   addCog(default1)
   addCog(default2)
+}
+
+
+$(window).ready(function() {
+  var storedAppId = localStorage.getItem("cog-app-id")
+  if (storedAppId) {
+    APP_ID = storedAppId;
+  } else {
+    APP_ID = guid();
+    localStorage.setItem("cog-app-id", APP_ID);
+  }
+
+  $("#addCog").click(function() {
+    if (cogForms.length < MAX_COGS + 1) { addCog(CogForm()); };
+    if (cogForms.length == MAX_COGS) { $("#addCog").attr("disabled", true) };
+  });
+
+  $("#apply").click(function() {
+    var json = JSON.stringify(paramMap(cogForms));
+    localStorage.setItem("cog-json", json);
+    $.ajax({
+      type: "POST",
+      url: BASE_URL + APP_ID,
+      data: json
+    });
+
+    if (overlayLayer) {
+      map.removeLayer(overlayLayer);
+    }
+    overlayLayer = generateTms();
+    map.addLayer(overlayLayer);
+  });
+
+  var storedCogs = localStorage.getItem("cog-json")
+  if (storedCogs) {
+    initFromJson(storedCogs);
+  } else {
+    initFresh();
+  }
 });
 

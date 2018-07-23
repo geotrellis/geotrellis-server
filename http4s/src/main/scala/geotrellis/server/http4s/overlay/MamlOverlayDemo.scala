@@ -1,7 +1,10 @@
-package geotrellis.server.http4s.maml
+package geotrellis.server.http4s.overlay
 
 import geotrellis.server.core.maml._
+import MamlStore.ops._
+import MamlReification.ops._
 
+import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
 import com.azavea.maml.util.Vars
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
@@ -27,43 +30,66 @@ import scala.util.Try
 import scala.collection.mutable
 
 
-class MamlOverlayDemo[Param](
+class MamlOverlayDemo(
   interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
-)(implicit t: Timer[IO],
-           pd: Decoder[Param],
-           mr: MamlReification[Param]) extends Http4sDsl[IO] with LazyLogging {
+)(implicit t: Timer[IO]) extends Http4sDsl[IO] with LazyLogging {
 
-  object ParamBindings {
-    def unapply(str: String): Option[List[(Param, Double)]] =
-      decode[List[(Param, Double)]](str) match {
-        case Right(res) => Some(res)
-        case Left(_) => None
-      }
+  // Unapply to handle UUIDs on path
+  object IdVar {
+    def unapply(str: String): Option[UUID] = {
+      if (!str.isEmpty)
+        Try(UUID.fromString(str)).toOption
+      else
+        None
+    }
   }
 
-  implicit val expressionDecoder = jsonOf[IO, Expression]
+  implicit val expressionDecoder = jsonOf[IO, Map[String, OverlayDefinition]]
 
-  final def overlayExpression(args: List[(Param, Double)]): Expression = {
-    val rasterVars = (0 to args.size - 1).toList map({ num => RasterVar(num.toString) })
-    WeightedOverlay(rasterVars, args.map(_._2))
+  def produceMaml(defs: Map[String, OverlayDefinition]): Expression = {
+    val weighted: List[Expression] = defs.map({ case(id, overlayDefinition) =>
+      Multiplication(List(RasterVar(id.toString), DblLit(overlayDefinition.weight)).toList)
+    }).toList
+    Addition(weighted)
   }
 
-  final def overlayParams(args: List[(Param, Double)]): Map[String, Param] =
-    args.map(_._1).zipWithIndex.map({ case (param, idx) => idx.toString -> param }).toMap
-
-  val reification = implicitly[MamlReification[Param]]
+  val demoStore: ConcurrentLinkedHashMap[UUID, Json] = new ConcurrentLinkedHashMap.Builder[UUID, Json]()
+    .maximumWeightedCapacity(100)
+    .build();
 
   def routes: HttpService[IO] = HttpService[IO] {
-    case req @ GET -> Root / IntVar(z) / IntVar(x) / IntVar(y) =>
-      val args: List[(Param, Double)] = ???
-      val paramMap = overlayParams(args)
+    case req @ POST -> Root / IdVar(key) =>
       (for {
-        expr      <- IO.pure { overlayExpression(args) }
-        vars      <- IO.pure { Vars.varsWithBuffer(expr) }
-        params    <- vars.toList.parTraverse { case (varName, (_, buffer)) =>
-                       reification.tmsReification(paramMap(varName), buffer)(t)(z, x, y).map(varName -> _)
-                     } map { _.toMap }
-        reified   <- IO.pure { Expression.bindParams(expr, params) }
+         args <- req.as[Map[String, OverlayDefinition]]
+         _    <- req.bodyAsText.compile.toList flatMap { reqBody =>
+                   IO.pure(logger.info(s"Attempting to store expression (${reqBody.mkString("")}) at key ($key)"))
+                 }
+         _    <- IO.pure { demoStore.put(key, args.asJson) }
+      } yield ()).attempt flatMap {
+        case Right(_) =>
+          Created()
+        case Left(InvalidMessageBodyFailure(_, _)) | Left(MalformedMessageBodyFailure(_, _)) =>
+          req.bodyAsText.compile.toList flatMap { reqBody =>
+            BadRequest(s"""Unable to parse ${reqBody.mkString("")} as a MAML expression""")
+          }
+        case Left(err) =>
+          logger.debug(err.toString, err)
+          InternalServerError(err.toString)
+      }
+
+    case req @ GET -> Root / IdVar(key) / IntVar(z) / IntVar(x) / IntVar(y) =>
+      (for {
+        // Get arguments
+        paramMap   <- IO.pure { Option(demoStore.get(key)).flatMap(_.as[Map[String,OverlayDefinition]].toOption).get }
+                        .recoverWith({ case _: NoSuchElementException => throw MamlStore.ExpressionNotFound(key) })
+        _          <- IO.pure(logger.info(s"Retrieved parameters for TMS ($z, $x, $y): ${paramMap.asJson.noSpaces}"))
+        expr       <- IO.pure { produceMaml(paramMap) }
+        _          <- IO.pure(logger.info(s"Constructed MAML at TMS ($z, $x, $y): ${expr.asJson.noSpaces}"))
+        vars       <- IO.pure { Vars.varsWithBuffer(expr) }
+        params     <- vars.toList.parTraverse { case (varName, (_, buffer)) =>
+                        paramMap(varName).tmsReification(buffer)(t)(z, x, y).map(varName -> _)
+                      } map { _.toMap }
+        reified    <- IO.pure { Expression.bindParams(expr, params) }
       } yield reified.andThen(interpreter(_)).andThen(_.as[Tile])).attempt flatMap {
         case Right(Valid(tile)) =>
           Ok(tile.renderPng(ColorRamps.Viridis).bytes)

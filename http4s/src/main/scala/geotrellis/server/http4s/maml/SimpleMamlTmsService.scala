@@ -41,8 +41,9 @@ class SimpleMamlTmsService[Store: MamlStore](
   def routes: HttpService[IO] = HttpService[IO] {
     case req @ GET -> Root / IdVar(key) / IntVar(z) / IntVar(x) / IntVar(y) =>
       (for {
-        maybeExpr <- expressionStore.getMaml(key)
-        expr      <- IO.pure { maybeExpr.get }.recoverWith({ case _: NoSuchElementException => throw MamlStore.ExpressionNotFound(key) })
+        expr      <- expressionStore.getMaml(key)
+                       .map(_.get)
+                       .recoverWith({ case _: NoSuchElementException => throw MamlStore.ExpressionNotFound(key) })
         _         <- IO.pure { logger.info(s"Attempting to interpret expression ($expr) at key ($key)") }
         vars      <- IO.pure { Vars.varsWithBuffer(expr) }
         params    <- vars.toList.parTraverse { case (varName, (_, buffer)) =>
