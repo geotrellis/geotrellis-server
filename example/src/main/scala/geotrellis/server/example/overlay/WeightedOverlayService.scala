@@ -77,7 +77,7 @@ class WeightedOverlayService(
           InternalServerError(err.toString)
       }
 
-    case req @ GET -> Root / IdVar(key) / IntVar(z) / IntVar(x) / IntVar(y) =>
+    case req @ GET -> Root / IdVar(key) / IntVar(z) / IntVar(x) / IntVar(y) ~ "png" =>
       (for {
         // Get arguments
         paramMap   <- IO.pure { Option(demoStore.get(key)).flatMap(_.as[Map[String,OverlayDefinition]].toOption).get }

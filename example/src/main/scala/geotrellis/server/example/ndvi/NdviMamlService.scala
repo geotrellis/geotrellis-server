@@ -60,10 +60,9 @@ class ExampleNdviMamlService[Param](
       ))
     )
 
-  val reification = implicitly[MamlReification[Param]]
-
   def routes: HttpService[IO] = HttpService[IO] {
-    case req @ GET -> Root / IntVar(z) / IntVar(x) / IntVar(y) :? RedQueryParamMatcher(red) +& NirQueryParamMatcher(nir) =>
+    // Matching json in the query parameter is a bad idea.
+    case req @ GET -> Root / IntVar(z) / IntVar(x) / IntVar(y) ~ "png" :? RedQueryParamMatcher(red) +& NirQueryParamMatcher(nir) =>
       //val red = CogNode(new URI(""), 2, None)
       //val nir = CogNode(new URI(""), 3, None)
       val paramMap = Map("red" -> red, "nir" -> nir)
