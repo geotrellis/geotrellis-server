@@ -50,7 +50,11 @@ class WeightedOverlayService(
     val weighted: List[Expression] = defs.map({ case(id, overlayDefinition) =>
       Multiplication(List(RasterVar(id.toString), DblLit(overlayDefinition.weight)).toList)
     }).toList
-    Addition(weighted)
+
+    if (weighted.length == 1)
+      weighted.head
+    else
+      Addition(weighted)
   }
 
   val demoStore: ConcurrentLinkedHashMap[UUID, Json] = new ConcurrentLinkedHashMap.Builder[UUID, Json]()

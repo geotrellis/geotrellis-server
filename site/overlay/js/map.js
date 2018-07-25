@@ -116,7 +116,7 @@ function CogForm(uri, band, weight, id) {
   var band = band || 1
   var id = id || guid();
 
-  var weightSlider = $('<input>', { type: "range", class: "custom-range", min: "0", max: "1", step: "0.1", value: weight })
+  var weightSlider = $('<input>', { type: "range", class: "custom-range", min: "-5", max: "5", step: "1", value: weight })
   var uriBox = UriBox(id, uri, band)
   var DOM = uriBox.dom
     .append(weightSlider)
@@ -138,7 +138,7 @@ function CogForm(uri, band, weight, id) {
 }
 
 function generateTms() {
-  return L.tileLayer(BASE_URL + APP_ID + "/{z}/{x}/{y}")
+  return L.tileLayer(BASE_URL + APP_ID + "/{z}/{x}/{y}.png?dummy=" + guid())
 }
 
 function initFromJson(json) {
