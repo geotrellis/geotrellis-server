@@ -61,6 +61,7 @@ lazy val core =
         circeGeneric,
         circeParser,
         circeOptics,
+        circeShapes,
         geotrellisS3,
         geotrellisSpark,
         cats,

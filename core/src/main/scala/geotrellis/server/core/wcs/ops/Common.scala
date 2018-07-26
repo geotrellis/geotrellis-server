@@ -1,4 +1,4 @@
-package geotrellis.server.http4s.wcs.ops
+package geotrellis.server.core.wcs.ops
 
 import geotrellis.proj4.CRS
 import geotrellis.vector.Extent

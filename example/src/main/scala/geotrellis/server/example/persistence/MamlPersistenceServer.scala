@@ -1,6 +1,7 @@
 package geotrellis.server.example.persistence
 
-import geotrellis.server.core.conf.Config
+import geotrellis.server.example.ExampleConf
+import geotrellis.server.core.conf.LoadConf
 import geotrellis.server.core.maml._
 
 import com.azavea.maml.ast.Expression
@@ -44,8 +45,8 @@ object MamlPersistenceServer extends StreamApp[IO] with LazyLogging with Http4sD
 
   def stream(args: List[String], requestShutdown: IO[Unit]): Stream[IO, ExitCode] = {
     for {
-      config     <- Stream.eval(Config.load())
-      _          <- Stream.eval(IO.pure(logger.info(s"Initializing Weighted Overlay at ${config.http.interface}:${config.http.port}/maml/overlay")))
+      conf       <- Stream.eval(LoadConf().as[ExampleConf])
+      _          <- Stream.eval(IO.pure(logger.info(s"Initializing Weighted Overlay at ${conf.http.interface}:${conf.http.port}/maml/overlay")))
       // This hashmap has a [MamlStore] implementation
       mamlStore = new ConcurrentLinkedHashMap.Builder[UUID, Expression]()
                     .maximumWeightedCapacity(1000)
@@ -53,7 +54,7 @@ object MamlPersistenceServer extends StreamApp[IO] with LazyLogging with Http4sD
       mamlPersistence = new MamlPersistenceService[HashMapMamlStore, CogNode](mamlStore)
       exitCode   <- BlazeBuilder[IO]
         .enableHttp2(true)
-        .bindHttp(config.http.port, config.http.interface)
+        .bindHttp(conf.http.port, conf.http.interface)
         .mountService(commonMiddleware(mamlPersistence.routes), "/maml/persistence")
         .serve
     } yield exitCode

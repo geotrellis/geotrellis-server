@@ -1,6 +1,7 @@
 package geotrellis.server.example.overlay
 
-import geotrellis.server.core.conf.Config
+import geotrellis.server.example.ExampleConf
+import geotrellis.server.core.conf.LoadConf
 import geotrellis.server.core.maml._
 
 import com.azavea.maml.ast.Expression
@@ -44,12 +45,12 @@ object OverlayServer extends StreamApp[IO] with LazyLogging with Http4sDsl[IO] {
 
   def stream(args: List[String], requestShutdown: IO[Unit]): Stream[IO, ExitCode] = {
     for {
-      config     <- Stream.eval(Config.load())
-      _          <- Stream.eval(IO.pure(logger.info(s"Initializing Weighted Overlay at ${config.http.interface}:${config.http.port}/maml/overlay")))
+      conf       <- Stream.eval(LoadConf().as[ExampleConf])
+      _          <- Stream.eval(IO.pure(logger.info(s"Initializing Weighted Overlay at ${conf.http.interface}:${conf.http.port}/maml/overlay")))
       weightedOverlay = new WeightedOverlayService()
       exitCode   <- BlazeBuilder[IO]
         .enableHttp2(true)
-        .bindHttp(config.http.port, config.http.interface)
+        .bindHttp(conf.http.port, conf.http.interface)
         .mountService(commonMiddleware(weightedOverlay.routes), "/maml/overlay")
         .serve
     } yield exitCode

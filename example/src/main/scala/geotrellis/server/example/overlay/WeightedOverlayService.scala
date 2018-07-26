@@ -2,7 +2,7 @@ package geotrellis.server.example.overlay
 
 import geotrellis.server.core.maml._
 import MamlStore.ops._
-import MamlReification.ops._
+import MamlTmsReification.ops._
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
 import com.azavea.maml.util.Vars
@@ -46,7 +46,7 @@ class WeightedOverlayService(
 
   implicit val expressionDecoder = jsonOf[IO, Map[String, OverlayDefinition]]
 
-  def produceMaml(defs: Map[String, OverlayDefinition]): Expression = {
+  def mkExpression(defs: Map[String, OverlayDefinition]): Expression = {
     val weighted: List[Expression] = defs.map({ case(id, overlayDefinition) =>
       Multiplication(List(RasterVar(id.toString), DblLit(overlayDefinition.weight)).toList)
     }).toList
@@ -82,19 +82,16 @@ class WeightedOverlayService(
       }
 
     case req @ GET -> Root / IdVar(key) / IntVar(z) / IntVar(x) / IntVar(y) ~ "png" =>
-      (for {
-        // Get arguments
-        paramMap   <- IO.pure { Option(demoStore.get(key)).flatMap(_.as[Map[String,OverlayDefinition]].toOption).get }
-                        .recoverWith({ case _: NoSuchElementException => throw MamlStore.ExpressionNotFound(key) })
-        _          <- IO.pure(logger.info(s"Retrieved parameters for TMS ($z, $x, $y): ${paramMap.asJson.noSpaces}"))
-        expr       <- IO.pure { produceMaml(paramMap) }
-        _          <- IO.pure(logger.info(s"Constructed MAML at TMS ($z, $x, $y): ${expr.asJson.noSpaces}"))
-        vars       <- IO.pure { Vars.varsWithBuffer(expr) }
-        params     <- vars.toList.parTraverse { case (varName, (_, buffer)) =>
-                        paramMap(varName).tmsReification(buffer)(t)(z, x, y).map(varName -> _)
-                      } map { _.toMap }
-        reified    <- IO.pure { Expression.bindParams(expr, params) }
-      } yield reified.andThen(interpreter(_)).andThen(_.as[Tile])).attempt flatMap {
+      val getParams =
+        IO { Option(demoStore.get(key)).flatMap(_.as[Map[String,OverlayDefinition]].toOption).get }
+          .recoverWith({ case _: NoSuchElementException => throw MamlStore.ExpressionNotFound(key) })
+
+      val eval = MamlTms.generateExpression(
+        mkExpression,
+        getParams,
+        interpreter
+      )
+      eval(z, x, y).attempt flatMap {
         case Right(Valid(tile)) =>
           Ok(tile.renderPng(ColorRamps.Viridis).bytes)
         case Right(Invalid(errs)) =>

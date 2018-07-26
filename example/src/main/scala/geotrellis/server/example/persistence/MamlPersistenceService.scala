@@ -1,6 +1,6 @@
 package geotrellis.server.example.persistence
 
-import geotrellis.server.core.maml.{MamlStore, MamlReification}
+import geotrellis.server.core.maml.{MamlStore, MamlTmsReification}
 import MamlStore.ops._
 
 import com.azavea.maml.util.Vars
@@ -32,7 +32,7 @@ class MamlPersistenceService[Store, Param](
 )(implicit t: Timer[IO],
            ms: MamlStore[Store],
            pd: Decoder[Param],
-           mr: MamlReification[Param]) extends Http4sDsl[IO] with LazyLogging {
+           mr: MamlTmsReification[Param]) extends Http4sDsl[IO] with LazyLogging {
 
   // Unapply to handle UUIDs on path
   object IdVar {
@@ -57,10 +57,10 @@ class MamlPersistenceService[Store, Param](
   def routes = HttpService[IO] {
     case req @ POST -> Root / IdVar(key) =>
       (for {
-         expr <- EitherT(req.as[Expression].attempt)
-         _    <- EitherT.pure[IO, Throwable](logger.info(s"Attempting to store expression (${req.bodyAsText}) at key ($key)"))
-         res  <- EitherT(store.putMaml(key, expr).attempt)
-       } yield res).value flatMap {
+         expr <- req.as[Expression]
+         _    <- IO.pure(logger.info(s"Attempting to store expression (${req.bodyAsText}) at key ($key)"))
+         res  <- store.putMaml(key, expr)
+       } yield res).attempt flatMap {
         case Right(created) =>
           Created()
         case Left(InvalidMessageBodyFailure(_, _)) | Left(MalformedMessageBodyFailure(_, _)) =>

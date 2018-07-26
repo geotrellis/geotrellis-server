@@ -1,7 +1,6 @@
 package geotrellis.server.example.ndvi
 
 import geotrellis.server.core.maml._
-import MamlReification.ops._
 
 import com.azavea.maml.util.Vars
 import com.azavea.maml.ast._
@@ -31,8 +30,9 @@ import scala.collection.mutable
 class ExampleNdviMamlService[Param](
   interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
 )(implicit t: Timer[IO],
-           pd: Decoder[Param],
-           mr: MamlReification[Param]) extends Http4sDsl[IO] with LazyLogging {
+           enc: Encoder[Param],
+           dec: Decoder[Param],
+           mr: MamlTmsReification[Param]) extends Http4sDsl[IO] with LazyLogging {
 
   object ParamBindings {
     def unapply(str: String): Option[Map[String, Param]] =
@@ -60,21 +60,14 @@ class ExampleNdviMamlService[Param](
       ))
     )
 
+  final val eval = MamlTms.fromExpression(ndvi, interpreter)
+
   def routes: HttpService[IO] = HttpService[IO] {
     // Matching json in the query parameter is a bad idea.
     case req @ GET -> Root / IntVar(z) / IntVar(x) / IntVar(y) ~ "png" :? RedQueryParamMatcher(red) +& NirQueryParamMatcher(nir) =>
-      //val red = CogNode(new URI(""), 2, None)
-      //val nir = CogNode(new URI(""), 3, None)
       val paramMap = Map("red" -> red, "nir" -> nir)
-      (for {
-        vars      <- IO.pure { Vars.varsWithBuffer(ndvi) }
-        params    <- vars.toList.parTraverse { case (varName, (_, buffer)) =>
-                       paramMap(varName)
-                         .tmsReification(buffer)(t)(z, x, y)
-                         .map(varName -> _)
-                     }.map { _.toMap }
-        reified   <- IO.pure { Expression.bindParams(ndvi, params) }
-      } yield reified.andThen(interpreter(_)).andThen(_.as[Tile])).attempt flatMap {
+
+      eval(paramMap, z, x, y).attempt flatMap {
         case Right(Valid(tile)) =>
           Ok(tile.renderPng(ColorRamps.Viridis).bytes)
         case Right(Invalid(errs)) =>

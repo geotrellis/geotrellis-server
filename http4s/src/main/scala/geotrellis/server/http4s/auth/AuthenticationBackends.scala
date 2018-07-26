@@ -1,7 +1,5 @@
 package geotrellis.server.http4s.auth
 
-import geotrellis.server.core.conf.Config
-
 import cats._, cats.effect._, cats.implicits._, cats.data._
 import cats.syntax._
 import com.typesafe.scalalogging.LazyLogging
@@ -46,16 +44,16 @@ object AuthenticationBackends extends LazyLogging {
     }
   }
 
-  def fromConfig(conf: Config): Kleisli[IO, Request[IO], Either[String, User]] = {
-    println(s"Signing key is: ${conf.auth.signingKey}")
-    conf.auth.signingKey match {
-      case "REPLACEME" => {
-        logger.warn("Signing key not changed from default. Falling back to always successful authentication")
+  def fromSigningKey(signingKey: Option[String]): Kleisli[IO, Request[IO], Either[String, User]] = {
+    println(s"Signing key is: ${signingKey}")
+    signingKey match {
+      case None => {
+        logger.warn("No key provided. Falling back to always successful authentication")
         successful
       }
-      case signingKey => {
+      case Some(key) => {
         logger.debug("Constructing auth middleware from configured signing key")
-        fromSigningKey(signingKey)
+        fromSigningKey(key)
       }
     }
   }
@@ -82,3 +80,4 @@ object AuthenticationBackends extends LazyLogging {
       message.traverse(_ => IO(User(1234, "ljaskdlfjsd")))
     }
 }
+

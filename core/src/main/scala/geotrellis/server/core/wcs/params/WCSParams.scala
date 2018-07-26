@@ -1,6 +1,6 @@
-package geotrellis.server.http4s.wcs.params
+package geotrellis.server.core.wcs.params
 
-import geotrellis.server.http4s.wcs.Constants.SUPPORTED_FORMATS
+import geotrellis.server.core.wcs.Constants.SUPPORTED_FORMATS
 
 import cats._
 import cats.implicits._

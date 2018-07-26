@@ -1,7 +1,7 @@
-package geotrellis.server.http4s.wcs.ops
+package geotrellis.server.core.wcs.ops
 
-import geotrellis.server.http4s.wcs.WcsService
-import geotrellis.server.http4s.wcs.params.GetCapabilitiesWcsParams
+import geotrellis.server.core.wcs.params.GetCapabilitiesWcsParams
+
 import geotrellis.spark._
 import geotrellis.spark.io._
 import com.typesafe.scalalogging.LazyLogging
@@ -34,7 +34,7 @@ object GetCapabilities extends LazyLogging {
     </ows:Operation>
   }
 
-  private def addLayers100(metadata: WcsService.MetadataCatalog) = {
+  private def addLayers100(metadata: MetadataCatalog) = {
     metadata.map { case (identifier, (zooms, maybeMetadata)) => {
       logger.info(s"Adding v1.0.0 tag for $identifier")
       maybeMetadata match {
@@ -51,7 +51,7 @@ object GetCapabilities extends LazyLogging {
     }}
   }
 
-  private def addLayers110(metadata: WcsService.MetadataCatalog) = {
+  private def addLayers110(metadata: MetadataCatalog) = {
     metadata.map { case (identifier, (zooms, maybeMetadata)) => {
       logger.info(s"Adding v1.1.0 tag for $identifier")
       maybeMetadata match {
@@ -78,7 +78,7 @@ object GetCapabilities extends LazyLogging {
     }}
   }
 
-  def build(requestURL: String, metadata: WcsService.MetadataCatalog, params: GetCapabilitiesWcsParams): Elem = {
+  def build(requestURL: String, metadata: MetadataCatalog, params: GetCapabilitiesWcsParams): Elem = {
     if (params.version < "1.1.0") {
       <WCS_Capabilities xmlns="http://www.opengis.net/wcs"
                         xmlns:xlink="http://www.w3.org/1999/xlink"

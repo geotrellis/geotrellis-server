@@ -1,4 +1,5 @@
-package geotrellis.server.http4s.wcs
+package geotrellis.server.core.wcs
+
 
 object Constants {
   // Map of incoming format string to normalized format string for supported formats.

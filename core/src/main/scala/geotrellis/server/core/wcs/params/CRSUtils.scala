@@ -1,4 +1,4 @@
-package geotrellis.server.http4s.wcs.params
+package geotrellis.server.core.wcs.params
 
 import cats._
 import cats.implicits._

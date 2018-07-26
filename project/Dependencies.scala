@@ -14,6 +14,7 @@ object Dependencies {
   val cats              = "org.typelevel"                 %% "cats-core"            % "1.1.0"
   val catsEffect        = "org.typelevel"                 %% "cats-effect"          % "0.10.1"
   val circeCore         = "io.circe"                      %% "circe-core"           % circeVer
+  val circeShapes       = "io.circe"                      %% "circe-shapes"         % circeVer
   val circeGeneric      = "io.circe"                      %% "circe-generic"        % circeVer
   val circeOptics       = "io.circe"                      %% "circe-optics"         % circeVer
   val circeParser       = "io.circe"                      %% "circe-parser"         % circeVer

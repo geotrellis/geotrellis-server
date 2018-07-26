@@ -37,7 +37,10 @@ object CogUtils {
     }
   }
 
-  def fetch(uri: String, zoom: Int, x: Int, y: Int): IO[MultibandTile] =
+  def fetch(uri: String, extent: Extent): IO[Raster[MultibandTile]] =
+    fromUri(uri).flatMap(cropGeoTiff(_, extent))
+
+  def fetch(uri: String, zoom: Int, x: Int, y: Int): IO[Raster[MultibandTile]] =
     CogUtils.fromUri(uri).flatMap { tiff =>
       val transform = Proj4Transform(tiff.crs, WebMercator)
       val inverseTransform = Proj4Transform(WebMercator, tiff.crs)
@@ -48,7 +51,7 @@ object CogUtils {
       val tiffTileRE = ReprojectRasterExtent(tmsTileRE, inverseTransform)
       val overview = closestTiffOverview(tiff, tiffTileRE.cellSize, Auto(0))
       cropGeoTiff(overview, tiffTileRE.extent).map { raster =>
-        raster.reproject(tmsTileRE, transform, inverseTransform).tile
+        raster.reproject(tmsTileRE, transform, inverseTransform)
       }
     }
 
@@ -71,11 +74,9 @@ object CogUtils {
   }
 
 
-  def getTiffExtent(uri: String): IO[Projected[MultiPolygon]] =
+  def getTiffExtent(uri: String): IO[Extent] =
     RangeReaderUtils.fromUri(uri).map { rr =>
-      val tiff = GeoTiffReader.readMultiband(rr, streaming = true)
-      val crs = tiff.crs
-      Projected(MultiPolygon(tiff.extent.reproject(crs, WebMercator).toPolygon()), 3857)
+      GeoTiffReader.readMultiband(rr, streaming = true).extent
     }
 
   /** Work around bug in GeoTiff.crop(extent) method */

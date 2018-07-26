@@ -1,12 +1,12 @@
-package geotrellis.server.http4s.wcs.ops
+package geotrellis.server.core.wcs.ops
+
+import geotrellis.server.core.wcs.params.GetCoverageWcsParams
 
 import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.raster.crop._
 import geotrellis.raster.reproject._
 import geotrellis.raster.io.geotiff._
-import geotrellis.server.http4s.wcs.WcsService
-import geotrellis.server.http4s.wcs.params.GetCoverageWcsParams
 import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.stitch._
@@ -39,7 +39,7 @@ class GetCoverage(catalogUri: => String) extends LazyLogging {
   /* This is a workaround for a caching but in AttributeStore*/
   lazy val altAttributeStore = AttributeStore(catalogUri)
 
-  def build(catalog: WcsService.MetadataCatalog, params: GetCoverageWcsParams): Array[Byte] = {
+  def build(catalog: MetadataCatalog, params: GetCoverageWcsParams): Array[Byte] = {
     def as = collectionReader.attributeStore
 
     val (zooms, _) = catalog(params.identifier)

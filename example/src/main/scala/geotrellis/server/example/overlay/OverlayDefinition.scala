@@ -1,7 +1,7 @@
 package geotrellis.server.example.overlay
 
 import geotrellis.server.core.cog.CogUtils
-import geotrellis.server.core.maml.MamlReification
+import geotrellis.server.core.maml.MamlTmsReification
 
 import com.azavea.maml.ast.{Expression, Literal, MamlKind, RasterLit}
 import com.azavea.maml.eval.tile._
@@ -21,8 +21,8 @@ object OverlayDefinition {
   implicit val olEncoder: Encoder[OverlayDefinition] = deriveEncoder
 
 
-  implicit val overlayDefinitionReification: MamlReification[OverlayDefinition] =
-    new MamlReification[OverlayDefinition] {
+  implicit val overlayDefinitionReification: MamlTmsReification[OverlayDefinition] =
+    new MamlTmsReification[OverlayDefinition] {
       def kind(self: OverlayDefinition): MamlKind = MamlKind.Tile
 
       def tmsReification(self: OverlayDefinition, buffer: Int)(implicit t: Timer[IO]): (Int, Int, Int) => IO[Literal] =
