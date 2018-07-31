@@ -12,6 +12,6 @@ import java.util.UUID
 
 
 @typeclass trait SummaryZoom[A] {
-  @op("maxAcceptableCellsize") def minAcceptableCellsize(self: A, maxCells: Int)(implicit t: Timer[IO]): IO[(Extent, CellSize)]
+  @op("maxAcceptableCellsize") def maxAcceptableCellsize(self: A, maxCells: Int)(implicit t: Timer[IO]): IO[(Extent, CellSize)]
 }
 

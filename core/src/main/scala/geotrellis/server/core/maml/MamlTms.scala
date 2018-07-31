@@ -28,7 +28,7 @@ object MamlTms extends LazyLogging {
     implicit reify: MamlTmsReification[Param],
              enc: Encoder[Param],
              t: Timer[IO]
-  ) = (z: Int, x: Int, y: Int) => {
+  ): (Int, Int, Int) => IO[Interpreted[Tile]] = (z: Int, x: Int, y: Int) => {
     for {
       expr             <- getExpression
       _                <- IO.pure(logger.info(s"Retrieved MAML AST at TMS ($z, $x, $y): ${expr.asJson.noSpaces}"))

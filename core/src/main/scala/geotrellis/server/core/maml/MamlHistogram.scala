@@ -15,9 +15,11 @@ import io.circe.syntax._
 import cats._
 import cats.data.{NonEmptyList => NEL}
 import cats.effect._
-import cats.implicits._
+import cats.syntax.all._
+import geotrellis.vector.Extent
 import geotrellis.raster._
 import geotrellis.raster.Tile
+
 
 object MamlHistogram extends LazyLogging {
 
@@ -36,14 +38,17 @@ object MamlHistogram extends LazyLogging {
   ) =
     for {
       params           <- getParams
-      extentsAndCS     <- params.values.map { _.maxAcceptableCellsize(maxCells)  } // iterable of (extent, cs)... need to merge
-      (extent, cs) = extentsAndCS.reduce { case ((extent1, cs1), (extent2, cs2)) =>
-                       val newExtent = (extent1 merge extent2)
-                       val newCs = (CellSize(math.max(cs1.width, cs2.width), math.max(cs1.height, cs2.height)))
-                       (newExtent, newCs)
-                     }
-      validatedTile    <- MamlExtent(getExpression, getParams, interpreter)
+      extentsCellSizes <- NEL.fromList(params.values.toList).getOrElse(throw new NoSuchElementException("No arguments provided"))
+                               .parTraverse { _.maxAcceptableCellsize(maxCells)  }: IO[NEL[(Extent, CellSize)]]
+      extentCellSize   <- IO { extentsCellSizes.tail.foldLeft(extentsCellSizes.head)({ case ((extent1, cs1), (extent2, cs2)) =>
+                            val newExtent = (extent1 combine extent2)
+                            val newCs = (CellSize(math.max(cs1.width, cs2.width), math.max(cs1.height, cs2.height)))
+                            (newExtent, newCs)
+                          }) }
+      extent = extentCellSize._1
+      cellsize = extentCellSize._2
+      validatedTile    <- IO { MamlExtent(getExpression, getParams, interpreter) }
       histogram        <- IO { validatedTile(extent).histogram }
     } yield histogram
-
 }
+
