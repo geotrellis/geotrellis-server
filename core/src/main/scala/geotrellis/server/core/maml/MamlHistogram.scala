@@ -18,6 +18,7 @@ import cats.effect._
 import cats.syntax.all._
 import geotrellis.vector.Extent
 import geotrellis.raster._
+import geotrellis.raster.histogram._
 import geotrellis.raster.Tile
 
 
@@ -35,7 +36,7 @@ object MamlHistogram extends LazyLogging {
              summary: SummaryZoom[Param],
              enc: Encoder[Param],
              t: Timer[IO]
-  ) =
+  ): IO[Interpreted[Histogram[Double]]] =
     for {
       params           <- getParams
       extentsCellSizes <- NEL.fromList(params.values.toList).getOrElse(throw new NoSuchElementException("No arguments provided"))
@@ -47,8 +48,8 @@ object MamlHistogram extends LazyLogging {
                           }) }
       extent = extentCellSize._1
       cellsize = extentCellSize._2
-      validatedTile    <- IO { MamlExtent(getExpression, getParams, interpreter) }
-      histogram        <- IO { validatedTile(extent).histogram }
-    } yield histogram
+      tileForExtent    <- IO { MamlExtent(getExpression, getParams, interpreter) }
+      interpretedTile  <- tileForExtent(extent)
+    } yield interpretedTile.map(StreamingHistogram.fromTile(_))
 }
 

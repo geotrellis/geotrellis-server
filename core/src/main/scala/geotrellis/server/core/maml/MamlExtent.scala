@@ -29,7 +29,7 @@ object MamlExtent extends LazyLogging {
     implicit reify: MamlExtentReification[Param],
              enc: Encoder[Param],
              t: Timer[IO]
-  ): Extent => Tile  = (extent: Extent) =>  {
+  ): Extent => IO[Interpreted[Tile]]  = (extent: Extent) =>  {
     ???
   }
 }

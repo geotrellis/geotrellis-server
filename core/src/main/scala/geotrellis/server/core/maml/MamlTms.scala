@@ -17,6 +17,7 @@ import cats.implicits._
 import geotrellis.raster._
 import geotrellis.raster.Tile
 
+
 object MamlTms extends LazyLogging {
 
   // Provide IOs for both expression and params, get back a tile
@@ -58,7 +59,7 @@ object MamlTms extends LazyLogging {
 
 
   /** Provide an expression and expect arguments to fulfill its needs */
-  def fromExpression[Param](
+  def curried[Param](
     expr: Expression,
     interpreter: BufferingInterpreter
   )(
@@ -78,7 +79,7 @@ object MamlTms extends LazyLogging {
     implicit reify: MamlTmsReification[Param],
              enc: Encoder[Param],
              t: Timer[IO]
-  ) = fromExpression(RasterVar("self"), interpreter)
+  ) = curried(RasterVar("identity"), interpreter)
 
 }
 

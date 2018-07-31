@@ -60,7 +60,7 @@ class ExampleNdviMamlService[Param](
       ))
     )
 
-  final val eval = MamlTms.fromExpression(ndvi, interpreter)
+  final val eval = MamlTms.curried(ndvi, interpreter)
 
   def routes: HttpService[IO] = HttpService[IO] {
     // Matching json in the query parameter is a bad idea.
