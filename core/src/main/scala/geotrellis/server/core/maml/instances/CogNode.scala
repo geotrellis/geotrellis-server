@@ -9,8 +9,10 @@ import com.azavea.maml.eval.tile._
 import io.circe._
 import io.circe.generic.semiauto._
 import cats.effect._
+import cats.data.{NonEmptyList => NEL}
 import cats.syntax.all._
 import geotrellis.raster._
+import geotrellis.proj4.CRS
 import geotrellis.vector.Extent
 
 import java.net.URI
@@ -28,8 +30,15 @@ object CogNode {
   implicit val cogNodeEncoder: Encoder[CogNode] = deriveEncoder[CogNode]
   implicit val cogNodeDecoder: Decoder[CogNode] = deriveDecoder[CogNode]
 
-  implicit val cogNodeExtension: MamlExtension[CogNode] = new MamlExtension[CogNode] {
-    def extent(self: CogNode)(implicit t: Timer[IO]): IO[Extent] = CogUtils.getTiffExtent(self.uri.toString)
+  implicit val cogNodeRasterExtents: HasRasterExtents[CogNode] = new HasRasterExtents[CogNode] {
+    def rasterExtents(self: CogNode)(implicit t: Timer[IO]): IO[NEL[RasterExtent]] =
+      CogUtils.getTiff(self.uri.toString).map { tiff =>
+        NEL(tiff.rasterExtent, tiff.overviews.map(_.rasterExtent))
+      }
+    def crs(self: CogNode)(implicit t: Timer[IO]): IO[CRS] =
+      CogUtils.getTiff(self.uri.toString).map { tiff =>
+        tiff.crs
+      }
   }
 
   implicit val cogNodeTmsReification: MamlTmsReification[CogNode] = new MamlTmsReification[CogNode] {
@@ -51,25 +60,11 @@ object CogNode {
 
   implicit val cogNodeExtentReification: MamlExtentReification[CogNode] = new MamlExtentReification[CogNode] {
     def kind(self: CogNode): MamlKind = MamlKind.Tile
-    def extentReification(self: CogNode)(implicit t: Timer[IO]): Extent => IO[Literal] = (extent: Extent) => {
-      CogUtils.fetch(self.uri.toString, extent)
-        .map { _.band(self.band) }
-        .map { raster => RasterLit(raster) }
+    def extentReification(self: CogNode)(implicit t: Timer[IO]): (Extent, CellSize) => IO[Literal] = (extent: Extent, cs: CellSize) => {
+      CogUtils.getTiff(self.uri.toString)
+        .map { CogUtils.cropGeoTiffToTile(_, extent, cs, self.band) }
+        .map { RasterLit(_) }
     }
-  }
-
-  implicit val cogNodeSummary: SummaryZoom[CogNode] = new SummaryZoom[CogNode] {
-    def maxAcceptableCellsize(self: CogNode, maxCells: Int)(implicit t: Timer[IO]): IO[(Extent, CellSize)] =
-      CogUtils.fromUri(self.uri.toString).map({ tiff =>
-        val colRowCount = math.sqrt(maxCells).toInt
-        val allTiffs = tiff.overviews :+ tiff
-        val minTiff = allTiffs.filter({ tiff =>
-          tiff.cellSize.resolution < CellSize(tiff.extent, colRowCount, colRowCount).resolution
-        }).maxBy(_.cellSize.resolution)
-        (minTiff.extent, minTiff.cellSize)
-      }).recoverWith({
-        case _: NoSuchElementException => throw new NoSuchElementException("Unable to retrieve minimum summary extent")
-      })
   }
 }
 

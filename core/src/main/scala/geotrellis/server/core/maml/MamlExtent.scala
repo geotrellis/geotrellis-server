@@ -29,7 +29,18 @@ object MamlExtent extends LazyLogging {
     implicit reify: MamlExtentReification[Param],
              enc: Encoder[Param],
              t: Timer[IO]
-  ): Extent => IO[Interpreted[Tile]]  = (extent: Extent) =>  {
-    ???
+  ): (Extent, CellSize) => IO[Interpreted[Tile]]  = (extent: Extent, cs: CellSize) =>  {
+    for {
+      expr             <- getExpression
+      _                <- IO.pure(logger.info(s"Retrieved MAML AST for extent ($extent) and cellsize ($cs): ${expr.asJson.noSpaces}"))
+      paramMap         <- getParams
+      _                <- IO.pure(logger.info(s"Retrieved parameters for extent ($extent) and cellsize ($cs): ${paramMap.asJson.noSpaces}"))
+      vars             <- IO.pure { Vars.varsWithBuffer(expr) }
+      params           <- vars.toList.parTraverse { case (varName, (_, buffer)) =>
+                            paramMap(varName).extentReification(t)(extent, cs).map(varName -> _)
+                          } map { _.toMap }
+      reified          <- IO.pure { Expression.bindParams(expr, params) }
+    } yield reified.andThen(interpreter(_)).andThen(_.as[Tile])
   }
 }
+

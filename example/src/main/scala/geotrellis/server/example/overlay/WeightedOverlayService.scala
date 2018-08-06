@@ -5,6 +5,7 @@ import MamlStore.ops._
 import MamlTmsReification.ops._
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
+import com.azavea.maml.error.Interpreted
 import com.azavea.maml.util.Vars
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
@@ -21,6 +22,7 @@ import cats.implicits._
 import cats.effect._
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster._
+import geotrellis.raster.histogram._
 import geotrellis.raster.render._
 
 import scala.math._
@@ -46,9 +48,19 @@ class WeightedOverlayService(
 
   implicit val expressionDecoder = jsonOf[IO, Map[String, OverlayDefinition]]
 
+  val demoStore: ConcurrentLinkedHashMap[UUID, Json] = new ConcurrentLinkedHashMap.Builder[UUID, Json]()
+    .maximumWeightedCapacity(100)
+    .build();
+
+  val demoHistogramStore: ConcurrentLinkedHashMap[UUID, Histogram[Double]] = new ConcurrentLinkedHashMap.Builder[UUID, Histogram[Double]]()
+    .maximumWeightedCapacity(100)
+    .build();
+
+  // Make the expression to evaluate based on input parameters
   def mkExpression(defs: Map[String, OverlayDefinition]): Expression = {
+    def adjustedWeight(weight: Double) = if (weight == 0) 1.0 else weight * 2
     val weighted: List[Expression] = defs.map({ case(id, overlayDefinition) =>
-      Multiplication(List(RasterVar(id.toString), DblLit(overlayDefinition.weight)).toList)
+      Multiplication(List(RasterVar(id.toString), DblLit(adjustedWeight(overlayDefinition.weight))).toList)
     }).toList
 
     if (weighted.length == 1)
@@ -57,9 +69,21 @@ class WeightedOverlayService(
       Addition(weighted)
   }
 
-  val demoStore: ConcurrentLinkedHashMap[UUID, Json] = new ConcurrentLinkedHashMap.Builder[UUID, Json]()
-    .maximumWeightedCapacity(100)
-    .build();
+  // Grab the stored eval parameters
+  def getParams(id: UUID) =
+    IO { Option(demoStore.get(id)).flatMap(_.as[Map[String,OverlayDefinition]].toOption).get }
+      .recoverWith({ case _: NoSuchElementException => throw MamlStore.ExpressionNotFound(id) })
+
+  // Dead simple caching to share histograms across requests
+  def histo(id: UUID): IO[Interpreted[Histogram[Double]]] = Option(demoHistogramStore.get(id)) match {
+    case Some(hist) =>
+      IO.pure(Valid(hist))
+    case None =>
+      MamlHistogram.generateExpression(mkExpression, getParams(id), interpreter, 512).map { hist =>
+        hist.map { demoHistogramStore.put(id, _) }
+        hist
+      }
+  }
 
   def routes: HttpService[IO] = HttpService[IO] {
     case req @ POST -> Root / IdVar(key) =>
@@ -71,6 +95,9 @@ class WeightedOverlayService(
          _    <- IO.pure { demoStore.put(key, args.asJson) }
       } yield ()).attempt flatMap {
         case Right(_) =>
+          // In parallel, store histogram
+          demoHistogramStore.put(key, null)
+          IO.shift *> histo(key)
           Created()
         case Left(InvalidMessageBodyFailure(_, _)) | Left(MalformedMessageBodyFailure(_, _)) =>
           req.bodyAsText.compile.toList flatMap { reqBody =>
@@ -82,28 +109,36 @@ class WeightedOverlayService(
       }
 
     case req @ GET -> Root / IdVar(key) / IntVar(z) / IntVar(x) / IntVar(y) ~ "png" =>
-      val getParams =
-        IO { Option(demoStore.get(key)).flatMap(_.as[Map[String,OverlayDefinition]].toOption).get }
-          .recoverWith({ case _: NoSuchElementException => throw MamlStore.ExpressionNotFound(key) })
 
       val eval = MamlTms.generateExpression(
         mkExpression,
-        getParams,
+        getParams(key),
         interpreter
       )
-      eval(z, x, y).attempt flatMap {
-        case Right(Valid(tile)) =>
-          Ok(tile.renderPng(ColorRamps.Viridis).bytes)
-        case Right(Invalid(errs)) =>
-          logger.debug(errs.toList.toString)
-          BadRequest(errs.asJson)
-        case Left(MamlStore.ExpressionNotFound(err)) =>
-          logger.info(err.toString)
-          NotFound()
-        case Left(err) =>
-          logger.debug(err.toString, err)
-          InternalServerError(err.toString)
-      }
+
+      (eval(z, x, y), histo(key))
+        .parMapN { (_, _) }
+        .attempt
+        .flatMap {
+          case Right((Valid(tile), Valid(histogram))) =>
+            val cmap = ColorMap.fromQuantileBreaks(histogram, ColorRamps.Viridis)
+            Ok(tile.renderPng(cmap).bytes)
+          case Right((Invalid(errs1), Invalid(errs2))) =>
+            logger.debug(List(errs1, errs2).asJson.toString)
+            BadRequest(List(errs1, errs2).asJson)
+          case Right((Invalid(errs), _)) =>
+            logger.debug(errs.asJson.noSpaces)
+            BadRequest(errs.asJson)
+          case Right((_, Invalid(errs))) =>
+            logger.debug(errs.asJson.noSpaces)
+            BadRequest(errs.asJson)
+          case Left(MamlStore.ExpressionNotFound(err)) =>
+            logger.info(err.toString)
+            NotFound()
+          case Left(err) =>
+            logger.debug(err.toString, err)
+            InternalServerError(err.toString)
+        }
   }
 }
 

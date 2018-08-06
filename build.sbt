@@ -47,7 +47,7 @@ lazy val root =
   Project("root", file("."))
     .aggregate(
       core,
-      http4s
+      example
     ).settings(commonSettings: _*)
 
 lazy val core =
@@ -72,38 +72,6 @@ lazy val core =
         typesafeLogging,
         logbackClassic,
         concHashMap
-      )
-    )
-
-lazy val http4s =
-  Project(id = "http4s", base = file("http4s"))
-    .settings(commonSettings: _*)
-    .dependsOn(core)
-    .settings(
-      name := "geotrellis-server-http4s",
-      assemblyJarName in assembly := "geotrellis-server-http4s.jar",
-      libraryDependencies ++= Seq(
-        http4sDsl,
-        http4sBlazeServer,
-        http4sBlazeClient,
-        http4sCirce,
-        http4sXml,
-        scalaXml,
-        geotrellisS3,
-        geotrellisSpark,
-        decline,
-        commonsIO,
-        concHashMap,
-        pureConfig,
-        typesafeLogging,
-        logbackClassic,
-        kamonCore,
-        kamonSysMetrics,
-        kamonPrometheus,
-        kamonHttp4s,
-        scalatest,
-        tsecCommon,
-        tsecHttp4s
       )
     )
 
