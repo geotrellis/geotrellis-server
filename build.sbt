@@ -34,6 +34,7 @@ lazy val commonSettings = Seq(
   addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
   fork := true,
+  test in assembly := {},
   assemblyMergeStrategy in assembly := {
     case "reference.conf" => MergeStrategy.concat
     case "application.conf" => MergeStrategy.concat

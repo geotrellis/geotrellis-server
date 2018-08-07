@@ -56,6 +56,10 @@ class WeightedOverlayService(
     .maximumWeightedCapacity(100)
     .build();
 
+  val transparentColorMap = ColorRamps.Viridis
+    .map { RGBA(_).unzipRGB }
+    .map { case (r, g, b) => RGBA(r, g, b, 50.0) }
+
   // Make the expression to evaluate based on input parameters
   def mkExpression(defs: Map[String, OverlayDefinition]): Expression = {
     def adjustedWeight(weight: Double) = if (weight == 0) 1.0 else weight * 2
@@ -86,6 +90,10 @@ class WeightedOverlayService(
   }
 
   def routes: HttpService[IO] = HttpService[IO] {
+    // Handle the static files for this demo
+    case request @ GET -> Root / path if List(".js", ".css", ".map", ".html", ".webm").exists(path.endsWith) =>
+      StaticFile.fromResource("/overlay-demo/" + path, Some(request)).getOrElseF(NotFound())
+
     case req @ POST -> Root / IdVar(key) =>
       (for {
          args <- req.as[Map[String, OverlayDefinition]]
@@ -121,7 +129,7 @@ class WeightedOverlayService(
         .attempt
         .flatMap {
           case Right((Valid(tile), Valid(histogram))) =>
-            val cmap = ColorMap.fromQuantileBreaks(histogram, ColorRamps.Viridis)
+            val cmap = ColorMap.fromQuantileBreaks(histogram, transparentColorMap)
             Ok(tile.renderPng(cmap).bytes)
           case Right((Invalid(errs1), Invalid(errs2))) =>
             logger.debug(List(errs1, errs2).asJson.toString)

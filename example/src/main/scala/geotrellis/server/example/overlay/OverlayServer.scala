@@ -51,7 +51,7 @@ object OverlayServer extends StreamApp[IO] with LazyLogging with Http4sDsl[IO] {
       exitCode   <- BlazeBuilder[IO]
         .enableHttp2(true)
         .bindHttp(conf.http.port, conf.http.interface)
-        .mountService(commonMiddleware(weightedOverlay.routes), "/maml/overlay")
+        .mountService(commonMiddleware(weightedOverlay.routes), "/")
         .serve
     } yield exitCode
   }

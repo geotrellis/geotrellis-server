@@ -1,7 +1,7 @@
 // GLOBAL STATE/MANAGEMENT FUNCS
 var cogForms = [];
 var MAX_COGS = 5;
-var BASE_URL = "http://localhost:9000/maml/overlay/"
+var BASE_URL = "http://localhost:9000/"
 var APP_ID;
 var overlayLayer;
 

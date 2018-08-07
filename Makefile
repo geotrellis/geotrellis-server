@@ -1,12 +1,13 @@
 COMMIT=$(shell git rev-parse --short HEAD)
 
 clean:
-	rm -rf **/target
-	rm docker/server/geotrellis-server-http4s.jar
+	sbt "project example" clean
+	touch docker/overlay-demo/geotrellis-server-example.jar
+	rm docker/overlay-demo/geotrellis-server-example.jar
 
-build:
-	sbt assembly
-	ln -f http4s/target/scala-2.11/geotrellis-server-http4s.jar docker/server/geotrellis-server-http4s.jar
+build: clean
+	sbt "project example" assembly
+	ln -f example/target/scala-2.11/geotrellis-server-example.jar docker/overlay-demo/geotrellis-server-example.jar
 	docker-compose build
 
 serve: build
@@ -15,5 +16,3 @@ serve: build
 test:
 	sbt test
 
-publish:
-	docker tag quay.io/geotrellis/server:latest quay.io/geotrellis/server:${COMMIT}

@@ -79,7 +79,6 @@ object MamlHistogram extends LazyLogging {
                             .map(_.rasterExtents)
                             .parSequence
                             .map(_.flatten)
-      _                <- IO.pure(println(params.values.toList.map(_.crs).parSequence.unsafeRunSync))
       intersection     <- IO { rasterExtents.foldLeft(Option.empty[Extent])({ (mbExtent, re) =>
                             mbExtent match {
                               case Some(extent) =>
@@ -90,11 +89,8 @@ object MamlHistogram extends LazyLogging {
                           }).getOrElse(throw new RequireIntersectingSources()) }
       cellSize         <- IO { chooseCellSize(rasterExtents.map(_.cellSize)) }
       sampleExtent     <- IO { sampleRasterExtent(intersection, cellSize, maxCells) }
-      _                <- IO.pure(println(s"all: ${Extent.toPolygon(intersection).toGeoJson}, subset: ${Extent.toPolygon(sampleExtent).toGeoJson}"))
       tileForExtent    <- IO { MamlExtent(getExpression, getParams, interpreter) }
-      _                <- IO.pure(println("tile4Extent produced"))
       interpretedTile  <- tileForExtent(sampleExtent, cellSize)
-      _                <- IO.pure(println("interpretedTile produced"))
     } yield interpretedTile.map(StreamingHistogram.fromTile(_))
 
   def generateExpression[Param](
