@@ -7,5 +7,5 @@ services:
     volumes:
       - $HOME/.aws:/root/.aws
     build:
-      context: docker/overlay-demo
-      dockerfile: server.dockerfile
+      context: docker
+      dockerfile: overlay.dockerfile
