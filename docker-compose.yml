@@ -2,19 +2,10 @@ version: '3'
 services:
   geotrellis-overlay:
     image: quay.io/geotrellis/server:latest
+    ports:
+      - "9000:9000"
     volumes:
       - $HOME/.aws:/root/.aws
     build:
       context: docker/overlay-demo
       dockerfile: server.dockerfile
-  nginx:
-    image: overlay-demo-static:latest
-    ports:
-      - "8888:80"
-    volumes:
-      - $HOME/.aws:/root/.aws
-    build:
-      context: docker/overlay-demo
-      dockerfile: nginx.dockerfile
-    links:
-      - geotrellis-overlay
