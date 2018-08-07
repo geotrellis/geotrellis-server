@@ -1,25 +1,11 @@
 version: '3'
 services:
-  geotrellis-server:
+  geotrellis-overlay:
     image: quay.io/geotrellis/server:latest
     ports:
       - "9000:9000"
-      - "9095:9095"
     volumes:
       - $HOME/.aws:/root/.aws
-    environment:
-      TEST_VAR: "env_var"
-      HTTP_PORT: 9000
-      HTTP_INTERFACE: "0.0.0.0"
     build:
-      context: docker/server
-      dockerfile: Dockerfile
-  prometheus:
-    image: prom/prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    links:
-      - geotrellis-server
-
+      context: docker/overlay-demo
+      dockerfile: server.dockerfile

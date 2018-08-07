@@ -14,10 +14,12 @@ object Dependencies {
   val cats              = "org.typelevel"                 %% "cats-core"            % "1.1.0"
   val catsEffect        = "org.typelevel"                 %% "cats-effect"          % "0.10.1"
   val circeCore         = "io.circe"                      %% "circe-core"           % circeVer
+  val circeShapes       = "io.circe"                      %% "circe-shapes"         % circeVer
   val circeGeneric      = "io.circe"                      %% "circe-generic"        % circeVer
   val circeOptics       = "io.circe"                      %% "circe-optics"         % circeVer
   val circeParser       = "io.circe"                      %% "circe-parser"         % circeVer
   val commonsIO         = "commons-io"                    %  "commons-io"           % "2.6"
+  val commonsLang       = "org.apache.commons"            %  "commons-lang3"        % "3.7"
   val concHashMap       = "com.googlecode.concurrentlinkedhashmap" % "concurrentlinkedhashmap-lru" % "1.4.2"
   val decline           = "com.monovore"                  %% "decline"              % "0.4.0"
   val geotrellisS3      = "org.locationtech.geotrellis"   %% "geotrellis-s3"        % gtVer
@@ -34,7 +36,7 @@ object Dependencies {
   val kamonSysMetrics   = "io.kamon"                      %% "kamon-system-metrics" % "1.0.0"
   val kindProjector     = "org.spire-math"                %% "kind-projector"       % "0.9.4"
   val logbackClassic    = "ch.qos.logback"                %  "logback-classic"      % "1.2.3"
-  val mamlJvm           = "com.azavea"                    %% "maml-jvm"             % "0.0.4-0fbf423"
+  val mamlJvm           = "com.azavea"                    %% "maml-jvm"             % "0.0.16"
   val pureConfig        = "com.github.pureconfig"         %% "pureconfig"           % "0.9.1"
   val scaffeine         = "com.github.blemale"            %% "scaffeine"            % "2.0.0"
   val scalaXml          = "org.scala-lang.modules"        %% "scala-xml"            % "1.1.0"

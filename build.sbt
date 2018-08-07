@@ -26,6 +26,7 @@ lazy val commonSettings = Seq(
     Resolver.bintrayRepo("bkirwi", "maven"), // Required for `decline` dependency
     Resolver.bintrayRepo("azavea", "maven"),
     Resolver.sonatypeRepo("releases"),
+    Resolver.sonatypeRepo("snapshots"),
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
     "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots"
   ),
@@ -33,6 +34,7 @@ lazy val commonSettings = Seq(
   addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
   fork := true,
+  test in assembly := {},
   assemblyMergeStrategy in assembly := {
     case "reference.conf" => MergeStrategy.concat
     case "application.conf" => MergeStrategy.concat
@@ -46,9 +48,8 @@ lazy val root =
   Project("root", file("."))
     .aggregate(
       core,
-      http4s
-    )
-    .settings(commonSettings: _*)
+      example
+    ).settings(commonSettings: _*)
 
 lazy val core =
   Project(id = "core", base = file("core"))
@@ -61,6 +62,7 @@ lazy val core =
         circeGeneric,
         circeParser,
         circeOptics,
+        circeShapes,
         geotrellisS3,
         geotrellisSpark,
         cats,
@@ -74,13 +76,13 @@ lazy val core =
       )
     )
 
-lazy val http4s =
-  Project(id = "http4s", base = file("http4s"))
+lazy val example =
+  Project(id = "example", base = file("example"))
     .settings(commonSettings: _*)
     .dependsOn(core)
     .settings(
-      name := "geotrellis-server-http4s",
-      assemblyJarName in assembly := "geotrellis-server-http4s.jar",
+      name := "geotrellis-server-example",
+      assemblyJarName in assembly := "geotrellis-server-example.jar",
       libraryDependencies ++= Seq(
         http4sDsl,
         http4sBlazeServer,
@@ -91,20 +93,12 @@ lazy val http4s =
         geotrellisS3,
         geotrellisSpark,
         decline,
-        cats,
         commonsIO,
         concHashMap,
-        kindProjector,
         pureConfig,
         typesafeLogging,
         logbackClassic,
-        kamonCore,
-        kamonSysMetrics,
-        kamonPrometheus,
-        kamonHttp4s,
-        scalatest,
-        tsecCommon,
-        tsecHttp4s
+        scalatest
       )
     )
 
