@@ -1,5 +1,6 @@
 package geotrellis.server.core.maml
 
+import geotrellis.server.core.maml.reification._
 import MamlTmsReification.ops._
 
 import com.azavea.maml.util.Vars

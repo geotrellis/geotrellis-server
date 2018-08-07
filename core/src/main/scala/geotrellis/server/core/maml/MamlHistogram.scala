@@ -1,6 +1,8 @@
 package geotrellis.server.core.maml
 
-import metadata._
+import geotrellis.server.core.maml.reification._
+import MamlExtentReification.ops._
+import geotrellis.server.core.maml.metadata._
 import HasRasterExtents.ops._
 
 import com.azavea.maml.util.Vars

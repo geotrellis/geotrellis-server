@@ -1,4 +1,4 @@
-package geotrellis.server.core.maml
+package geotrellis.server.core.maml.reification
 
 import geotrellis.vector.Extent
 import com.azavea.maml.ast.{Literal, MamlKind}

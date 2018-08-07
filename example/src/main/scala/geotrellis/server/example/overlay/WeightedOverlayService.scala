@@ -1,7 +1,9 @@
 package geotrellis.server.example.overlay
 
-import geotrellis.server.core.maml._
+import geotrellis.server.core.maml.{MamlTms, MamlHistogram}
+import geotrellis.server.core.maml.persistence._
 import MamlStore.ops._
+import geotrellis.server.core.maml.reification._
 import MamlTmsReification.ops._
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
@@ -91,6 +93,9 @@ class WeightedOverlayService(
 
   def routes: HttpService[IO] = HttpService[IO] {
     // Handle the static files for this demo
+    case request @ GET -> Root =>
+      StaticFile.fromResource("/overlay-demo/index.html", Some(request)).getOrElseF(NotFound())
+
     case request @ GET -> Root / path if List(".js", ".css", ".map", ".html", ".webm").exists(path.endsWith) =>
       StaticFile.fromResource("/overlay-demo/" + path, Some(request)).getOrElseF(NotFound())
 

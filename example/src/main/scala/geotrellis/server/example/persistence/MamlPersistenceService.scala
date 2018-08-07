@@ -1,7 +1,9 @@
 package geotrellis.server.example.persistence
 
-import geotrellis.server.core.maml.{MamlStore, MamlTmsReification}
+import geotrellis.server.core.maml.persistence._
 import MamlStore.ops._
+import geotrellis.server.core.maml.reification._
+import MamlTmsReification.ops._
 
 import com.azavea.maml.util.Vars
 import com.azavea.maml.ast.Expression
