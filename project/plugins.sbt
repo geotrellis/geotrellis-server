@@ -8,3 +8,5 @@ addSbtPlugin("pl.project13.scala" % "sbt-jmh" % "0.2.27")
 
 addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7")
 
+addSbtPlugin("io.get-coursier" % "sbt-coursier" % "1.0.3")
+
