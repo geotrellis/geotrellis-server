@@ -1,8 +1,9 @@
 package geotrellis.server.example.overlay
 
+import geotrellis.server.core.maml.reification._
+import geotrellis.server.core.maml.metadata._
+import HasRasterExtents.ops._
 import geotrellis.server.core.cog.CogUtils
-import geotrellis.server.core.maml._
-import geotrellis.server.core.maml.metadata.HasRasterExtents
 
 import com.azavea.maml.ast.{Expression, Literal, MamlKind, RasterLit}
 import com.azavea.maml.eval.tile._

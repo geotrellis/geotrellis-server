@@ -1,6 +1,10 @@
 package geotrellis.server.example.ndvi
 
-import geotrellis.server.core.maml._
+import geotrellis.server.core.maml.{MamlTms, MamlHistogram}
+import geotrellis.server.core.maml.persistence._
+import MamlStore.ops._
+import geotrellis.server.core.maml.reification._
+import MamlTmsReification.ops._
 
 import com.azavea.maml.util.Vars
 import com.azavea.maml.ast._

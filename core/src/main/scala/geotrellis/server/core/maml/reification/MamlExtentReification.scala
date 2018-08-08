@@ -1,4 +1,4 @@
-package geotrellis.server.core.maml
+package geotrellis.server.core.maml.reification
 
 import geotrellis.raster.CellSize
 import geotrellis.vector.Extent

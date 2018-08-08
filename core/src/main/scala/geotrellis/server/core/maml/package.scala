@@ -1,5 +1,7 @@
 package geotrellis.server.core
 
+import geotrellis.server.core.maml.persistence._
+
 import com.azavea.maml.ast.Expression
 import cats._
 import cats.effect.IO

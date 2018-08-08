@@ -1,6 +1,8 @@
 package geotrellis.server.core.maml
 
+import geotrellis.server.core.maml.persistence._
 import geotrellis.server.core.maml.metadata._
+import geotrellis.server.core.maml.reification._
 
 import geotrellis.server.core.cog.CogUtils
 
