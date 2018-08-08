@@ -46,7 +46,7 @@ object OverlayServer extends StreamApp[IO] with LazyLogging with Http4sDsl[IO] {
   def stream(args: List[String], requestShutdown: IO[Unit]): Stream[IO, ExitCode] = {
     for {
       conf       <- Stream.eval(LoadConf().as[ExampleConf])
-      _          <- Stream.eval(IO.pure(logger.info(s"Initializing Weighted Overlay at ${conf.http.interface}:${conf.http.port}/maml/overlay")))
+      _          <- Stream.eval(IO.pure(logger.info(s"Initializing Weighted Overlay at ${conf.http.interface}:${conf.http.port}/")))
       weightedOverlay = new WeightedOverlayService()
       exitCode   <- BlazeBuilder[IO]
         .enableHttp2(true)
