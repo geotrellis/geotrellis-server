@@ -1,7 +1,6 @@
 // GLOBAL STATE/MANAGEMENT FUNCS
 var cogForms = [];
 var MAX_COGS = 5;
-var BASE_URL = "http://localhost:9000/"
 var APP_ID;
 var overlayLayer;
 
@@ -138,7 +137,7 @@ function CogForm(uri, band, weight, id) {
 }
 
 function generateTms() {
-  return L.tileLayer(BASE_URL + APP_ID + "/{z}/{x}/{y}.png?dummy=" + guid())
+  return L.tileLayer(APP_ID + "/{z}/{x}/{y}.png?dummy=" + guid())
 }
 
 function initFromJson(json) {
@@ -179,7 +178,7 @@ $(window).ready(function() {
     localStorage.setItem("cog-json", json);
     $.ajax({
       type: "POST",
-      url: BASE_URL + APP_ID,
+      url: APP_ID,
       data: json
     });
 

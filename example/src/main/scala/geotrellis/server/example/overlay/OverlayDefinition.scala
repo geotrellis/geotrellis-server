@@ -32,7 +32,7 @@ object OverlayDefinition {
 
       def tmsReification(self: OverlayDefinition, buffer: Int)(implicit t: Timer[IO]): (Int, Int, Int) => IO[Literal] =
         (z: Int, x: Int, y: Int) => {
-          CogUtils.fetch(self.uri.toString, z, x, y).map(_.band(self.band - 1)).map { tile =>
+          CogUtils.fetch(self.uri.toString, z, x, y).map(_.tile.band(self.band - 1)).map { tile =>
             val extent = CogUtils.tmsLevels(z).mapTransform.keyToExtent(x, y)
             RasterLit(Raster(tile, extent))
           }
