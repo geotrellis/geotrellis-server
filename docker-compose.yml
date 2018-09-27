@@ -17,7 +17,7 @@ services:
       - $HOME/.aws:/root/.aws
     build:
       context: docker
-      dockerfile: overlay.dockerfile
+      dockerfile: persistence.dockerfile
   ndvi-example:
     image: quay.io/geotrellis/server:latest
     ports:
@@ -26,5 +26,5 @@ services:
       - $HOME/.aws:/root/.aws
     build:
       context: docker
-      dockerfile: overlay.dockerfile
+      dockerfile: ndvi.dockerfile
 
