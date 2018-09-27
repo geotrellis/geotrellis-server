@@ -67,4 +67,3 @@ make runNdviExample
 
 Lookee here, NDVI demo
 
-### Structure:
