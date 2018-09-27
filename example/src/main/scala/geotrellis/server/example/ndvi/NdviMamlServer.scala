@@ -48,7 +48,7 @@ object NdviMamlServer extends StreamApp[IO] with LazyLogging with Http4sDsl[IO] 
     for {
       conf       <- Stream.eval(LoadConf().as[ExampleConf])
       _          <- Stream.eval(IO.pure(logger.info(s"Initializing Weighted Overlay at ${conf.http.interface}:${conf.http.port}/maml/overlay")))
-      mamlNdviRendering = new ExampleNdviMamlService[CogNode]()
+      mamlNdviRendering = new NdviMamlService[CogNode]()
       exitCode   <- BlazeBuilder[IO]
         .enableHttp2(true)
         .bindHttp(conf.http.port, conf.http.interface)

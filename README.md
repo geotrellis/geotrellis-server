@@ -1,18 +1,45 @@
 # GeoTrellis Server
 
-A set of components for conveniently serving raster data from arbitrary
-sources. This library enables complex workflows which result in
-TMS-based (z, x, y) and extent-based products. Throughout the library,
-MAML ([Map Algebra Modeling Language](https://github.com/geotrellis/maml/))
-serves as the Lingua Franca - generating an endpoint which returns imagery
-takes the form of specifying one of
-1. a MAML expression + the arguments which complement it
-2. a way of producing MAML expressions based on provided arguments
-3. a MAML expression to evaluate (once bound with arguments)
+A set of components designed to simplify serving raster data from
+arbitrary sources. This library enables complex workflows which
+result in TMS-based (z, x, y) and extent-based products.
+
+In addition to providing a story about how sources of imagery can be displayed
+or returned, this project aims to ease the creation of dynamic,
+responsive layers whose transformations can be described in MAML
+([Map Algebra Modeling Language](https://github.com/geotrellis/maml/)).
+
 
 ## Getting started
 
-### Running geotrellis-server
+### Running an example geotrellis-server
+
+Three example servers are available which can be run through the provided
+makefile.
+
+1. WeightedOverlayServer
+  * zooba zooba
+  * More stuff
+2. MamlPersistenceServer
+  * details
+  * facts
+3. NdviMamlServer
+  * what about this?
+  * did you consider that?
+
+To run an example:
+```bash
+make runOverlayExample
+```
+
+```bash
+make runPersistenceExample
+```
+
+```bash
+make runNdviExample
+```
+
 
 ### Structure:
 
@@ -32,3 +59,11 @@ takes the form of specifying one of
 ### Distribution
 - Publish a generic server example that can actually be useful? Maybe one
   that assumes GT avro layers?
+
+
+
+### ????
+1. a MAML expression + the arguments which complement it
+2. a way of producing MAML expressions based on provided arguments
+3. a MAML expression to evaluate (once bound with arguments)
+

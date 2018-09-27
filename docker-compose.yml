@@ -1,6 +1,6 @@
 version: '3'
 services:
-  geotrellis-overlay:
+  overlay-example:
     image: quay.io/geotrellis/server:latest
     ports:
       - "9000:9000"
@@ -9,3 +9,22 @@ services:
     build:
       context: docker
       dockerfile: overlay.dockerfile
+  persistence-example:
+    image: quay.io/geotrellis/server:latest
+    ports:
+      - "9000:9000"
+    volumes:
+      - $HOME/.aws:/root/.aws
+    build:
+      context: docker
+      dockerfile: overlay.dockerfile
+  ndvi-example:
+    image: quay.io/geotrellis/server:latest
+    ports:
+      - "9000:9000"
+    volumes:
+      - $HOME/.aws:/root/.aws
+    build:
+      context: docker
+      dockerfile: overlay.dockerfile
+

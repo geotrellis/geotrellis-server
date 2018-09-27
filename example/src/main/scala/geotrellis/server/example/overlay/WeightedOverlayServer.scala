@@ -29,7 +29,7 @@ import scala.collection.mutable
 import java.util.UUID
 
 
-object OverlayServer extends StreamApp[IO] with LazyLogging with Http4sDsl[IO] {
+object WeightedOverlayServer extends StreamApp[IO] with LazyLogging with Http4sDsl[IO] {
 
   implicit val contextShift: ContextShift[IO] = IO.contextShift(global)
 
