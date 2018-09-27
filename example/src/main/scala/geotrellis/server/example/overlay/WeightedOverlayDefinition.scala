@@ -19,16 +19,16 @@ import geotrellis.proj4.CRS
 import geotrellis.vector.Extent
 
 
-case class OverlayDefinition(uri: String, band: Int, weight: Double)
+case class WeightedOverlayDefinition(uri: String, band: Int, weight: Double)
 
-object OverlayDefinition {
-  implicit val olDecoder: Decoder[OverlayDefinition] = deriveDecoder
-  implicit val olEncoder: Encoder[OverlayDefinition] = deriveEncoder
+object WeightedOverlayDefinition {
+  implicit val olDecoder: Decoder[WeightedOverlayDefinition] = deriveDecoder
+  implicit val olEncoder: Encoder[WeightedOverlayDefinition] = deriveEncoder
 
 
-  implicit val overlayTmsDefinitionReification: MamlTmsReification[OverlayDefinition] =
-    new MamlTmsReification[OverlayDefinition] {
-      def kind(self: OverlayDefinition): MamlKind = MamlKind.Tile
+  implicit val overlayTmsDefinitionReification: MamlTmsReification[WeightedOverlayDefinition] =
+    new MamlTmsReification[WeightedOverlayDefinition] {
+      def kind(self: WeightedOverlayDefinition): MamlKind = MamlKind.Tile
 
       def tmsReification(self: OverlayDefinition, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[Literal] =
         (z: Int, x: Int, y: Int) => {
@@ -39,9 +39,9 @@ object OverlayDefinition {
         }
     }
 
-  implicit val overlayExtentDefinitionReification: MamlExtentReification[OverlayDefinition] =
-    new MamlExtentReification[OverlayDefinition] {
-      def kind(self: OverlayDefinition): MamlKind = MamlKind.Tile
+  implicit val overlayExtentDefinitionReification: MamlExtentReification[WeightedOverlayDefinition] =
+    new MamlExtentReification[WeightedOverlayDefinition] {
+      def kind(self: WeightedOverlayDefinition): MamlKind = MamlKind.Tile
 
       def extentReification(self: OverlayDefinition)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] =
         (extent: Extent, cs: CellSize) => {

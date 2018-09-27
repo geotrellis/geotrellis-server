@@ -48,7 +48,7 @@ class WeightedOverlayService(
     }
   }
 
-  implicit val expressionDecoder = jsonOf[IO, Map[String, OverlayDefinition]]
+  implicit val expressionDecoder = jsonOf[IO, Map[String, WeightedOverlayDefinition]]
 
   val demoStore: ConcurrentLinkedHashMap[UUID, Json] = new ConcurrentLinkedHashMap.Builder[UUID, Json]()
     .maximumWeightedCapacity(100)
@@ -63,7 +63,7 @@ class WeightedOverlayService(
     .map { case (r, g, b) => RGBA(r, g, b, 50.0) }
 
   // Make the expression to evaluate based on input parameters
-  def mkExpression(defs: Map[String, OverlayDefinition]): Expression = {
+  def mkExpression(defs: Map[String, WeightedOverlayDefinition]): Expression = {
     def adjustedWeight(weight: Double) = if (weight == 0) 1.0 else weight * 2
     val weighted: List[Expression] = defs.map({ case(id, overlayDefinition) =>
       Multiplication(List(RasterVar(id.toString), DblLit(adjustedWeight(overlayDefinition.weight))).toList)
@@ -77,7 +77,7 @@ class WeightedOverlayService(
 
   // Grab the stored eval parameters
   def getParams(id: UUID) =
-    IO { Option(demoStore.get(id)).flatMap(_.as[Map[String,OverlayDefinition]].toOption).get }
+    IO { Option(demoStore.get(id)).flatMap(_.as[Map[String, WeightedOverlayDefinition]].toOption).get }
       .recoverWith({ case _: NoSuchElementException => throw MamlStore.ExpressionNotFound(id) })
 
   // Dead simple caching to share histograms across requests
@@ -101,7 +101,7 @@ class WeightedOverlayService(
 
     case req @ POST -> Root / IdVar(key) =>
       (for {
-         args <- req.as[Map[String, OverlayDefinition]]
+         args <- req.as[Map[String, WeightedOverlayDefinition]]
          _    <- req.bodyAsText.compile.toList flatMap { reqBody =>
                    IO.pure(logger.info(s"Attempting to store expression (${reqBody.mkString("")}) at key ($key)"))
                  }

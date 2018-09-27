@@ -28,7 +28,7 @@ import scala.collection.mutable
 import java.util.UUID
 
 
-object NdviMamlServer extends StreamApp[IO] with LazyLogging with Http4sDsl[IO] {
+object NdviServer extends StreamApp[IO] with LazyLogging with Http4sDsl[IO] {
 
   implicit val contextShift: ContextShift[IO] = IO.contextShift(global)
 
@@ -48,7 +48,7 @@ object NdviMamlServer extends StreamApp[IO] with LazyLogging with Http4sDsl[IO] 
     for {
       conf       <- Stream.eval(LoadConf().as[ExampleConf])
       _          <- Stream.eval(IO.pure(logger.info(s"Initializing Weighted Overlay at ${conf.http.interface}:${conf.http.port}/maml/overlay")))
-      mamlNdviRendering = new NdviMamlService[CogNode]()
+      mamlNdviRendering = new NdviService[CogNode]()
       exitCode   <- BlazeBuilder[IO]
         .enableHttp2(true)
         .bindHttp(conf.http.port, conf.http.interface)

@@ -17,28 +17,32 @@ responsive layers whose transformations can be described in MAML
 Three example servers are available which can be run through the provided
 makefile.
 
-1. WeightedOverlayServer
-  * zooba zooba
-  * More stuff
-2. MamlPersistenceServer
-  * details
-  * facts
-3. NdviMamlServer
-  * what about this?
-  * did you consider that?
+#### WeightedOverlayServer
 
-To run an example:
 ```bash
 make runOverlayExample
 ```
+
+Blah blah blah
+
+Zim zoom zah
+
+#### PersistenceServer
 
 ```bash
 make runPersistenceExample
 ```
 
+Some words. Describing things
+
+#### NdviServer
+
 ```bash
 make runNdviExample
 ```
+
+Lookee here, NDVI demo
+
 
 
 ### Structure:
@@ -61,9 +65,9 @@ make runNdviExample
   that assumes GT avro layers?
 
 
-
 ### ????
 1. a MAML expression + the arguments which complement it
 2. a way of producing MAML expressions based on provided arguments
 3. a MAML expression to evaluate (once bound with arguments)
+
 

@@ -29,7 +29,7 @@ import scala.util.Try
 import scala.collection.mutable
 
 
-class MamlPersistenceService[Store, Param](
+class PersistenceService[Store, Param](
   val store: Store
 )(implicit contextShift: ContextShift[IO],
            ms: MamlStore[Store],
