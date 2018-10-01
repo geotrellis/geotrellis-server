@@ -79,7 +79,7 @@ object MamlHistogram extends LazyLogging {
       params           <- getParams
       rasterExtents    <- NEL.fromListUnsafe(params.values.toList)
                             .map(_.rasterExtents)
-                            .sequence
+                            .parSequence
                             .map(_.flatten)
       intersection     <- IO { rasterExtents.foldLeft(Option.empty[Extent])({ (mbExtent, re) =>
                             mbExtent match {

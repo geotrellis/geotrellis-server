@@ -52,7 +52,7 @@ object CogNode {
         .map(_.band(self.band))
       (fetch(x - 1, y + 1), fetch(x, y + 1), fetch(x + 1, y + 1),
        fetch(x - 1, y),     fetch(x, y),     fetch(x + 1, y),
-       fetch(x - 1, y - 1), fetch(x, y - 1), fetch(x + 1, y - 1)).mapN { (tl, tm, tr, ml, mm, mr, bl, bm, br) =>
+       fetch(x - 1, y - 1), fetch(x, y - 1), fetch(x + 1, y - 1)).parMapN { (tl, tm, tr, ml, mm, mr, bl, bm, br) =>
         val tile = TileWithNeighbors(mm, Some(NeighboringTiles(tl, tm, tr, ml, mr,bl, bm, br))).withBuffer(buffer)
         val extent = CogUtils.tmsLevels(z).mapTransform.keyToExtent(x, y)
         RasterLit(Raster(tile, extent))
