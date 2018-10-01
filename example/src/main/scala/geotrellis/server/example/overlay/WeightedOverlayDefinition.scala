@@ -30,7 +30,7 @@ object WeightedOverlayDefinition {
     new MamlTmsReification[WeightedOverlayDefinition] {
       def kind(self: WeightedOverlayDefinition): MamlKind = MamlKind.Tile
 
-      def tmsReification(self: OverlayDefinition, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[Literal] =
+      def tmsReification(self: WeightedOverlayDefinition, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[Literal] =
         (z: Int, x: Int, y: Int) => {
           CogUtils.fetch(self.uri.toString, z, x, y).map(_.tile.band(self.band - 1)).map { tile =>
             val extent = CogUtils.tmsLevels(z).mapTransform.keyToExtent(x, y)
@@ -43,7 +43,7 @@ object WeightedOverlayDefinition {
     new MamlExtentReification[WeightedOverlayDefinition] {
       def kind(self: WeightedOverlayDefinition): MamlKind = MamlKind.Tile
 
-      def extentReification(self: OverlayDefinition)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] =
+      def extentReification(self: WeightedOverlayDefinition)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] =
         (extent: Extent, cs: CellSize) => {
           CogUtils.getTiff(self.uri.toString)
             .map { CogUtils.cropGeoTiffToTile(_, extent, cs, self.band - 1) }
@@ -51,12 +51,12 @@ object WeightedOverlayDefinition {
         }
     }
 
-  implicit val overlayDefinitionRasterExtents: HasRasterExtents[OverlayDefinition] = new HasRasterExtents[OverlayDefinition] {
-    def rasterExtents(self: OverlayDefinition)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] =
+  implicit val overlayDefinitionRasterExtents: HasRasterExtents[WeightedOverlayDefinition] = new HasRasterExtents[WeightedOverlayDefinition] {
+    def rasterExtents(self: WeightedOverlayDefinition)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] =
       CogUtils.getTiff(self.uri.toString).map { tiff =>
         NEL(tiff.rasterExtent, tiff.overviews.map(_.rasterExtent))
       }
-    def crs(self: OverlayDefinition)(implicit contextShift: ContextShift[IO]): IO[CRS] =
+    def crs(self: WeightedOverlayDefinition)(implicit contextShift: ContextShift[IO]): IO[CRS] =
       CogUtils.getTiff(self.uri.toString).map { tiff =>
         tiff.crs
       }

@@ -28,3 +28,15 @@ services:
       context: docker
       dockerfile: ndvi.dockerfile
 
+  server-microsite:
+    image: quay.io/geotrellis/server-microsite:latest
+    command: bash -c "cd /root/geotrellis-server/docs/target/site && jekyll serve --host 0.0.0.0"
+    ports:
+      - "4000:4000"
+    volumes:
+      - $HOME/.sbt:/root/.sbt
+      - $HOME/.ivy2:/root/.ivy2
+      - ./:/root/geotrellis-server
+    build:
+      context: docker
+      dockerfile: microsite.dockerfile

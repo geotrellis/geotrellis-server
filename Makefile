@@ -1,7 +1,7 @@
-COMMIT=$(shell git rev-parse --short HEAD)
-
 clean:
 	sbt "project example" clean
+	touch docker/geotrellis-server-example.jar
+	rm docker/geotrellis-server-example.jar
 
 docker/geotrellis-server-example.jar:
 	sbt "project example" assembly
@@ -13,14 +13,18 @@ rebuild:
 	ln -f example/target/scala-2.11/geotrellis-server-example.jar docker/geotrellis-server-example.jar
 	docker-compose build
 
-runOverlayExample: docker/geotrellis-server-example.jar
-	docker-compose run overlay-example
+serveOverlayExample: docker/geotrellis-server-example.jar
+	docker-compose run --service-ports overlay-example
 
-runPersistenceExample: docker/geotrellis-server-example.jar
-	docker-compose run persistence-example
+servePersistenceExample: docker/geotrellis-server-example.jar
+	docker-compose run --service-ports persistence-example
 
-runNdviExample: docker/geotrellis-server-example.jar
-	docker-compose run ndvi-example
+serveNdviExample: docker/geotrellis-server-example.jar
+	docker-compose run --service-ports ndvi-example
+
+serveDocs:
+	docker-compose run server-microsite bash -c "cd /root/geotrellis-server && sbt 'project docs' makeMicrosite"
+	docker-compose run --service-ports server-microsite
 
 test:
 	sbt test
