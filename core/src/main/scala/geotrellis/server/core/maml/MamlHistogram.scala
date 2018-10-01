@@ -73,7 +73,7 @@ object MamlHistogram extends LazyLogging {
     implicit reify: MamlExtentReification[Param],
              extended: HasRasterExtents[Param],
              enc: Encoder[Param],
-             t: Timer[IO]
+             contextShift: ContextShift[IO]
   ): IO[Interpreted[Histogram[Double]]] =
     for {
       params           <- getParams
@@ -104,7 +104,7 @@ object MamlHistogram extends LazyLogging {
     implicit reify: MamlExtentReification[Param],
              extended: HasRasterExtents[Param],
              enc: Encoder[Param],
-             t: Timer[IO]
+             contextShift: ContextShift[IO]
   ) = apply[Param](getParams.map(mkExpr(_)), getParams, interpreter, maxCells)
 
 
@@ -117,7 +117,7 @@ object MamlHistogram extends LazyLogging {
     implicit reify: MamlExtentReification[Param],
              extended: HasRasterExtents[Param],
              enc: Encoder[Param],
-             t: Timer[IO]
+             contextShift: ContextShift[IO]
   ): (Map[String, Param]) => IO[Interpreted[Histogram[Double]]] =
     (paramMap: Map[String, Param]) => {
       apply[Param](IO.pure(expr), IO.pure(paramMap), interpreter, maxCells)
@@ -132,7 +132,7 @@ object MamlHistogram extends LazyLogging {
     implicit reify: MamlExtentReification[Param],
              extended: HasRasterExtents[Param],
              enc: Encoder[Param],
-             t: Timer[IO]
+             contextShift: ContextShift[IO]
   ) = curried(RasterVar("identity"), interpreter, maxCells)
 
 }

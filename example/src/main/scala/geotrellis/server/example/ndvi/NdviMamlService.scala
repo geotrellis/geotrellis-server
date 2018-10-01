@@ -33,7 +33,7 @@ import scala.collection.mutable
 
 class ExampleNdviMamlService[Param](
   interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
-)(implicit t: Timer[IO],
+)(implicit contextShift: ContextShift[IO],
            enc: Encoder[Param],
            dec: Decoder[Param],
            mr: MamlTmsReification[Param]) extends Http4sDsl[IO] with LazyLogging {

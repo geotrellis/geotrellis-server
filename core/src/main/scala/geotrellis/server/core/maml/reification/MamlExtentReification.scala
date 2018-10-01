@@ -13,6 +13,6 @@ import java.util.UUID
 
 @typeclass trait MamlExtentReification[A] {
   @op("kind") def kind(self: A): MamlKind
-  @op("extentReification") def extentReification(self: A)(implicit t: Timer[IO]): (Extent, CellSize) => IO[Literal]
+  @op("extentReification") def extentReification(self: A)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal]
 }
 

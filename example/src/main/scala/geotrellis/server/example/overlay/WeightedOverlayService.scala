@@ -36,7 +36,7 @@ import scala.collection.mutable
 
 class WeightedOverlayService(
   interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
-)(implicit t: Timer[IO]) extends Http4sDsl[IO] with LazyLogging {
+)(implicit contextShift: ContextShift[IO]) extends Http4sDsl[IO] with LazyLogging {
 
   // Unapply to handle UUIDs on path
   object IdVar {
