@@ -15,9 +15,9 @@ responsive layers whose transformations can be described in MAML
 ### Including Geotrellis Server
 
 Current version:
- - 0.16
+ - 0.0.2
 
-`libraryDependencies += "com.azavea" %% "geotrellis-server-core" % 0.16`
+`libraryDependencies += "com.azavea" %% "geotrellis-server-core" % "0.0.2"`
 
 
 ### Running an example
