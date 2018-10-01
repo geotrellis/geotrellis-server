@@ -29,7 +29,7 @@ object MamlTms extends LazyLogging {
   )(
     implicit reify: MamlTmsReification[Param],
              enc: Encoder[Param],
-             t: Timer[IO]
+             contextShift: ContextShift[IO]
   ): (Int, Int, Int) => IO[Interpreted[Tile]] = (z: Int, x: Int, y: Int) => {
     for {
       expr             <- getExpression
@@ -37,8 +37,8 @@ object MamlTms extends LazyLogging {
       paramMap         <- getParams
       _                <- IO.pure(logger.info(s"Retrieved parameters for TMS ($z, $x, $y): ${paramMap.asJson.noSpaces}"))
       vars             <- IO.pure { Vars.varsWithBuffer(expr) }
-      params           <- vars.toList.parTraverse { case (varName, (_, buffer)) =>
-                            paramMap(varName).tmsReification(buffer)(t)(z, x, y).map(varName -> _)
+      params           <- vars.toList.traverse { case (varName, (_, buffer)) =>
+                            paramMap(varName).tmsReification(buffer)(contextShift)(z, x, y).map(varName -> _)
                           } map { _.toMap }
       reified          <- IO.pure { Expression.bindParams(expr, params) }
     } yield reified.andThen(interpreter(_)).andThen(_.as[Tile])
@@ -55,8 +55,8 @@ object MamlTms extends LazyLogging {
   )(
     implicit reify: MamlTmsReification[Param],
              enc: Encoder[Param],
-             t: Timer[IO]
-  ) = apply[Param](getParams.map(mkExpr(_)), getParams, interpreter)(reify, enc, t)
+             contextShift: ContextShift[IO]
+  ) = apply[Param](getParams.map(mkExpr(_)), getParams, interpreter)(reify, enc, contextShift)
 
 
   /** Provide an expression and expect arguments to fulfill its needs */
@@ -66,10 +66,10 @@ object MamlTms extends LazyLogging {
   )(
     implicit reify: MamlTmsReification[Param],
              enc: Encoder[Param],
-             t: Timer[IO]
+             contextShift: ContextShift[IO]
   ): (Map[String, Param], Int, Int, Int) => IO[Interpreted[Tile]] =
     (paramMap: Map[String, Param], z: Int, x: Int, y: Int) => {
-      apply[Param](IO.pure(expr), IO.pure(paramMap), interpreter)(reify, enc, t)(z, x, y)
+      apply[Param](IO.pure(expr), IO.pure(paramMap), interpreter)(reify, enc, contextShift)(z, x, y)
     }
 
 
@@ -79,7 +79,7 @@ object MamlTms extends LazyLogging {
   )(
     implicit reify: MamlTmsReification[Param],
              enc: Encoder[Param],
-             t: Timer[IO]
+             contextShift: ContextShift[IO]
   ) = curried(RasterVar("identity"), interpreter)
 
 }

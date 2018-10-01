@@ -31,7 +31,7 @@ import scala.collection.mutable
 
 class MamlPersistenceService[Store, Param](
   val store: Store
-)(implicit t: Timer[IO],
+)(implicit contextShift: ContextShift[IO],
            ms: MamlStore[Store],
            pd: Decoder[Param],
            mr: MamlTmsReification[Param]) extends Http4sDsl[IO] with LazyLogging {

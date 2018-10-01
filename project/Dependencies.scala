@@ -2,7 +2,7 @@ import sbt._
 
 object Dependencies {
 
-  val circeVer         = "0.10.0-M1"
+  val circeVer         = "0.10.0"
   val gtVer            = "2.0.0"
   val gtServerVer      = "0.1.0"
   val http4sVer        = "0.18.12"
@@ -11,8 +11,8 @@ object Dependencies {
 
   //val kamonZipkin       = "io.kamon"                      %% "kamon-zipkin"         % "1.0.1"
   val caffeine          = "com.github.ben-manes.caffeine" %  "caffeine"             % "2.3.5"
-  val cats              = "org.typelevel"                 %% "cats-core"            % "1.1.0"
-  val catsEffect        = "org.typelevel"                 %% "cats-effect"          % "0.10.1"
+  val cats              = "org.typelevel"                 %% "cats-core"            % "1.3.1"
+  val catsEffect        = "org.typelevel"                 %% "cats-effect"          % "1.0.0"
   val circeCore         = "io.circe"                      %% "circe-core"           % circeVer
   val circeShapes       = "io.circe"                      %% "circe-shapes"         % circeVer
   val circeGeneric      = "io.circe"                      %% "circe-generic"        % circeVer

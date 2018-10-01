@@ -30,7 +30,7 @@ object OverlayDefinition {
     new MamlTmsReification[OverlayDefinition] {
       def kind(self: OverlayDefinition): MamlKind = MamlKind.Tile
 
-      def tmsReification(self: OverlayDefinition, buffer: Int)(implicit t: Timer[IO]): (Int, Int, Int) => IO[Literal] =
+      def tmsReification(self: OverlayDefinition, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[Literal] =
         (z: Int, x: Int, y: Int) => {
           CogUtils.fetch(self.uri.toString, z, x, y).map(_.tile.band(self.band - 1)).map { tile =>
             val extent = CogUtils.tmsLevels(z).mapTransform.keyToExtent(x, y)
@@ -43,7 +43,7 @@ object OverlayDefinition {
     new MamlExtentReification[OverlayDefinition] {
       def kind(self: OverlayDefinition): MamlKind = MamlKind.Tile
 
-      def extentReification(self: OverlayDefinition)(implicit t: Timer[IO]): (Extent, CellSize) => IO[Literal] =
+      def extentReification(self: OverlayDefinition)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] =
         (extent: Extent, cs: CellSize) => {
           CogUtils.getTiff(self.uri.toString)
             .map { CogUtils.cropGeoTiffToTile(_, extent, cs, self.band - 1) }
@@ -52,11 +52,11 @@ object OverlayDefinition {
     }
 
   implicit val overlayDefinitionRasterExtents: HasRasterExtents[OverlayDefinition] = new HasRasterExtents[OverlayDefinition] {
-    def rasterExtents(self: OverlayDefinition)(implicit t: Timer[IO]): IO[NEL[RasterExtent]] =
+    def rasterExtents(self: OverlayDefinition)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] =
       CogUtils.getTiff(self.uri.toString).map { tiff =>
         NEL(tiff.rasterExtent, tiff.overviews.map(_.rasterExtent))
       }
-    def crs(self: OverlayDefinition)(implicit t: Timer[IO]): IO[CRS] =
+    def crs(self: OverlayDefinition)(implicit contextShift: ContextShift[IO]): IO[CRS] =
       CogUtils.getTiff(self.uri.toString).map { tiff =>
         tiff.crs
       }
