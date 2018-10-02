@@ -29,7 +29,7 @@ import scala.collection.mutable
 import java.util.UUID
 
 
-object MamlPersistenceServer extends StreamApp[IO] with LazyLogging with Http4sDsl[IO] {
+object PersistenceServer extends StreamApp[IO] with LazyLogging with Http4sDsl[IO] {
 
   implicit val contextShift: ContextShift[IO] = IO.contextShift(global)
 
@@ -53,7 +53,7 @@ object MamlPersistenceServer extends StreamApp[IO] with LazyLogging with Http4sD
       mamlStore = new ConcurrentLinkedHashMap.Builder[UUID, Expression]()
                     .maximumWeightedCapacity(1000)
                     .build();
-      mamlPersistence = new MamlPersistenceService[HashMapMamlStore, CogNode](mamlStore)
+      mamlPersistence = new PersistenceService[HashMapMamlStore, CogNode](mamlStore)
       exitCode   <- BlazeBuilder[IO]
         .enableHttp2(true)
         .bindHttp(conf.http.port, conf.http.interface)

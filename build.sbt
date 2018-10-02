@@ -6,7 +6,8 @@ scalaVersion in ThisBuild := scalaVer
 
 lazy val commonSettings = Seq(
   organization := "com.azavea",
-  version := gtServerVer,
+  version := "0.0.2",
+  licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
   cancelable in Global := true,
   scalaVersion := scalaVer,
   scalacOptions := Seq(
@@ -46,7 +47,18 @@ lazy val commonSettings = Seq(
   }
 )
 
+lazy val publishSettings = Seq(
+  bintrayOrganization := Some("azavea"),
+  bintrayRepository := "geotrellis",
+  bintrayVcsUrl := Some("https://github.com/geotrellis/geotrellis-server.git"),
+  publishMavenStyle := true,
+  publishArtifact in Test := false,
+  pomIncludeRepository := { _ => false },
+  homepage := Some(url("https://geotrellis.github.io/geotrellis-server"))
+)
+
 lazy val noPublishSettings = Seq(
+  skip in publish := true,
   publish := {},
   publishLocal := {},
   publishArtifact := false
@@ -56,15 +68,22 @@ lazy val docsMappingsAPIDir = settingKey[String]("Name of subdirectory in site t
 
 
 lazy val docSettings = Seq(
-  micrositeName := "GT Server",
-  micrositeDescription := "Map Algebra Model Language",
-  micrositeAuthor := "GeoTrellis Team at Azavea",
+  micrositeName := "GeoTrellis Server",
+  micrositeDescription := "Expressive, modular, raster processing pipelines",
+  micrositeAuthor := "the GeoTrellis team at Azavea",
   micrositeGitterChannel := false,
   micrositeOrganizationHomepage := "https://www.azavea.com/",
   micrositeGithubOwner := "geotrellis",
   micrositeGithubRepo := "geotrellis-server",
-  micrositeBaseUrl := "/gtserve",
-  micrositeDocumentationUrl := "/gtserve/latest/api",
+  micrositeBaseUrl := "/gtserver",
+  micrositeDocumentationUrl := "/gtserver/latest/api",
+  micrositeExtraMdFiles := Map(
+    file("README.md") -> ExtraMdFileConfig(
+      "index.md",
+      "home",
+      Map("title" -> "Home", "section" -> "home", "position" -> "0")
+    )
+  ),
   micrositeFooterText := Some(
     """
       |<p>© 2017 <a href="https://geotrellis.io/">GeoTrellis</a></p>
@@ -81,6 +100,7 @@ lazy val root = project.in(file("."))
 lazy val core = project
   .settings(moduleName := "geotrellis-server-core")
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     assemblyJarName in assembly := "geotrellis-server-core.jar",
     libraryDependencies ++= Seq(
@@ -104,6 +124,7 @@ lazy val core = project
 
 lazy val example = project
   .settings(commonSettings)
+  .settings(publishSettings)
   .dependsOn(core)
   .settings(
     moduleName := "geotrellis-server-example",

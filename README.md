@@ -1,34 +1,43 @@
-# GeoTrellis Server
+### Overview
 
-A set of components for conveniently serving raster data from arbitrary
-sources. This library enables complex workflows which result in
-TMS-based (z, x, y) and extent-based products. Throughout the library,
-MAML ([Map Algebra Modeling Language](https://github.com/geotrellis/maml/))
-serves as the Lingua Franca - generating an endpoint which returns imagery
-takes the form of specifying one of
-1. a MAML expression + the arguments which complement it
-2. a way of producing MAML expressions based on provided arguments
-3. a MAML expression to evaluate (once bound with arguments)
+GeoTrellis Server is a set of components designed to simplify
+viewing, processing, and serving raster data from arbitrary sources
+with an emphasis on doing so in a functional style. It aims to ease
+the pains related to constructing complex raster processing workflows
+which result in TMS-based (z, x, y) and extent-based products.
 
-## Getting started
-
-### Running geotrellis-server
-
-### Structure:
-
-- geotrellis-server-core: server-agnostic code which facilitates the
-  generation of imagery/metadata about imagery/image-based products.
-- geotrellis-server-example: a collection of http4s servers which
-  illustrate the use of `core` components to solve real problems
+In addition to providing a story about how sources of imagery can be displayed
+or returned, this project aims to simplify the creation of dynamic,
+responsive layers whose transformations can be described in MAML
+([Map Algebra Modeling Language](https://github.com/geotrellis/maml/)).
 
 
-### Design Questions
+### Including Geotrellis Server
 
-- How can we support a collection of backends? (looks like shapeless
-  `coproduct` derivation of typeclass behavior that each underlying type
-  implements)
+Current version:
+ - 0.0.2
+
+`libraryDependencies += "com.azavea" %% "geotrellis-server-core" % "0.0.2"`
 
 
-### Distribution
-- Publish a generic server example that can actually be useful? Maybe one
-  that assumes GT avro layers?
+### Running an example
+
+Three example servers are available which can be run through the provided
+makefile.
+
+1. A server and simple UI that evaluates weighted overlays between
+arbitrary COGs
+```bash
+make serveOverlayExample
+```
+
+2. Integrates GTServer components with application-specific persistence needs.
+```bash
+make servePersistenceExample
+```
+
+3. Illustrates GTServer evaluating a remote-sensing classic, the NDVI.
+```bash
+make serveNdviExample
+```
+

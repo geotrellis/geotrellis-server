@@ -31,7 +31,7 @@ import scala.util.Try
 import scala.collection.mutable
 
 
-class ExampleNdviMamlService[Param](
+class NdviService[Param](
   interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
 )(implicit contextShift: ContextShift[IO],
            enc: Encoder[Param],
