@@ -6,7 +6,7 @@ scalaVersion in ThisBuild := scalaVer
 
 lazy val commonSettings = Seq(
   organization := "com.azavea",
-  version := "0.0.2",
+  version := "0.0.3",
   licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
   cancelable in Global := true,
   scalaVersion := scalaVer,
