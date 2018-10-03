@@ -32,6 +32,7 @@ import java.net.URI
 import java.util.{UUID, NoSuchElementException}
 import scala.util.Try
 import scala.collection.mutable
+import scala.concurrent.ExecutionContext
 
 
 class WeightedOverlayService(
@@ -91,13 +92,13 @@ class WeightedOverlayService(
       }
   }
 
-  def routes: HttpService[IO] = HttpService[IO] {
+  def routes: HttpRoutes[IO] = HttpRoutes.of {
     // Handle the static files for this demo
     case request @ GET -> Root =>
-      StaticFile.fromResource("/overlay-demo/index.html", Some(request)).getOrElseF(NotFound())
+      StaticFile.fromResource("/overlay-demo/index.html", ExecutionContext.global, Some(request)).getOrElseF(NotFound())
 
     case request @ GET -> Root / path if List(".js", ".css", ".map", ".html", ".webm").exists(path.endsWith) =>
-      StaticFile.fromResource("/overlay-demo/" + path, Some(request)).getOrElseF(NotFound())
+      StaticFile.fromResource("/overlay-demo/" + path, ExecutionContext.global, Some(request)).getOrElseF(NotFound())
 
     case req @ POST -> Root / IdVar(key) =>
       (for {
