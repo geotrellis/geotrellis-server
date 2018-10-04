@@ -11,6 +11,9 @@ env:
 
 language: scala
 
+scala:
+  - "2.11.12"
+
 addons:
   # Fix OpenJDK builds
   # https://github.com/travis-ci/travis-ci/issues/5227
@@ -20,15 +23,13 @@ jdk:
   - openjdk8
   - oraclejdk8
 
-scala:
-  - "2.11.12"
-
 cache:
   directories:
   - $HOME/.ivy2
   - $HOME/.sbt
 
 before_install:
+  - if [ "$TRAVIS_BRANCH" = "master" -a "$TRAVIS_PULL_REQUEST" = "false" ]; then bash .travis/decrypt-keys.sh; fi
   - export PATH=${PATH}:./vendor/bundle
 
 install:
@@ -49,14 +50,7 @@ notifications:
   slack:
     secure: "RPNymWgr5RXN2LpDERitGAP7pckR19znqAlrcuKE46O7saqlenX6ii8ToRHOe1ba0udJO0B1n2R2OzTlw14AkuETyRKX4X8OtVlU/dtfTHfVMbX6+oRPd1g1mfLrLavR5o2ml/KoIvi9QLbNcVHfqoeA+xxW5TJTm9zayRC9d1M="
 
+after_success:
+  - if [ "$TRAVIS_BRANCH" = "master" -a "$TRAVIS_PULL_REQUEST" = "false" ]; then bash .travis/publishMicrosite.sh; fi
+  - if [ "$TRAVIS_PULL_REQUEST" = "true" ]; then echo "Not in master branch, skipping deploy and release"; fi
 
-
-#deploy:
-#  - provider: script
-#    script: .travis/scaladocs.sh
-#    skip_cleanup: true
-#    on:
-#      repo: locationtech/geotrellis
-#      branch: master
-#      jdk: oraclejdk8
-#      scala: "2.11.12"
