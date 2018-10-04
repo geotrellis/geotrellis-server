@@ -11,7 +11,6 @@ import cats.effect._
 import io.circe._
 import io.circe.syntax._
 import fs2._
-import fs2.StreamApp.ExitCode
 import org.http4s.circe._
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
@@ -29,7 +28,7 @@ import scala.collection.mutable
 import java.util.UUID
 
 
-object PersistenceServer extends StreamApp[IO] with LazyLogging with Http4sDsl[IO] {
+object PersistenceServer extends LazyLogging with Http4sDsl[IO] {
 
   implicit val contextShift: ContextShift[IO] = IO.contextShift(global)
 

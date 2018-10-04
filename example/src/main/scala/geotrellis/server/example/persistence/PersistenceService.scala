@@ -56,7 +56,7 @@ class PersistenceService[Store, Param](
 
   implicit val expressionDecoder = jsonOf[IO, Expression]
 
-  def routes = HttpService[IO] {
+  def routes: HttpRoutes[IO] = HttpRoutes.of {
     case req @ POST -> Root / IdVar(key) =>
       (for {
          expr <- req.as[Expression]

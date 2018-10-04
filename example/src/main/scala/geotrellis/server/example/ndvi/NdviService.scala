@@ -66,7 +66,7 @@ class NdviService[Param](
 
   final val eval = MamlTms.curried(ndvi, interpreter)
 
-  def routes: HttpService[IO] = HttpService[IO] {
+  def routes: HttpRoutes[IO] = HttpRoutes.of {
     // Matching json in the query parameter is a bad idea.
     case req @ GET -> Root / IntVar(z) / IntVar(x) / IntVar(y) ~ "png" :? RedQueryParamMatcher(red) +& NirQueryParamMatcher(nir) =>
       val paramMap = Map("red" -> red, "nir" -> nir)
