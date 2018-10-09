@@ -84,20 +84,20 @@ Here's a quick NDVI example using GT Server:
 ```scala
 // The MAML AST
 val ast =
-  IO.pure(Addition(List(
+  Addition(List(
     RasterVar("nir"),
     RasterVar("red")
-  )))
+  ))
 
 // The parameter bindings corresponding to instances of `Var` in the AST to evaluate
 val params =
-  IO.pure(Map(
+  Map(
     "nir" -> ImageryLayer("http://some.source"),
     "red" -> ImageryLayer("http://some.other.source")
-  ))
+  )
 
 // Produce the function which will evaluate tiles
-val tmsEvaluator = MamlTms.apply(ast, params)
+val tmsEvaluator = MamlTms.apply(IO.pure(ast), IO.pure(params))
 
 // Get z, x, y somehow - usually this is programmatic
 val (z, x, y) = ???
