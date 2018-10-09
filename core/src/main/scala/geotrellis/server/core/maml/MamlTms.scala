@@ -19,9 +19,21 @@ import geotrellis.raster._
 import geotrellis.raster.Tile
 
 
+/** Provides methods for producing TMS tiles */
 object MamlTms extends LazyLogging {
 
-  // Provide IOs for both expression and params, get back a tile
+  /**
+   * Given an [[Expression]], a parameter map, and an interpreter, create a function
+   *  which takes z, x, and y coordinates and returns the corresponding tile.
+   *
+   * @tparam Param a type whose instances can refer to layers
+   * @param getExpression an [[IO]] yielding a description of the map algebra
+   *                      to be carried out
+   * @param getParams an [[IO]] yielding a map from source node ID to some stand-in
+   *                  for a tile source
+   * @param interpreter a MAML-compliant interpreter (with buffering)
+   * @return a function from (Int, Int, Int) to a Tile corresponding to the Param provided
+   */
   def apply[Param](
     getExpression: IO[Expression],
     getParams: IO[Map[String, Param]],

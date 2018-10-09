@@ -117,8 +117,7 @@ lazy val core = project
       kindProjector,
       simulacrum,
       typesafeLogging,
-      logbackClassic,
-      concHashMap
+      logbackClassic
     )
   )
 
