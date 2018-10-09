@@ -84,7 +84,7 @@ Here's a quick NDVI example using GT Server:
 ```scala
 val tmsEvaluator = MamlTms.apply(
   IO.pure(Addition(List(RasterVar("nir"), RasterVar("red"))))
-  IO.pure(Map("nir" -> ImageryLayer("http://some.source", "red" -> ImageryLayer("http://some.other.source"))))
+  IO.pure(Map("nir" -> ImageryLayer("http://some.source"), "red" -> ImageryLayer("http://some.other.source")))
 )
 
 val (z, x, y) = getTmsCoordinates()
