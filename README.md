@@ -67,16 +67,16 @@ Three objects are worth calling out immediately:
 Each of these objects is a response to distinct needs encountered when
 writing raster-based applications. Included are  several strategies for
 evaluating their products. The strategies currently available are:
-1. `_.apply`
+1. `apply`
 > Takes: parameters, AST, and a MAML `Interpreter`
-2. `_.generateExpression`
+2. `generateExpression`
 > Takes: parameters, a function which will generate an AST based on the
 > parameters, and a MAML `Interpreter`
-3. `_.curried`
+3. `curried`
 > Takes: an AST and a MAML `Interpreter` (this method produces an
 > intermediate, curried, function which expects a parameter map to
 > evaluate)
-4. `_.identity`
+4. `identity`
 > Takes an interpreter and evaluates the simplest image-based MAML tree
 > a lone `RasterVar` with no transformations.
 
