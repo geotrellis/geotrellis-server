@@ -52,15 +52,15 @@ val plusOne = Addition(List(RasterVar("test1"), IntLit(1)))
 ```
 
 Three objects are worth calling out immediately:
-1. [MamlExtent](core/src/main/scala/geotrellis/server/core/MamlExtent.scala)
+1. `MamlExtent`
 > produces a `Validated` `Tile` (given an extent) which can be served out
 > directly or else an `Invalid` `MamlError`, which can be converted to
 > JSON as is convenient.
-2. [MamlTms](core/src/main/scala/geotrellis/server/core/MamlTms.scala)
+2. `MamlTms`
 > produces a `Validated` `Tile` (given the tms Z, X, Y
 > coordinates) which can be served out directly or else an `Invalid`
 > `MamlError`, which can be converted to JSON as is convenient.
-3. [MamlHistogram](core/src/main/scala/geotrellis/server/core/MamlHistogram.scala)
+3. `MamlHistogram`
 > attempts to sample the derived layer to generate a histogram of its
 > contained values.
 
