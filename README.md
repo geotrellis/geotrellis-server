@@ -82,15 +82,31 @@ evaluating their products. The strategies currently available are:
 
 Here's a quick NDVI example using GT Server:
 ```scala
-val tmsEvaluator = MamlTms.apply(
-  IO.pure(Addition(List(RasterVar("nir"), RasterVar("red"))))
-  IO.pure(Map("nir" -> ImageryLayer("http://some.source"), "red" -> ImageryLayer("http://some.other.source")))
-)
+// The MAML AST
+val ast =
+  IO.pure(Addition(List(
+    RasterVar("nir"),
+    RasterVar("red")
+  )))
 
-val (z, x, y) = getTmsCoordinates()
-val answer: IO[Valid[Tile]] = tmsEvaluator(z, x, y)
+// The parameter bindings corresponding to instances of `Var` in the AST to evaluate
+val params =
+  IO.pure(Map(
+    "nir" -> ImageryLayer("http://some.source"),
+    "red" -> ImageryLayer("http://some.other.source")
+  ))
+
+// Produce the function which will evaluate tiles
+val tmsEvaluator = MamlTms.apply(ast, params)
+
+// Get z, x, y somehow - usually this is programmatic
+val (z, x, y) = ???
+
+// Apply the z, x, y params to the generated evaluator function
+val res: IO[Valid[Tile]] = tmsEvaluator(z, x, y)
+
 // We can log the error's JSON representation or else return the successful result
-answer map {
+res map {
   case Valid(tile) => tile
   case Invalid(e) => log.debug(e.asJson)
 }
