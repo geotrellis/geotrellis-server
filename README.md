@@ -43,7 +43,7 @@ than simple, first-order parameters - the task for which
 [MAML](https://github.com/geotrellis/maml/) was written.
 
 ```scala
-// This addition node describes a `LocalAdd` on the values eventually
+// This node describes a `LocalAdd` on the values eventually
 // bound to `RasterVar("test1")` and `RasterVar("test2")
 val simpleAdd = Addition(List(RasterVar("test1"), RasterVar("test2")))
 

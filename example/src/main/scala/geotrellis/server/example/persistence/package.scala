@@ -1,4 +1,4 @@
-package geotrellis.server.core
+package geotrellis.server.example
 
 import geotrellis.server.core.maml.persistence._
 
@@ -11,7 +11,7 @@ import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
 import java.util.UUID
 
 
-package object maml {
+package object persistence {
   type HashMapMamlStore = ConcurrentLinkedHashMap[UUID, Expression]
   implicit val inMemMamlStore: MamlStore[ConcurrentLinkedHashMap[UUID, Expression]] =
     new MamlStore[ConcurrentLinkedHashMap[UUID, Expression]] {
