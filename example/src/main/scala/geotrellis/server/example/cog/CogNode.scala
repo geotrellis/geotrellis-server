@@ -1,7 +1,7 @@
-package geotrellis.server.maml
+package geotrellis.server.example.cog
 
 import geotrellis.server._
-import geotrellis.server.util.cog.CogUtils
+import geotrellis.server.example.cog.util.CogUtils
 
 import com.azavea.maml.ast.{Expression, Literal, MamlKind, RasterLit}
 import com.azavea.maml.eval.tile._

@@ -1,10 +1,9 @@
 package geotrellis.server.example.overlay
 
-import geotrellis.server.core.maml.{MamlTms, MamlHistogram}
-import geotrellis.server.core.maml.persistence._
+import geotrellis.server._
+import geotrellis.server.example.persistence.MamlStore
 import MamlStore.ops._
-import geotrellis.server.core.maml.reification._
-import MamlTmsReification.ops._
+import TmsReification.ops._
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
 import com.azavea.maml.error.Interpreted
@@ -86,7 +85,7 @@ class WeightedOverlayService(
     case Some(hist) =>
       IO.pure(Valid(hist))
     case None =>
-      MamlHistogram.generateExpression(mkExpression, getParams(id), interpreter, 512).map { hist =>
+      LayerHistogram.generateExpression(mkExpression, getParams(id), interpreter, 512).map { hist =>
         hist.map { demoHistogramStore.put(id, _) }
         hist
       }
@@ -124,7 +123,7 @@ class WeightedOverlayService(
 
     case req @ GET -> Root / IdVar(key) / IntVar(z) / IntVar(x) / IntVar(y) ~ "png" =>
 
-      val eval = MamlTms.generateExpression(
+      val eval = LayerTms.generateExpression(
         mkExpression,
         getParams(key),
         interpreter

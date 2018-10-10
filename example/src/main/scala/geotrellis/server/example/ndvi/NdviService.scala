@@ -1,10 +1,9 @@
 package geotrellis.server.example.ndvi
 
-import geotrellis.server.core.maml.{MamlTms, MamlHistogram}
-import geotrellis.server.core.maml.persistence._
+import geotrellis.server._
+import geotrellis.server.example.persistence._
 import MamlStore.ops._
-import geotrellis.server.core.maml.reification._
-import MamlTmsReification.ops._
+import TmsReification.ops._
 
 import com.azavea.maml.util.Vars
 import com.azavea.maml.ast._
@@ -36,7 +35,7 @@ class NdviService[Param](
 )(implicit contextShift: ContextShift[IO],
            enc: Encoder[Param],
            dec: Decoder[Param],
-           mr: MamlTmsReification[Param]) extends Http4sDsl[IO] with LazyLogging {
+           mr: TmsReification[Param]) extends Http4sDsl[IO] with LazyLogging {
 
   object ParamBindings {
     def unapply(str: String): Option[Map[String, Param]] =
@@ -64,7 +63,7 @@ class NdviService[Param](
       ))
     )
 
-  final val eval = MamlTms.curried(ndvi, interpreter)
+  final val eval = LayerTms.curried(ndvi, interpreter)
 
   def routes: HttpRoutes[IO] = HttpRoutes.of {
     // Matching json in the query parameter is a bad idea.

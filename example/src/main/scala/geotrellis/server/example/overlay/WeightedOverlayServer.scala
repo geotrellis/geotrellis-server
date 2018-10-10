@@ -1,8 +1,7 @@
 package geotrellis.server.example.overlay
 
-import geotrellis.server.example.ExampleConf
-import geotrellis.server.core.conf.LoadConf
-import geotrellis.server.core.maml._
+import geotrellis.server.example._
+import geotrellis.server._
 
 import cats.data._
 import cats.effect._
