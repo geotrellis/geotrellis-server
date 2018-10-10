@@ -44,5 +44,44 @@ object MamlExtent extends LazyLogging {
       reified          <- IO.pure { Expression.bindParams(expr, params) }
     } yield reified.andThen(interpreter(_)).andThen(_.as[Tile])
   }
+
+  def generateExpression[Param](
+    mkExpr: Map[String, Param] => Expression,
+    getParams: IO[Map[String, Param]],
+    interpreter: BufferingInterpreter
+  )(
+    implicit reify: MamlExtentReification[Param],
+             enc: Encoder[Param],
+             contextShift: ContextShift[IO]
+  ) = apply[Param](getParams.map(mkExpr(_)), getParams, interpreter)
+
+
+  /** Provide an expression and expect arguments to fulfill its needs */
+  def curried[Param](
+    expr: Expression,
+    interpreter: BufferingInterpreter
+  )(
+    implicit reify: MamlExtentReification[Param],
+             enc: Encoder[Param],
+             contextShift: ContextShift[IO]
+  ): (Map[String, Param], Extent, CellSize) => IO[Interpreted[Tile]] =
+    (paramMap: Map[String, Param], extent: Extent, cellsize: CellSize) => {
+      val eval = apply[Param](IO.pure(expr), IO.pure(paramMap), interpreter)
+      eval(extent, cellsize)
+    }
+
+
+  /** The identity endpoint (for simple display of raster) */
+  def identity[Param](
+    param: Param
+  )(
+    implicit reify: MamlExtentReification[Param],
+             enc: Encoder[Param],
+             contextShift: ContextShift[IO]
+  ): (Extent, CellSize) => IO[Interpreted[Tile]] =
+    (extent: Extent, cellsize: CellSize) => {
+      val eval = curried(RasterVar("identity"), BufferingInterpreter.DEFAULT)
+      eval(Map("identity" -> param), extent, cellsize)
+    }
 }
 

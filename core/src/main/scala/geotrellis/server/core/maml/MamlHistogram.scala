@@ -126,14 +126,17 @@ object MamlHistogram extends LazyLogging {
 
   /** The identity endpoint (for simple display of raster) */
   def identity[Param](
-    interpreter: BufferingInterpreter,
+    param: Param,
     maxCells: Int
   )(
     implicit reify: MamlExtentReification[Param],
              extended: HasRasterExtents[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
-  ) = curried(RasterVar("identity"), interpreter, maxCells)
+  ) = {
+    val eval = curried(RasterVar("identity"), BufferingInterpreter.DEFAULT, maxCells)
+    eval(Map("identity" -> param))
+  }
 
 }
 

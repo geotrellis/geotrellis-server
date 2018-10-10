@@ -50,8 +50,8 @@ object MamlTms extends LazyLogging {
       _                <- IO.pure(logger.info(s"Retrieved parameters for TMS ($z, $x, $y): ${paramMap.asJson.noSpaces}"))
       vars             <- IO.pure { Vars.varsWithBuffer(expr) }
       params           <- vars.toList.parTraverse { case (varName, (_, buffer)) =>
-                            val thingify = paramMap(varName).tmsReification(buffer)
-                            thingify(z, x, y).map(varName -> _)
+                            val eval = paramMap(varName).tmsReification(buffer)
+                            eval(z, x, y).map(varName -> _)
                           } map { _.toMap }
       reified          <- IO.pure { Expression.bindParams(expr, params) }
     } yield reified.andThen(interpreter(_)).andThen(_.as[Tile])
@@ -82,19 +82,22 @@ object MamlTms extends LazyLogging {
              contextShift: ContextShift[IO]
   ): (Map[String, Param], Int, Int, Int) => IO[Interpreted[Tile]] =
     (paramMap: Map[String, Param], z: Int, x: Int, y: Int) => {
-      val thingify = apply[Param](IO.pure(expr), IO.pure(paramMap), interpreter)
-      thingify(z, x, y)
+      val eval = apply[Param](IO.pure(expr), IO.pure(paramMap), interpreter)
+      eval(z, x, y)
     }
 
 
   /** The identity endpoint (for simple display of raster) */
   def identity[Param](
-    interpreter: BufferingInterpreter
+    param: Param
   )(
     implicit reify: MamlTmsReification[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
-  ) = curried(RasterVar("identity"), interpreter)
+  ) = (z: Int, x: Int, y: Int) => {
+    val eval = curried(RasterVar("identity"), BufferingInterpreter.DEFAULT)
+    eval(Map("identity" -> param), z, x, y)
+  }
 
 }
 
