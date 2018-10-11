@@ -1,0 +1,188 @@
+<html><head><title>GeoTrellis Server: Home</title><meta charset="utf-8" /><meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="author" content="the GeoTrellis team at Azavea" /><meta name="description" content="Expressive, modular, raster processing pipelines" /><meta name="og:image" content="/gtserver/img/poster.png" /><meta name="og:title" content="GeoTrellis Server: Home" /><meta name="og:site_name" content="GeoTrellis Server" /><meta name="og:url" content="" /><meta name="og:type" content="website" /><meta name="og:description" content="Expressive, modular, raster processing pipelines" /><link rel="icon" type="image/png" href="/gtserver/img/favicon.png" /><meta name="twitter:title" content="GeoTrellis Server: Home" /><meta name="twitter:image" content="img/poster.png" /><meta name="twitter:description" content="Expressive, modular, raster processing pipelines" /><meta name="twitter:card" content="summary_large_image" /><link rel="icon" type="image/png" sizes="16x16" href="/gtserver/img/favicon16x16.png" /><link rel="icon" type="image/png" sizes="24x24" href="/gtserver/img/favicon24x24.png" /><link rel="icon" type="image/png" sizes="32x32" href="/gtserver/img/favicon32x32.png" /><link rel="icon" type="image/png" sizes="48x48" href="/gtserver/img/favicon48x48.png" /><link rel="icon" type="image/png" sizes="57x57" href="/gtserver/img/favicon57x57.png" /><link rel="icon" type="image/png" sizes="60x60" href="/gtserver/img/favicon60x60.png" /><link rel="icon" type="image/png" sizes="64x64" href="/gtserver/img/favicon64x64.png" /><link rel="icon" type="image/png" sizes="70x70" href="/gtserver/img/favicon70x70.png" /><link rel="icon" type="image/png" sizes="72x72" href="/gtserver/img/favicon72x72.png" /><link rel="icon" type="image/png" sizes="76x76" href="/gtserver/img/favicon76x76.png" /><link rel="icon" type="image/png" sizes="96x96" href="/gtserver/img/favicon96x96.png" /><link rel="icon" type="image/png" sizes="114x114" href="/gtserver/img/favicon114x114.png" /><link rel="icon" type="image/png" sizes="120x120" href="/gtserver/img/favicon120x120.png" /><link rel="icon" type="image/png" sizes="128x128" href="/gtserver/img/favicon128x128.png" /><link rel="icon" type="image/png" sizes="144x144" href="/gtserver/img/favicon144x144.png" /><link rel="icon" type="image/png" sizes="150x150" href="/gtserver/img/favicon150x150.png" /><link rel="icon" type="image/png" sizes="152x152" href="/gtserver/img/favicon152x152.png" /><link rel="icon" type="image/png" sizes="196x196" href="/gtserver/img/favicon196x196.png" /><link rel="icon" type="image/png" sizes="310x310" href="/gtserver/img/favicon310x310.png" /><link rel="icon" type="image/png" sizes="310x150" href="/gtserver/img/favicon310x150.png" /><link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" /><link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" /><link rel="stylesheet" href="/gtserver/highlight/styles/default.css" /><link rel="stylesheet" href="/gtserver/css/style.css" /><link rel="stylesheet" href="/gtserver/css/palette.css" /><link rel="stylesheet" href="/gtserver/css/codemirror.css" /></head><body><header id="site-header"><div class="navbar-wrapper"><div class="container"><div class="row"><div class="col-xs-6"><a href="/gtserver/" class="brand"><div class="icon-wrapper"><span>GeoTrellis Server</span></div></a></div><div class="col-xs-6"><nav class="text-right"><ul class=""><li><a href="https://github.com/geotrellis/geotrellis-server"><i class="fa fa-github"></i><span class="hidden-xs">GitHub</span></a></li><li><a href="/gtserver/latest/api"><i class="fa fa-file-text"></i><span class="hidden-xs">Documentation</span></a></li></ul></nav></div></div></div></div><div class="jumbotron"><div class="container"><h1 class="text-center">Expressive, modular, raster processing pipelines</h1><h2></h2><p class="text-center"><a href="https://github.com/geotrellis/geotrellis-server" class="btn btn-outline-inverse">View on GitHub</a></p></div></div><div><ul class="horizontalNav">     <li><a class=" active " href="/gtserver/">Home</a></li> </ul></div></header><main id="site-main"><section class="use"><div class="container"><div id="content"><h3 id="about-the-library">About the library</h3>
+
+<p>GeoTrellis Server is a set of components designed to simplify
+viewing, processing, and serving raster data from arbitrary sources
+with an emphasis on doing so in a functional style. It aims to ease
+the pains related to constructing complex raster processing workflows
+which result in TMS-based (z, x, y) and extent-based products.</p>
+
+<p>In addition to providing a story about how sources of imagery can be displayed
+or returned, this project aims to simplify the creation of dynamic,
+responsive layers whose transformations can be described in MAML
+(<a href="https://github.com/geotrellis/maml/">Map Algebra Modeling Language</a>).</p>
+
+<h3 id="including-geotrellis-server">Including Geotrellis Server</h3>
+
+<p>Current version:</p>
+<ul>
+  <li>0.0.5</li>
+</ul>
+
+<p>Add the geotrellis-server dependency by declaring it within your
+project’s <code class="highlighter-rouge">build.sbt</code>:
+<code class="highlighter-rouge">libraryDependencies += "com.azavea" %% "geotrellis-server-core" % "0.0.5"</code></p>
+
+<h3 id="high-level-concepts">High level concepts</h3>
+
+<p>Imagine you’ve got a simple case class which is sufficient to identify
+layers of imagery for an application you’re working on.</p>
+
+<div class="language-scala highlighter-rouge"><pre class="highlight"><code><span class="k">import</span> <span class="nn">java.net.URI</span>
+
+<span class="k">case</span> <span class="k">class</span> <span class="nc">ImageryLayer</span><span class="o">(</span><span class="n">location</span><span class="k">:</span> <span class="kt">URI</span><span class="o">)</span>
+</code></pre>
+</div>
+
+<p>Imagine further that you’d like to enable your application to compose these
+layers together via map algebra to produce derived layers and that the
+combinations can’t be known at compile-time (users will be deciding
+which - if any - map algebra to run). This is a job that GeoTrellis
+server can radically simplify. Because we’re dealing with behavior
+specified at runtime, we need to evaluate program descriptions rather
+than simple, first-order parameters - the task for which
+<a href="https://github.com/geotrellis/maml/">MAML</a> was written.</p>
+
+<div class="language-scala highlighter-rouge"><pre class="highlight"><code><span class="c1">// This node describes a `LocalAdd` on the values eventually
+// bound to `RasterVar("test1")` and `RasterVar("test2")
+</span><span class="k">val</span> <span class="n">simpleAdd</span> <span class="k">=</span> <span class="nc">Addition</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="nc">RasterVar</span><span class="o">(</span><span class="s">"test1"</span><span class="o">),</span> <span class="nc">RasterVar</span><span class="o">(</span><span class="s">"test2"</span><span class="o">)))</span>
+
+<span class="c1">// This describes incrementing every value in the eventually bound raster by 1
+</span><span class="k">val</span> <span class="n">plusOne</span> <span class="k">=</span> <span class="nc">Addition</span><span class="o">(</span><span class="nc">List</span><span class="o">(</span><span class="nc">RasterVar</span><span class="o">(</span><span class="s">"additionRaster1"</span><span class="o">),</span> <span class="nc">IntLit</span><span class="o">(</span><span class="mi">1</span><span class="o">)))</span>
+</code></pre>
+</div>
+
+<p>Because MAML encodes map alagebra transformations in data, actually
+executing a MAML program for practical purposes can be difficult and
+unintuitive. GeoTrellis server bridges this gap by providing a
+typeclass-based means of extending source types in client applications
+with the behaviors necessary to actually evaluate a MAML AST.</p>
+
+<p>The following example demonstrates what is required to generate
+functions which produce extents provided MAML program descriptions. For
+a more complete example, check out
+<a href="example/src/main/scala/geotrellis/server/example/cog/CogNode.scala">CogNode</a>.</p>
+<div class="language-scala highlighter-rouge"><pre class="highlight"><code><span class="k">import</span> <span class="nn">io.circe._</span>
+<span class="k">import</span> <span class="nn">io.circe.syntax._</span>
+<span class="k">import</span> <span class="nn">io.circe.generic.semiauto._</span>
+<span class="k">import</span> <span class="nn">cats._</span>
+<span class="k">import</span> <span class="nn">cats.effect._</span>
+<span class="k">import</span> <span class="nn">com.azavea.maml.ast._</span>
+<span class="k">import</span> <span class="nn">com.azavea.maml.eval.BufferingInterpreter</span>
+<span class="k">import</span> <span class="nn">geotrellis.server._</span>
+
+<span class="c1">// This class points to a COG and specifies a band of interest
+</span><span class="k">case</span> <span class="k">class</span> <span class="nc">RasterRef</span><span class="o">(</span><span class="n">uri</span><span class="k">:</span> <span class="kt">URI</span><span class="o">,</span> <span class="n">band</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)</span>
+
+<span class="c1">// We need to provide some implicit evidence. Most applications can do this within companion objects
+</span><span class="k">object</span> <span class="nc">RasterRef</span> <span class="o">{</span>
+  <span class="c1">// reification means 'thingification', and that's what we're proving we can do here
+</span>  <span class="k">implicit</span> <span class="k">val</span> <span class="n">rasterRefExtentReification</span><span class="k">:</span> <span class="kt">ExtentReification</span><span class="o">[</span><span class="kt">RasterRef</span><span class="o">]</span> <span class="k">=</span> <span class="k">new</span> <span class="nc">ExtentReification</span><span class="o">[</span><span class="kt">RasterRef</span><span class="o">]</span> <span class="o">{</span>
+    <span class="k">def</span> <span class="n">kind</span><span class="o">(</span><span class="n">self</span><span class="k">:</span> <span class="kt">RasterRef</span><span class="o">)</span><span class="k">:</span> <span class="kt">MamlKind</span> <span class="o">=</span> <span class="o">???</span>
+    <span class="k">def</span> <span class="n">extentReification</span><span class="o">(</span><span class="n">self</span><span class="k">:</span> <span class="kt">CogNode</span><span class="o">,</span> <span class="n">buffer</span><span class="k">:</span> <span class="kt">Int</span><span class="o">)(</span><span class="k">implicit</span> <span class="n">contextShift</span><span class="k">:</span> <span class="kt">ContextShift</span><span class="o">[</span><span class="kt">IO</span><span class="o">])</span><span class="k">:</span> <span class="o">(</span><span class="kt">Extent</span><span class="o">,</span> <span class="kt">CellSize</span><span class="o">)</span> <span class="k">=&gt;</span> <span class="nc">IO</span><span class="o">[</span><span class="kt">Literal</span><span class="o">]</span> <span class="k">=</span> <span class="o">???</span>
+  <span class="o">}</span>
+  <span class="c1">// We can lean on circe's automatic derivation to provide an encoder
+</span>  <span class="k">implicit</span> <span class="k">val</span> <span class="n">rasterRefEncoding</span><span class="k">:</span> <span class="kt">Encoder</span><span class="o">[</span><span class="kt">RasterRef</span><span class="o">]</span> <span class="k">=</span> <span class="n">deriveEncoder</span><span class="o">[</span><span class="kt">RasterRef</span><span class="o">]</span>
+<span class="o">}</span>
+
+<span class="c1">// A source from which MAML evaluation will be able to derive necessary artifacts
+</span><span class="k">val</span> <span class="n">reference</span> <span class="k">=</span> <span class="nc">RasterRef</span><span class="o">(</span><span class="s">"http://some.url.com"</span><span class="o">,</span> <span class="mi">1</span><span class="o">)</span>
+
+<span class="c1">// We need to key provided references based on the ID of the Var they'll replace
+</span><span class="k">val</span> <span class="n">parameters</span> <span class="k">=</span> <span class="nc">Map</span><span class="o">(</span><span class="s">"additionRaster1"</span> <span class="o">-&gt;</span> <span class="n">reference</span><span class="o">)</span>
+
+<span class="c1">// This is an interpeter GT Server will use to roll up the tree + params to some result
+</span><span class="k">val</span> <span class="n">interpreter</span> <span class="k">=</span> <span class="nc">BufferingInterpreter</span><span class="o">.</span><span class="nc">DEFAULT</span>
+
+<span class="c1">// Not yet a result: we can use the result here to produce artifacts for different extent inputs
+</span><span class="k">val</span> <span class="n">tileEval</span> <span class="k">=</span> <span class="nc">LayerExtent</span><span class="o">.</span><span class="n">apply</span><span class="o">(</span><span class="nc">IO</span><span class="o">.</span><span class="n">pure</span><span class="o">(</span><span class="n">plusOne</span><span class="o">),</span> <span class="nc">IO</span><span class="o">.</span><span class="n">pure</span><span class="o">(</span><span class="n">parameters</span><span class="o">),</span> <span class="n">interpreter</span><span class="o">)</span>
+
+<span class="k">val</span> <span class="n">targetExtent</span><span class="k">:</span> <span class="kt">Extent</span> <span class="o">=</span> <span class="o">???</span> <span class="c1">// Where should the tile come from?
+</span><span class="k">val</span> <span class="n">targetCellSize</span><span class="k">:</span> <span class="kt">CellSize</span> <span class="o">=</span> <span class="o">???</span> <span class="c1">// What resolution should the tile be?
+</span>
+<span class="c1">// Branch on Valid/Invalid and print some info about which branch we're on
+</span><span class="n">tileEval</span><span class="o">(</span><span class="n">targetExtent</span><span class="o">,</span> <span class="n">targetCellSize</span><span class="o">)</span> <span class="n">map</span> <span class="o">{</span>
+  <span class="k">case</span> <span class="nc">Valid</span><span class="o">(</span><span class="n">tile</span><span class="o">)</span> <span class="k">=&gt;</span>
+    <span class="n">println</span><span class="o">(</span><span class="s">"we did it, a tile: (rows: ${tile.rows}, cols: ${tile.cols})"</span><span class="o">)</span>
+  <span class="k">case</span> <span class="nc">Invalid</span><span class="o">(</span><span class="n">err</span><span class="o">)</span> <span class="k">=&gt;</span>
+    <span class="n">println</span><span class="o">(</span><span class="s">"Ran into an error (${err.asJson}) during MAML evaluation of AST (${plusOne.asJson}) with params (${params.asJson})"</span><span class="o">)</span>
+<span class="o">}</span>
+</code></pre>
+</div>
+
+<p><code class="highlighter-rouge">LayerExtent</code> is joined by two other objects which organize evaluation
+strategies for different products:</p>
+
+<ul>
+  <li>
+    <p><code class="highlighter-rouge">LayerExtent</code>: Constructs functions that produce a <code class="highlighter-rouge">cats.data.Validated</code> instance
+containing a <code class="highlighter-rouge">Tile</code> (given an extent) or else <code class="highlighter-rouge">MamlError</code>s. Requires
+<code class="highlighter-rouge">ExtentReification</code> and <code class="highlighter-rouge">Encoder</code> evidence</p>
+  </li>
+  <li>
+    <p><code class="highlighter-rouge">LayerTms</code>: Constructs functions that produce a <code class="highlighter-rouge">cats.data.Validated</code> instance
+containing a <code class="highlighter-rouge">Tile</code> (given the tms Z, X, Y coordinates) or else
+<code class="highlighter-rouge">MamlError</code>s. Requires <code class="highlighter-rouge">TmsReification</code> and <code class="highlighter-rouge">Encoder</code> evidence</p>
+  </li>
+  <li>
+    <p><code class="highlighter-rouge">LayerHistogram</code>: Constructs functions that produce a <code class="highlighter-rouge">cats.data.Validated</code> instance
+containing a <code class="highlighter-rouge">Histogram</code> or else <code class="highlighter-rouge">MamlError</code>s. Requires
+<code class="highlighter-rouge">ExtentReification</code>, <code class="highlighter-rouge">Encoder</code>, and <code class="highlighter-rouge">HasRasterExtents</code> evidence</p>
+  </li>
+</ul>
+
+<p>Each of these objects is a response to distinct needs encountered when
+writing raster-based applications. Included in each object are methods
+which encode several strategies for evaluating their products. The strategies
+currently available are:</p>
+<ul>
+  <li>
+    <p><code class="highlighter-rouge">apply</code>: Takes parameters, a MAML AST, and a MAML <code class="highlighter-rouge">Interpreter</code> and evaluates accordingly</p>
+  </li>
+  <li>
+    <p><code class="highlighter-rouge">generateExpression</code>: parameters, a function which will generate an AST based on the
+parameters, and a MAML <code class="highlighter-rouge">Interpreter</code></p>
+  </li>
+  <li>
+    <p><code class="highlighter-rouge">curried</code>: Takes an AST and a MAML <code class="highlighter-rouge">Interpreter</code> (this method produces an
+intermediate, curried, function which expects a parameter map to
+evaluate)</p>
+  </li>
+  <li>
+    <p><code class="highlighter-rouge">identity</code>: Evaluates a proven source without any MAML evaluation (useful for
+quickly defining a static layer viewer or debugging implicit evidence behavior</p>
+  </li>
+</ul>
+
+<h3 id="running-an-example">Running an example</h3>
+
+<p>Three example servers are available which can be run through the provided
+makefile. These examples have been implemented via <a href="https://http4s.org/">http4s</a>,
+which has a pleasant, clean API and plays nicely with the
+<a href="https://typelevel.org/cats/">cats</a> and <a href="https://typelevel.org/cats-effect/">cats-effect</a>
+libraries.</p>
+
+<ol>
+  <li>A server and simple UI that evaluates weighted overlays between
+arbitrary COGs. This demo includes a simple UI, available at http://localhost:9000/ for a
+    <div class="language-bash highlighter-rouge"><pre class="highlight"><code>make serveOverlayExample
+</code></pre>
+    </div>
+  </li>
+  <li>Integrates GTServer components with application-specific persistence needs.
+    <div class="language-bash highlighter-rouge"><pre class="highlight"><code>make servePersistenceExample
+</code></pre>
+    </div>
+  </li>
+  <li>Illustrates GTServer evaluating a remote-sensing classic, the NDVI.
+    <div class="language-bash highlighter-rouge"><pre class="highlight"><code>make serveNdviExample
+</code></pre>
+    </div>
+  </li>
+</ol>
+
+</div></div></section><section class="technologies"><div class="container"><div class="row"></div></div></section></main><footer id="site-footer"><div class="container"><div class="row"><div class="col-xs-6"><p>GeoTrellis Server is designed and developed by <a href="https://www.azavea.com/" target="_blank">the GeoTrellis team at Azavea</a></p></div><div class="col-xs-6"><p class="text-right"><a href="https://github.com/geotrellis/geotrellis-server"><span class="fa fa-github"></span>View on GitHub</a></p></div></div><div class="row"><div class="col-xs-6">
+<p>© 2017 <a href="https://geotrellis.io/">GeoTrellis</a></p>
+<p style="font-size: 80%; margin-top: 10px">Website built with <a href="https://47deg.github.io/sbt-microsites/">sbt-microsites © 2016 47 Degrees</a></p>
+</div></div></div></footer><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script><script src="/gtserver/highlight/highlight.pack.js"></script><script>hljs.configure({languages:['scala','java','bash']});
+hljs.initHighlighting();
+              </script></body></html>
