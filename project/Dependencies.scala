@@ -4,13 +4,13 @@ object Dependencies {
 
   val circeVer         = "0.10.0"
   val gtVer            = "2.0.0"
-  val http4sVer        = "0.19.0-M3"
+  val http4sVer        = "0.19.0"
   val scalaVer         = "2.11.12"
   val tsecV            = "0.0.1-M11"
 
   //val kamonZipkin       = "io.kamon"                      %% "kamon-zipkin"         % "1.0.1"
   val caffeine          = "com.github.ben-manes.caffeine" %  "caffeine"             % "2.3.5"
-  val cats              = "org.typelevel"                 %% "cats-core"            % "1.3.1"
+  val cats              = "org.typelevel"                 %% "cats-core"            % "1.4.0"
   val catsEffect        = "org.typelevel"                 %% "cats-effect"          % "1.0.0"
   val circeCore         = "io.circe"                      %% "circe-core"           % circeVer
   val circeShapes       = "io.circe"                      %% "circe-shapes"         % circeVer
