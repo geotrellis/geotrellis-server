@@ -49,7 +49,7 @@ object LayerExtent extends LazyLogging {
     getParams: IO[Map[String, Param]],
     interpreter: BufferingInterpreter
   )(
-    implicit reify: MamlExtentReification[Param],
+    implicit reify: ExtentReification[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ) = apply[Param](getParams.map(mkExpr(_)), getParams, interpreter)
@@ -60,7 +60,7 @@ object LayerExtent extends LazyLogging {
     expr: Expression,
     interpreter: BufferingInterpreter
   )(
-    implicit reify: MamlExtentReification[Param],
+    implicit reify: ExtentReification[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ): (Map[String, Param], Extent, CellSize) => IO[Interpreted[Tile]] =
@@ -74,7 +74,7 @@ object LayerExtent extends LazyLogging {
   def identity[Param](
     param: Param
   )(
-    implicit reify: MamlExtentReification[Param],
+    implicit reify: ExtentReification[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ): (Extent, CellSize) => IO[Interpreted[Tile]] =

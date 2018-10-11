@@ -1,8 +1,6 @@
 package geotrellis.server.example.ndvi
 
 import geotrellis.server._
-import geotrellis.server.example.persistence._
-import MamlStore.ops._
 import TmsReification.ops._
 
 import com.azavea.maml.util.Vars
@@ -76,9 +74,6 @@ class NdviService[Param](
         case Right(Invalid(errs)) =>
           logger.debug(errs.toList.toString)
           BadRequest(errs.asJson)
-        case Left(MamlStore.ExpressionNotFound(err)) =>
-          logger.info(err.toString)
-          NotFound()
         case Left(err) =>
           logger.debug(err.toString, err)
           InternalServerError(err.toString)
