@@ -4,33 +4,23 @@ import geotrellis.server.example.ExampleConf
 import geotrellis.server.core.conf.LoadConf
 import geotrellis.server.core.maml._
 
-import com.azavea.maml.ast.Expression
-import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
 import cats.data._
 import cats.effect._
-import io.circe._
-import io.circe.syntax._
+import cats.implicits._
 import fs2._
-import org.http4s.circe._
-import org.http4s._
-import org.http4s.dsl.Http4sDsl
-import org.http4s.client.blaze.Http1Client
-import org.http4s.server.blaze.BlazeBuilder
-import org.http4s.server.HttpMiddleware
-import org.http4s.server.middleware.{GZip, CORS, CORSConfig}
-import org.http4s.headers.{Location, `Content-Type`}
-import org.http4s.client.Client
 import com.typesafe.scalalogging.LazyLogging
+import org.http4s._
+import org.http4s.server._
+import org.http4s.server.blaze.BlazeServerBuilder
+import org.http4s.server.middleware.{CORS, CORSConfig}
+import org.http4s.syntax.kleisli._
 
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.collection.mutable
-import java.util.UUID
+import scala.concurrent.ExecutionContext.Implicits.global
 
 
-object WeightedOverlayServer extends LazyLogging with Http4sDsl[IO] {
 
-  implicit val contextShift: ContextShift[IO] = IO.contextShift(global)
+object WeightedOverlayServer extends LazyLogging with IOApp {
 
   private val corsConfig = CORSConfig(
     anyOrigin = true,
@@ -40,21 +30,25 @@ object WeightedOverlayServer extends LazyLogging with Http4sDsl[IO] {
     maxAge = 1.day.toSeconds
   )
 
-  private val commonMiddleware: HttpMiddleware[IO] = { (routes: HttpService[IO]) =>
+  private val commonMiddleware: HttpMiddleware[IO] = { (routes: HttpRoutes[IO]) =>
     CORS(routes)
   }
 
-  def stream(args: List[String], requestShutdown: IO[Unit]): Stream[IO, ExitCode] = {
+  def stream: Stream[IO, ExitCode] = {
     for {
       conf       <- Stream.eval(LoadConf().as[ExampleConf])
       _          <- Stream.eval(IO.pure(logger.info(s"Initializing Weighted Overlay at ${conf.http.interface}:${conf.http.port}/")))
-      weightedOverlay = new WeightedOverlayService()
-      exitCode   <- BlazeBuilder[IO]
+      overlayService = new WeightedOverlayService()
+      exitCode   <- BlazeServerBuilder[IO]
         .enableHttp2(true)
         .bindHttp(conf.http.port, conf.http.interface)
-        .mountService(commonMiddleware(weightedOverlay.routes), "/")
+        .withHttpApp(Router("/" -> commonMiddleware(overlayService.routes)).orNotFound)
         .serve
     } yield exitCode
   }
+
+  /** The 'main' method for a cats-effect IOApp */
+  override def run(args: List[String]): IO[ExitCode] =
+    stream.compile.drain.as(ExitCode.Success)
 }
 
