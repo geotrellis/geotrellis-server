@@ -2,31 +2,34 @@ version: '3'
 services:
   overlay-example:
     image: quay.io/geotrellis/server:latest
+    command: /bin/sh -c "java -cp /opt/geotrellis-server-example.jar geotrellis.server.example.overlay.WeightedOverlayServer"
     ports:
       - "9000:9000"
     volumes:
       - $HOME/.aws:/root/.aws
     build:
       context: docker
-      dockerfile: overlay.dockerfile
+      dockerfile: examples.dockerfile
   persistence-example:
     image: quay.io/geotrellis/server:latest
+    command: /bin/sh -c "java -cp /opt/geotrellis-server-example.jar geotrellis.server.example.persistence.PersistenceServer"
     ports:
       - "9000:9000"
     volumes:
       - $HOME/.aws:/root/.aws
     build:
       context: docker
-      dockerfile: persistence.dockerfile
+      dockerfile: examples.dockerfile
   ndvi-example:
     image: quay.io/geotrellis/server:latest
+    command: /bin/sh -c "java -cp /opt/geotrellis-server-example.jar geotrellis.server.example.ndvi.NdviServer"
     ports:
       - "9000:9000"
     volumes:
       - $HOME/.aws:/root/.aws
     build:
       context: docker
-      dockerfile: ndvi.dockerfile
+      dockerfile: examples.dockerfile
 
   server-microsite:
     image: quay.io/geotrellis/server-microsite:latest
