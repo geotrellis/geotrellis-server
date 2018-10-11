@@ -15,11 +15,11 @@ responsive layers whose transformations can be described in MAML
 ### Including Geotrellis Server
 
 Current version:
- - 0.0.4
+ - 0.0.5
 
 Add the geotrellis-server dependency by declaring it within your
 project's `build.sbt`:
-`libraryDependencies += "com.azavea" %% "geotrellis-server-core" % "0.0.4"`
+`libraryDependencies += "com.azavea" %% "geotrellis-server-core" % "0.0.5"`
 
 
 ### High level concepts
@@ -48,69 +48,89 @@ than simple, first-order parameters - the task for which
 val simpleAdd = Addition(List(RasterVar("test1"), RasterVar("test2")))
 
 // This describes incrementing every value in the eventually bound raster by 1
-val plusOne = Addition(List(RasterVar("test1"), IntLit(1)))
+val plusOne = Addition(List(RasterVar("additionRaster1"), IntLit(1)))
 ```
 
-Three objects are worth calling out immediately:
-1. `MamlExtent`
-> produces a `Validated` `Tile` (given an extent) which can be served out
-> directly or else an `Invalid` `MamlError`, which can be converted to
-> JSON as is convenient.
-2. `MamlTms`
-> produces a `Validated` `Tile` (given the tms Z, X, Y
-> coordinates) which can be served out directly or else an `Invalid`
-> `MamlError`, which can be converted to JSON as is convenient.
-3. `MamlHistogram`
-> attempts to sample the derived layer to generate a histogram of its
-> contained values.
+Because MAML encodes map alagebra transformations in data, actually
+executing a MAML program for practical purposes can be difficult and
+unintuitive. GeoTrellis server bridges this gap by providing a
+typeclass-based means of extending source types in client applications
+with the behaviors necessary to actually evaluate a MAML AST.
+
+```scala
+// This class points to a COG and specifies a band of interest
+import io.circe._
+import io.circe.syntax._
+import io.circe.generic.semiauto._
+import cats._
+import cats.effect._
+import com.azavea.maml.ast._
+import com.azavea.maml.eval.BufferingInterpreter
+import geotrellis.server._
+case class RasterRef(uri: URI, band: Int)
+
+// We need to provide some implicits. Most applications can do so within companion objects
+object RasterRef {
+  // reification means 'thingification', and that's what we're proving we
+  //  can do here (provided some extent, grab a MAML Literal)
+  implicit val rasterRefExtentReification: ExtentReification[RasterRef] = new ExtentReification[RasterRef] {
+    def kind(self: RasterRef): MamlKind = ???
+    def extentReification(self: CogNode, buffer: Int)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] = ???
+  }
+  // We can lean on circe's automatic derivation to provide an encoder
+  implicit val rasterRefEncoding: Encoder[RasterRef] = deriveEncoder[RasterRef]
+}
+
+val reference = RasterRef("http://some.url.com", 1)
+
+val parameters = Map("additionRaster1" -> reference)
+val interpreter = BufferingInterpreter.DEFAULT
+val tileEval = LayerExtent.apply(IO.pure(plusOne), IO.pure(parameters), interpreter)
+val targetExtent: Extent = ??? // Where should the tile come from?
+val targetCellSize: CellSize = ??? // What resolution should the tile be?
+tileEval(targetExtent, targetCellSize) map {
+  case Valid(tile) =>
+    tile
+  case Invalid(err) =>
+    logger.debug("Ran into an error during MAML evaluation of AST ${plusOne.asJson} with params ${params.asJson}")
+}
+```
+
+`LayerExtent` is joined by two other objects which organize evaluation
+strategies for different products:
+- LayerExtent
+Constructs functions that produce a `cats.data.Validated` instance
+containing a `Tile` (given an extent) or else `MamlError`s
+
+- LayerTms
+Constructs functions that produce a `cats.data.Validated` instance
+containing a `Tile` (given the tms Z, X, Y coordinates) or else
+`MamlError`s
+
+- LayerHistogram
+Constructs functions that produce a `cats.data.Validated` instance
+containing a `Histogram` or else `MamlError`s
 
 Each of these objects is a response to distinct needs encountered when
 writing raster-based applications. Included are  several strategies for
 evaluating their products. The strategies currently available are:
-1. `apply`
-> Takes: parameters, AST, and a MAML `Interpreter`
-2. `generateExpression`
-> Takes: parameters, a function which will generate an AST based on the
-> parameters, and a MAML `Interpreter`
-3. `curried`
-> Takes: an AST and a MAML `Interpreter` (this method produces an
-> intermediate, curried, function which expects a parameter map to
-> evaluate)
-4. `identity`
-> Takes an interpreter and evaluates the simplest image-based MAML tree
-> a lone `RasterVar` with no transformations.
 
-Here's a quick NDVI example using GT Server:
-```scala
-// The MAML AST
-val ast =
-  Addition(List(
-    RasterVar("nir"),
-    RasterVar("red")
-  ))
+- apply
+Takes: parameters, AST, and a MAML `Interpreter`
 
-// The parameter bindings corresponding to instances of `Var` in the AST to evaluate
-val params =
-  Map(
-    "nir" -> ImageryLayer("http://some.source"),
-    "red" -> ImageryLayer("http://some.other.source")
-  )
+- generateExpression
+Takes: parameters, a function which will generate an AST based on the
+parameters, and a MAML `Interpreter`
 
-// Produce the function which will evaluate tiles
-val tmsEvaluator = MamlTms.apply(IO.pure(ast), IO.pure(params))
+- curried
+Takes: an AST and a MAML `Interpreter` (this method produces an
+intermediate, curried, function which expects a parameter map to
+evaluate)
 
-// Get z, x, y somehow - usually this is programmatic
-val (z, x, y) = ???
-
-// Apply the z, x, y params to the generated evaluator function
-val res: IO[Valid[Tile]] = tmsEvaluator(z, x, y)
-
-// We can log the error's JSON representation or else return the successful result
-res map {
-  case Valid(tile) => tile
-  case Invalid(e) => log.debug(e.asJson)
-}
-```
+- identity
+Evaluates a proven source without any MAML evaluation (useful for
+quickly defining a static layer viewer or debugging implicit evidence
+behavior
 
 
 ### Running an example
