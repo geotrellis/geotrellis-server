@@ -57,8 +57,11 @@ unintuitive. GeoTrellis server bridges this gap by providing a
 typeclass-based means of extending source types in client applications
 with the behaviors necessary to actually evaluate a MAML AST.
 
+The following example demonstrates what is required to generate
+functions which produce extents provided MAML program descriptions. For
+a more complete example, check out
+[CogNode](example/src/main/scala/geotrellis/server/example/cog/CogNode.scala).
 ```scala
-// This class points to a COG and specifies a band of interest
 import io.circe._
 import io.circe.syntax._
 import io.circe.generic.semiauto._
@@ -67,12 +70,13 @@ import cats.effect._
 import com.azavea.maml.ast._
 import com.azavea.maml.eval.BufferingInterpreter
 import geotrellis.server._
+
+// This class points to a COG and specifies a band of interest
 case class RasterRef(uri: URI, band: Int)
 
-// We need to provide some implicits. Most applications can do so within companion objects
+// We need to provide some implicit evidence. Most applications can do this within companion objects
 object RasterRef {
-  // reification means 'thingification', and that's what we're proving we
-  //  can do here (provided some extent, grab a MAML Literal)
+  // reification means 'thingification', and that's what we're proving we can do here
   implicit val rasterRefExtentReification: ExtentReification[RasterRef] = new ExtentReification[RasterRef] {
     def kind(self: RasterRef): MamlKind = ???
     def extentReification(self: CogNode, buffer: Int)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] = ???
@@ -81,18 +85,27 @@ object RasterRef {
   implicit val rasterRefEncoding: Encoder[RasterRef] = deriveEncoder[RasterRef]
 }
 
+// A source from which MAML evaluation will be able to derive necessary artifacts
 val reference = RasterRef("http://some.url.com", 1)
 
+// We need to key provided references based on the ID of the Var they'll replace
 val parameters = Map("additionRaster1" -> reference)
+
+// This is an interpeter GT Server will use to roll up the tree + params to some result
 val interpreter = BufferingInterpreter.DEFAULT
+
+// Not yet a result: we can use the result here to produce artifacts for different extent inputs
 val tileEval = LayerExtent.apply(IO.pure(plusOne), IO.pure(parameters), interpreter)
+
 val targetExtent: Extent = ??? // Where should the tile come from?
 val targetCellSize: CellSize = ??? // What resolution should the tile be?
+
+// Branch on Valid/Invalid and print some info about which branch we're on
 tileEval(targetExtent, targetCellSize) map {
   case Valid(tile) =>
-    tile
+    println("we did it, a tile: (rows: ${tile.rows}, cols: ${tile.cols})")
   case Invalid(err) =>
-    logger.debug("Ran into an error during MAML evaluation of AST ${plusOne.asJson} with params ${params.asJson}")
+    println("Ran into an error (${err.asJson}) during MAML evaluation of AST (${plusOne.asJson}) with params (${params.asJson})")
 }
 ```
 
@@ -114,7 +127,6 @@ containing a `Histogram` or else `MamlError`s
 Each of these objects is a response to distinct needs encountered when
 writing raster-based applications. Included are  several strategies for
 evaluating their products. The strategies currently available are:
-
 - apply
 Takes: parameters, AST, and a MAML `Interpreter`
 
