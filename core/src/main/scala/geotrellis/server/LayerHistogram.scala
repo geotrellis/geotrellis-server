@@ -25,7 +25,8 @@ import scala.util.Random
 
 object LayerHistogram extends LazyLogging {
 
-  final def sampleRasterExtent(uberExtent: Extent, cs: CellSize, maxCells: Int): Extent = {
+  /** Sample imagery based on a provided sample extent */
+  final private def sampleRasterExtent(uberExtent: Extent, cs: CellSize, maxCells: Int): Extent = {
     val newWidth = math.sqrt(maxCells.toDouble) * cs.width
     val newHeight = math.sqrt(maxCells.toDouble) * cs.height
 
@@ -44,8 +45,8 @@ object LayerHistogram extends LazyLogging {
   }
 
 
-  // Choose a native level of representation
-  final def chooseCellSize(nativeCellSizes: NEL[CellSize]): CellSize =
+  /** Heuristics to select a cellsize from among those available natively */
+  final private def chooseCellSize(nativeCellSizes: NEL[CellSize]): CellSize =
     nativeCellSizes
       .reduceLeft({ (chosenCS: CellSize, nextCS: CellSize) =>
         val chosenSize = chosenCS.height * chosenCS.width
