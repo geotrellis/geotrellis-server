@@ -1,7 +1,6 @@
-package geotrellis.server.core.maml
+package geotrellis.server
 
-import geotrellis.server.core.maml.reification._
-import MamlExtentReification.ops._
+import ExtentReification.ops._
 
 import geotrellis.vector.Extent
 import com.azavea.maml.util.Vars
@@ -19,7 +18,7 @@ import cats.implicits._
 import geotrellis.raster._
 import geotrellis.raster.Tile
 
-object MamlExtent extends LazyLogging {
+object LayerExtent extends LazyLogging {
 
   // Provide IOs for both expression and params, get back a tile
   def apply[Param](
@@ -27,7 +26,7 @@ object MamlExtent extends LazyLogging {
     getParams: IO[Map[String, Param]],
     interpreter: BufferingInterpreter
   )(
-    implicit reify: MamlExtentReification[Param],
+    implicit reify: ExtentReification[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ): (Extent, CellSize) => IO[Interpreted[Tile]]  = (extent: Extent, cs: CellSize) =>  {
@@ -50,7 +49,7 @@ object MamlExtent extends LazyLogging {
     getParams: IO[Map[String, Param]],
     interpreter: BufferingInterpreter
   )(
-    implicit reify: MamlExtentReification[Param],
+    implicit reify: ExtentReification[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ) = apply[Param](getParams.map(mkExpr(_)), getParams, interpreter)
@@ -61,7 +60,7 @@ object MamlExtent extends LazyLogging {
     expr: Expression,
     interpreter: BufferingInterpreter
   )(
-    implicit reify: MamlExtentReification[Param],
+    implicit reify: ExtentReification[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ): (Map[String, Param], Extent, CellSize) => IO[Interpreted[Tile]] =
@@ -75,7 +74,7 @@ object MamlExtent extends LazyLogging {
   def identity[Param](
     param: Param
   )(
-    implicit reify: MamlExtentReification[Param],
+    implicit reify: ExtentReification[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ): (Extent, CellSize) => IO[Interpreted[Tile]] =

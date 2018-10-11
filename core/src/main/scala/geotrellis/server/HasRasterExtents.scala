@@ -1,4 +1,4 @@
-package geotrellis.server.core.maml.metadata
+package geotrellis.server
 
 import geotrellis.vector.Extent
 import geotrellis.proj4.CRS

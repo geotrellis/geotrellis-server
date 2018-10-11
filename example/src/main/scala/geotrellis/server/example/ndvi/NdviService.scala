@@ -1,10 +1,7 @@
 package geotrellis.server.example.ndvi
 
-import geotrellis.server.core.maml.{MamlTms, MamlHistogram}
-import geotrellis.server.core.maml.persistence._
-import MamlStore.ops._
-import geotrellis.server.core.maml.reification._
-import MamlTmsReification.ops._
+import geotrellis.server._
+import TmsReification.ops._
 
 import com.azavea.maml.util.Vars
 import com.azavea.maml.ast._
@@ -36,7 +33,7 @@ class NdviService[Param](
 )(implicit contextShift: ContextShift[IO],
            enc: Encoder[Param],
            dec: Decoder[Param],
-           mr: MamlTmsReification[Param]) extends Http4sDsl[IO] with LazyLogging {
+           mr: TmsReification[Param]) extends Http4sDsl[IO] with LazyLogging {
 
   object ParamBindings {
     def unapply(str: String): Option[Map[String, Param]] =
@@ -64,7 +61,7 @@ class NdviService[Param](
       ))
     )
 
-  final val eval = MamlTms.curried(ndvi, interpreter)
+  final val eval = LayerTms.curried(ndvi, interpreter)
 
   def routes: HttpRoutes[IO] = HttpRoutes.of {
     // Matching json in the query parameter is a bad idea.
@@ -77,9 +74,6 @@ class NdviService[Param](
         case Right(Invalid(errs)) =>
           logger.debug(errs.toList.toString)
           BadRequest(errs.asJson)
-        case Left(MamlStore.ExpressionNotFound(err)) =>
-          logger.info(err.toString)
-          NotFound()
         case Left(err) =>
           logger.debug(err.toString, err)
           InternalServerError(err.toString)

@@ -1,4 +1,4 @@
-package geotrellis.server.core.cog
+package geotrellis.server.util.cog
 
 import geotrellis.vector._
 import geotrellis.raster._

@@ -1,8 +1,8 @@
 package geotrellis.server.example.ndvi
 
-import geotrellis.server.core.conf.LoadConf
-import geotrellis.server.example.ExampleConf
-import geotrellis.server.core.maml._
+import geotrellis.server._
+import geotrellis.server.example._
+import geotrellis.server.example.cog.CogNode
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
 import cats.data._

@@ -1,4 +1,4 @@
-package geotrellis.server.core.maml.persistence
+package geotrellis.server.example.persistence
 
 import com.azavea.maml.ast.{Expression, Literal}
 import cats._

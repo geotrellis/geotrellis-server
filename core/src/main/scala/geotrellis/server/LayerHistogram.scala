@@ -1,8 +1,6 @@
-package geotrellis.server.core.maml
+package geotrellis.server
 
-import geotrellis.server.core.maml.reification._
-import MamlExtentReification.ops._
-import geotrellis.server.core.maml.metadata._
+import ExtentReification.ops._
 import HasRasterExtents.ops._
 
 import com.azavea.maml.util.Vars
@@ -25,9 +23,10 @@ import geotrellis.raster.Tile
 
 import scala.util.Random
 
-object MamlHistogram extends LazyLogging {
+object LayerHistogram extends LazyLogging {
 
-  final def sampleRasterExtent(uberExtent: Extent, cs: CellSize, maxCells: Int): Extent = {
+  /** Sample imagery based on a provided sample extent */
+  final private def sampleRasterExtent(uberExtent: Extent, cs: CellSize, maxCells: Int): Extent = {
     val newWidth = math.sqrt(maxCells.toDouble) * cs.width
     val newHeight = math.sqrt(maxCells.toDouble) * cs.height
 
@@ -46,8 +45,8 @@ object MamlHistogram extends LazyLogging {
   }
 
 
-  // Choose a native level of representation
-  final def chooseCellSize(nativeCellSizes: NEL[CellSize]): CellSize =
+  /** Heuristics to select a cellsize from among those available natively */
+  final private def chooseCellSize(nativeCellSizes: NEL[CellSize]): CellSize =
     nativeCellSizes
       .reduceLeft({ (chosenCS: CellSize, nextCS: CellSize) =>
         val chosenSize = chosenCS.height * chosenCS.width
@@ -70,7 +69,7 @@ object MamlHistogram extends LazyLogging {
     interpreter: BufferingInterpreter,
     maxCells: Int
   )(
-    implicit reify: MamlExtentReification[Param],
+    implicit reify: ExtentReification[Param],
              extended: HasRasterExtents[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
@@ -91,7 +90,7 @@ object MamlHistogram extends LazyLogging {
                           }).getOrElse(throw new RequireIntersectingSources()) }
       cellSize         <- IO { chooseCellSize(rasterExtents.map(_.cellSize)) }
       sampleExtent     <- IO { sampleRasterExtent(intersection, cellSize, maxCells) }
-      tileForExtent    <- IO { MamlExtent(getExpression, getParams, interpreter) }
+      tileForExtent    <- IO { LayerExtent(getExpression, getParams, interpreter) }
       interpretedTile  <- tileForExtent(sampleExtent, cellSize)
     } yield interpretedTile.map(StreamingHistogram.fromTile(_))
 
@@ -101,7 +100,7 @@ object MamlHistogram extends LazyLogging {
     interpreter: BufferingInterpreter,
     maxCells: Int
   )(
-    implicit reify: MamlExtentReification[Param],
+    implicit reify: ExtentReification[Param],
              extended: HasRasterExtents[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
@@ -114,7 +113,7 @@ object MamlHistogram extends LazyLogging {
     interpreter: BufferingInterpreter,
     maxCells: Int
   )(
-    implicit reify: MamlExtentReification[Param],
+    implicit reify: ExtentReification[Param],
              extended: HasRasterExtents[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
@@ -129,7 +128,7 @@ object MamlHistogram extends LazyLogging {
     param: Param,
     maxCells: Int
   )(
-    implicit reify: MamlExtentReification[Param],
+    implicit reify: ExtentReification[Param],
              extended: HasRasterExtents[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]

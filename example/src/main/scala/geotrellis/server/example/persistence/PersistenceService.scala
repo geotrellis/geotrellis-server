@@ -1,9 +1,8 @@
 package geotrellis.server.example.persistence
 
-import geotrellis.server.core.maml.persistence._
+import geotrellis.server._
 import MamlStore.ops._
-import geotrellis.server.core.maml.reification._
-import MamlTmsReification.ops._
+import TmsReification.ops._
 
 import com.azavea.maml.util.Vars
 import com.azavea.maml.ast.Expression
@@ -34,7 +33,7 @@ class PersistenceService[Store, Param](
 )(implicit contextShift: ContextShift[IO],
            ms: MamlStore[Store],
            pd: Decoder[Param],
-           mr: MamlTmsReification[Param]) extends Http4sDsl[IO] with LazyLogging {
+           mr: TmsReification[Param]) extends Http4sDsl[IO] with LazyLogging {
 
   // Unapply to handle UUIDs on path
   object IdVar {

@@ -1,4 +1,4 @@
-package geotrellis.server.core.maml.reification
+package geotrellis.server
 
 import geotrellis.raster.CellSize
 import geotrellis.vector.Extent
@@ -11,7 +11,7 @@ import simulacrum._
 import java.util.UUID
 
 
-@typeclass trait MamlExtentReification[A] {
+@typeclass trait ExtentReification[A] {
   @op("kind") def kind(self: A): MamlKind
   @op("extentReification") def extentReification(self: A)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal]
 }

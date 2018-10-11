@@ -1,10 +1,7 @@
-package geotrellis.server.core.maml
+package geotrellis.server.example.cog
 
-import geotrellis.server.core.maml.persistence._
-import geotrellis.server.core.maml.metadata._
-import geotrellis.server.core.maml.reification._
-
-import geotrellis.server.core.cog.CogUtils
+import geotrellis.server._
+import geotrellis.server.example.cog.util.CogUtils
 
 import com.azavea.maml.ast.{Expression, Literal, MamlKind, RasterLit}
 import com.azavea.maml.eval.tile._
@@ -43,7 +40,7 @@ object CogNode {
       }
   }
 
-  implicit val cogNodeTmsReification: MamlTmsReification[CogNode] = new MamlTmsReification[CogNode] {
+  implicit val cogNodeTmsReification: TmsReification[CogNode] = new TmsReification[CogNode] {
     def kind(self: CogNode): MamlKind = MamlKind.Tile
     def tmsReification(self: CogNode, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[Literal] = (z: Int, x: Int, y: Int) => {
       def fetch(xCoord: Int, yCoord: Int) =
@@ -60,7 +57,7 @@ object CogNode {
     }
   }
 
-  implicit val cogNodeExtentReification: MamlExtentReification[CogNode] = new MamlExtentReification[CogNode] {
+  implicit val cogNodeExtentReification: ExtentReification[CogNode] = new ExtentReification[CogNode] {
     def kind(self: CogNode): MamlKind = MamlKind.Tile
     def extentReification(self: CogNode)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] = (extent: Extent, cs: CellSize) => {
       CogUtils.getTiff(self.uri.toString)

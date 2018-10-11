@@ -1,9 +1,8 @@
 package geotrellis.server.example.overlay
 
-import geotrellis.server.core.maml.reification._
-import geotrellis.server.core.maml.metadata._
+import geotrellis.server._
 import HasRasterExtents.ops._
-import geotrellis.server.core.cog.CogUtils
+import geotrellis.server.example.cog.util.CogUtils
 
 import com.azavea.maml.ast.{Expression, Literal, MamlKind, RasterLit}
 import com.azavea.maml.eval.tile._
@@ -26,8 +25,8 @@ object WeightedOverlayDefinition {
   implicit val olEncoder: Encoder[WeightedOverlayDefinition] = deriveEncoder
 
 
-  implicit val overlayTmsDefinitionReification: MamlTmsReification[WeightedOverlayDefinition] =
-    new MamlTmsReification[WeightedOverlayDefinition] {
+  implicit val overlayTmsDefinitionReification: TmsReification[WeightedOverlayDefinition] =
+    new TmsReification[WeightedOverlayDefinition] {
       def kind(self: WeightedOverlayDefinition): MamlKind = MamlKind.Tile
 
       def tmsReification(self: WeightedOverlayDefinition, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[Literal] =
@@ -39,8 +38,8 @@ object WeightedOverlayDefinition {
         }
     }
 
-  implicit val overlayExtentDefinitionReification: MamlExtentReification[WeightedOverlayDefinition] =
-    new MamlExtentReification[WeightedOverlayDefinition] {
+  implicit val overlayExtentDefinitionReification: ExtentReification[WeightedOverlayDefinition] =
+    new ExtentReification[WeightedOverlayDefinition] {
       def kind(self: WeightedOverlayDefinition): MamlKind = MamlKind.Tile
 
       def extentReification(self: WeightedOverlayDefinition)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] =

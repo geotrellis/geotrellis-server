@@ -1,7 +1,6 @@
-package geotrellis.server.core.maml
+package geotrellis.server
 
-import geotrellis.server.core.maml.reification._
-import MamlTmsReification.ops._
+import TmsReification.ops._
 
 import com.azavea.maml.util.Vars
 import com.azavea.maml.error._
@@ -20,7 +19,7 @@ import geotrellis.raster.Tile
 
 
 /** Provides methods for producing TMS tiles */
-object MamlTms extends LazyLogging {
+object LayerTms extends LazyLogging {
 
   /**
    * Given an [[Expression]], a parameter map, and an interpreter, create a function
@@ -39,7 +38,7 @@ object MamlTms extends LazyLogging {
     getParams: IO[Map[String, Param]],
     interpreter: BufferingInterpreter
   )(
-    implicit reify: MamlTmsReification[Param],
+    implicit reify: TmsReification[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ): (Int, Int, Int) => IO[Interpreted[Tile]] = (z: Int, x: Int, y: Int) => {
@@ -66,7 +65,7 @@ object MamlTms extends LazyLogging {
     getParams: IO[Map[String, Param]],
     interpreter: BufferingInterpreter
   )(
-    implicit reify: MamlTmsReification[Param],
+    implicit reify: TmsReification[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ) = apply[Param](getParams.map(mkExpr(_)), getParams, interpreter)
@@ -77,7 +76,7 @@ object MamlTms extends LazyLogging {
     expr: Expression,
     interpreter: BufferingInterpreter
   )(
-    implicit reify: MamlTmsReification[Param],
+    implicit reify: TmsReification[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ): (Map[String, Param], Int, Int, Int) => IO[Interpreted[Tile]] =
@@ -91,7 +90,7 @@ object MamlTms extends LazyLogging {
   def identity[Param](
     param: Param
   )(
-    implicit reify: MamlTmsReification[Param],
+    implicit reify: TmsReification[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ) = (z: Int, x: Int, y: Int) => {

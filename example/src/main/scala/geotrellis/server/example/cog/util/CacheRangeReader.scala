@@ -1,4 +1,4 @@
-package geotrellis.server.core.cog
+package geotrellis.server.example.cog.util
 
 import geotrellis.util._
 
