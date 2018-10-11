@@ -111,38 +111,34 @@ tileEval(targetExtent, targetCellSize) map {
 
 `LayerExtent` is joined by two other objects which organize evaluation
 strategies for different products:
-- LayerExtent
-Constructs functions that produce a `cats.data.Validated` instance
-containing a `Tile` (given an extent) or else `MamlError`s
 
-- LayerTms
-Constructs functions that produce a `cats.data.Validated` instance
+`LayerExtent`: Constructs functions that produce a `cats.data.Validated` instance
+containing a `Tile` (given an extent) or else `MamlError`s. Requires
+`ExtentReification` and `Encoder` evidence
+
+`LayerTms`: Constructs functions that produce a `cats.data.Validated` instance
 containing a `Tile` (given the tms Z, X, Y coordinates) or else
-`MamlError`s
+`MamlError`s. Requires `TmsReification` and `Encoder` evidence
 
-- LayerHistogram
-Constructs functions that produce a `cats.data.Validated` instance
-containing a `Histogram` or else `MamlError`s
+`LayerHistogram`: Constructs functions that produce a `cats.data.Validated` instance
+containing a `Histogram` or else `MamlError`s. Requires
+`ExtentReification`, `Encoder`, and `HasRasterExtents` evidence
 
 Each of these objects is a response to distinct needs encountered when
-writing raster-based applications. Included are  several strategies for
-evaluating their products. The strategies currently available are:
-- apply
-Takes: parameters, AST, and a MAML `Interpreter`
+writing raster-based applications. Included in each object are methods
+which encode several strategies for evaluating their products. The strategies
+currently available are:
+`apply`: Takes parameters, a MAML AST, and a MAML `Interpreter` and evaluates accordingly
 
-- generateExpression
-Takes: parameters, a function which will generate an AST based on the
+`generateExpression`: parameters, a function which will generate an AST based on the
 parameters, and a MAML `Interpreter`
 
-- curried
-Takes: an AST and a MAML `Interpreter` (this method produces an
+`curried`: Takes an AST and a MAML `Interpreter` (this method produces an
 intermediate, curried, function which expects a parameter map to
 evaluate)
 
-- identity
-Evaluates a proven source without any MAML evaluation (useful for
-quickly defining a static layer viewer or debugging implicit evidence
-behavior
+- `identity`: Evaluates a proven source without any MAML evaluation (useful for
+quickly defining a static layer viewer or debugging implicit evidence behavior
 
 
 ### Running an example
