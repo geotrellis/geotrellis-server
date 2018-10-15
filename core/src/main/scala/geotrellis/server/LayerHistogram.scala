@@ -26,27 +26,41 @@ import scala.util.Random
 object LayerHistogram extends LazyLogging {
 
   /** Sample imagery based on a provided sample extent */
-  final private def sampleRasterExtent(uberExtent: Extent, cs: CellSize, maxCells: Int): Extent = {
-    val newWidth = math.sqrt(maxCells.toDouble) * cs.width
-    val newHeight = math.sqrt(maxCells.toDouble) * cs.height
+  final def sampleRasterExtent(uberExtent: Extent, cs: CellSize, maxCells: Int): Extent = {
+    if (uberExtent.width > 0 || uberExtent.height > 0) uberExtent
+    else {
+      logger.debug(s"Finding sample extent for UberExtent $uberExtent for $cs with a maximum sample of $maxCells cells")
+      val sampleWidth = math.sqrt(maxCells.toDouble) * cs.width
+      val sampleHeight = math.sqrt(maxCells.toDouble) * cs.height
 
-    val wDiff = uberExtent.width - newWidth
-    val hDiff = uberExtent.height - newHeight
+      // Sanity check here - if the desired sample extent is larger than the source extent, just use the source extent
+      val newWidth = if (sampleWidth > uberExtent.width) uberExtent.width else sampleWidth
+      val newHeight = if (sampleHeight > uberExtent.height) uberExtent.height else sampleHeight
 
-    val xmin = Random.nextDouble * wDiff
-    val ymin = Random.nextDouble * hDiff
+      val wScale = newWidth / uberExtent.width
+      val hScale = newHeight / uberExtent.height
+      logger.debug(s"desired sample scale factor $wScale, $hScale")
 
-    Extent(
-      xmin + uberExtent.xmin,
-      ymin + uberExtent.ymin,
-      xmin + newWidth + uberExtent.xmin,
-      ymin + newHeight + uberExtent.ymin
-    )
+      // TODO: introduce more meaningful randomness to sampling strategy (scale alone determines sample location)
+      val xMinScaled = uberExtent.xmin * wScale
+      val xOffset = (uberExtent.xmin - xMinScaled) * 2
+      val xMin = xMinScaled + xOffset
+      val xMax = uberExtent.xmax * wScale + xOffset
+
+      val yMinScaled = uberExtent.ymin * hScale
+      val yOffset = (uberExtent.ymin - yMinScaled) * 2
+      val yMin = yMinScaled + yOffset
+      val yMax = uberExtent.ymax * hScale + yOffset
+
+      val sample = Extent(xMin, yMin, xMax, yMax)
+      logger.debug(s"The sample extent covers ${(sample.area / uberExtent.area) * 100}% of the source extent")
+      sample
+    }
   }
 
 
-  /** Heuristics to select a cellsize from among those available natively */
-  final private def chooseCellSize(nativeCellSizes: NEL[CellSize]): CellSize =
+  /** Choose the largest cellsize */
+  final def chooseLargestCellSize(nativeCellSizes: NEL[CellSize]): CellSize =
     nativeCellSizes
       .reduceLeft({ (chosenCS: CellSize, nextCS: CellSize) =>
         val chosenSize = chosenCS.height * chosenCS.width
@@ -88,7 +102,7 @@ object LayerHistogram extends LazyLogging {
                                 Some(re.extent)
                             }
                           }).getOrElse(throw new RequireIntersectingSources()) }
-      cellSize         <- IO { chooseCellSize(rasterExtents.map(_.cellSize)) }
+      cellSize         <- IO { chooseLargestCellSize(rasterExtents.map(_.cellSize)) }
       sampleExtent     <- IO { sampleRasterExtent(intersection, cellSize, maxCells) }
       tileForExtent    <- IO { LayerExtent(getExpression, getParams, interpreter) }
       interpretedTile  <- tileForExtent(sampleExtent, cellSize)
