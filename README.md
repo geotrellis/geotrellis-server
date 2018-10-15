@@ -15,11 +15,11 @@ responsive layers whose transformations can be described in MAML
 ### Including Geotrellis Server
 
 Current version:
- - 0.0.5
+ - 0.0.6
 
 Add the geotrellis-server dependency by declaring it within your
 project's `build.sbt`:
-`libraryDependencies += "com.azavea" %% "geotrellis-server-core" % "0.0.5"`
+`libraryDependencies += "com.azavea" %% "geotrellis-server-core" % "0.0.6"`
 
 
 ### High level concepts
