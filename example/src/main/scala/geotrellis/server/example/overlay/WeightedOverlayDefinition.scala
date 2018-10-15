@@ -2,7 +2,7 @@ package geotrellis.server.example.overlay
 
 import geotrellis.server._
 import HasRasterExtents.ops._
-import geotrellis.server.example.cog.util.CogUtils
+import geotrellis.server.cog.util.CogUtils
 
 import com.azavea.maml.ast.{Expression, Literal, MamlKind, RasterLit}
 import com.azavea.maml.eval.tile._
