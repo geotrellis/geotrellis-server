@@ -2,7 +2,7 @@ package geotrellis.server.example.ndvi
 
 import geotrellis.server._
 import geotrellis.server.example._
-import geotrellis.server.example.cog.CogNode
+import geotrellis.server.cog.CogNode
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
 import cats.data._

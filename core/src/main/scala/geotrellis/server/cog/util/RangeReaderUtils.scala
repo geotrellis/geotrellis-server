@@ -1,4 +1,4 @@
-package geotrellis.server.example.cog.util
+package geotrellis.server.cog.util
 
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.util.{FileRangeReader, RangeReader}
