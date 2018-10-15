@@ -24,7 +24,7 @@ class HistogramHeuristicsTest extends FunSuite with Matchers {
       val cs = CellSize(random.nextDouble, random.nextDouble)
       val maxCells = 4000
       val sampleExtent = LayerHistogram.sampleRasterExtent(uberExtent, cs, maxCells)
-      assert(uberExtent.envelope.contains(sampleExtent))
+      assert(uberExtent.envelope.contains(sampleExtent), "overall extent must contain sample extent")
     }
   }
 }
