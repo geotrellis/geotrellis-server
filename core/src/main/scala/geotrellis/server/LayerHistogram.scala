@@ -36,7 +36,6 @@ object LayerHistogram extends LazyLogging {
       // Sanity check here - if the desired sample extent is larger than the source extent, just use the source extent
       val newWidth = if (sampleWidth > uberExtent.width) uberExtent.width else sampleWidth
       val newHeight = if (sampleHeight > uberExtent.height) uberExtent.height else sampleHeight
-      logger.debug(s"desired sample of width: $newWidth, height: $newHeight")
 
       val wScale = newWidth / uberExtent.width
       val hScale = newHeight / uberExtent.height
