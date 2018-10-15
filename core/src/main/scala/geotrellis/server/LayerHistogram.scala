@@ -27,7 +27,7 @@ object LayerHistogram extends LazyLogging {
 
   /** Sample imagery based on a provided sample extent */
   final def sampleRasterExtent(uberExtent: Extent, cs: CellSize, maxCells: Int): Extent = {
-    if (uberExtent.width > 0 || uberExtent.height > 0) uberExtent
+    if (uberExtent.width <= 0 || uberExtent.height <= 0) uberExtent
     else {
       logger.debug(s"Finding sample extent for UberExtent $uberExtent for $cs with a maximum sample of $maxCells cells")
       val sampleWidth = math.sqrt(maxCells.toDouble) * cs.width

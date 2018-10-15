@@ -11,7 +11,7 @@ import scala.util.Random
 class HistogramHeuristicsTest extends FunSuite with Matchers {
   test("extent sampling") {
     val random = new Random(1337)
-    for (x <- 0 to 10000) {
+    for (x <- 0 to 1000) {
       val scale = scala.math.abs(random.nextInt)
       val randomXMin = random.nextDouble
       val randomYMin = random.nextDouble
