@@ -117,7 +117,8 @@ lazy val core = project
       kindProjector,
       simulacrum,
       typesafeLogging,
-      logbackClassic
+      logbackClassic,
+      scalatest
     )
   )
 
