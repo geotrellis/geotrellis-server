@@ -50,4 +50,3 @@ object WeightedOverlayServer extends LazyLogging with IOApp {
   override def run(args: List[String]): IO[ExitCode] =
     stream.compile.drain.as(ExitCode.Success)
 }
-

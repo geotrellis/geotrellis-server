@@ -148,6 +148,27 @@ lazy val example = project
     )
   )
 
+lazy val wcs = project
+  .settings(moduleName := "geotrellis-server-wcs")
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(
+    assemblyJarName in assembly := "geotrellis-server-wcs.jar",
+    libraryDependencies ++= Seq(
+      http4sDsl,
+      http4sXml,
+      http4sCirce,
+      http4sBlazeServer % Test,
+      geotrellisS3,
+      geotrellisSpark,
+      spark,
+      kindProjector,
+      typesafeLogging,
+      logbackClassic,
+      scalatest
+    )
+  )
+
 lazy val docs = project
   .enablePlugins(MicrositesPlugin)
   .enablePlugins(SiteScaladocPlugin)
@@ -156,5 +177,3 @@ lazy val docs = project
   .settings(docSettings)
   .settings(noPublishSettings)
   .dependsOn(core, example)
-
-
