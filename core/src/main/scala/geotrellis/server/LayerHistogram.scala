@@ -33,26 +33,21 @@ object LayerHistogram extends LazyLogging {
       val sampleWidth = math.sqrt(maxCells.toDouble) * cs.width
       val sampleHeight = math.sqrt(maxCells.toDouble) * cs.height
 
+      logger.debug(s"orig height: ${uberExtent.height}, width: ${uberExtent.width}")
+      logger.debug(s"ideal sample height: $sampleHeight, ideal sample width: $sampleWidth")
       // Sanity check here - if the desired sample extent is larger than the source extent, just use the source extent
       val newWidth = if (sampleWidth > uberExtent.width) uberExtent.width else sampleWidth
       val newHeight = if (sampleHeight > uberExtent.height) uberExtent.height else sampleHeight
 
-      val wScale = newWidth / uberExtent.width
-      val hScale = newHeight / uberExtent.height
-      logger.debug(s"desired sample scale factor $wScale, $hScale")
+      // we need to avoid doing math which *should* result in equal minimum values (floating point issues)
+      val xmin =
+        if (newWidth == uberExtent.width) uberExtent.xmin
+        else uberExtent.xmax - newWidth
+      val ymin =
+        if (newHeight == uberExtent.height) uberExtent.ymin
+        else uberExtent.ymax - newHeight
 
-      // TODO: introduce more meaningful randomness to sampling strategy (scale alone determines sample location)
-      val xMinScaled = uberExtent.xmin * wScale
-      val xOffset = (uberExtent.xmin - xMinScaled) * 2
-      val xMin = xMinScaled + xOffset
-      val xMax = uberExtent.xmax * wScale + xOffset
-
-      val yMinScaled = uberExtent.ymin * hScale
-      val yOffset = (uberExtent.ymin - yMinScaled) * 2
-      val yMin = yMinScaled + yOffset
-      val yMax = uberExtent.ymax * hScale + yOffset
-
-      val sample = Extent(xMin, yMin, xMax, yMax)
+      val sample = Extent(xmin, ymin, uberExtent.xmax, uberExtent.ymax)
       logger.debug(s"The sample extent covers ${(sample.area / uberExtent.area) * 100}% of the source extent")
       sample
     }
