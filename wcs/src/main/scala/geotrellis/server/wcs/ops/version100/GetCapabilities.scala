@@ -14,7 +14,7 @@ import scala.xml._
 object GetCapabilities extends GetCapabilitiesBase {
   // Cribbed from https://github.com/ngageoint/mrgeo/blob/master/mrgeo-services/mrgeo-services-wcs/src/main/java/org/mrgeo/services/wcs/WcsCapabilities.java
 
-  private def makeElement(requestURL: String, operation: String = "") = {
+  private def makeElement(requestURL: String) = {
     <HTTP>
       <Get>
         <OnlineResource xmlns:xlink="http://www.w3.org/1999/xlink" xlink:type="simple" xlink:href={ requestURL } />
