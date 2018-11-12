@@ -3,7 +3,7 @@ import sbt._
 object Dependencies {
 
   val circeVer         = "0.10.0"
-  val gtVer            = "2.0.0"
+  val gtVer            = "2.1.0"
   val http4sVer        = "0.19.0"
   val scalaVer         = "2.11.12"
   val tsecV            = "0.0.1-M11"

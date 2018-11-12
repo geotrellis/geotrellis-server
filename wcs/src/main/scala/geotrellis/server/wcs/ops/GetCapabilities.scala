@@ -36,7 +36,7 @@ object GetCapabilities extends LazyLogging {
 
   private def addLayers100(metadata: MetadataCatalog) = {
     metadata.map { case (identifier, (zooms, maybeMetadata)) => {
-      logger.info(s"Adding v1.0.0 tag for $identifier")
+      //logger.info(s"Adding v1.0.0 tag for $identifier")
       maybeMetadata match {
         case Some(metadata) =>
           val crs = metadata.crs
@@ -53,7 +53,7 @@ object GetCapabilities extends LazyLogging {
 
   private def addLayers110(metadata: MetadataCatalog) = {
     metadata.map { case (identifier, (zooms, maybeMetadata)) => {
-      logger.info(s"Adding v1.1.0 tag for $identifier")
+      //logger.info(s"Adding v1.1.0 tag for $identifier")
       maybeMetadata match {
         case Some(metadata) =>
           val crs = metadata.crs
