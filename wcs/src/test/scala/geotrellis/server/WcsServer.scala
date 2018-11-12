@@ -23,7 +23,7 @@ import scala.concurrent.duration._
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext.Implicits.global
 
-object NlcdServer extends LazyLogging with IOApp {
+object WcsServer extends LazyLogging with IOApp {
 
   private val corsConfig = CORSConfig(
     anyOrigin = true,
