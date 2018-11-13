@@ -28,7 +28,7 @@ object WcsService {
  type MetadataCatalog = Map[String, (Seq[Int], Option[TileLayerMetadata[SpatialKey]])]
 }
 
-class WcsService(catalog: URI) extends Http4sDsl[IO] with LazyLogging {
+class WcsService(catalog: URI, authority: String, port: Int) extends Http4sDsl[IO] with LazyLogging {
 
  def handleError[Result](result: Either[Throwable, Result])(implicit ee: EntityEncoder[IO, Result]) = result match {
    case Right(res) =>
@@ -56,7 +56,8 @@ class WcsService(catalog: URI) extends Http4sDsl[IO] with LazyLogging {
  val getCoverage = new GetCoverage(catalog.toString)
 
  def routes = HttpRoutes.of[IO] {
-   case req @ GET -> Root =>
+   case req @ GET -> Root / "wcs" =>
+     logger.warn(s"""Recv'd request: $req""")
      WcsParams(req.multiParams) match {
        case Validated.Invalid(errors) =>
          val msg = WcsParamsError.generateErrorMessage(errors.toList)
@@ -66,12 +67,15 @@ class WcsService(catalog: URI) extends Http4sDsl[IO] with LazyLogging {
        case Validated.Valid(wcsParams) =>
          wcsParams match {
            case p: GetCapabilitiesWcsParams =>
-             val link = s"${req.uri.scheme}://${req.uri.authority}${req.uri.path}?"
-             logger.debug(s"GetCapabilities: $link")
-             Ok(GetCapabilities.build(link, catalogMetadata, p))
+             //val link = s"${req.uri.scheme}://${req.uri.authority}${req.uri.path}?"
+             val link = s"http://${authority}:${port}${req.uri.path}?"
+             logger.debug(s"\033[1mGetCapabilities: $link\033[0m")
+             val result = GetCapabilities.build(link, catalogMetadata, p)
+             logger.debug(result.toString)
+             Ok(result)
 
            case p: DescribeCoverageWcsParams =>
-             logger.debug(s"DescribeCoverage: ${req.uri}")
+             logger.debug(s"\033[1mDescribeCoverage: ${req.uri}\033[0m")
              for {
                getCoverage <- IO { DescribeCoverage.build(catalogMetadata, p) }.attempt
                result <- handleError(getCoverage)
@@ -81,7 +85,7 @@ class WcsService(catalog: URI) extends Http4sDsl[IO] with LazyLogging {
              }
 
            case p: GetCoverageWcsParams =>
-             logger.debug(s"GetCoverage: ${req.uri}")
+             logger.debug(s"\033[1mGetCoverage: ${req.uri}\033[0m")
              for {
                getCoverage <- IO { getCoverage.build(catalogMetadata, p) }.attempt
                result <- handleError(getCoverage)
@@ -91,5 +95,8 @@ class WcsService(catalog: URI) extends Http4sDsl[IO] with LazyLogging {
              }
          }
      }
-  }
+   case req =>
+     logger.warn(s"""Recv'd UNHANDLED request: $req""")
+     BadRequest()
+ }
 }
