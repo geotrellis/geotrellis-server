@@ -11,7 +11,7 @@ import com.typesafe.scalalogging.LazyLogging
 import scala.util.Try
 import scala.xml._
 
-object GetCapabilities extends GetCapabilitiesBase {
+object GetCapabilities extends GetCapabilitiesBase with LazyLogging {
   // Cribbed from https://github.com/ngageoint/mrgeo/blob/master/mrgeo-services/mrgeo-services-wcs/src/main/java/org/mrgeo/services/wcs/WcsCapabilities.java
 
   private def makeElement(requestURL: String) = {

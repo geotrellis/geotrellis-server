@@ -14,7 +14,7 @@ import com.typesafe.scalalogging.LazyLogging
 
 import scala.xml._
 
-object DescribeCoverage extends DescribeCoverageBase {
+object DescribeCoverage extends DescribeCoverageBase with LazyLogging {
   private def addDescriptions(catalog: MetadataCatalog)(identifier: String) = {
     logger.info(s"Received v1.1.0 DescribeCoverage request for layer $identifier")
 

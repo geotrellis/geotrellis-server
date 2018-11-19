@@ -12,6 +12,6 @@ import com.typesafe.scalalogging.LazyLogging
 
 import scala.xml._
 
-trait DescribeCoverage extends LazyLogging {
+trait DescribeCoverage {
   def build(metadata: MetadataCatalog, params: DescribeCoverageWcsParams): Elem
 }
