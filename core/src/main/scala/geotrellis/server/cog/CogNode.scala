@@ -41,7 +41,7 @@ object CogNode {
   }
 
   implicit val cogNodeTmsReification: TmsReification[CogNode] = new TmsReification[CogNode] {
-    def kind(self: CogNode): MamlKind = MamlKind.Tile
+    def kind(self: CogNode): MamlKind = MamlKind.Image
     def tmsReification(self: CogNode, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[Literal] = (z: Int, x: Int, y: Int) => {
       def fetch(xCoord: Int, yCoord: Int) =
         CogUtils.fetch(self.uri.toString, z, xCoord, yCoord)
@@ -58,7 +58,7 @@ object CogNode {
   }
 
   implicit val cogNodeExtentReification: ExtentReification[CogNode] = new ExtentReification[CogNode] {
-    def kind(self: CogNode): MamlKind = MamlKind.Tile
+    def kind(self: CogNode): MamlKind = MamlKind.Image
     def extentReification(self: CogNode)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] = (extent: Extent, cs: CellSize) => {
       CogUtils.getTiff(self.uri.toString)
         .map { CogUtils.cropGeoTiffToTile(_, extent, cs, self.band) }

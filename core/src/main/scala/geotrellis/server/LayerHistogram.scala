@@ -19,7 +19,6 @@ import geotrellis.vector.Extent
 import geotrellis.vector.io._
 import geotrellis.raster._
 import geotrellis.raster.histogram._
-import geotrellis.raster.Tile
 
 import scala.util.Random
 
@@ -82,7 +81,7 @@ object LayerHistogram extends LazyLogging {
              extended: HasRasterExtents[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
-  ): IO[Interpreted[Histogram[Double]]] =
+  ): IO[Interpreted[List[Histogram[Double]]]] =
     for {
       params           <- getParams
       rasterExtents    <- NEL.fromListUnsafe(params.values.toList)
@@ -99,9 +98,11 @@ object LayerHistogram extends LazyLogging {
                           }).getOrElse(throw new RequireIntersectingSources()) }
       cellSize         <- IO { chooseLargestCellSize(rasterExtents.map(_.cellSize)) }
       sampleExtent     <- IO { sampleRasterExtent(intersection, cellSize, maxCells) }
-      tileForExtent    <- IO { LayerExtent(getExpression, getParams, interpreter) }
-      interpretedTile  <- tileForExtent(sampleExtent, cellSize)
-    } yield interpretedTile.map(StreamingHistogram.fromTile(_))
+      mbtileForExtent  <- IO { LayerExtent(getExpression, getParams, interpreter) }
+      interpretedTile  <- mbtileForExtent(sampleExtent, cellSize)
+    } yield interpretedTile.map { mbtile =>
+      mbtile.bands.map { band => StreamingHistogram.fromTile(band) }.toList
+    }
 
   def generateExpression[Param](
     mkExpr: Map[String, Param] => Expression,
@@ -126,7 +127,7 @@ object LayerHistogram extends LazyLogging {
              extended: HasRasterExtents[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
-  ): (Map[String, Param]) => IO[Interpreted[Histogram[Double]]] =
+  ): (Map[String, Param]) => IO[Interpreted[List[Histogram[Double]]]] =
     (paramMap: Map[String, Param]) => {
       apply[Param](IO.pure(expr), IO.pure(paramMap), interpreter, maxCells)
     }

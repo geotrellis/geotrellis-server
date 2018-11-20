@@ -15,7 +15,6 @@ import cats.data.{NonEmptyList => NEL}
 import cats.effect._
 import cats.implicits._
 import geotrellis.raster._
-import geotrellis.raster.Tile
 
 
 /** Provides methods for producing TMS tiles */
@@ -41,7 +40,7 @@ object LayerTms extends LazyLogging {
     implicit reify: TmsReification[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
-  ): (Int, Int, Int) => IO[Interpreted[Tile]] = (z: Int, x: Int, y: Int) => {
+  ): (Int, Int, Int) => IO[Interpreted[MultibandTile]] = (z: Int, x: Int, y: Int) => {
     for {
       expr             <- getExpression
       _                <- IO.pure(logger.info(s"Retrieved MAML AST at TMS ($z, $x, $y): ${expr.asJson.noSpaces}"))
@@ -53,7 +52,7 @@ object LayerTms extends LazyLogging {
                             eval(z, x, y).map(varName -> _)
                           } map { _.toMap }
       reified          <- IO.pure { Expression.bindParams(expr, params) }
-    } yield reified.andThen(interpreter(_)).andThen(_.as[Tile])
+    } yield reified.andThen(interpreter(_)).andThen(_.as[MultibandTile])
   }
 
 
@@ -79,7 +78,7 @@ object LayerTms extends LazyLogging {
     implicit reify: TmsReification[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
-  ): (Map[String, Param], Int, Int, Int) => IO[Interpreted[Tile]] =
+  ): (Map[String, Param], Int, Int, Int) => IO[Interpreted[MultibandTile]] =
     (paramMap: Map[String, Param], z: Int, x: Int, y: Int) => {
       val eval = apply[Param](IO.pure(expr), IO.pure(paramMap), interpreter)
       eval(z, x, y)

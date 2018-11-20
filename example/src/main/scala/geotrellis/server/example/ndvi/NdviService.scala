@@ -69,8 +69,9 @@ class NdviService[Param](
       val paramMap = Map("red" -> red, "nir" -> nir)
 
       eval(paramMap, z, x, y).attempt flatMap {
-        case Right(Valid(tile)) =>
-          Ok(tile.renderPng(ColorRamps.Viridis).bytes)
+        case Right(Valid(mbtile)) =>
+          // Image results have multiple bands. We need to pick one
+          Ok(mbtile.band(1).renderPng(ColorRamps.Viridis).bytes)
         case Right(Invalid(errs)) =>
           logger.debug(errs.toList.toString)
           BadRequest(errs.asJson)

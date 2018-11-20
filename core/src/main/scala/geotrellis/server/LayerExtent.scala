@@ -16,7 +16,7 @@ import cats.data.{NonEmptyList => NEL}
 import cats.effect._
 import cats.implicits._
 import geotrellis.raster._
-import geotrellis.raster.Tile
+
 
 object LayerExtent extends LazyLogging {
 
@@ -29,7 +29,7 @@ object LayerExtent extends LazyLogging {
     implicit reify: ExtentReification[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
-  ): (Extent, CellSize) => IO[Interpreted[Tile]]  = (extent: Extent, cs: CellSize) =>  {
+  ): (Extent, CellSize) => IO[Interpreted[MultibandTile]]  = (extent: Extent, cs: CellSize) =>  {
     for {
       expr             <- getExpression
       _                <- IO.pure(logger.info(s"Retrieved MAML AST for extent ($extent) and cellsize ($cs): ${expr.asJson.noSpaces}"))
@@ -41,7 +41,7 @@ object LayerExtent extends LazyLogging {
                             thingify(extent, cs).map(varName -> _)
                           } map { _.toMap }
       reified          <- IO.pure { Expression.bindParams(expr, params) }
-    } yield reified.andThen(interpreter(_)).andThen(_.as[Tile])
+    } yield reified.andThen(interpreter(_)).andThen(_.as[MultibandTile])
   }
 
   def generateExpression[Param](
@@ -63,7 +63,7 @@ object LayerExtent extends LazyLogging {
     implicit reify: ExtentReification[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
-  ): (Map[String, Param], Extent, CellSize) => IO[Interpreted[Tile]] =
+  ): (Map[String, Param], Extent, CellSize) => IO[Interpreted[MultibandTile]] =
     (paramMap: Map[String, Param], extent: Extent, cellsize: CellSize) => {
       val eval = apply[Param](IO.pure(expr), IO.pure(paramMap), interpreter)
       eval(extent, cellsize)
@@ -77,7 +77,7 @@ object LayerExtent extends LazyLogging {
     implicit reify: ExtentReification[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
-  ): (Extent, CellSize) => IO[Interpreted[Tile]] =
+  ): (Extent, CellSize) => IO[Interpreted[MultibandTile]] =
     (extent: Extent, cellsize: CellSize) => {
       val eval = curried(RasterVar("identity"), BufferingInterpreter.DEFAULT)
       eval(Map("identity" -> param), extent, cellsize)

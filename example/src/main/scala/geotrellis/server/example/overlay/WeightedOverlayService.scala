@@ -86,6 +86,8 @@ class WeightedOverlayService(
       IO.pure(Valid(hist))
     case None =>
       LayerHistogram.generateExpression(mkExpression, getParams(id), interpreter, 512).map { hist =>
+        hist.map(_.head)  // We only want the first value from the mbtile
+      }.map { hist =>
         hist.map { demoHistogramStore.put(id, _) }
         hist
       }
@@ -133,9 +135,9 @@ class WeightedOverlayService(
         .parMapN { (_, _) }
         .attempt
         .flatMap {
-          case Right((Valid(tile), Valid(histogram))) =>
+          case Right((Valid(mbtile), Valid(histogram))) =>
             val cmap = ColorMap.fromQuantileBreaks(histogram, transparentColorMap)
-            Ok(tile.renderPng(cmap).bytes)
+            Ok(mbtile.band(1).renderPng(cmap).bytes)
           case Right((Invalid(errs1), Invalid(errs2))) =>
             logger.debug(List(errs1, errs2).asJson.toString)
             BadRequest(List(errs1, errs2).asJson)

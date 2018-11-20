@@ -43,7 +43,7 @@ object NdviServer extends LazyLogging with IOApp {
   val stream: Stream[IO, ExitCode] = {
     for {
       conf       <- Stream.eval(LoadConf().as[ExampleConf])
-      _          <- Stream.eval(IO.pure(logger.info(s"Initializing Weighted Overlay at ${conf.http.interface}:${conf.http.port}/maml/overlay")))
+      _          <- Stream.eval(IO.pure(logger.info(s"Initializing NDVI service at ${conf.http.interface}:${conf.http.port}/")))
       mamlNdviRendering = new NdviService[CogNode]()
       exitCode   <- BlazeServerBuilder[IO]
         .enableHttp2(true)
