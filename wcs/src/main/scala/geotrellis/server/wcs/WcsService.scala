@@ -67,18 +67,17 @@ class WcsService(catalog: URI, authority: String, port: Int) extends Http4sDsl[I
        case Validated.Valid(wcsParams) =>
          wcsParams match {
            case p: GetCapabilitiesWcsParams =>
-             //val link = s"${req.uri.scheme}://${req.uri.authority}${req.uri.path}?"
              val link = s"http://${authority}:${port}${req.uri.path}?"
              logger.debug(s"\033[1mGetCapabilities: $link\033[0m")
-             val result = GetCapabilities.build(link, catalogMetadata, p)
+             val result = Operations.getCapabilities(link, catalogMetadata, p)
              logger.debug(result.toString)
              Ok(result)
 
            case p: DescribeCoverageWcsParams =>
              logger.debug(s"\033[1mDescribeCoverage: ${req.uri}\033[0m")
              for {
-               getCoverage <- IO { DescribeCoverage.build(catalogMetadata, p) }.attempt
-               result <- handleError(getCoverage)
+               describeCoverage <- IO { Operations.describeCoverage(catalogMetadata, p) }.attempt
+               result <- handleError(describeCoverage)
              } yield {
                logger.debug("describecoverage result", result)
                result

@@ -11,7 +11,9 @@ import geotrellis.vector.Extent
 
 import scala.util.Try
 
-abstract sealed class WcsParams
+abstract sealed class WcsParams {
+  val version: String
+}
 
 case class GetCapabilitiesWcsParams(version: String) extends WcsParams
 
