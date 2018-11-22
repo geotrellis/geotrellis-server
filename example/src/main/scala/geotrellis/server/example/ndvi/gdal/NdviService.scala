@@ -58,6 +58,7 @@ class NdviService[Param](
 
   final val eval = LayerTms.curried(ndvi, interpreter)
 
+  // http://0.0.0.0:9000/{z}/{x}/{y}.png
   def routes: HttpRoutes[IO] = HttpRoutes.of {
     // Matching json in the query parameter is a bad idea.
     case req @ GET -> Root / IntVar(z) / IntVar(x) / IntVar(y) ~ "png" /*:? RedQueryParamMatcher(red) +& NirQueryParamMatcher(nir)*/ =>

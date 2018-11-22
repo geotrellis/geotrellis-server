@@ -2,7 +2,6 @@ package geotrellis.server.example.ndvi
 
 import geotrellis.server._
 import TmsReification.ops._
-
 import com.azavea.maml.util.Vars
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
@@ -14,7 +13,8 @@ import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
 import cats._
-import cats.data._, Validated._
+import cats.data._
+import Validated._
 import cats.implicits._
 import cats.effect._
 import com.typesafe.scalalogging.LazyLogging
@@ -23,7 +23,11 @@ import geotrellis.raster.render._
 
 import scala.math._
 import java.net.URI
-import java.util.{UUID, NoSuchElementException}
+import java.util.{NoSuchElementException, UUID}
+
+import geotrellis.server.cog.CogNode
+import geotrellis.server.gdal.GDALNode
+
 import scala.util.Try
 import scala.collection.mutable
 
@@ -63,13 +67,14 @@ class NdviService[Param](
 
   final val eval = LayerTms.curried(ndvi, interpreter)
 
+  // http://0.0.0.0:9000/{z}/{x}/{y}.png
   def routes: HttpRoutes[IO] = HttpRoutes.of {
     // Matching json in the query parameter is a bad idea.
-    case req @ GET -> Root / IntVar(z) / IntVar(x) / IntVar(y) ~ "png" :? RedQueryParamMatcher(red) +& NirQueryParamMatcher(nir) =>
-      val paramMap = Map("red" -> red, "nir" -> nir)
-
-      println(s"red: ${red}")
-      println(s"nir: ${nir}")
+    case req @ GET -> Root / IntVar(z) / IntVar(x) / IntVar(y) ~ "png" /*:? RedQueryParamMatcher(red) +& NirQueryParamMatcher(nir)*/ =>
+      val paramMap = Map(
+        "red" -> CogNode(new java.net.URI("file:///Users/daunnc/subversions/git/github/geotrellis-landsat-tutorial/data/r-g-nir.tif"), 0, None).asInstanceOf[Param],
+        "nir" -> CogNode(new java.net.URI("file:///Users/daunnc/subversions/git/github/geotrellis-landsat-tutorial/data/r-g-nir.tif"), 2, None).asInstanceOf[Param]
+      )
 
       eval(paramMap, z, x, y).attempt flatMap {
         case Right(Valid(mbtile)) =>
