@@ -32,8 +32,8 @@ lazy val commonSettings = Seq(
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
     "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots"
   ),
-  addCompilerPlugin("org.spire-math" % "kind-projector" % "0.9.4" cross CrossVersion.binary),
-  addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+  addCompilerPlugin(kindProjector cross CrossVersion.binary),
+  addCompilerPlugin(macrosParadise cross CrossVersion.full),
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
   fork := true,
   test in assembly := {},
@@ -44,7 +44,8 @@ lazy val commonSettings = Seq(
     case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") => MergeStrategy.discard
     case "META-INF/MANIFEST.MF" => MergeStrategy.discard
     case _ => MergeStrategy.first
-  }
+  },
+  javaOptions ++= Seq("-Djava.library.path=/usr/local/lib")
 )
 
 lazy val publishSettings = Seq(
@@ -111,10 +112,10 @@ lazy val core = project
       circeShapes,
       geotrellisS3,
       geotrellisSpark,
+      geotrellisVlm,
       cats,
       catsEffect,
       mamlJvm,
-      kindProjector,
       simulacrum,
       typesafeLogging,
       logbackClassic,
@@ -162,7 +163,6 @@ lazy val wcs = project
       geotrellisS3,
       geotrellisSpark,
       spark,
-      kindProjector,
       typesafeLogging,
       logbackClassic,
       scalatest

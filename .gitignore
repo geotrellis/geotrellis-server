@@ -15,3 +15,5 @@ pc.stdout.log
 *.aux.xml
 *.jar
 *.crc
+.idea
+*.log

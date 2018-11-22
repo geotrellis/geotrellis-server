@@ -1,8 +1,7 @@
-package geotrellis.server.example.ndvi
+package geotrellis.server.example.ndvi.gdal
 
 import geotrellis.server._
 import TmsReification.ops._
-
 import com.azavea.maml.util.Vars
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
@@ -14,18 +13,14 @@ import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
 import cats._
-import cats.data._, Validated._
+import cats.data._
+import Validated._
 import cats.implicits._
 import cats.effect._
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.raster._
 import geotrellis.raster.render._
-
-import scala.math._
-import java.net.URI
-import java.util.{UUID, NoSuchElementException}
-import scala.util.Try
-import scala.collection.mutable
+import geotrellis.server.gdal.GDALNode
 
 
 class NdviService[Param](
@@ -65,11 +60,14 @@ class NdviService[Param](
 
   def routes: HttpRoutes[IO] = HttpRoutes.of {
     // Matching json in the query parameter is a bad idea.
-    case req @ GET -> Root / IntVar(z) / IntVar(x) / IntVar(y) ~ "png" :? RedQueryParamMatcher(red) +& NirQueryParamMatcher(nir) =>
-      val paramMap = Map("red" -> red, "nir" -> nir)
+    case req @ GET -> Root / IntVar(z) / IntVar(x) / IntVar(y) ~ "png" /*:? RedQueryParamMatcher(red) +& NirQueryParamMatcher(nir)*/ =>
 
-      println(s"red: ${red}")
-      println(s"nir: ${nir}")
+      println(s"geotrellis.contrib.vlm.gdal.GDAL.cache.size: ${geotrellis.contrib.vlm.gdal.GDAL.cache.asMap.size}")
+
+      val paramMap = Map(
+        "red" -> GDALNode(new java.net.URI("/Users/daunnc/subversions/git/github/geotrellis-landsat-tutorial/data/r-g-nir.tif"), 0, None).asInstanceOf[Param],
+        "nir" -> GDALNode(new java.net.URI("/Users/daunnc/subversions/git/github/geotrellis-landsat-tutorial/data/r-g-nir.tif"), 2, None).asInstanceOf[Param]
+      )
 
       eval(paramMap, z, x, y).attempt flatMap {
         case Right(Valid(mbtile)) =>
