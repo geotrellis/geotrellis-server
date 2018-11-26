@@ -1,28 +1,19 @@
 package geotrellis.server.example.ndvi
 
-import geotrellis.server._
 import geotrellis.server.example._
 import geotrellis.server.cog.CogNode
-import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
-import cats.data._
+
 import cats.effect._
 import cats.implicits._
-import io.circe._
-import io.circe.syntax._
 import fs2._
-import com.typesafe.scalalogging.LazyLogging
-import org.http4s.circe._
 import org.http4s._
-import org.http4s.dsl.Http4sDsl
 import org.http4s.server._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.{CORS, CORSConfig}
 import org.http4s.syntax.kleisli._
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.concurrent.duration._
-import scala.collection.mutable
-import scala.concurrent.ExecutionContext.Implicits.global
-
 
 object NdviServer extends LazyLogging with IOApp {
 
