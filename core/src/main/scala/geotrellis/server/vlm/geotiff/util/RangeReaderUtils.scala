@@ -1,4 +1,4 @@
-package geotrellis.server.cog.util
+package geotrellis.server.vlm.geotiff.util
 
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.util.{FileRangeReader, RangeReader}
@@ -16,7 +16,6 @@ import java.nio.file.Paths
 import java.nio.charset.Charset
 import java.net.URI
 import java.net.URL
-
 
 object RangeReaderUtils extends LazyLogging {
   def fromUri(uri: String): IO[RangeReader] = IO {

@@ -3,7 +3,6 @@ package geotrellis.server.example.ndvi.gdal
 import geotrellis.server._
 import geotrellis.raster._
 import geotrellis.raster.render._
-import geotrellis.server.gdal.GDALNode
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
 import com.azavea.maml.eval._
@@ -18,6 +17,8 @@ import cats.data._
 import Validated._
 import cats.effect._
 import com.typesafe.scalalogging.LazyLogging
+
+import java.net.URLDecoder
 
 class NdviService[Param](
   interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
@@ -35,7 +36,7 @@ class NdviService[Param](
   }
 
   implicit val redQueryParamDecoder: QueryParamDecoder[Param] =
-    QueryParamDecoder[String].map(decode[Param](_).right.get)
+    QueryParamDecoder[String].map { str => decode[Param](URLDecoder.decode(str, "UTF-8")).right.get }
   object RedQueryParamMatcher extends QueryParamDecoderMatcher[Param]("red")
   object NirQueryParamMatcher extends QueryParamDecoderMatcher[Param]("nir")
 

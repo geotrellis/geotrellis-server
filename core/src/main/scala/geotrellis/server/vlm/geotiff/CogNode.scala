@@ -1,30 +1,33 @@
-package geotrellis.server.cog
+package geotrellis.server.vlm.geotiff
 
 import geotrellis.server._
-import geotrellis.server.cog.util.CogUtils
-
-import com.azavea.maml.ast.{Expression, Literal, MamlKind, RasterLit}
-import com.azavea.maml.eval.tile._
-import io.circe._
-import io.circe.generic.semiauto._
-import cats.effect._
-import cats.data.{NonEmptyList => NEL}
-import cats.syntax.all._
+import geotrellis.server.vlm.RasterSourceUtils
+import geotrellis.contrib.vlm.geotiff._
+import geotrellis.server.vlm.geotiff.util._
 import geotrellis.raster._
 import geotrellis.proj4.CRS
 import geotrellis.vector.Extent
 
-import java.net.URI
+import com.azavea.maml.ast.{Literal, MamlKind, RasterLit}
+import com.azavea.maml.eval.tile._
+import _root_.io.circe._
+import _root_.io.circe.generic.semiauto._
+import cats.effect._
+import cats.data.{NonEmptyList => NEL}
+import cats.syntax.all._
 
+import java.net.URI
 
 case class CogNode(uri: URI, band: Int, celltype: Option[CellType])
 
-object CogNode {
-  implicit val cellTypeEncoder: Encoder[CellType] = Encoder.encodeString.contramap[CellType](CellType.toName)
-  implicit val cellTypeDecoder: Decoder[CellType] = Decoder[String].emap { name => Right(CellType.fromName(name)) }
+/** TODO: make it use RasterSources and remove COGUtils at all **/
+object CogNode extends RasterSourceUtils {
+  def getRasterSource(uri: String): GeoTiffRasterSource = new GeoTiffRasterSource(uri)
 
-  implicit val uriEncoder: Encoder[URI] = Encoder.encodeString.contramap[URI](_.toString)
-  implicit val uriDecoder: Decoder[URI] = Decoder[String].emap { str => Right(URI.create(str)) }
+  def getRasterExtents(uri: String): IO[NEL[RasterExtent]] = IO {
+    val tiff = getRasterSource(uri).tiff
+    NEL(tiff.rasterExtent, tiff.overviews.map(_.rasterExtent))
+  }
 
   implicit val cogNodeEncoder: Encoder[CogNode] = deriveEncoder[CogNode]
   implicit val cogNodeDecoder: Decoder[CogNode] = deriveDecoder[CogNode]

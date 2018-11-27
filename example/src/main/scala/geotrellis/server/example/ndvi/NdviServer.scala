@@ -1,7 +1,7 @@
 package geotrellis.server.example.ndvi
 
 import geotrellis.server.example._
-import geotrellis.server.cog.CogNode
+import geotrellis.server.vlm.geotiff.CogNode
 
 import cats.effect._
 import cats.implicits._

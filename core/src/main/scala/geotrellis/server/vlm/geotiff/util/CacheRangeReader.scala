@@ -1,7 +1,6 @@
-package geotrellis.server.cog.util
+package geotrellis.server.vlm.geotiff.util
 
 import geotrellis.util._
-
 
 case class CacheRangeReader(rr: RangeReader, cachedBytes: Array[Byte])
     extends RangeReader {

@@ -1,11 +1,10 @@
 package geotrellis.server.example.ndvi.gdal
 
 import geotrellis.server.example._
-import geotrellis.server.gdal._
+import geotrellis.server.vlm.gdal._
 
 import cats.effect._
 import cats.implicits._
-import io.circe.syntax._
 import fs2._
 import com.typesafe.scalalogging.LazyLogging
 import org.http4s._
@@ -13,8 +12,6 @@ import org.http4s.server._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.{CORS, CORSConfig}
 import org.http4s.syntax.kleisli._
-
-import java.net.URI
 
 import scala.concurrent.duration._
 

@@ -1,4 +1,4 @@
-package geotrellis.server.cog.util
+package geotrellis.server.vlm.geotiff.util
 
 import geotrellis.vector._
 import geotrellis.raster._
@@ -16,7 +16,6 @@ import scala.concurrent._
 import cats.effect.IO
 import cats.data._
 import cats.implicits._
-
 
 object CogUtils {
 

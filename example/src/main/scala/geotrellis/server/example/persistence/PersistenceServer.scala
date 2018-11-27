@@ -2,7 +2,7 @@ package geotrellis.server.example.persistence
 
 import geotrellis.server._
 import geotrellis.server.example._
-import geotrellis.server.cog._
+import geotrellis.server.vlm.geotiff._
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
 import com.azavea.maml.ast.Expression

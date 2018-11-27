@@ -18,6 +18,8 @@ import Validated._
 import cats.effect._
 import com.typesafe.scalalogging.LazyLogging
 
+import java.net.URLDecoder
+
 class NdviService[Param](
   interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
 )(implicit contextShift: ContextShift[IO],
@@ -34,7 +36,7 @@ class NdviService[Param](
   }
 
   implicit val redQueryParamDecoder: QueryParamDecoder[Param] =
-    QueryParamDecoder[String].map(decode[Param](_).right.get)
+    QueryParamDecoder[String].map { str => decode[Param](URLDecoder.decode(str, "UTF-8")).right.get }
   object RedQueryParamMatcher extends QueryParamDecoderMatcher[Param]("red")
   object NirQueryParamMatcher extends QueryParamDecoderMatcher[Param]("nir")
 
