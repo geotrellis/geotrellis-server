@@ -1,4 +1,4 @@
-package geotrellis.server.example.ndvi.gdal
+package geotrellis.server.example.ndvi
 
 import geotrellis.server.example._
 import geotrellis.server.vlm.gdal._
@@ -15,7 +15,7 @@ import org.http4s.syntax.kleisli._
 
 import scala.concurrent.duration._
 
-object NdviServer extends LazyLogging with IOApp {
+object GdalNdviServer extends LazyLogging with IOApp {
 
   private val corsConfig = CORSConfig(
     anyOrigin = true,
