@@ -47,14 +47,12 @@ object CogNode extends RasterSourceUtils {
     def kind(self: CogNode): MamlKind = MamlKind.Image
     def tmsReification(self: CogNode, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[Literal] = (z: Int, x: Int, y: Int) => {
       def fetch(xCoord: Int, yCoord: Int) =
-        CogUtils.fetch(self.uri.toString, z, xCoord, yCoord)
-        .map(_.tile)
-        .map(_.band(self.band))
-      (fetch(x - 1, y + 1), fetch(x, y + 1), fetch(x + 1, y + 1),
-       fetch(x - 1, y),     fetch(x, y),     fetch(x + 1, y),
-       fetch(x - 1, y - 1), fetch(x, y - 1), fetch(x + 1, y - 1)).parMapN { (tl, tm, tr, ml, mm, mr, bl, bm, br) =>
-        val tile = TileWithNeighbors(mm, Some(NeighboringTiles(tl, tm, tr, ml, mr,bl, bm, br))).withBuffer(buffer)
-        val extent = CogUtils.tmsLevels(z).mapTransform.keyToExtent(x, y)
+        fetchTile(self.uri.toString, z, xCoord, yCoord)
+          .map(_.tile)
+          .map(_.band(self.band))
+
+      fetch(x, y).map { tile =>
+        val extent = tmsLevels(z).mapTransform.keyToExtent(x, y)
         RasterLit(Raster(MultibandTile(tile), extent))
       }
     }
