@@ -10,6 +10,7 @@ lazy val commonSettings = Seq(
   licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
   cancelable in Global := true,
   scalaVersion := scalaVer,
+  crossScalaVersions := crossScalaVer,
   scalacOptions := Seq(
     "-deprecation",
     "-unchecked",

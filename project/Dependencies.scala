@@ -3,10 +3,11 @@ import sbt._
 object Dependencies {
 
   val circeVer         = "0.10.0"
-  val gtVer            = "2.1.0"
+  val gtVer            = "3.0.0-SNAPSHOT"
   val gtcVer           = "0.4.0"
   val http4sVer        = "0.19.0"
   val scalaVer         = "2.11.12"
+  val crossScalaVer    = Seq(scalaVer, "2.12.7")
   val tsecVer          = "0.0.1-M11"
 
   //val kamonZipkin       = "io.kamon"                      %% "kamon-zipkin"         % "1.0.1"
