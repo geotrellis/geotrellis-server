@@ -5,6 +5,10 @@ import geotrellis.server.vlm.RasterSourceUtils
 import geotrellis.contrib.vlm.gdal.{GDALBaseRasterSource, GDALRasterSource}
 import geotrellis.raster._
 import geotrellis.proj4.CRS
+import geotrellis.contrib.vlm.TargetRegion
+import geotrellis.raster.resample.NearestNeighbor
+import geotrellis.server.vlm.geotiff.CogNode
+import geotrellis.vector.Extent
 import com.azavea.maml.ast.{Literal, MamlKind, RasterLit}
 
 import _root_.io.circe._
@@ -51,6 +55,17 @@ object GDALNode extends RasterSourceUtils {
         val extent = tmsLevels(z).mapTransform.keyToExtent(x, y)
         RasterLit(Raster(MultibandTile(tile), extent))
       }
+    }
+  }
+
+  implicit val GDALNodeExtentReification: ExtentReification[GDALNode] = new ExtentReification[GDALNode] {
+    def kind(self: GDALNode): MamlKind = MamlKind.Image
+    def extentReification(self: GDALNode)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] = (extent: Extent, cs: CellSize) => {
+      getRasterSource(self.uri.toString)
+        .resample(TargetRegion(RasterExtent(extent, cs)), NearestNeighbor)
+        .read(extent, self.band :: Nil)
+        .map { RasterLit(_) }
+        .toIO { new Exception(s"No tile avail for RasterExtent: ${RasterExtent(extent, cs)}") }
     }
   }
 }

@@ -26,7 +26,7 @@ object Dependencies {
   val geotrellisS3      = "org.locationtech.geotrellis"   %% "geotrellis-s3"          % gtVer
   val geotrellisSpark   = "org.locationtech.geotrellis"   %% "geotrellis-spark"       % gtVer
   val geotrellisVlm     = "com.azavea.geotrellis"         %% "geotrellis-contrib-vlm" % gtcVer
-  val hadoop            = "org.apache.hadoop"             %  "hadoop-client"        % "2.8.0" % "provided"
+  val hadoop            = "org.apache.hadoop"             %  "hadoop-client"        % "2.8.0" % Provided
   val http4sBlazeClient = "org.http4s"                    %% "http4s-blaze-client"  % http4sVer
   val http4sBlazeServer = "org.http4s"                    %% "http4s-blaze-server"  % http4sVer
   val http4sCirce       = "org.http4s"                    %% "http4s-circe"         % http4sVer
@@ -42,9 +42,9 @@ object Dependencies {
   val pureConfig        = "com.github.pureconfig"         %% "pureconfig"           % "0.9.1"
   val scaffeine         = "com.github.blemale"            %% "scaffeine"            % "2.0.0"
   val scalaXml          = "org.scala-lang.modules"        %% "scala-xml"            % "1.1.0"
-  val scalatest         = "org.scalatest"                 %%  "scalatest"           % "3.0.4" % "test"
+  val scalatest         = "org.scalatest"                 %%  "scalatest"           % "3.0.4" % Test
   val simulacrum        = "com.github.mpilquist"          %% "simulacrum"           % "0.12.0"
-  val spark             = "org.apache.spark"              %% "spark-core"           % "2.3.0" % "provided"
+  val spark             = "org.apache.spark"              %% "spark-core"           % "2.3.0" % Provided
   val tsecCommon        = "io.github.jmcardon"            %% "tsec-common"          % tsecVer
   val tsecHttp4s        = "io.github.jmcardon"            %% "tsec-http4s"          % tsecVer
   val typesafeLogging   = "com.typesafe.scala-logging"    %% "scala-logging"        % "3.9.0"
