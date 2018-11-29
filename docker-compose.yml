@@ -1,36 +1,37 @@
 version: '3'
 services:
   overlay-example:
-    image: quay.io/geotrellis/server:latest
+    image: daunnc/openjdk-gdal:2.3.1
     command: /bin/sh -c "java -cp /opt/geotrellis-server-example.jar geotrellis.server.example.overlay.WeightedOverlayServer"
     ports:
       - "9000:9000"
     volumes:
       - $HOME/.aws:/root/.aws
-    build:
-      context: docker
-      dockerfile: examples.dockerfile
+      - ./example/target/scala-2.11/geotrellis-server-example.jar:/opt/geotrellis-server-example.jar
   persistence-example:
-    image: quay.io/geotrellis/server:latest
+    image: daunnc/openjdk-gdal:2.3.1
     command: /bin/sh -c "java -cp /opt/geotrellis-server-example.jar geotrellis.server.example.persistence.PersistenceServer"
     ports:
       - "9000:9000"
     volumes:
       - $HOME/.aws:/root/.aws
-    build:
-      context: docker
-      dockerfile: examples.dockerfile
+      - ./example/target/scala-2.11/geotrellis-server-example.jar:/opt/geotrellis-server-example.jar
   ndvi-example:
-    image: quay.io/geotrellis/server:latest
+    image: daunnc/openjdk-gdal:2.3.1
     command: /bin/sh -c "java -cp /opt/geotrellis-server-example.jar geotrellis.server.example.ndvi.NdviServer"
     ports:
       - "9000:9000"
     volumes:
       - $HOME/.aws:/root/.aws
-    build:
-      context: docker
-      dockerfile: examples.dockerfile
-
+      - ./example/target/scala-2.11/geotrellis-server-example.jar:/opt/geotrellis-server-example.jar
+  gdal-ndvi-example:
+    image: daunnc/openjdk-gdal:2.3.1
+    command: /bin/sh -c "java -Djava.library.path=/usr/local/lib -cp /opt/geotrellis-server-example.jar geotrellis.server.example.ndvi.GdalNdviServer"
+    ports:
+      - "9000:9000"
+    volumes:
+      - $HOME/.aws:/root/.aws
+      - ./example/target/scala-2.11/geotrellis-server-example.jar:/opt/geotrellis-server-example.jar
   server-microsite:
     image: quay.io/geotrellis/server-microsite:latest
     command: bash -c "cd /root/geotrellis-server/docs/target/site && jekyll serve --host 0.0.0.0"
@@ -41,5 +42,5 @@ services:
       - $HOME/.ivy2:/root/.ivy2
       - ./:/root/geotrellis-server
     build:
-      context: docker
       dockerfile: microsite.dockerfile
+      context: .

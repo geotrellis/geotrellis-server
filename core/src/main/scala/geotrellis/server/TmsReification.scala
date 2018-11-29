@@ -1,14 +1,9 @@
 package geotrellis.server
 
-import geotrellis.vector.Extent
 import com.azavea.maml.ast.{Literal, MamlKind}
-import cats._
-import cats.data.EitherT
+
 import cats.effect._
 import simulacrum._
-
-import java.util.UUID
-
 
 @typeclass trait TmsReification[A] {
   @op("kind") def kind(self: A): MamlKind

@@ -1,32 +1,24 @@
 package geotrellis.server.example.ndvi
 
 import geotrellis.server._
-import TmsReification.ops._
-
-import com.azavea.maml.util.Vars
+import geotrellis.raster._
+import geotrellis.raster.render._
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
 import com.azavea.maml.eval._
+
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.circe._
-import io.circe._
-import io.circe.parser._
-import io.circe.syntax._
-import cats._
-import cats.data._, Validated._
-import cats.implicits._
+import _root_.io.circe._
+import _root_.io.circe.parser._
+import _root_.io.circe.syntax._
+import cats.data._
+import Validated._
 import cats.effect._
 import com.typesafe.scalalogging.LazyLogging
-import geotrellis.raster._
-import geotrellis.raster.render._
 
-import scala.math._
-import java.net.URI
-import java.util.{UUID, NoSuchElementException}
-import scala.util.Try
-import scala.collection.mutable
-
+import java.net.URLDecoder
 
 class NdviService[Param](
   interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
@@ -44,7 +36,7 @@ class NdviService[Param](
   }
 
   implicit val redQueryParamDecoder: QueryParamDecoder[Param] =
-    QueryParamDecoder[String].map(decode[Param](_).right.get)
+    QueryParamDecoder[String].map { str => decode[Param](URLDecoder.decode(str, "UTF-8")).right.get }
   object RedQueryParamMatcher extends QueryParamDecoderMatcher[Param]("red")
   object NirQueryParamMatcher extends QueryParamDecoderMatcher[Param]("nir")
 
@@ -63,14 +55,16 @@ class NdviService[Param](
 
   final val eval = LayerTms.curried(ndvi, interpreter)
 
+  // http://0.0.0.0:9000/{z}/{x}/{y}.png
   def routes: HttpRoutes[IO] = HttpRoutes.of {
     // Matching json in the query parameter is a bad idea.
     case req @ GET -> Root / IntVar(z) / IntVar(x) / IntVar(y) ~ "png" :? RedQueryParamMatcher(red) +& NirQueryParamMatcher(nir) =>
       val paramMap = Map("red" -> red, "nir" -> nir)
 
       eval(paramMap, z, x, y).attempt flatMap {
-        case Right(Valid(tile)) =>
-          Ok(tile.renderPng(ColorRamps.Viridis).bytes)
+        case Right(Valid(mbtile)) =>
+          // Image results have multiple bands. We need to pick one
+          Ok(mbtile.band(0).renderPng(ColorRamps.Viridis).bytes)
         case Right(Invalid(errs)) =>
           logger.debug(errs.toList.toString)
           BadRequest(errs.asJson)

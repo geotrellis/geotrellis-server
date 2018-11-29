@@ -1,27 +1,19 @@
 package geotrellis.server
 
-import ExtentReification.ops._
 import HasRasterExtents.ops._
 
-import com.azavea.maml.util.Vars
 import com.azavea.maml.error._
 import com.azavea.maml.ast._
-import com.azavea.maml.ast.codec.tree._
 import com.azavea.maml.eval._
-import com.typesafe.scalalogging.LazyLogging
-import io.circe._
-import io.circe.syntax._
-import cats._
+import geotrellis.vector.Extent
+import geotrellis.raster._
+import geotrellis.raster.histogram._
+
+import _root_.io.circe._
 import cats.data.{NonEmptyList => NEL}
 import cats.effect._
 import cats.implicits._
-import geotrellis.vector.Extent
-import geotrellis.vector.io._
-import geotrellis.raster._
-import geotrellis.raster.histogram._
-import geotrellis.raster.Tile
-
-import scala.util.Random
+import com.typesafe.scalalogging.LazyLogging
 
 object LayerHistogram extends LazyLogging {
 
@@ -82,7 +74,7 @@ object LayerHistogram extends LazyLogging {
              extended: HasRasterExtents[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
-  ): IO[Interpreted[Histogram[Double]]] =
+  ): IO[Interpreted[List[Histogram[Double]]]] =
     for {
       params           <- getParams
       rasterExtents    <- NEL.fromListUnsafe(params.values.toList)
@@ -99,9 +91,11 @@ object LayerHistogram extends LazyLogging {
                           }).getOrElse(throw new RequireIntersectingSources()) }
       cellSize         <- IO { chooseLargestCellSize(rasterExtents.map(_.cellSize)) }
       sampleExtent     <- IO { sampleRasterExtent(intersection, cellSize, maxCells) }
-      tileForExtent    <- IO { LayerExtent(getExpression, getParams, interpreter) }
-      interpretedTile  <- tileForExtent(sampleExtent, cellSize)
-    } yield interpretedTile.map(StreamingHistogram.fromTile(_))
+      mbtileForExtent  <- IO { LayerExtent(getExpression, getParams, interpreter) }
+      interpretedTile  <- mbtileForExtent(sampleExtent, cellSize)
+    } yield interpretedTile.map { mbtile =>
+      mbtile.bands.map { band => StreamingHistogram.fromTile(band) }.toList
+    }
 
   def generateExpression[Param](
     mkExpr: Map[String, Param] => Expression,
@@ -126,7 +120,7 @@ object LayerHistogram extends LazyLogging {
              extended: HasRasterExtents[Param],
              enc: Encoder[Param],
              contextShift: ContextShift[IO]
-  ): (Map[String, Param]) => IO[Interpreted[Histogram[Double]]] =
+  ): (Map[String, Param]) => IO[Interpreted[List[Histogram[Double]]]] =
     (paramMap: Map[String, Param]) => {
       apply[Param](IO.pure(expr), IO.pure(paramMap), interpreter, maxCells)
     }

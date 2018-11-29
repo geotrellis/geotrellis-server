@@ -1,26 +1,20 @@
 clean:
 	sbt "project example" clean
-	touch docker/geotrellis-server-example.jar
-	rm docker/geotrellis-server-example.jar
 
-docker/geotrellis-server-example.jar:
+build:
 	sbt "project example" assembly
-	ln -f example/target/scala-2.11/geotrellis-server-example.jar docker/geotrellis-server-example.jar
-	docker-compose build
 
-rebuild:
-	sbt "project example" assembly
-	ln -f example/target/scala-2.11/geotrellis-server-example.jar docker/geotrellis-server-example.jar
-	docker-compose build
-
-serveOverlayExample: docker/geotrellis-server-example.jar
+serveOverlayExample:
 	docker-compose run --service-ports overlay-example
 
-servePersistenceExample: docker/geotrellis-server-example.jar
+servePersistenceExample:
 	docker-compose run --service-ports persistence-example
 
-serveNdviExample: docker/geotrellis-server-example.jar
+serveNdviExample:
 	docker-compose run --service-ports ndvi-example
+
+serveGdalNdviExample:
+	docker-compose run --service-ports gdal-ndvi-example
 
 serveDocs:
 	docker-compose run server-microsite bash -c "cd /root/geotrellis-server && sbt 'project docs' makeMicrosite"

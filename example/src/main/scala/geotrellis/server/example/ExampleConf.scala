@@ -1,8 +1,5 @@
 package geotrellis.server.example
 
-import java.net.URI
-
-
 case class ExampleConf(http: ExampleConf.Http, auth: ExampleConf.Auth)
 
 object ExampleConf {

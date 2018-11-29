@@ -2,7 +2,6 @@ package geotrellis.server.example.persistence
 
 import geotrellis.server._
 import MamlStore.ops._
-import TmsReification.ops._
 
 import com.azavea.maml.util.Vars
 import com.azavea.maml.ast.Expression
@@ -13,19 +12,11 @@ import org.http4s.circe._
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
-import cats._
-import cats.data._
-import cats.implicits._
 import cats.effect._
 import com.typesafe.scalalogging.LazyLogging
-import geotrellis.raster._
-import geotrellis.raster.render._
 
-import scala.math._
-import java.net.URI
-import java.util.{UUID, NoSuchElementException}
+import java.util.UUID
 import scala.util.Try
-import scala.collection.mutable
 
 
 class PersistenceService[Store, Param](

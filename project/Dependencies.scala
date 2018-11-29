@@ -3,10 +3,12 @@ import sbt._
 object Dependencies {
 
   val circeVer         = "0.10.0"
-  val gtVer            = "2.1.0"
+  val gtVer            = "3.0.0-SNAPSHOT"
+  val gtcVer           = "0.4.0"
   val http4sVer        = "0.19.0"
   val scalaVer         = "2.11.12"
-  val tsecV            = "0.0.1-M11"
+  val crossScalaVer    = Seq(scalaVer, "2.12.7")
+  val tsecVer          = "0.0.1-M11"
 
   //val kamonZipkin       = "io.kamon"                      %% "kamon-zipkin"         % "1.0.1"
   val caffeine          = "com.github.ben-manes.caffeine" %  "caffeine"             % "2.3.5"
@@ -21,9 +23,10 @@ object Dependencies {
   val commonsLang       = "org.apache.commons"            %  "commons-lang3"        % "3.7"
   val concHashMap       = "com.googlecode.concurrentlinkedhashmap" % "concurrentlinkedhashmap-lru" % "1.4.2"
   val decline           = "com.monovore"                  %% "decline"              % "0.4.0"
-  val geotrellisS3      = "org.locationtech.geotrellis"   %% "geotrellis-s3"        % gtVer
-  val geotrellisSpark   = "org.locationtech.geotrellis"   %% "geotrellis-spark"     % gtVer
-  val hadoop            = "org.apache.hadoop"             %  "hadoop-client"        % "2.8.0" % "provided"
+  val geotrellisS3      = "org.locationtech.geotrellis"   %% "geotrellis-s3"          % gtVer
+  val geotrellisSpark   = "org.locationtech.geotrellis"   %% "geotrellis-spark"       % gtVer
+  val geotrellisVlm     = "com.azavea.geotrellis"         %% "geotrellis-contrib-vlm" % gtcVer
+  val hadoop            = "org.apache.hadoop"             %  "hadoop-client"        % "2.8.0" % Provided
   val http4sBlazeClient = "org.http4s"                    %% "http4s-blaze-client"  % http4sVer
   val http4sBlazeServer = "org.http4s"                    %% "http4s-blaze-server"  % http4sVer
   val http4sCirce       = "org.http4s"                    %% "http4s-circe"         % http4sVer
@@ -34,15 +37,15 @@ object Dependencies {
   val kamonPrometheus   = "io.kamon"                      %% "kamon-prometheus"     % "1.0.0"
   val kamonSysMetrics   = "io.kamon"                      %% "kamon-system-metrics" % "1.0.0"
   val kindProjector     = "org.spire-math"                %% "kind-projector"       % "0.9.4"
-  val logbackClassic    = "ch.qos.logback"                %  "logback-classic"      % "1.2.3"
-  val mamlJvm           = "com.azavea"                    %% "maml-jvm"             % "0.0.17"
+  val mamlJvm           = "com.azavea"                    %% "maml-jvm"             % "0.1.0"
   val pureConfig        = "com.github.pureconfig"         %% "pureconfig"           % "0.9.1"
   val scaffeine         = "com.github.blemale"            %% "scaffeine"            % "2.0.0"
   val scalaXml          = "org.scala-lang.modules"        %% "scala-xml"            % "1.1.0"
-  val scalatest         = "org.scalatest"                 %%  "scalatest"           % "3.0.4" % "test"
+  val scalatest         = "org.scalatest"                 %%  "scalatest"           % "3.0.4" % Test
   val simulacrum        = "com.github.mpilquist"          %% "simulacrum"           % "0.12.0"
-  val spark             = "org.apache.spark"              %% "spark-core"           % "2.3.0" % "provided"
-  val tsecCommon        = "io.github.jmcardon"            %% "tsec-common"          % tsecV
-  val tsecHttp4s        = "io.github.jmcardon"            %% "tsec-http4s"          % tsecV
+  val spark             = "org.apache.spark"              %% "spark-core"           % "2.4.0" % Provided
+  val tsecCommon        = "io.github.jmcardon"            %% "tsec-common"          % tsecVer
+  val tsecHttp4s        = "io.github.jmcardon"            %% "tsec-http4s"          % tsecVer
   val typesafeLogging   = "com.typesafe.scala-logging"    %% "scala-logging"        % "3.9.0"
+  val macrosParadise    = "org.scalamacros"                % "paradise"             % "2.1.0"
 }

@@ -4,9 +4,7 @@ import cats.effect.IO
 import com.typesafe.config.ConfigFactory
 import pureconfig.error.ConfigReaderException
 
-import java.net.URI
 import scala.reflect.ClassTag
-
 
 object LoadConf {
 

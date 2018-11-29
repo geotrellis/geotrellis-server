@@ -9,6 +9,7 @@ lazy val commonSettings = Seq(
   licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
   cancelable in Global := true,
   scalaVersion := scalaVer,
+  crossScalaVersions := crossScalaVer,
   scalacOptions := Seq(
     "-deprecation",
     "-unchecked",
@@ -26,13 +27,14 @@ lazy val commonSettings = Seq(
   resolvers ++= Seq(
     Resolver.bintrayRepo("bkirwi", "maven"), // Required for `decline` dependency
     Resolver.bintrayRepo("azavea", "maven"),
+    Resolver.bintrayRepo("azavea", "geotrellis"),
     Resolver.sonatypeRepo("releases"),
     Resolver.sonatypeRepo("snapshots"),
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
     "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots"
   ),
-  addCompilerPlugin("org.spire-math" % "kind-projector" % "0.9.4" cross CrossVersion.binary),
-  addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+  addCompilerPlugin(kindProjector cross CrossVersion.binary),
+  addCompilerPlugin(macrosParadise cross CrossVersion.full),
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
   fork := true,
   test in assembly := {},
@@ -43,7 +45,8 @@ lazy val commonSettings = Seq(
     case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") => MergeStrategy.discard
     case "META-INF/MANIFEST.MF" => MergeStrategy.discard
     case _ => MergeStrategy.first
-  }
+  },
+  javaOptions ++= Seq("-Djava.library.path=/usr/local/lib")
 )
 
 lazy val publishSettings = Seq(
@@ -110,10 +113,11 @@ lazy val core = project
       circeShapes,
       geotrellisS3,
       geotrellisSpark,
+      spark,
+      geotrellisVlm,
       cats,
       catsEffect,
       mamlJvm,
-      kindProjector,
       simulacrum,
       typesafeLogging,
       scalatest
@@ -136,12 +140,12 @@ lazy val example = project
       scalaXml,
       geotrellisS3,
       geotrellisSpark,
+      spark,
       decline,
       commonsIO,
       concHashMap,
       pureConfig,
       typesafeLogging,
-      logbackClassic,
       scalatest
     )
   )
@@ -160,9 +164,7 @@ lazy val wcs = project
       geotrellisS3,
       geotrellisSpark,
       spark,
-      kindProjector,
       typesafeLogging,
-      logbackClassic,
       scalatest
     )
   )
@@ -175,3 +177,10 @@ lazy val docs = project
   .settings(docSettings)
   .settings(noPublishSettings)
   .dependsOn(core, example)
+
+lazy val bench = project
+  .dependsOn(core)
+  .settings(commonSettings)
+  .enablePlugins(JmhPlugin)
+
+

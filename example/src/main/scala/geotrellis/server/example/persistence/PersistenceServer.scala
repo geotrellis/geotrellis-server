@@ -2,7 +2,7 @@ package geotrellis.server.example.persistence
 
 import geotrellis.server._
 import geotrellis.server.example._
-import geotrellis.server.cog._
+import geotrellis.server.vlm.geotiff._
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
 import com.azavea.maml.ast.Expression
@@ -19,9 +19,6 @@ import org.http4s.syntax.kleisli._
 
 import java.util.UUID
 import scala.concurrent.duration._
-import scala.collection.mutable
-import scala.concurrent.ExecutionContext.Implicits.global
-
 
 object PersistenceServer extends LazyLogging with IOApp {
 
@@ -40,12 +37,12 @@ object PersistenceServer extends LazyLogging with IOApp {
   val stream: Stream[IO, ExitCode] = {
     for {
       conf       <- Stream.eval(LoadConf().as[ExampleConf])
-      _          <- Stream.eval(IO.pure(logger.info(s"Initializing Weighted Overlay at ${conf.http.interface}:${conf.http.port}/maml/overlay")))
+      _          <- Stream.eval(IO.pure(logger.info(s"Initializing persistence demo at ${conf.http.interface}:${conf.http.port}/")))
       // This hashmap has a [MamlStore] implementation
       mamlStore = new ConcurrentLinkedHashMap.Builder[UUID, Expression]()
                     .maximumWeightedCapacity(1000)
-                    .build();
-      mamlPersistence = new PersistenceService[HashMapMamlStore, CogNode](mamlStore)
+                    .build()
+      mamlPersistence = new PersistenceService[HashMapMamlStore, GeoTiffNode](mamlStore)
       exitCode   <- BlazeServerBuilder[IO]
         .enableHttp2(true)
         .bindHttp(conf.http.port, conf.http.interface)

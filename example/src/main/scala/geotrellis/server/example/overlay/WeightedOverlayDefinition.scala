@@ -2,7 +2,7 @@ package geotrellis.server.example.overlay
 
 import geotrellis.server._
 import HasRasterExtents.ops._
-import geotrellis.server.cog.util.CogUtils
+import geotrellis.server.vlm.geotiff.util._
 
 import com.azavea.maml.ast.{Expression, Literal, MamlKind, RasterLit}
 import com.azavea.maml.eval.tile._
@@ -27,7 +27,7 @@ object WeightedOverlayDefinition {
 
   implicit val overlayTmsDefinitionReification: TmsReification[WeightedOverlayDefinition] =
     new TmsReification[WeightedOverlayDefinition] {
-      def kind(self: WeightedOverlayDefinition): MamlKind = MamlKind.Tile
+      def kind(self: WeightedOverlayDefinition): MamlKind = MamlKind.Image
 
       def tmsReification(self: WeightedOverlayDefinition, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[Literal] =
         (z: Int, x: Int, y: Int) => {
@@ -40,7 +40,7 @@ object WeightedOverlayDefinition {
 
   implicit val overlayExtentDefinitionReification: ExtentReification[WeightedOverlayDefinition] =
     new ExtentReification[WeightedOverlayDefinition] {
-      def kind(self: WeightedOverlayDefinition): MamlKind = MamlKind.Tile
+      def kind(self: WeightedOverlayDefinition): MamlKind = MamlKind.Image
 
       def extentReification(self: WeightedOverlayDefinition)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] =
         (extent: Extent, cs: CellSize) => {
