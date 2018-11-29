@@ -1,26 +1,19 @@
 package geotrellis.server
 
-import ExtentReification.ops._
 import HasRasterExtents.ops._
 
-import com.azavea.maml.util.Vars
 import com.azavea.maml.error._
 import com.azavea.maml.ast._
-import com.azavea.maml.ast.codec.tree._
 import com.azavea.maml.eval._
-import com.typesafe.scalalogging.LazyLogging
-import io.circe._
-import io.circe.syntax._
-import cats._
-import cats.data.{NonEmptyList => NEL}
-import cats.effect._
-import cats.implicits._
 import geotrellis.vector.Extent
-import geotrellis.vector.io._
 import geotrellis.raster._
 import geotrellis.raster.histogram._
 
-import scala.util.Random
+import _root_.io.circe._
+import cats.data.{NonEmptyList => NEL}
+import cats.effect._
+import cats.implicits._
+import com.typesafe.scalalogging.LazyLogging
 
 object LayerHistogram extends LazyLogging {
 

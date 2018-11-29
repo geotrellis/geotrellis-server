@@ -5,9 +5,8 @@ import geotrellis.util.{FileRangeReader, RangeReader}
 import geotrellis.spark.io.s3.util.S3RangeReader
 import geotrellis.spark.io.s3.{AmazonS3Client => GTAmazonS3Client}
 import geotrellis.spark.io.http.util.HttpRangeReader
-import cats._
+
 import cats.effect.IO
-import cats.implicits._
 import com.amazonaws.services.s3.{AmazonS3URI, AmazonS3ClientBuilder}
 import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import org.apache.http.client.utils.URLEncodedUtils

@@ -3,20 +3,15 @@ package geotrellis.server.vlm.geotiff.util
 import geotrellis.vector._
 import geotrellis.raster._
 import geotrellis.raster.crop._
-import geotrellis.raster.resample._
-import geotrellis.raster.histogram._
 import geotrellis.raster.reproject._
 import geotrellis.raster.io.geotiff._
 import geotrellis.raster.io.geotiff.reader.GeoTiffReader
-import geotrellis.util._
 import geotrellis.proj4._
 import geotrellis.spark.tiling._
 
-import scala.concurrent._
 import cats.effect.IO
-import cats.data._
-import cats.implicits._
 
+// TODO: remove this object
 object CogUtils {
 
   val tmsLevels: Array[LayoutDefinition] = {

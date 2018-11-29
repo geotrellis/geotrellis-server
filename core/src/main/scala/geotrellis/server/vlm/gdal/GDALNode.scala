@@ -1,14 +1,14 @@
 package geotrellis.server.vlm.gdal
 
 import geotrellis.server._
-import geotrellis.server.vlm.RasterSourceUtils
+import geotrellis.server.vlm._
 import geotrellis.contrib.vlm.gdal.{GDALBaseRasterSource, GDALRasterSource}
 import geotrellis.raster._
 import geotrellis.proj4.CRS
 import geotrellis.contrib.vlm.TargetRegion
 import geotrellis.raster.resample.NearestNeighbor
-import geotrellis.server.vlm.geotiff.CogNode
 import geotrellis.vector.Extent
+
 import com.azavea.maml.ast.{Literal, MamlKind, RasterLit}
 
 import _root_.io.circe._
@@ -37,13 +37,14 @@ object GDALNode extends RasterSourceUtils {
   implicit val gdalNodeEncoder: Encoder[GDALNode] = deriveEncoder[GDALNode]
   implicit val gdalNodeDecoder: Decoder[GDALNode] = deriveDecoder[GDALNode]
 
-  implicit val GDALNodeRasterExtents: HasRasterExtents[GDALNode] = new HasRasterExtents[GDALNode] {
+  implicit val gdalNodeRasterExtents: HasRasterExtents[GDALNode] = new HasRasterExtents[GDALNode] {
     def rasterExtents(self: GDALNode)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] =
       getRasterExtents(self.uri.toString)
-    def crs(self: GDALNode)(implicit contextShift: ContextShift[IO]): IO[CRS] = getCRS(self.uri.toString)
+    def crs(self: GDALNode)(implicit contextShift: ContextShift[IO]): IO[CRS] =
+      getCRS(self.uri.toString)
   }
 
-  implicit val GDALNodeTmsReification: TmsReification[GDALNode] = new TmsReification[GDALNode] {
+  implicit val gdalNodeTmsReification: TmsReification[GDALNode] = new TmsReification[GDALNode] {
     def kind(self: GDALNode): MamlKind = MamlKind.Image
     def tmsReification(self: GDALNode, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[Literal] = (z: Int, x: Int, y: Int) => {
       def fetch(xCoord: Int, yCoord: Int) =
@@ -58,7 +59,7 @@ object GDALNode extends RasterSourceUtils {
     }
   }
 
-  implicit val GDALNodeExtentReification: ExtentReification[GDALNode] = new ExtentReification[GDALNode] {
+  implicit val gdalNodeExtentReification: ExtentReification[GDALNode] = new ExtentReification[GDALNode] {
     def kind(self: GDALNode): MamlKind = MamlKind.Image
     def extentReification(self: GDALNode)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] = (extent: Extent, cs: CellSize) => {
       getRasterSource(self.uri.toString)

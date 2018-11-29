@@ -1,15 +1,11 @@
 package geotrellis.server.example
 
-import geotrellis.server._
-
 import com.azavea.maml.ast.Expression
-import cats._
+
 import cats.effect.IO
-import io.circe._
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
 
 import java.util.UUID
-
 
 package object persistence {
   type HashMapMamlStore = ConcurrentLinkedHashMap[UUID, Expression]

@@ -10,12 +10,9 @@ import com.azavea.maml.eval._
 import com.typesafe.scalalogging.LazyLogging
 import io.circe._
 import io.circe.syntax._
-import cats._
-import cats.data.{NonEmptyList => NEL}
 import cats.effect._
 import cats.implicits._
 import geotrellis.raster._
-
 
 /** Provides methods for producing TMS tiles */
 object LayerTms extends LazyLogging {

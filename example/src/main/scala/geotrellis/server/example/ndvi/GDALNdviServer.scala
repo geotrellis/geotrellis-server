@@ -1,21 +1,21 @@
 package geotrellis.server.example.ndvi
 
 import geotrellis.server.example._
-import geotrellis.server.vlm.geotiff.GeoTiffNode
+import geotrellis.server.vlm.gdal._
 
 import cats.effect._
 import cats.implicits._
 import fs2._
+import com.typesafe.scalalogging.LazyLogging
 import org.http4s._
 import org.http4s.server._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.{CORS, CORSConfig}
 import org.http4s.syntax.kleisli._
-import com.typesafe.scalalogging.LazyLogging
 
 import scala.concurrent.duration._
 
-object NdviServer extends LazyLogging with IOApp {
+object GDALNdviServer extends LazyLogging with IOApp {
 
   private val corsConfig = CORSConfig(
     anyOrigin = true,
@@ -33,7 +33,7 @@ object NdviServer extends LazyLogging with IOApp {
     for {
       conf       <- Stream.eval(LoadConf().as[ExampleConf])
       _          <- Stream.eval(IO.pure(logger.info(s"Initializing NDVI service at ${conf.http.interface}:${conf.http.port}/")))
-      mamlNdviRendering = new NdviService[GeoTiffNode]()
+      mamlNdviRendering = new NdviService[GDALNode]()
       exitCode   <- BlazeServerBuilder[IO]
         .enableHttp2(true)
         .bindHttp(conf.http.port, conf.http.interface)

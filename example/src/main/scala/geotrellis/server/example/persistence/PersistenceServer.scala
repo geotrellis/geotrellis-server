@@ -19,9 +19,6 @@ import org.http4s.syntax.kleisli._
 
 import java.util.UUID
 import scala.concurrent.duration._
-import scala.collection.mutable
-import scala.concurrent.ExecutionContext.Implicits.global
-
 
 object PersistenceServer extends LazyLogging with IOApp {
 
@@ -44,8 +41,8 @@ object PersistenceServer extends LazyLogging with IOApp {
       // This hashmap has a [MamlStore] implementation
       mamlStore = new ConcurrentLinkedHashMap.Builder[UUID, Expression]()
                     .maximumWeightedCapacity(1000)
-                    .build();
-      mamlPersistence = new PersistenceService[HashMapMamlStore, CogNode](mamlStore)
+                    .build()
+      mamlPersistence = new PersistenceService[HashMapMamlStore, GeoTiffNode](mamlStore)
       exitCode   <- BlazeServerBuilder[IO]
         .enableHttp2(true)
         .bindHttp(conf.http.port, conf.http.interface)
