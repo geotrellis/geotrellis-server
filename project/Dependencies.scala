@@ -37,14 +37,13 @@ object Dependencies {
   val kamonPrometheus   = "io.kamon"                      %% "kamon-prometheus"     % "1.0.0"
   val kamonSysMetrics   = "io.kamon"                      %% "kamon-system-metrics" % "1.0.0"
   val kindProjector     = "org.spire-math"                %% "kind-projector"       % "0.9.4"
-  val logbackClassic    = "ch.qos.logback"                %  "logback-classic"      % "1.2.3"
-  val mamlJvm           = "com.azavea"                    %% "maml-jvm"             % "0.0.17-MULTIBAND"
+  val mamlJvm           = "com.azavea"                    %% "maml-jvm"             % "0.1.0"
   val pureConfig        = "com.github.pureconfig"         %% "pureconfig"           % "0.9.1"
   val scaffeine         = "com.github.blemale"            %% "scaffeine"            % "2.0.0"
   val scalaXml          = "org.scala-lang.modules"        %% "scala-xml"            % "1.1.0"
   val scalatest         = "org.scalatest"                 %%  "scalatest"           % "3.0.4" % Test
   val simulacrum        = "com.github.mpilquist"          %% "simulacrum"           % "0.12.0"
-  val spark             = "org.apache.spark"              %% "spark-core"           % "2.3.0" % Provided
+  val spark             = "org.apache.spark"              %% "spark-core"           % "2.4.0" % Provided
   val tsecCommon        = "io.github.jmcardon"            %% "tsec-common"          % tsecVer
   val tsecHttp4s        = "io.github.jmcardon"            %% "tsec-http4s"          % tsecVer
   val typesafeLogging   = "com.typesafe.scala-logging"    %% "scala-logging"        % "3.9.0"

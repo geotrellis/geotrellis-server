@@ -28,6 +28,7 @@ lazy val commonSettings = Seq(
   resolvers ++= Seq(
     Resolver.bintrayRepo("bkirwi", "maven"), // Required for `decline` dependency
     Resolver.bintrayRepo("azavea", "maven"),
+    Resolver.bintrayRepo("azavea", "geotrellis"),
     Resolver.sonatypeRepo("releases"),
     Resolver.sonatypeRepo("snapshots"),
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
@@ -113,13 +114,13 @@ lazy val core = project
       circeShapes,
       geotrellisS3,
       geotrellisSpark,
+      spark,
       geotrellisVlm,
       cats,
       catsEffect,
       mamlJvm,
       simulacrum,
       typesafeLogging,
-      logbackClassic,
       scalatest
     )
   )
@@ -140,12 +141,12 @@ lazy val example = project
       scalaXml,
       geotrellisS3,
       geotrellisSpark,
+      spark,
       decline,
       commonsIO,
       concHashMap,
       pureConfig,
       typesafeLogging,
-      logbackClassic,
       scalatest
     )
   )
@@ -165,7 +166,6 @@ lazy val wcs = project
       geotrellisSpark,
       spark,
       typesafeLogging,
-      logbackClassic,
       scalatest
     )
   )
@@ -178,3 +178,10 @@ lazy val docs = project
   .settings(docSettings)
   .settings(noPublishSettings)
   .dependsOn(core, example)
+
+lazy val bench = project
+  .dependsOn(core)
+  .settings(commonSettings)
+  .enablePlugins(JmhPlugin)
+
+
