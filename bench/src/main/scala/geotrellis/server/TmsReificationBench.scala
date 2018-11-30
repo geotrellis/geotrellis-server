@@ -10,6 +10,7 @@ import com.azavea.maml.util.Square
 import com.azavea.maml.eval.BufferingInterpreter
 import cats.effect._
 import org.openjdk.jmh.annotations._
+import org.gdal.gdal.gdalJNI
 
 import scala.concurrent.ExecutionContext
 import java.net.URI
@@ -18,6 +19,9 @@ import java.net.URI
 @BenchmarkMode(Array(Mode.AverageTime))
 @State(Scope.Thread)
 class TmsReificationBench {
+
+  // gdal performance will be obscured by the caching it attempts
+  gdalJNI.SetConfigOption("GDAL_CACHEMAX", "0")
 
   implicit var contextShift = IO.contextShift(ExecutionContext.global)
 
