@@ -10,6 +10,5 @@ import simulacrum._
 
 @typeclass trait HasRasterExtents[A] {
   @op("rasterExtents") def rasterExtents(self: A)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]]
-  @op("crs") def crs(self: A)(implicit contextShift: ContextShift[IO]): IO[CRS]
 }
 

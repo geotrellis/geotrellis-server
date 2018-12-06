@@ -33,8 +33,6 @@ object GeoTiffNode extends RasterSourceUtils {
   implicit val cogNodeRasterExtents: HasRasterExtents[GeoTiffNode] = new HasRasterExtents[GeoTiffNode] {
     def rasterExtents(self: GeoTiffNode)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] =
       getRasterExtents(self.uri.toString)
-    def crs(self: GeoTiffNode)(implicit contextShift: ContextShift[IO]): IO[CRS] =
-      getCRS(self.uri.toString)
   }
 
   implicit val cogNodeTmsReification: TmsReification[GeoTiffNode] = new TmsReification[GeoTiffNode] {

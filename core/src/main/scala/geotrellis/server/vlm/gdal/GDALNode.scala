@@ -40,8 +40,6 @@ object GDALNode extends RasterSourceUtils {
   implicit val gdalNodeRasterExtents: HasRasterExtents[GDALNode] = new HasRasterExtents[GDALNode] {
     def rasterExtents(self: GDALNode)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] =
       getRasterExtents(self.uri.toString)
-    def crs(self: GDALNode)(implicit contextShift: ContextShift[IO]): IO[CRS] =
-      getCRS(self.uri.toString)
   }
 
   implicit val gdalNodeTmsReification: TmsReification[GDALNode] = new TmsReification[GDALNode] {
