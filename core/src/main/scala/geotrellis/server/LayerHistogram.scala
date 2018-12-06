@@ -9,7 +9,6 @@ import geotrellis.vector.Extent
 import geotrellis.raster._
 import geotrellis.raster.histogram._
 
-import _root_.io.circe._
 import cats.data.{NonEmptyList => NEL}
 import cats.effect._
 import cats.implicits._
@@ -72,7 +71,6 @@ object LayerHistogram extends LazyLogging {
   )(
     implicit reify: ExtentReification[Param],
              extended: HasRasterExtents[Param],
-             enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ): IO[Interpreted[List[Histogram[Double]]]] =
     for {
@@ -105,7 +103,6 @@ object LayerHistogram extends LazyLogging {
   )(
     implicit reify: ExtentReification[Param],
              extended: HasRasterExtents[Param],
-             enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ) = apply[Param](getParams.map(mkExpr(_)), getParams, interpreter, maxCells)
 
@@ -118,7 +115,6 @@ object LayerHistogram extends LazyLogging {
   )(
     implicit reify: ExtentReification[Param],
              extended: HasRasterExtents[Param],
-             enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ): (Map[String, Param]) => IO[Interpreted[List[Histogram[Double]]]] =
     (paramMap: Map[String, Param]) => {
@@ -133,7 +129,6 @@ object LayerHistogram extends LazyLogging {
   )(
     implicit reify: ExtentReification[Param],
              extended: HasRasterExtents[Param],
-             enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ) = {
     val eval = curried(RasterVar("identity"), BufferingInterpreter.DEFAULT, maxCells)

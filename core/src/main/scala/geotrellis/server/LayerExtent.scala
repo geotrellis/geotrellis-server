@@ -27,14 +27,13 @@ object LayerExtent extends LazyLogging {
     interpreter: BufferingInterpreter
   )(
     implicit reify: ExtentReification[Param],
-             enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ): (Extent, CellSize) => IO[Interpreted[MultibandTile]]  = (extent: Extent, cs: CellSize) =>  {
     for {
       expr             <- getExpression
-      _                <- IO.pure(logger.info(s"Retrieved MAML AST for extent ($extent) and cellsize ($cs): ${expr.asJson.noSpaces}"))
+      _                <- IO.pure(logger.info(s"Retrieved MAML AST for extent ($extent) and cellsize ($cs): ${expr.toString}"))
       paramMap         <- getParams
-      _                <- IO.pure(logger.info(s"Retrieved parameters for extent ($extent) and cellsize ($cs): ${paramMap.asJson.noSpaces}"))
+      _                <- IO.pure(logger.info(s"Retrieved parameters for extent ($extent) and cellsize ($cs): ${paramMap.toString}"))
       vars             <- IO.pure { Vars.varsWithBuffer(expr) }
       params           <- vars.toList.parTraverse { case (varName, (_, buffer)) =>
                             val thingify = paramMap(varName).extentReification
@@ -50,7 +49,6 @@ object LayerExtent extends LazyLogging {
     interpreter: BufferingInterpreter
   )(
     implicit reify: ExtentReification[Param],
-             enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ) = apply[Param](getParams.map(mkExpr(_)), getParams, interpreter)
 
@@ -61,7 +59,6 @@ object LayerExtent extends LazyLogging {
     interpreter: BufferingInterpreter
   )(
     implicit reify: ExtentReification[Param],
-             enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ): (Map[String, Param], Extent, CellSize) => IO[Interpreted[MultibandTile]] =
     (paramMap: Map[String, Param], extent: Extent, cellsize: CellSize) => {
@@ -75,7 +72,6 @@ object LayerExtent extends LazyLogging {
     param: Param
   )(
     implicit reify: ExtentReification[Param],
-             enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ): (Extent, CellSize) => IO[Interpreted[MultibandTile]] =
     (extent: Extent, cellsize: CellSize) => {
