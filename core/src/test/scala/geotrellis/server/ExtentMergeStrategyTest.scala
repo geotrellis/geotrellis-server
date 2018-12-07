@@ -28,7 +28,7 @@ class ExtentMergeStrategyTest extends FunSuite with Matchers {
     val e3 = Extent(75, 75, 90, 90)
     val extents = List(e1, e2, e3)
     extents.permutations.toList.map { permutation =>
-      assert(SampleUtils.intersectExtents(NEL.fromListUnsafe(permutation)) == Some(Extent(75, 75, 90, 90)), "did not nail it")
+      assert(SampleUtils.intersectExtents(NEL.fromListUnsafe(permutation)) == Some(Extent(75, 75, 90, 90)))
     }
   }
 
@@ -38,7 +38,7 @@ class ExtentMergeStrategyTest extends FunSuite with Matchers {
     val e3 = Extent(125, 125, 200, 200)
     val extents = List(e1, e2, e3)
     extents.permutations.toList.map { permutation =>
-      assert(SampleUtils.intersectExtents(NEL.fromListUnsafe(permutation)) == None, "nailed it - NOT")
+      assert(SampleUtils.intersectExtents(NEL.fromListUnsafe(permutation)) == None)
     }
   }
 
@@ -48,7 +48,7 @@ class ExtentMergeStrategyTest extends FunSuite with Matchers {
     val e3 = Extent(225, 225, 300, 300)
     val extents = List(e1, e2, e3)
     extents.permutations.toList.map { permutation =>
-      assert(SampleUtils.intersectExtents(NEL.fromListUnsafe(permutation)) == None, "nailed it - NOT")
+      assert(SampleUtils.intersectExtents(NEL.fromListUnsafe(permutation)) == None)
     }
   }
 
@@ -58,8 +58,7 @@ class ExtentMergeStrategyTest extends FunSuite with Matchers {
     val e3 = Extent(75, 75, 90, 90)
     val extents = List(e1, e2, e3)
     extents.permutations.toList.map { permutation =>
-      assert(( extents map { SampleUtils.unionExtents(NEL.fromListUnsafe(permutation)).get contains _ }) reduce { _ && _},
-        "nailed it - NOT")
+      assert(( extents map { SampleUtils.unionExtents(NEL.fromListUnsafe(permutation)).get contains _ }) reduce { _ && _})
     }
   }
   test("partial overlap - union") {
@@ -68,8 +67,7 @@ class ExtentMergeStrategyTest extends FunSuite with Matchers {
     val e3 = Extent(125, 125, 200, 200)
     val extents = List(e1, e2, e3)
     extents.permutations.toList.map { permutation =>
-      assert((extents map { SampleUtils.unionExtents(NEL.fromListUnsafe(permutation)).get contains _ }) reduce { _ && _ },
-        "nailed it - NOT")
+      assert((extents map { SampleUtils.unionExtents(NEL.fromListUnsafe(permutation)).get contains _ }) reduce { _ && _ })
     }
   }
   test("no overlap - union") {
@@ -78,8 +76,7 @@ class ExtentMergeStrategyTest extends FunSuite with Matchers {
     val e3 = Extent(225, 225, 300, 300)
     val extents = List(e1, e2, e3)
     extents.permutations.toList.map { permutation =>
-      assert((extents map { SampleUtils.unionExtents(NEL.fromListUnsafe(permutation)).get contains _ }) reduce { _ && _ },
-        "nailed it - NOT")
+      assert((extents map { SampleUtils.unionExtents(NEL.fromListUnsafe(permutation)).get contains _ }) reduce { _ && _ })
     }
   }
 }

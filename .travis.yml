@@ -39,8 +39,7 @@ install:
   - gem install jekyll -v 3.2.1
 
 script:
-  - sbt "project core" test
-  - sbt "project example" test
+  - .travis/build-and-test-docker.sh
 
 notifications:
   email:

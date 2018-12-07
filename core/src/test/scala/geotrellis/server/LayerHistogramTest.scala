@@ -26,13 +26,13 @@ class LayerHistogramTest extends FunSuite with Matchers {
     val rt = ResourceTile("8x8.tif")
     val samples = LayerHistogram.identity(rt, 64).unsafeRunSync
     val sampleCount = samples.toOption.get.head.statistics.get.dataCells
-    assert(sampleCount == 64, s"Expected 4 cells in histogram, got $sampleCount")
+    assert(sampleCount == 64, s"Expected 64 cells in histogram, got $sampleCount")
   }
 
   test("histogram samples the total extent when budget too big") {
     val rt = ResourceTile("8x8.tif")
     val samples = LayerHistogram.identity(rt, 128).unsafeRunSync
     val sampleCount = samples.toOption.get.head.statistics.get.dataCells
-    assert(sampleCount == 64, s"Expected 4 cells in histogram, got $sampleCount")
+    assert(sampleCount == 64, s"Expected 64 cells in histogram, got $sampleCount")
   }
 }
