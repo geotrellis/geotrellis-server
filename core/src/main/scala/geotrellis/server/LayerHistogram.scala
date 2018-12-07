@@ -16,6 +16,8 @@ import cats.effect._
 import cats.implicits._
 import cats.syntax.either._
 
+import scala.collection.mutable
+
 
 object LayerHistogram extends LazyLogging {
 
@@ -55,9 +57,9 @@ object LayerHistogram extends LazyLogging {
         val bl = mbtileBL.bands.map { band => StreamingHistogram.fromTile(band) }.toList
         val br = mbtileBR.bands.map { band => StreamingHistogram.fromTile(band) }.toList
         List(tr, bl, br).foldLeft(tl.asInstanceOf[List[Histogram[Double]]])({ (histListAcc, histListNext) =>
-          val arr = Array[Histogram[Double]]()
+          val arr = mutable.ListBuffer.empty[Histogram[Double]]
           for (idx <- 0 to histListAcc.length - 1) {
-            arr(idx) = histListAcc(idx) merge histListNext(idx).asInstanceOf[Histogram[Double]]
+            arr += (histListAcc(idx) merge histListNext(idx).asInstanceOf[Histogram[Double]])
           }
           arr.toList
         })
