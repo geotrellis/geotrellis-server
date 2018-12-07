@@ -35,14 +35,12 @@ object LayerTms extends LazyLogging {
     interpreter: BufferingInterpreter
   )(
     implicit reify: TmsReification[Param],
-             enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ): (Int, Int, Int) => IO[Interpreted[MultibandTile]] = (z: Int, x: Int, y: Int) => {
     for {
       expr             <- getExpression
       _                <- IO.pure(logger.info(s"Retrieved MAML AST at TMS ($z, $x, $y): ${expr.asJson.noSpaces}"))
       paramMap         <- getParams
-      _                <- IO.pure(logger.info(s"Retrieved parameters for TMS ($z, $x, $y): ${paramMap.asJson.noSpaces}"))
       vars             <- IO.pure { Vars.varsWithBuffer(expr) }
       params           <- vars.toList.parTraverse { case (varName, (_, buffer)) =>
                             val eval = paramMap(varName).tmsReification(buffer)
@@ -62,7 +60,6 @@ object LayerTms extends LazyLogging {
     interpreter: BufferingInterpreter
   )(
     implicit reify: TmsReification[Param],
-             enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ) = apply[Param](getParams.map(mkExpr(_)), getParams, interpreter)
 
@@ -73,7 +70,6 @@ object LayerTms extends LazyLogging {
     interpreter: BufferingInterpreter
   )(
     implicit reify: TmsReification[Param],
-             enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ): (Map[String, Param], Int, Int, Int) => IO[Interpreted[MultibandTile]] =
     (paramMap: Map[String, Param], z: Int, x: Int, y: Int) => {
@@ -87,7 +83,6 @@ object LayerTms extends LazyLogging {
     param: Param
   )(
     implicit reify: TmsReification[Param],
-             enc: Encoder[Param],
              contextShift: ContextShift[IO]
   ) = (z: Int, x: Int, y: Int) => {
     val eval = curried(RasterVar("identity"), BufferingInterpreter.DEFAULT)
