@@ -4,7 +4,6 @@ import geotrellis.server._
 import geotrellis.server.vlm._
 import geotrellis.contrib.vlm.gdal.{GDALBaseRasterSource, GDALRasterSource}
 import geotrellis.raster._
-import geotrellis.proj4.CRS
 import geotrellis.contrib.vlm.TargetRegion
 import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.vector.Extent

@@ -31,9 +31,9 @@ object LayerExtent extends LazyLogging {
   ): (Extent, CellSize) => IO[Interpreted[MultibandTile]]  = (extent: Extent, cs: CellSize) =>  {
     for {
       expr             <- getExpression
-      _                <- IO.pure(logger.info(s"Retrieved MAML AST for extent ($extent) and cellsize ($cs): ${expr.toString}"))
+      _                <- IO.pure(logger.trace(s"Retrieved MAML AST for extent ($extent) and cellsize ($cs): ${expr.toString}"))
       paramMap         <- getParams
-      _                <- IO.pure(logger.info(s"Retrieved parameters for extent ($extent) and cellsize ($cs): ${paramMap.toString}"))
+      _                <- IO.pure(logger.trace(s"Retrieved parameters for extent ($extent) and cellsize ($cs): ${paramMap.toString}"))
       vars             <- IO.pure { Vars.varsWithBuffer(expr) }
       params           <- vars.toList.parTraverse { case (varName, (_, buffer)) =>
                             val thingify = paramMap(varName).extentReification
