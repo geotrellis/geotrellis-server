@@ -4,9 +4,10 @@ import geotrellis.server._
 import geotrellis.server.vlm._
 import geotrellis.contrib.vlm.geotiff._
 import geotrellis.contrib.vlm.TargetRegion
-import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.raster._
-import geotrellis.proj4.CRS
+import geotrellis.raster.resample.NearestNeighbor
+import geotrellis.raster.io.geotiff.AutoHigherResolution
+
 import geotrellis.vector.Extent
 import com.azavea.maml.ast.{Literal, MamlKind, RasterLit}
 
@@ -20,12 +21,7 @@ import java.net.URI
 case class GeoTiffNode(uri: URI, band: Int, celltype: Option[CellType])
 
 object GeoTiffNode extends RasterSourceUtils {
-  def getRasterSource(uri: String): GeoTiffRasterSource = new GeoTiffRasterSource(uri)
-
-  def getRasterExtents(uri: String): IO[NEL[RasterExtent]] = IO {
-    val tiff = getRasterSource(uri).tiff
-    NEL(tiff.rasterExtent, tiff.overviews.map(_.rasterExtent))
-  }
+  def getRasterSource(uri: String): GeoTiffRasterSource = GeoTiffRasterSource(uri)
 
   implicit val cogNodeEncoder: Encoder[GeoTiffNode] = deriveEncoder[GeoTiffNode]
   implicit val cogNodeDecoder: Decoder[GeoTiffNode] = deriveDecoder[GeoTiffNode]
@@ -54,7 +50,7 @@ object GeoTiffNode extends RasterSourceUtils {
     def kind(self: GeoTiffNode): MamlKind = MamlKind.Image
     def extentReification(self: GeoTiffNode)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] = (extent: Extent, cs: CellSize) => {
       getRasterSource(self.uri.toString)
-        .resample(TargetRegion(RasterExtent(extent, cs)), NearestNeighbor)
+        .resample(TargetRegion(RasterExtent(extent, cs)), NearestNeighbor, AutoHigherResolution)
         .read(extent, self.band :: Nil)
         .map { RasterLit(_) }
         .toIO { new Exception(s"No tile avail for RasterExtent: ${RasterExtent(extent, cs)}") }
