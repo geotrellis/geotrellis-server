@@ -10,7 +10,7 @@ lazy val commonSettings = Seq(
   cancelable in Global := true,
   scalaVersion := scalaVer,
   crossScalaVersions := crossScalaVer,
-  version := "0.0.14-RC3",
+  version := "0.0.14-RC4",
   scalacOptions := Seq(
     "-deprecation",
     "-unchecked",
@@ -183,5 +183,3 @@ lazy val bench = project
   .dependsOn(core)
   .settings(commonSettings)
   .enablePlugins(JmhPlugin)
-
-
