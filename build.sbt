@@ -10,7 +10,7 @@ lazy val commonSettings = Seq(
   cancelable in Global := true,
   scalaVersion := scalaVer,
   crossScalaVersions := crossScalaVer,
-  version := "0.0.14-RC",
+  version := "0.0.14-RC3",
   scalacOptions := Seq(
     "-deprecation",
     "-unchecked",
