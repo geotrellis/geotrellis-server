@@ -10,7 +10,6 @@ lazy val commonSettings = Seq(
   cancelable in Global := true,
   scalaVersion := scalaVer,
   crossScalaVersions := crossScalaVer,
-  version := "0.0.14-RC4",
   scalacOptions := Seq(
     "-deprecation",
     "-unchecked",
@@ -32,7 +31,8 @@ lazy val commonSettings = Seq(
     Resolver.sonatypeRepo("releases"),
     Resolver.sonatypeRepo("snapshots"),
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
-    "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots"
+    "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
+    "geotrellis-staging" at "https://oss.sonatype.org/service/local/repositories/orglocationtechgeotrellis-1009/content"
   ),
   addCompilerPlugin(kindProjector cross CrossVersion.binary),
   addCompilerPlugin(macrosParadise cross CrossVersion.full),

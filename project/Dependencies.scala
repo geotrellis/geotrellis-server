@@ -4,7 +4,7 @@ object Dependencies {
 
   val circeVer         = "0.10.0"
   val gtVer            = "3.0.0-SNAPSHOT"
-  val gtcVer           = "0.7.3"
+  val gtcVer           = "0.7.7"
   val http4sVer        = "0.19.0"
   val scalaVer         = "2.11.12"
   val crossScalaVer    = Seq(scalaVer, "2.12.7")
@@ -23,8 +23,8 @@ object Dependencies {
   val commonsLang       = "org.apache.commons"            %  "commons-lang3"        % "3.7"
   val concHashMap       = "com.googlecode.concurrentlinkedhashmap" % "concurrentlinkedhashmap-lru" % "1.4.2"
   val decline           = "com.monovore"                  %% "decline"              % "0.4.0"
-  val geotrellisS3      = "org.locationtech.geotrellis"   %% "geotrellis-s3"          % gtVer
-  val geotrellisSpark   = "org.locationtech.geotrellis"   %% "geotrellis-spark"       % gtVer
+  val geotrellisS3      = "org.locationtech.geotrellis"   %% "geotrellis-s3"        % gtVer
+  val geotrellisSpark   = "org.locationtech.geotrellis"   %% "geotrellis-spark"     % gtVer
   val geotrellisVlm     = "com.azavea.geotrellis"         %% "geotrellis-contrib-vlm" % gtcVer
   val hadoop            = "org.apache.hadoop"             %  "hadoop-client"        % "2.8.0" % Provided
   val http4sBlazeClient = "org.http4s"                    %% "http4s-blaze-client"  % http4sVer
