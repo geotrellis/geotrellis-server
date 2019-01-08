@@ -43,26 +43,16 @@ object LayerHistogram extends LazyLogging {
                              .map(_.flatten)
       intersection      <- IO { SampleUtils.intersectExtents(rasterExtents.map(_.extent))
                                   .getOrElse(throw new RequireIntersectingSources()) }
+      _                 <- IO { logger.trace(s"[LayerHistogram] Intersection of provided layer extents calculated: $intersection") }
       cellSize          <- IO { SampleUtils.chooseLargestCellSize(rasterExtents.map(_.cellSize)) }
-      sampleExtents     <- IO { SampleUtils.sampleRasterExtent(intersection, cellSize, maxCells) }
+      _                 <- IO { logger.trace(s"[LayerHistogram] Largest cell size of provided layers calculated: $cellSize") }
       mbtileForExtent   <- IO { LayerExtent(getExpression, getParams, interpreter) }
-      interpretedTileTL <- mbtileForExtent(sampleExtents._1, cellSize)
-      interpretedTileTR <- mbtileForExtent(sampleExtents._2, cellSize)
-      interpretedTileBL <- mbtileForExtent(sampleExtents._3, cellSize)
-      interpretedTileBR <- mbtileForExtent(sampleExtents._4, cellSize)
-    } yield (interpretedTileTL, interpretedTileTR, interpretedTileBL, interpretedTileBR).mapN {
-      case (mbtileTL, mbtileTR, mbtileBL, mbtileBR) =>
-        val tl = mbtileTL.bands.map { band => StreamingHistogram.fromTile(band) }.toList
-        val tr = mbtileTR.bands.map { band => StreamingHistogram.fromTile(band) }.toList
-        val bl = mbtileBL.bands.map { band => StreamingHistogram.fromTile(band) }.toList
-        val br = mbtileBR.bands.map { band => StreamingHistogram.fromTile(band) }.toList
-        List(tr, bl, br).foldLeft(tl.asInstanceOf[List[Histogram[Double]]])({ (histListAcc, histListNext) =>
-          val arr = mutable.ListBuffer.empty[Histogram[Double]]
-          for (idx <- 0 to histListAcc.length - 1) {
-            arr += (histListAcc(idx) merge histListNext(idx).asInstanceOf[Histogram[Double]])
-          }
-          arr.toList
-        })
+      _                 <- IO { logger.trace(s"[LayerHistogram] calculating histogram from (approximately) ${intersection.area / (cellSize.width * cellSize.height)} cells") }
+      interpretedTile   <- mbtileForExtent(intersection, cellSize)
+    } yield {
+      interpretedTile.map { mbtile =>
+        mbtile.bands.map { band  => StreamingHistogram.fromTile(band) }.toList
+      }
     }
 
   def generateExpression[Param](
