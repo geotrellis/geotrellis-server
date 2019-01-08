@@ -9,6 +9,7 @@ object Dependencies {
   val scalaVer         = "2.11.12"
   val crossScalaVer    = Seq(scalaVer, "2.12.7")
   val tsecVer          = "0.0.1-M11"
+  val dispatchVer      = "0.11.3"
 
   //val kamonZipkin       = "io.kamon"                      %% "kamon-zipkin"         % "1.0.1"
   val caffeine          = "com.github.ben-manes.caffeine" %  "caffeine"             % "2.3.5"
@@ -49,4 +50,7 @@ object Dependencies {
   val tsecHttp4s        = "io.github.jmcardon"            %% "tsec-http4s"          % tsecVer
   val typesafeLogging   = "com.typesafe.scala-logging"    %% "scala-logging"        % "3.9.0"
   val macrosParadise    = "org.scalamacros"                % "paradise"             % "2.1.0"
+  val scalaParser       = "org.scala-lang.modules"        %% "scala-parser-combinators" % "1.1.1"
+  val dispatch          = "net.databinder.dispatch"       %% "dispatch-core"        % dispatchVer
+
 }

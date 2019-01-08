@@ -30,6 +30,7 @@ lazy val commonSettings = Seq(
     Resolver.bintrayRepo("azavea", "geotrellis"),
     Resolver.sonatypeRepo("releases"),
     Resolver.sonatypeRepo("snapshots"),
+    "osgeo" at "http://download.osgeo.org/webdav/geotools/",
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
     "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
     "geotrellis-staging" at "https://oss.sonatype.org/service/local/repositories/orglocationtechgeotrellis-1009/content"
@@ -161,13 +162,36 @@ lazy val wcs = project
       http4sDsl,
       http4sXml,
       http4sCirce,
-      http4sBlazeServer % Test,
+      spark,
       geotrellisS3,
       geotrellisSpark,
-      spark,
       typesafeLogging,
+      http4sBlazeServer % Test,
       scalatest
     )
+  )
+
+lazy val ogc = project
+  .enablePlugins(ScalaxbPlugin)
+  .settings(moduleName := "geotrellis-server-ogc")
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(
+    scalaxbDispatchVersion in (Compile, scalaxb) := dispatchVer,
+    scalaxbPackageName in (Compile, scalaxb)     := "opengis.wms"
+  )
+  .settings(
+    assemblyJarName in assembly := "geotrellis-server-ogc.jar",
+    libraryDependencies ++= Seq(
+      http4sDsl,
+      http4sXml,
+      http4sCirce,
+      spark,
+      geotrellisS3,
+      geotrellisSpark,
+      typesafeLogging,
+      http4sBlazeServer % Test,
+      scalatest)
   )
 
 lazy val docs = project
