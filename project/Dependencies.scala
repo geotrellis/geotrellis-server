@@ -51,5 +51,4 @@ object Dependencies {
   val macrosParadise    = "org.scalamacros"                % "paradise"             % "2.1.0"
   val scalaParser       = "org.scala-lang.modules"        %% "scala-parser-combinators" % "1.1.1"
   val dispatch          = "net.databinder.dispatch"       %% "dispatch-core"        % dispatchVer
-
 }

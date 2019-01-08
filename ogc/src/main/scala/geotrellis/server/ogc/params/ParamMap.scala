@@ -22,6 +22,15 @@ class ParamMap(params: Map[String, Seq[String]]) extends LazyLogging {
       case None => Invalid(ParamError.MissingParam(field))
     }).toValidatedNel
 
+
+  /** Get a field that must appear only once, otherwise error */
+  def validatedOptionalParam(field: String): ValidatedNel[ParamError, Option[String]] =
+    (getParams(field) match {
+      case None => Valid(Option.empty[String])
+      case Some(v :: Nil) => Valid(Some(v))
+      case Some(vs) => Invalid(ParamError.RepeatedParam(field))
+    }).toValidatedNel
+
   /** Get a field that must appear only once, parse the value successfully, otherwise error */
   def validatedParam[T](field: String, parseValue: String => Option[T]): ValidatedNel[ParamError, T] =
     (getParams(field) match {
@@ -59,8 +68,4 @@ class ParamMap(params: Map[String, Seq[String]]) extends LazyLogging {
             Valid(default)
         }
     }).toValidatedNel
-}
-
-object ParamMap {
-  def apply(params: Map[String, Seq[String]]): ParamMap = ParamMap(params)
 }

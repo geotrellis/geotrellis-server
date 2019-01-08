@@ -13,7 +13,7 @@ object ParamError {
 
   final case class MissingParam(field: String) extends ParamError {
     def errorMessage =
-      s"""Missing parameter '$field.'"""
+      s"""Missing parameter '$field'"""
   }
 
   final case class MissingMultiParam(fields: Seq[String]) extends ParamError {
@@ -25,12 +25,12 @@ object ParamError {
 
   final case class RepeatedParam(field: String) extends ParamError {
     def errorMessage =
-      s"""More than one instance of parameter '$field.'"""
+      s"""More than one instance of parameter '$field'"""
   }
 
   final case class ParseError(field: String, value: String) extends ParamError {
     def errorMessage =
-      s"""Cannot parse value '$value' for parameter '$field.'"""
+      s"""Cannot parse value '$value' for parameter '$field'"""
   }
 
   final case class CrsParseError(crsDesc: String) extends ParamError {
@@ -44,5 +44,5 @@ object ParamError {
   }
 
   def generateErrorMessage(errors: List[ParamError]): String =
-    errors.map(_.errorMessage).mkString(",")
+    errors.map(_.errorMessage).mkString("; ")
 }

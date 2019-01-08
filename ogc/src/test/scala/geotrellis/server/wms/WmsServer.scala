@@ -1,4 +1,4 @@
-package geotrellis.server.wms
+package geotrellis.server.ogc.wms
 
 import geotrellis.server._
 import geotrellis.server.example._
@@ -37,7 +37,7 @@ object WmsServer extends LazyLogging with IOApp {
     CORS(routes)
   }
 
-  val ip = {
+  val ip: String = {
     val socket = new java.net.DatagramSocket()
     socket.connect(java.net.InetAddress.getByName("8.8.8.8"), 10002)
     val result = socket.getLocalAddress.getHostAddress

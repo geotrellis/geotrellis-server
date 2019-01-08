@@ -17,3 +17,4 @@ pc.stdout.log
 *.crc
 .idea
 *.log
+.DS_Store
