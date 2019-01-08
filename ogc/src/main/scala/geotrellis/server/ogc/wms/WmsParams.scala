@@ -17,41 +17,18 @@ abstract sealed class WmsParams {
 }
 
 object WmsParams {
-  final case class GetCapabilities(version: String) extends WmsParams
+  final case class GetCapabilities(
+    version: String,
+    format: Option[String],
+    updateSequence: Option[String]
+  ) extends WmsParams
 
   object GetCapabilities {
     def build(params: ParamMap): ValidatedNel[ParamError, WmsParams] = {
-      val versionParam =
-        params.validatedVersion("1.3.0")
-
-      versionParam.map { version: String =>
-        GetCapabilities(version)
-      }
-    }
-  }
-
-  case class DescribeCoverage(version: String, identifiers: Seq[String]) extends WmsParams
-
-  object DescribeCoverage {
-    def build(params: ParamMap): ValidatedNel[ParamError, WmsParams] = {
-      val versionParam =
-        params.validatedVersion("1.3.0")
-
-      versionParam
-        .andThen { version: String =>
-          // Version 1.1.0 switched from single "coverage" to multiple "identifiers"
-          val identifiers =
-            if(version < "1.1.0") {
-              params.validatedParam("coverage").map(Seq(_))
-            } else {
-              params.validatedParam("identifiers").map(_.split(",").toSeq)
-            }
-
-          identifiers.map { ids => (version, ids) }
-        }
-        .map { case (version, identifiers) =>
-          DescribeCoverage(version, identifiers)
-        }
+      (params.validatedVersion("1.3.0"),
+        params.validatedOptionalParam("format"),
+        params.validatedOptionalParam("updatesequence")
+      ).mapN(GetCapabilities.apply)
     }
   }
 
@@ -65,24 +42,24 @@ object WmsParams {
     crs: CRS
   ) extends WmsParams
 
-object GetMap {
-  private def getBboxAndCrsOption(params: ParamMap, field: String): ValidatedNel[ParamError, (Vector[Double], Option[String])] =
-    params.validatedParam[(Vector[Double], Option[String])](field, { bboxStr =>
-      // Sometimes the CRS was a 5th element in the bbox param.
-      try {
-        val v = bboxStr.split(",").toVector
-        if(v.length == 4) {
-          Some((v.map(_.toDouble), None))
-        } else if(v.length == 5) {
-          val values = v
-          Some((v.take(4).map(_.toDouble), Some(v.last)))
-        } else {
-          None
+  object GetMap {
+    private def getBboxAndCrsOption(params: ParamMap, field: String): ValidatedNel[ParamError, (Vector[Double], Option[String])] =
+      params.validatedParam[(Vector[Double], Option[String])](field, { bboxStr =>
+        // Sometimes the CRS was a 5th element in the bbox param.
+        try {
+          val v = bboxStr.split(",").toVector
+          if(v.length == 4) {
+            Some((v.map(_.toDouble), None))
+          } else if(v.length == 5) {
+            val values = v
+            Some((v.take(4).map(_.toDouble), Some(v.last)))
+          } else {
+            None
+          }
+        } catch {
+          case _: Throwable => None
         }
-      } catch {
-        case _: Throwable => None
-      }
-    })
+      })
 
     def build(params: ParamMap): ValidatedNel[ParamError, WmsParams] = {
       val versionParam =
@@ -159,32 +136,23 @@ object GetMap {
     }
   }
 
-  /** Defines valid request types, and the WmsParams to build from them. */
-  private val requestMap: Map[String, ParamMap => ValidatedNel[ParamError, WmsParams]] =
-    Map(
-      "getcapabilities" -> GetCapabilities.build _,
-      "describecoverage" -> DescribeCoverage.build _,
-      "getmap" -> GetMap.build _
-    )
-
-  private val validRequests = requestMap.keys.toSet
-
   def apply(queryParams: Map[String, Seq[String]]): ValidatedNel[ParamError, WmsParams] = {
-    val params = ParamMap(queryParams)
+    val params = new ParamMap(queryParams)
 
     val serviceParam =
       params.validatedParam("service", validValues=Set("wms"))
 
     val requestParam =
-      params.validatedParam("request", validValues=validRequests)
+      params.validatedParam("request", validValues=Set("getcapabilities", "getmap"))
 
     val firstStageValidation =
       (serviceParam, requestParam).mapN { case (a, b) => b }
 
-    firstStageValidation
-      .andThen { request =>
-        // Further validation and building based on request type.
-        requestMap(request)(params)
-      }
+    firstStageValidation.andThen {
+      case "getcapabilities" =>
+        GetCapabilities.build(params)
+      case "getmap" =>
+        GetMap.build(params)
+    }
   }
 }

@@ -1,4 +1,4 @@
-package geotrellis.server.wms
+package geotrellis.server.ogc.wms
 
 import java.net.URI
 
