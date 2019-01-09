@@ -52,47 +52,8 @@ class WmsService(catalog: URI, authority: String, port: Int) extends Http4sDsl[I
           logger.warn(msg)
           BadRequest(msg)
 
-        case Validated.Valid(wmsReq: GetCapabilities) => {
-          import opengis.wms._
-
-          val service = Service(
-            Name = Name.fromString("WMS", opengis.wms.defaultScope),
-            Title = "GeoTrellis WMS",
-            OnlineResource = OnlineResource())
-
-          val capability = {
-            val getCapabilities = OperationType(
-              Format = List("text/xml"),
-              DCPType = List(DCPType(
-                HTTP(Get = Get(OnlineResource(Map(
-                  "@{http://www.w3.org/1999/xlink}href" -> scalaxb.DataRecord(new URI("http://localhost/wms")),
-                  "@{http://www.w3.org/1999/xlink}type" -> scalaxb.DataRecord(xlink.Simple: xlink.TypeType)))))
-              )))
-
-            val getMap = OperationType(
-              Format = List("text/xml"),
-              DCPType = List(DCPType(
-                HTTP(Get = Get(OnlineResource(Map(
-                  "@{http://www.w3.org/1999/xlink}href" -> scalaxb.DataRecord(new URI("http://localhost/wms")),
-                  "@{http://www.w3.org/1999/xlink}type" -> scalaxb.DataRecord(xlink.Simple: xlink.TypeType)))))
-              )))
-
-            Capability(
-              Request = Request(GetCapabilities = getCapabilities, GetMap = getMap, GetFeatureInfo = None),
-              Exception = Exception(List("XML")),
-              Layer = None)
-          }
-
-          val xml: scala.xml.Elem = scalaxb.toXML[opengis.wms.WMS_Capabilities](
-            obj = WMS_Capabilities(service, capability),
-            namespace = None,
-            elementLabel = Some("WMS_Capabilities"),
-            scope = opengis.wms.defaultScope,
-            typeAttribute = false
-          ).asInstanceOf[scala.xml.Elem]
-
-          Ok.apply(xml)
-        }
+        case Validated.Valid(wmsReq: GetCapabilities) =>
+          Ok.apply(new CapabilitiesView().toXML)
 
         case Validated.Valid(wmsReq: GetMap) =>
           Ok(s"""GET Request: $wmsReq""")
