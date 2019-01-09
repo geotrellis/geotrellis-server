@@ -56,7 +56,7 @@ class WmsService(catalog: URI, authority: String, port: Int) extends Http4sDsl[I
           import opengis.wms._
 
           val service = Service(
-            Name = Name.fromString("WMS", NamespaceBinding(null, "http://www.opengis.net/wms", null)),
+            Name = Name.fromString("WMS", opengis.wms.defaultScope),
             Title = "GeoTrellis WMS",
             OnlineResource = OnlineResource())
 

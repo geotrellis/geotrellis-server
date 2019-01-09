@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schema targetNamespace="http://www.opengis.net/wms" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:wms="http://www.opengis.net/wms" xmlns="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
-	<import namespace="http://www.w3.org/1999/xlink" schemaLocation="../../xlink/1.0.0/xlinks.xsd"/>
+	<import namespace="http://www.w3.org/1999/xlink"/>
 	<!-- ********************************************************************* -->
 	<!-- **  The Top-Level Element.                                         ** -->
 	<!-- ********************************************************************* -->
@@ -79,7 +79,7 @@
       </documentation>
 		</annotation>
 		<complexType>
-			<attributeGroup ref="xlink:simpleLink"/>
+			<attributeGroup ref="xlink:simpleAttrs"/>
 		</complexType>
 	</element>
 	<element name="Format" type="string">
