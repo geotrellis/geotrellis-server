@@ -66,7 +66,7 @@ class WmsService(catalog: URI, authority: String, port: Int) extends Http4sDsl[I
               DCPType = List(DCPType(
                 HTTP(Get = Get(OnlineResource(Map(
                   "@{http://www.w3.org/1999/xlink}href" -> scalaxb.DataRecord(new URI("http://localhost/wms")),
-                  "@type" -> scalaxb.DataRecord("simple")))))
+                  "@{http://www.w3.org/1999/xlink}type" -> scalaxb.DataRecord(xlink.Simple: xlink.TypeType)))))
               )))
 
             val getMap = OperationType(
@@ -74,7 +74,7 @@ class WmsService(catalog: URI, authority: String, port: Int) extends Http4sDsl[I
               DCPType = List(DCPType(
                 HTTP(Get = Get(OnlineResource(Map(
                   "@{http://www.w3.org/1999/xlink}href" -> scalaxb.DataRecord(new URI("http://localhost/wms")),
-                  "@type" -> scalaxb.DataRecord("simple")))))
+                  "@{http://www.w3.org/1999/xlink}type" -> scalaxb.DataRecord(xlink.Simple: xlink.TypeType)))))
               )))
 
             Capability(
