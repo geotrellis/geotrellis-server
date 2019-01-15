@@ -7,7 +7,7 @@ import geotrellis.raster.resample.{NearestNeighbor, ResampleMethod}
 import geotrellis.spark.SpatialKey
 import geotrellis.spark.tiling.{LayoutDefinition, ZoomedLayoutScheme}
 
-import cats.effect.IO
+import cats.effect._
 import cats.data.{NonEmptyList => NEL}
 import io.circe.{Decoder, Encoder}
 
@@ -30,19 +30,24 @@ trait RasterSourceUtils {
     for (zoom <- 0 to 64) yield scheme.levelForZoom(zoom).layout
   }.toArray
 
-  def fetchTile(uri: String, zoom: Int, x: Int, y: Int, crs: CRS = WebMercator, method: ResampleMethod = NearestNeighbor): IO[Raster[MultibandTile]] = {
+  def fetchTile[F[_]](
+    uri: String, zoom: Int,
+    x: Int, y: Int, crs: CRS = WebMercator,
+    method: ResampleMethod = NearestNeighbor
+  )(implicit F: ConcurrentEffect[F]): F[Raster[MultibandTile]] = {
     val key = SpatialKey(x, y)
     val ld = tmsLevels(zoom)
     val rs = getRasterSource(uri).reproject(crs, method).tileToLayout(ld, method)
 
     rs.read(key) match {
-      case Some(t) => IO.pure(Raster(t, ld.mapTransform(key)))
-      case _ => IO.raiseError(new Exception(s"No Tile availble for the following SpatialKey: ${x}, ${y}"))
+      case Some(t) => F.pure(Raster(t, ld.mapTransform(key)))
+      case _ => F.raiseError(new Exception(s"No Tile availble for the following SpatialKey: ${x}, ${y}"))
     }
   }
 
-  def getCRS(uri: String): IO[CRS] = IO { getRasterSource(uri).crs }
-  def getRasterExtents(uri: String): IO[NEL[RasterExtent]] = IO {
+  def getCRS[F[_]](uri: String)(implicit F: ConcurrentEffect[F]): F[CRS] = F.delay { getRasterSource(uri).crs }
+
+  def getRasterExtents[F[_]](uri: String)(implicit F: ConcurrentEffect[F]): F[NEL[RasterExtent]] = F.delay {
     val rs = getRasterSource(uri)
     NEL.fromList(rs.resolutions).getOrElse(NEL(rs.rasterExtent, Nil))
   }

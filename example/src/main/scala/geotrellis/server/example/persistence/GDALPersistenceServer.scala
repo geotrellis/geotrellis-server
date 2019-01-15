@@ -41,7 +41,7 @@ object GDALPersistenceServer extends LazyLogging with IOApp {
       mamlStore = new ConcurrentLinkedHashMap.Builder[UUID, Expression]()
                     .maximumWeightedCapacity(1000)
                     .build()
-      mamlPersistence = new PersistenceService[HashMapMamlStore, GDALNode](mamlStore)
+      mamlPersistence = new PersistenceService[IO, HashMapMamlStore, GDALNode](mamlStore)
       exitCode   <- BlazeServerBuilder[IO]
         .enableHttp2(true)
         .bindHttp(conf.http.port, conf.http.interface)

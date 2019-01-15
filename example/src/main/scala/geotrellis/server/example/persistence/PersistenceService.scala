@@ -6,6 +6,7 @@ import MamlStore.ops._
 import com.azavea.maml.util.Vars
 import com.azavea.maml.ast.Expression
 import com.azavea.maml.ast.codec.tree._
+import com.typesafe.scalalogging.LazyLogging
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.circe._
@@ -13,18 +14,18 @@ import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
 import cats.effect._
-import com.typesafe.scalalogging.LazyLogging
+import cats.implicits._
 
 import java.util.UUID
 import scala.util.Try
 
 
-class PersistenceService[Store, Param](
+class PersistenceService[F[_], Store, Param](
   val store: Store
-)(implicit contextShift: ContextShift[IO],
+)(implicit F: ConcurrentEffect[F],
            ms: MamlStore[Store],
            pd: Decoder[Param],
-           mr: TmsReification[Param]) extends Http4sDsl[IO] with LazyLogging {
+           mr: TmsReification[Param]) extends Http4sDsl[F] with LazyLogging {
 
   // Unapply to handle UUIDs on path
   object IdVar {
@@ -44,13 +45,13 @@ class PersistenceService[Store, Param](
       }
   }
 
-  implicit val expressionDecoder = jsonOf[IO, Expression]
+  implicit val expressionDecoder = jsonOf[F, Expression]
 
-  def routes: HttpRoutes[IO] = HttpRoutes.of {
+  def routes: HttpRoutes[F] = HttpRoutes.of {
     case req @ POST -> Root / IdVar(key) =>
       (for {
          expr <- req.as[Expression]
-         _    <- IO.pure(logger.info(s"Attempting to store expression (${req.bodyAsText}) at key ($key)"))
+         _    <- F.pure(logger.info(s"Attempting to store expression (${req.bodyAsText}) at key ($key)"))
          res  <- store.putMaml(key, expr)
        } yield res).attempt flatMap {
         case Right(created) =>

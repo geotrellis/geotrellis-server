@@ -3,6 +3,7 @@ package geotrellis.server.example.ndvi
 import geotrellis.server.example._
 import geotrellis.server.vlm.gdal._
 
+import cats._
 import cats.effect._
 import cats.implicits._
 import fs2._
@@ -33,7 +34,7 @@ object GDALNdviServer extends LazyLogging with IOApp {
     for {
       conf       <- Stream.eval(LoadConf().as[ExampleConf])
       _          <- Stream.eval(IO.pure(logger.info(s"Initializing NDVI service at ${conf.http.interface}:${conf.http.port}/")))
-      mamlNdviRendering = new NdviService[GDALNode]()
+      mamlNdviRendering = new NdviService[IO, IO.Par, GDALNode]()
       exitCode   <- BlazeServerBuilder[IO]
         .enableHttp2(true)
         .bindHttp(conf.http.port, conf.http.interface)

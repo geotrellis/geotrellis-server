@@ -13,6 +13,8 @@ import org.http4s.circe._
 import _root_.io.circe._
 import _root_.io.circe.parser._
 import _root_.io.circe.syntax._
+import cats._
+import cats.implicits._
 import cats.data._
 import Validated._
 import cats.effect._
@@ -20,12 +22,14 @@ import com.typesafe.scalalogging.LazyLogging
 
 import java.net.URLDecoder
 
-class NdviService[Param](
+class NdviService[F[_], Par[_], Param](
   interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
-)(implicit contextShift: ContextShift[IO],
+)(implicit F: ConcurrentEffect[F],
+           P: Parallel[F, Par],
+           contextShift: ContextShift[F],
            enc: Encoder[Param],
            dec: Decoder[Param],
-           mr: TmsReification[Param]) extends Http4sDsl[IO] with LazyLogging {
+           mr: TmsReification[Param]) extends Http4sDsl[F] with LazyLogging {
 
   object ParamBindings {
     def unapply(str: String): Option[Map[String, Param]] =
@@ -40,7 +44,7 @@ class NdviService[Param](
   object RedQueryParamMatcher extends QueryParamDecoderMatcher[Param]("red")
   object NirQueryParamMatcher extends QueryParamDecoderMatcher[Param]("nir")
 
-  implicit val expressionDecoder = jsonOf[IO, Expression]
+  implicit val expressionDecoder = jsonOf[F, Expression]
 
   final val ndvi: Expression =
     Division(List(
@@ -56,7 +60,7 @@ class NdviService[Param](
   final val eval = LayerTms.curried(ndvi, interpreter)
 
   // http://0.0.0.0:9000/{z}/{x}/{y}.png
-  def routes: HttpRoutes[IO] = HttpRoutes.of {
+  def routes: HttpRoutes[F] = HttpRoutes.of {
     // Matching json in the query parameter is a bad idea.
     case req @ GET -> Root / IntVar(z) / IntVar(x) / IntVar(y) ~ "png" :? RedQueryParamMatcher(red) +& NirQueryParamMatcher(nir) =>
       val paramMap = Map("red" -> red, "nir" -> nir)

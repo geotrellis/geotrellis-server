@@ -12,7 +12,7 @@ import io.circe.generic.semiauto._
 import cats._
 import cats.data.{NonEmptyList => NEL}
 import cats.effect._
-import cats.syntax.all._
+import cats.implicits._
 import geotrellis.raster._
 import geotrellis.proj4.CRS
 import geotrellis.vector.Extent
@@ -29,7 +29,7 @@ object WeightedOverlayDefinition {
     new TmsReification[WeightedOverlayDefinition] {
       def kind(self: WeightedOverlayDefinition): MamlKind = MamlKind.Image
 
-      def tmsReification(self: WeightedOverlayDefinition, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[Literal] =
+      def tmsReification[F[_]](self: WeightedOverlayDefinition, buffer: Int)(implicit F: ConcurrentEffect[F]): (Int, Int, Int) => F[Literal] =
         (z: Int, x: Int, y: Int) => {
           CogUtils.fetch(self.uri.toString, z, x, y).map(_.tile.band(self.band - 1)).map { tile =>
             val extent = CogUtils.tmsLevels(z).mapTransform.keyToExtent(x, y)
@@ -42,7 +42,7 @@ object WeightedOverlayDefinition {
     new ExtentReification[WeightedOverlayDefinition] {
       def kind(self: WeightedOverlayDefinition): MamlKind = MamlKind.Image
 
-      def extentReification(self: WeightedOverlayDefinition)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] =
+      def extentReification[F[_]](self: WeightedOverlayDefinition)(implicit F: ConcurrentEffect[F]): (Extent, CellSize) => F[Literal] =
         (extent: Extent, cs: CellSize) => {
           CogUtils.getTiff(self.uri.toString)
             .map { CogUtils.cropGeoTiffToTile(_, extent, cs, self.band - 1) }
@@ -51,11 +51,11 @@ object WeightedOverlayDefinition {
     }
 
   implicit val overlayDefinitionRasterExtents: HasRasterExtents[WeightedOverlayDefinition] = new HasRasterExtents[WeightedOverlayDefinition] {
-    def rasterExtents(self: WeightedOverlayDefinition)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] =
+    def rasterExtents[F[_]](self: WeightedOverlayDefinition)(implicit F: ConcurrentEffect[F]): F[NEL[RasterExtent]] =
       CogUtils.getTiff(self.uri.toString).map { tiff =>
         NEL(tiff.rasterExtent, tiff.overviews.map(_.rasterExtent))
       }
-    def crs(self: WeightedOverlayDefinition)(implicit contextShift: ContextShift[IO]): IO[CRS] =
+    def crs[F[_]](self: WeightedOverlayDefinition)(implicit F: ConcurrentEffect[F]): F[CRS] =
       CogUtils.getTiff(self.uri.toString).map { tiff =>
         tiff.crs
       }

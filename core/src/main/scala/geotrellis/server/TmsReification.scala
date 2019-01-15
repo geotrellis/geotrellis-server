@@ -7,6 +7,6 @@ import simulacrum._
 
 @typeclass trait TmsReification[A] {
   @op("kind") def kind(self: A): MamlKind
-  @op("tmsReification") def tmsReification(self: A, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[Literal]
+  @op("tmsReification") def tmsReification[F[_]](self: A, buffer: Int)(implicit F: ConcurrentEffect[F]): (Int, Int, Int) => F[Literal]
 }
 

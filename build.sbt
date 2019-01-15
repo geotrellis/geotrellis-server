@@ -126,11 +126,11 @@ lazy val core = project
   )
 
 lazy val example = project
+  .settings(moduleName := "geotrellis-server-example")
   .settings(commonSettings)
   .settings(publishSettings)
   .dependsOn(core)
   .settings(
-    moduleName := "geotrellis-server-example",
     assemblyJarName in assembly := "geotrellis-server-example.jar",
     libraryDependencies ++= Seq(
       http4sDsl,

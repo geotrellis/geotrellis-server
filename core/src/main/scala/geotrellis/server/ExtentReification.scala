@@ -13,6 +13,6 @@ import java.util.UUID
 
 @typeclass trait ExtentReification[A] {
   @op("kind") def kind(self: A): MamlKind
-  @op("extentReification") def extentReification(self: A)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal]
+  @op("extentReification") def extentReification[F[_]](self: A)(implicit F: ConcurrentEffect[F]): (Extent, CellSize) => F[Literal]
 }
 

@@ -9,7 +9,8 @@ import geotrellis.raster.io.geotiff.reader.GeoTiffReader
 import geotrellis.proj4._
 import geotrellis.spark.tiling._
 
-import cats.effect.IO
+import cats.implicits._
+import cats.effect._
 
 // TODO: remove this object
 object CogUtils {
@@ -20,7 +21,7 @@ object CogUtils {
   }.toArray
 
   /** Read GeoTiff from URI while caching the header bytes in memcache */
-  def fromUri(uri: String): IO[GeoTiff[MultibandTile]] = {
+  def fromUri[F[_]](uri: String)(implicit F: ConcurrentEffect[F]): F[GeoTiff[MultibandTile]] = {
     val cacheSize = 1<<18
     for {
       headerBytes <- RangeReaderUtils.fromUri(uri).map(_.readRange(0, cacheSize))
@@ -31,10 +32,10 @@ object CogUtils {
     }
   }
 
-  def fetch(uri: String, extent: Extent): IO[Raster[MultibandTile]] =
+  def fetch[F[_]](uri: String, extent: Extent)(implicit F: ConcurrentEffect[F]): F[Raster[MultibandTile]] =
     fromUri(uri).map { tiff => tiff.crop(RasterExtent(extent, tiff.cellSize)) }
 
-  def fetch(uri: String, zoom: Int, x: Int, y: Int): IO[Raster[MultibandTile]] =
+  def fetch[F[_]](uri: String, zoom: Int, x: Int, y: Int)(implicit F: ConcurrentEffect[F]): F[Raster[MultibandTile]] =
     CogUtils.fromUri(uri).flatMap { tiff =>
       val transform = Proj4Transform(tiff.crs, WebMercator)
       val inverseTransform = Proj4Transform(WebMercator, tiff.crs)
@@ -56,12 +57,12 @@ object CogUtils {
   }
 
 
-  def getTiff(uri: String): IO[GeoTiff[MultibandTile]] =
+  def getTiff[F[_]](uri: String)(implicit F: ConcurrentEffect[F]): F[GeoTiff[MultibandTile]] =
     RangeReaderUtils.fromUri(uri).map { rr =>
       GeoTiffReader.readMultiband(rr, streaming = true)
     }
 
-  def cropGeoTiff[T <: CellGrid](tiff: GeoTiff[T], extent: Extent): IO[Raster[T]] = IO {
+  def cropGeoTiff[F[_], T <: CellGrid](tiff: GeoTiff[T], extent: Extent)(implicit F: ConcurrentEffect[F]): F[Raster[T]] = F.delay {
     if (extent.intersects(tiff.extent)) {
       val bounds = tiff.rasterExtent.gridBoundsFor(extent)
       val clipExtent = tiff.rasterExtent.extentFor(bounds)

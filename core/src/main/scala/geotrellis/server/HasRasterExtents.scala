@@ -9,6 +9,6 @@ import cats.effect._
 import simulacrum._
 
 @typeclass trait HasRasterExtents[A] {
-  @op("rasterExtents") def rasterExtents(self: A)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]]
+  @op("rasterExtents") def rasterExtents[F[_]](self: A)(implicit F: ConcurrentEffect[F]): F[NEL[RasterExtent]]
 }
 

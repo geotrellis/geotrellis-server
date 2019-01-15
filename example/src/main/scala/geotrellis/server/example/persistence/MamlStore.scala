@@ -2,16 +2,16 @@ package geotrellis.server.example.persistence
 
 import com.azavea.maml.ast.{Expression, Literal}
 import cats._
-import cats.data.EitherT
-import cats.effect.IO
+import cats.implicits._
+import cats.effect._
 import simulacrum._
 
 import java.util.UUID
 
 
 @typeclass trait MamlStore[A] {
-  @op("getMaml") def getMaml(self: A, key: UUID): IO[Option[Expression]]
-  @op("putMaml") def putMaml(self: A, key: UUID, maml: Expression): IO[Unit]
+  @op("getMaml") def getMaml[F[_]](self: A, key: UUID)(implicit F: ConcurrentEffect[F]): F[Option[Expression]]
+  @op("putMaml") def putMaml[F[_]](self: A, key: UUID, maml: Expression)(implicit F: ConcurrentEffect[F]): F[Unit]
 }
 
 object MamlStore {

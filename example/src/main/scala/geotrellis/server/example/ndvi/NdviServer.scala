@@ -33,7 +33,7 @@ object NdviServer extends LazyLogging with IOApp {
     for {
       conf       <- Stream.eval(LoadConf().as[ExampleConf])
       _          <- Stream.eval(IO.pure(logger.info(s"Initializing NDVI service at ${conf.http.interface}:${conf.http.port}/")))
-      mamlNdviRendering = new NdviService[GeoTiffNode]()
+      mamlNdviRendering = new NdviService[IO, IO.Par, GeoTiffNode]()
       exitCode   <- BlazeServerBuilder[IO]
         .enableHttp2(true)
         .bindHttp(conf.http.port, conf.http.interface)
