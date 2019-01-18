@@ -1,20 +1,20 @@
 package geotrellis.server.ogc.wms
 
-import java.net.URI
+import geotrellis.proj4.{CRS, LatLng}
 
+import java.net.URI
 import scala.xml.Elem
 
-class CapabilitiesView {
-  // TODO: move model to constructor once one exists
-  def model = ???
-
+class CapabilitiesView(model: RasterSourcesModel, crs: CRS = LatLng) {
   def toXML: Elem = {
     import opengis.wms._
 
     val service = Service(
       Name = Name.fromString("WMS", opengis.wms.defaultScope),
       Title = "GeoTrellis WMS",
-      OnlineResource = OnlineResource())
+      OnlineResource = OnlineResource(),
+      KeywordList = Some(KeywordList(Keyword("WMS") :: Keyword("GeoTrellis") :: Nil))
+    )
 
     val capability = {
       val getCapabilities = OperationType(
@@ -35,8 +35,8 @@ class CapabilitiesView {
 
       Capability(
         Request = Request(GetCapabilities = getCapabilities, GetMap = getMap, GetFeatureInfo = None),
-        Exception = Exception(List("XML")),
-        Layer = None
+        Exception = Exception(List("XML", "INIMAGE", "BLANK")),
+        Layer = Some(model.toLayer(crs))
       )
     }
 
