@@ -1,14 +1,20 @@
 package geotrellis.server.ogc.wms
 
 import geotrellis.contrib.vlm.RasterSource
+import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
 import geotrellis.spark.tiling._
 import geotrellis.proj4._
 import geotrellis.raster.render.{ColorRamp, Png}
 import geotrellis.raster.{MultibandTile, Raster}
 import geotrellis.server.ogc.wms.WmsParams.GetMap
+import geotrellis.spark.io.s3.AmazonS3Client
 import geotrellis.vector.Extent
+
 import opengis.wms._
 import scalaxb.CanWriteXML
+import com.amazonaws.services.s3.{AmazonS3ClientBuilder, AmazonS3URI}
+import java.io.File
+import java.net._
 
 case class RasterSourcesModel(map: Map[String, RasterSource]) {
   import RasterSourcesModel._
@@ -115,5 +121,21 @@ object RasterSourcesModel {
         attributes = Map.empty
       )
     }
+  }
+
+  def fromURI(uri: URI): RasterSourcesModel = {
+    val list: List[URI] = uri.getScheme match {
+      case null | "file" =>
+        new File(uri).listFiles.filter(_.isFile).toList.map(_.toURI)
+      case "s3" =>
+        val s3Uri = new AmazonS3URI(java.net.URLDecoder.decode(uri.toString, "UTF-8"))
+        val s3Client = new AmazonS3Client(AmazonS3ClientBuilder.defaultClient())
+        s3Client.listKeys(s3Uri.getBucket, s3Uri.getKey).map { key => new URI(s"${uri.toString}/$key") }.toList
+
+      case scheme =>
+        throw new IllegalArgumentException(s"Unable to read scheme $scheme at $uri")
+    }
+
+    RasterSourcesModel(list.map { uri => uri.toString.split("/").last.split("\\.").head -> GeoTiffRasterSource(uri.toString) }.toMap)
   }
 }
