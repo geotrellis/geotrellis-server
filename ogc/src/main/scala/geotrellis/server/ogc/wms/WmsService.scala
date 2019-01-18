@@ -2,8 +2,10 @@ package geotrellis.server.ogc.wms
 
 import geotrellis.spark._
 import geotrellis.proj4.WebMercator
+import geotrellis.raster.{MultibandTile, Raster}
 import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wms.WmsParams.{GetCapabilities, GetMap}
+
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.io._
@@ -12,17 +14,12 @@ import org.http4s.implicits._
 import cats.data.Validated
 import cats.effect._
 import com.typesafe.scalalogging.LazyLogging
+
 import java.net.URI
-
-import geotrellis.raster.{MultibandTile, Raster}
-
-object WmsService {
-  type MetadataCatalog = Map[String, (Seq[Int], Option[TileLayerMetadata[SpatialKey]])]
-}
 
 class WmsService(catalog: URI, authority: String, port: Int) extends Http4sDsl[IO] with LazyLogging {
   /** Should be generated from the catalog */
-  lazy val model = RasterSourcesModel(Map())
+  lazy val model = RasterSourcesModel.fromURI(catalog)
 
   def handleError[Result](result: Either[Throwable, Result])(implicit ee: EntityEncoder[IO, Result]): IO[Response[IO]] = result match {
     case Right(res) =>
@@ -47,8 +44,12 @@ class WmsService(catalog: URI, authority: String, port: Int) extends Http4sDsl[I
 
         case Validated.Valid(wmsReq: GetMap) =>
           val raster: Option[Raster[MultibandTile]] = model.getMap(wmsReq)
-          val png = model.getMapWithColorRamp(wmsReq)
-          Ok(s"""GET Request: $wmsReq""")
+          // val png = model.getMapWithColorRamp(wmsReq)
+          raster.map(_.tile.renderPng.bytes) match {
+            case Some(bytes) => Ok(bytes)
+            case _ => BadRequest("Empty Tile")
+          }
+          // Ok(s"""GET Request: $wmsReq""")
       }
 
     case req =>
