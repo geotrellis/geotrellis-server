@@ -197,6 +197,9 @@ lazy val ogc = project
       geotrellisSpark,
       geotrellisVlm,
       typesafeLogging,
+      commonsIo, // to make GeoTiffRasterSources work
+      slf4jApi, // enable logging 
+      slf4jSimple,
       http4sBlazeServer % Test,
       scalatest
     )

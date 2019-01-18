@@ -16,15 +16,7 @@ import scala.concurrent.duration._
 import java.net.URI
 
 object WmsServer extends LazyLogging with IOApp {
-  val catalogURI: URI = new URI("/catalog")
-
-  private val corsConfig = CORSConfig(
-    anyOrigin = true,
-    anyMethod = false,
-    allowedMethods = Some(Set("GET")),
-    allowCredentials = true,
-    maxAge = 1.day.toSeconds
-  )
+  val catalogURI: URI = new URI("s3://geotrellis-test/daunnc/LC_TEST")
 
   private val commonMiddleware: HttpMiddleware[IO] = { (routes: HttpRoutes[IO]) =>
     CORS(routes)
@@ -36,6 +28,7 @@ object WmsServer extends LazyLogging with IOApp {
       _          <- Stream.eval(IO.pure(logger.info(s"Initializing WMS service at ${conf.http.interface}:${conf.http.port}/")))
       wcsService = new WmsService(catalogURI, s"${conf.http.interface}", conf.http.port)
       exitCode   <- BlazeServerBuilder[IO]
+        .withIdleTimeout(Duration.Inf) // for test purposes only
         .enableHttp2(true)
         .bindHttp(conf.http.port, conf.http.interface)
         .withHttpApp(Router("/" -> commonMiddleware(wcsService.routes)).orNotFound)

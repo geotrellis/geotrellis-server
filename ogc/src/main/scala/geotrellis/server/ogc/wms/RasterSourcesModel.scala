@@ -9,12 +9,13 @@ import geotrellis.raster.{MultibandTile, Raster}
 import geotrellis.server.ogc.wms.WmsParams.GetMap
 import geotrellis.spark.io.s3.AmazonS3Client
 import geotrellis.vector.Extent
-
 import opengis.wms._
 import scalaxb.CanWriteXML
 import com.amazonaws.services.s3.{AmazonS3ClientBuilder, AmazonS3URI}
 import java.io.File
 import java.net._
+
+import geotrellis.contrib.vlm.gdal.GDALRasterSource
 
 case class RasterSourcesModel(map: Map[String, RasterSource]) {
   import RasterSourcesModel._
@@ -78,7 +79,7 @@ object RasterSourcesModel {
         Abstract = Some(layerName),
         KeywordList = None,
         // extra CRS that is suppotred by this layer
-        CRS = s"EPSG: ${self.crs.epsgCode}" :: Nil,
+        CRS = s"EPSG: ${self.crs.epsgCode.get}" :: Nil,
         // global Extent for the CRS
         EX_GeographicBoundingBox = Some(self.extent.reproject(self.crs, LatLng)).map { case Extent(xmin, ymin, xmax, ymax) =>
           opengis.wms.EX_GeographicBoundingBox(xmin, xmax, ymin, ymax)
@@ -89,7 +90,7 @@ object RasterSourcesModel {
             List(crs, self.crs).map { crs =>
               val Extent(xmin, ymin, xmax, ymax) = self.extent.reproject(self.crs, crs)
               BoundingBox(Map(
-                "@CRS" -> s"EPSG: ${crs.epsgCode}",
+                "@CRS" -> s"EPSG: ${crs.epsgCode.get}",
                 "@minx" -> xmin,
                 "@miny" -> ymin,
                 "@maxx" -> xmax,
@@ -99,7 +100,7 @@ object RasterSourcesModel {
           } else {
             val Extent(xmin, ymin, xmax, ymax) = self.extent
             BoundingBox(Map(
-              "@CRS" -> s"EPSG: ${crs.epsgCode}",
+              "@CRS" -> s"EPSG: ${crs.epsgCode.get}",
               "@minx" -> xmin,
               "@miny" -> ymin,
               "@maxx" -> xmax,
@@ -130,7 +131,11 @@ object RasterSourcesModel {
       case "s3" =>
         val s3Uri = new AmazonS3URI(java.net.URLDecoder.decode(uri.toString, "UTF-8"))
         val s3Client = new AmazonS3Client(AmazonS3ClientBuilder.defaultClient())
-        s3Client.listKeys(s3Uri.getBucket, s3Uri.getKey).map { key => new URI(s"${uri.toString}/$key") }.toList
+        s3Client
+          .listKeys(s3Uri.getBucket, s3Uri.getKey)
+          .filter(k => !k.contains(".ovr"))
+          .map { key => new URI(s"s3://${s3Uri.getBucket}/$key") }
+          .toList
 
       case scheme =>
         throw new IllegalArgumentException(s"Unable to read scheme $scheme at $uri")
