@@ -51,4 +51,8 @@ object Dependencies {
   val macrosParadise    = "org.scalamacros"                % "paradise"             % "2.1.0"
   val scalaParser       = "org.scala-lang.modules"        %% "scala-parser-combinators" % "1.1.1"
   val dispatch          = "net.databinder.dispatch"       %% "dispatch-core"        % dispatchVer
+  val apacheMath        = "org.apache.commons"             % "commons-math3"        % "3.6.1"
+  val commonsIo         = "commons-io"                     % "commons-io"           % "2.6"
+  val slf4jApi          = "org.slf4j"                      % "slf4j-api"            % "1.7.25"
+  val slf4jSimple       = "org.slf4j"                      % "slf4j-simple"         % "1.7.25"
 }
