@@ -193,9 +193,11 @@ lazy val ogc = project
       spark,
       geotrellisS3,
       geotrellisSpark,
+      geotrellisVlm,
       typesafeLogging,
       http4sBlazeServer % Test,
-      scalatest)
+      scalatest
+    )
   )
 
 lazy val docs = project
