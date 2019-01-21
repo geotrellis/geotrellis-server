@@ -6,7 +6,7 @@ import geotrellis.contrib.vlm.gdal._
 import geotrellis.spark.tiling._
 import geotrellis.proj4._
 import geotrellis.raster.render.{ColorRamp, Png}
-import geotrellis.raster.{MultibandTile, Raster}
+import geotrellis.raster.{MultibandTile, Raster, RasterExtent}
 import geotrellis.server.ogc.wms.WmsParams.GetMap
 import geotrellis.spark.io.s3.AmazonS3Client
 import geotrellis.vector.Extent
@@ -22,10 +22,10 @@ case class RasterSourcesModel(map: Map[String, RasterSource]) {
   import RasterSourcesModel._
 
   def getMap(wmsReq: GetMap): Option[Raster[MultibandTile]] = {
+    val re = RasterExtent(wmsReq.boundingBox, wmsReq.width, wmsReq.height)
     map
       .get(wmsReq.layers.head.toUpperCase)
-      .flatMap(_.reproject(wmsReq.crs).read(wmsReq.boundingBox))
-      .map(_.resample(wmsReq.width, wmsReq.height))
+      .flatMap(_.reprojectToGrid(wmsReq.crs, re).read(wmsReq.boundingBox))
   }
 
   def getMapWithColorRamp(wmsReq: GetMap, colorRamp: Option[ColorRamp] = None, bandIndex: Int = 0): Option[Png] =
