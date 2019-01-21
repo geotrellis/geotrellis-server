@@ -18,6 +18,14 @@ import java.net.URI
 object WmsServer extends LazyLogging with IOApp {
   val catalogURI: URI = new URI("s3://geotrellis-test/daunnc/LC_TEST")
 
+  private val corsConfig = CORSConfig(
+    anyOrigin = true,
+    anyMethod = false,
+    allowedMethods = Some(Set("GET")),
+    allowCredentials = true,
+    maxAge = 1.day.toSeconds
+  )
+
   private val commonMiddleware: HttpMiddleware[IO] = { (routes: HttpRoutes[IO]) =>
     CORS(routes)
   }

@@ -1,11 +1,11 @@
 package geotrellis.server.ogc.wms
 
 import geotrellis.proj4.{CRS, LatLng}
-
 import java.net.URI
-import scala.xml.Elem
 
-class CapabilitiesView(model: RasterSourcesModel, crs: CRS = LatLng) {
+import scala.xml.{Elem, NodeSeq}
+
+class CapabilitiesView(model: RasterSourcesModel, authority: String, port: Int, crs: CRS = LatLng) {
   def toXML: Elem = {
     import opengis.wms._
 
@@ -21,15 +21,15 @@ class CapabilitiesView(model: RasterSourcesModel, crs: CRS = LatLng) {
         Format = List("text/xml"),
         DCPType = List(DCPType(
           HTTP(Get = Get(OnlineResource(Map(
-            "@{http://www.w3.org/1999/xlink}href" -> scalaxb.DataRecord(new URI("http://localhost/wms")),
+            "@{http://www.w3.org/1999/xlink}href" -> scalaxb.DataRecord(new URI(s"http://${authority}:${port}/wms")),
             "@{http://www.w3.org/1999/xlink}type" -> scalaxb.DataRecord(xlink.Simple: xlink.TypeType)))))
         )))
 
       val getMap = OperationType(
-        Format = List("text/xml"),
+        Format = List("text/xml", "image/png", "image/geotiff", "image/jpeg"),
         DCPType = List(DCPType(
           HTTP(Get = Get(OnlineResource(Map(
-            "@{http://www.w3.org/1999/xlink}href" -> scalaxb.DataRecord(new URI("http://localhost/wms")),
+            "@{http://www.w3.org/1999/xlink}href" -> scalaxb.DataRecord(new URI(s"http://${authority}:${port}/wms")),
             "@{http://www.w3.org/1999/xlink}type" -> scalaxb.DataRecord(xlink.Simple: xlink.TypeType)))))
         )))
 
@@ -40,11 +40,26 @@ class CapabilitiesView(model: RasterSourcesModel, crs: CRS = LatLng) {
       )
     }
 
-    val ret = scalaxb.toXML[opengis.wms.WMS_Capabilities](
+    /**
+      * Default scope generates an incorrect XML file (in the incorrect scope, prefixes all XML elements with `wms:` prefix.
+      *
+      * val defaultScope = scalaxb.toScope(Some("ogc") -> "http://www.opengis.net/ogc",
+      * Some("wms") -> "http://www.opengis.net/wms",
+      * Some("xlink") -> "http://www.w3.org/1999/xlink",
+      * Some("xs") -> "http://www.w3.org/2001/XMLSchema",
+      * Some("xsi") -> "http://www.w3.org/2001/XMLSchema-instance")
+      */
+
+    val ret: NodeSeq = scalaxb.toXML[opengis.wms.WMS_Capabilities](
       obj = WMS_Capabilities(service, capability, Map("@version" -> scalaxb.DataRecord("1.3.0"))),
       namespace = None,
       elementLabel = Some("WMS_Capabilities"),
-      scope = opengis.wms.defaultScope,
+      scope = scalaxb.toScope(
+        Some("ogc") -> "http://www.opengis.net/ogc",
+        Some("xlink") -> "http://www.w3.org/1999/xlink",
+        Some("xs") -> "http://www.w3.org/2001/XMLSchema",
+        Some("xsi") -> "http://www.w3.org/2001/XMLSchema-instance"
+      ),
       typeAttribute = false
     )
 

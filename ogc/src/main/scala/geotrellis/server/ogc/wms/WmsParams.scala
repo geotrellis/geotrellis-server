@@ -34,7 +34,7 @@ object WmsParams {
 
   case class GetMap(
     version: String,
-    identifier: String,
+    layers: List[String],
     boundingBox: Extent,
     format: String,
     width: Int,
@@ -47,7 +47,9 @@ object WmsParams {
       params.validatedParam[(Vector[Double], Option[String])](field, { bboxStr =>
         // Sometimes the CRS was a 5th element in the bbox param.
         try {
+          // xmin, xmax, ymin, ymax
           val v = bboxStr.split(",").toVector
+          println(s"")
           if(v.length == 4) {
             Some((v.map(_.toDouble), None))
           } else if(v.length == 5) {
@@ -81,11 +83,13 @@ object WmsParams {
                 (id, bbox, crsOption)
               }
             } else {
-              val identifier =
-                params.validatedParam("identifier")
+              val identifier = params.validatedParam("layers")
 
-              val bboxAndCrsOption =
-                getBboxAndCrsOption(params, "boundingbox")
+              val bboxAndCrsOption = {
+                val res = getBboxAndCrsOption(params, "boundingbox")
+                if(res.isInvalid) getBboxAndCrsOption(params, "bbox")
+                else res
+              }
 
               (identifier, bboxAndCrsOption).mapN { case (id, (bbox, crsOption)) =>
                 (id, bbox, crsOption)
@@ -129,8 +133,8 @@ object WmsParams {
             })
 
           (idAndBboxAndCrs, format, width, height).mapN { case ((id, bbox, crs), format, width, height) =>
-            val extent = Extent(bbox(0), bbox(1), bbox(2), bbox(3))
-            GetMap(version, id, extent, format, width, height, crs)
+            val extent = Extent(xmin = bbox(0), ymin = bbox(1), xmax = bbox(2), ymax = bbox(3))
+            GetMap(version, List(id), extent, format, width, height, crs)
           }
         }
     }
