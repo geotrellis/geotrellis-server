@@ -1,7 +1,8 @@
 package geotrellis.server.ogc.wms
 
 import geotrellis.contrib.vlm.RasterSource
-import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
+import geotrellis.contrib.vlm.geotiff._
+import geotrellis.contrib.vlm.gdal._
 import geotrellis.spark.tiling._
 import geotrellis.proj4._
 import geotrellis.raster.render.{ColorRamp, Png}
@@ -15,16 +16,17 @@ import com.amazonaws.services.s3.{AmazonS3ClientBuilder, AmazonS3URI}
 import java.io.File
 import java.net._
 
-import geotrellis.contrib.vlm.gdal.GDALRasterSource
+import geotrellis.server.ogc.conf.Conf
 
 case class RasterSourcesModel(map: Map[String, RasterSource]) {
   import RasterSourcesModel._
 
-  def getMap(wmsReq: GetMap): Option[Raster[MultibandTile]] =
+  def getMap(wmsReq: GetMap): Option[Raster[MultibandTile]] = {
     map
-      .get(wmsReq.identifier)
-      .flatMap { rs =>rs.reproject(wmsReq.crs).read(wmsReq.boundingBox) }
-      .map { _.resample(wmsReq.width, wmsReq.height) }
+      .get(wmsReq.layers.head.toUpperCase)
+      .flatMap(_.reproject(wmsReq.crs).read(wmsReq.boundingBox))
+      .map(_.resample(wmsReq.width, wmsReq.height))
+  }
 
   def getMapWithColorRamp(wmsReq: GetMap, colorRamp: Option[ColorRamp] = None, bandIndex: Int = 0): Option[Png] =
     getMap(wmsReq).map { raster =>
@@ -45,13 +47,24 @@ case class RasterSourcesModel(map: Map[String, RasterSource]) {
       KeywordList = None,
       // All layers are avail at least at this CRS
       // All sublayers would have metadata in this CRS + its own
-      CRS = s"EPSG: ${crs.epsgCode}" :: Nil,
+      CRS = crs.epsgCode.map { code => s"EPSG:$code" }.toList,
       // Extent of all layers in LatLng
-      EX_GeographicBoundingBox = Some(crs.worldExtent).map { case Extent(xmin, ymin, xmax, ymax) =>
+      // Should it be world extent? To simplify tests and QGIS work it's all RasterSources extent
+      EX_GeographicBoundingBox = extent(LatLng).map { case Extent(xmin, ymin, xmax, ymax) =>
         opengis.wms.EX_GeographicBoundingBox(xmin, xmax, ymin, ymax)
       },
       // no bounding box is required for the global layer
-      BoundingBox = Nil,
+      BoundingBox = {
+        extent(LatLng).toList.map { case Extent(xmin, ymin, xmax, ymax) =>
+          BoundingBox(Map(
+            "@CRS" -> s"EPSG:${crs.epsgCode.get}",
+            "@minx" -> xmin,
+            "@miny" -> ymin,
+            "@maxx" -> xmax,
+            "@maxy" -> ymax
+          ))
+        }
+      },
       Dimension = Nil,
       Attribution = None,
       AuthorityURL = Nil,
@@ -79,7 +92,7 @@ object RasterSourcesModel {
         Abstract = Some(layerName),
         KeywordList = None,
         // extra CRS that is suppotred by this layer
-        CRS = s"EPSG: ${self.crs.epsgCode.get}" :: Nil,
+        CRS = List(crs, self.crs).flatMap(_.epsgCode).map { code => s"EPSG:$code" },
         // global Extent for the CRS
         EX_GeographicBoundingBox = Some(self.extent.reproject(self.crs, LatLng)).map { case Extent(xmin, ymin, xmax, ymax) =>
           opengis.wms.EX_GeographicBoundingBox(xmin, xmax, ymin, ymax)
@@ -90,7 +103,7 @@ object RasterSourcesModel {
             List(crs, self.crs).map { crs =>
               val Extent(xmin, ymin, xmax, ymax) = self.extent.reproject(self.crs, crs)
               BoundingBox(Map(
-                "@CRS" -> s"EPSG: ${crs.epsgCode.get}",
+                "@CRS" -> s"EPSG:${crs.epsgCode.get}",
                 "@minx" -> xmin,
                 "@miny" -> ymin,
                 "@maxx" -> xmax,
@@ -100,7 +113,7 @@ object RasterSourcesModel {
           } else {
             val Extent(xmin, ymin, xmax, ymax) = self.extent
             BoundingBox(Map(
-              "@CRS" -> s"EPSG: ${crs.epsgCode.get}",
+              "@CRS" -> s"EPSG:${crs.epsgCode.get}",
               "@minx" -> xmin,
               "@miny" -> ymin,
               "@maxx" -> xmax,
@@ -141,6 +154,6 @@ object RasterSourcesModel {
         throw new IllegalArgumentException(s"Unable to read scheme $scheme at $uri")
     }
 
-    RasterSourcesModel(list.map { uri => uri.toString.split("/").last.split("\\.").head -> GeoTiffRasterSource(uri.toString) }.toMap)
+    RasterSourcesModel(list.map { uri => uri.toString.split("/").last.split("\\.").head -> Conf.http.rasterSource(uri.toString) }.toMap)
   }
 }

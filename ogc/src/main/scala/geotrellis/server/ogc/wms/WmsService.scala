@@ -40,12 +40,12 @@ class WmsService(catalog: URI, authority: String, port: Int) extends Http4sDsl[I
           BadRequest(msg)
 
         case Validated.Valid(wmsReq: GetCapabilities) =>
-          Ok.apply(new CapabilitiesView(model).toXML)
+          Ok.apply(new CapabilitiesView(model, authority, port).toXML)
 
         case Validated.Valid(wmsReq: GetMap) =>
           val raster: Option[Raster[MultibandTile]] = model.getMap(wmsReq)
           // val png = model.getMapWithColorRamp(wmsReq)
-          raster.map(_.tile.renderPng.bytes) match {
+          raster.map(_.tile.band(0).renderPng.bytes) match {
             case Some(bytes) => Ok(bytes)
             case _ => BadRequest("Empty Tile")
           }

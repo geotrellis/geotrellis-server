@@ -6,6 +6,9 @@ object Constants {
   val SUPPORTED_FORMATS =
     Map(
       "geotiff" -> "geotiff",
-      "geotif" -> "geotiff"
+      "geotif" -> "geotiff",
+      "image/png" -> "png",
+      "image/geotiff" -> "geotiff",
+      "image/jpeg" -> "jpeg"
     )
 }
