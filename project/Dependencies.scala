@@ -3,8 +3,8 @@ import sbt._
 object Dependencies {
 
   val circeVer         = "0.10.0"
-  val gtVer            = "3.0.0-SNAPSHOT"
-  val gtcVer           = "0.7.13"
+  val gtVer            = "2.2.0"
+  val gtcVer           = "0.8.0"
   val http4sVer        = "0.19.0"
   val scalaVer         = "2.11.12"
   val crossScalaVer    = Seq(scalaVer, "2.12.7")
@@ -39,7 +39,7 @@ object Dependencies {
   val kamonSysMetrics   = "io.kamon"                      %% "kamon-system-metrics" % "1.0.0"
   val kindProjector     = "org.spire-math"                %% "kind-projector"       % "0.9.4"
   val mamlJvm           = "com.azavea"                    %% "maml-jvm"             % "0.1.0"
-  val pureConfig        = "com.github.pureconfig"         %% "pureconfig"           % "0.9.1"
+  val pureConfig        = "com.github.pureconfig"         %% "pureconfig"           % "0.9.2"
   val scaffeine         = "com.github.blemale"            %% "scaffeine"            % "2.0.0"
   val scalaXml          = "org.scala-lang.modules"        %% "scala-xml"            % "1.1.0"
   val scalatest         = "org.scalatest"                 %%  "scalatest"           % "3.0.4" % Test

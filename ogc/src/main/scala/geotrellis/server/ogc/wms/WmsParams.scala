@@ -34,7 +34,7 @@ object WmsParams {
 
   case class GetMap(
     version: String,
-    layers: List[String],
+    layers: Array[String],
     boundingBox: Extent,
     format: String,
     width: Int,
@@ -43,74 +43,31 @@ object WmsParams {
   ) extends WmsParams
 
   object GetMap {
-    private def getBboxAndCrsOption(params: ParamMap, field: String): ValidatedNel[ParamError, (Vector[Double], Option[String])] =
-      params.validatedParam[(Vector[Double], Option[String])](field, { bboxStr =>
-        // Sometimes the CRS was a 5th element in the bbox param.
-        try {
-          // xmin, xmax, ymin, ymax
-          val v = bboxStr.split(",").toVector
-          println(s"")
-          if(v.length == 4) {
-            Some((v.map(_.toDouble), None))
-          } else if(v.length == 5) {
-            val values = v
-            Some((v.take(4).map(_.toDouble), Some(v.last)))
-          } else {
-            None
-          }
-        } catch {
-          case _: Throwable => None
-        }
-      })
-
     def build(params: ParamMap): ValidatedNel[ParamError, WmsParams] = {
       val versionParam =
         params.validatedVersion("1.3.0")
 
       versionParam
         .andThen { version: String =>
-          // Collected the bbox, id, and possibly the CRS in one shot.
-          // This is beause the boundingbox param could contain the CRS as a 5th element.
-          val idAndBboxAndCrsOption =
-            if(version < "1.1.0") {
-              val identifier =
-                params.validatedParam("coverage")
+          val layers =
+            params.validatedParam[Array[String]]("layers", { s => Some(s.split(",")) })
 
-              val bboxAndCrsOption =
-                getBboxAndCrsOption(params, "bbox")
-
-              (identifier, bboxAndCrsOption).mapN { case (id, (bbox, crsOption)) =>
-                (id, bbox, crsOption)
+          val bbox =
+            params.validatedParam("bbox", {s =>
+              s.split(",").map(_.toDouble) match {
+                case Array(xmin, ymin, xmax, ymax) =>
+                  Some(Extent(ymin, xmin, ymax, xmax))
+                case _ => None
               }
-            } else {
-              val identifier = params.validatedParam("layers")
+            })
 
-              val bboxAndCrsOption = {
-                val res = getBboxAndCrsOption(params, "boundingbox")
-                if(res.isInvalid) getBboxAndCrsOption(params, "bbox")
-                else res
-              }
+          val width =
+            params.validatedParam[Int]("width", { s => Try(s.toInt).toOption })
 
-              (identifier, bboxAndCrsOption).mapN { case (id, (bbox, crsOption)) =>
-                (id, bbox, crsOption)
-              }
-            }
+          val height =
+            params.validatedParam[Int]("height", { s => Try(s.toInt).toOption })
 
-          // Transform the OGC urn CRS code into a CRS.
-          val idAndBboxAndCrs =
-            idAndBboxAndCrsOption
-              .andThen { case (id, bbox, crsOption) =>
-                // If the CRS wasn't in the boundingbox parameter, pull it out of the CRS field.
-                crsOption match {
-                  case Some(crsDesc) =>
-                    CrsUtils.ogcToCRS(crsDesc).map { crs => (id, bbox, crs) }
-                  case None =>
-                    params.validatedParam("crs")
-                      .andThen { crsDesc =>
-                        CrsUtils.ogcToCRS(crsDesc).map { crs => (id, bbox, crs) }
-                      }
-                }
-              }
+          val crs = params.validatedParam("crs", { s => Try(CRS.fromName(s)).toOption })
 
           val format =
             params.validatedParam("format")
@@ -122,19 +79,8 @@ object WmsParams {
                   }
               }
 
-          val width =
-            params.validatedParam[Int]("width", { s =>
-              Try(s.toInt).toOption
-            })
-
-          val height =
-            params.validatedParam[Int]("height", { s =>
-              Try(s.toInt).toOption
-            })
-
-          (idAndBboxAndCrs, format, width, height).mapN { case ((id, bbox, crs), format, width, height) =>
-            val extent = Extent(xmin = bbox(0), ymin = bbox(1), xmax = bbox(2), ymax = bbox(3))
-            GetMap(version, List(id), extent, format, width, height, crs)
+          (layers, bbox, format, width, height, crs).mapN { case (layers, bbox, format, width, height, crs) =>
+            GetMap(version, layers, bbox, format = format, width = width, height = height, crs = crs)
           }
         }
     }
