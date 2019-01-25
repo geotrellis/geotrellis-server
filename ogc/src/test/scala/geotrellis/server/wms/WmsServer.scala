@@ -1,29 +1,21 @@
 package geotrellis.server.ogc.wms
 
-import geotrellis.server._
-import geotrellis.server.example._
+import geotrellis.server.ogc.conf._
 
-import cats.data._
 import cats.effect._
 import cats.implicits._
-import io.circe._
-import io.circe.syntax._
 import fs2._
-import com.typesafe.scalalogging.LazyLogging
-import org.http4s.circe._
 import org.http4s._
-import org.http4s.dsl.Http4sDsl
 import org.http4s.server._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.{CORS, CORSConfig}
 import org.http4s.syntax.kleisli._
-
-import java.util.UUID
+import com.typesafe.scalalogging.LazyLogging
 import scala.concurrent.duration._
-import scala.collection.mutable
-import scala.concurrent.ExecutionContext.Implicits.global
+import java.net.URI
 
 object WmsServer extends LazyLogging with IOApp {
+  val catalogURI: URI = new URI("s3://geotrellis-test/daunnc/LC_TEST")
 
   private val corsConfig = CORSConfig(
     anyOrigin = true,
@@ -37,23 +29,17 @@ object WmsServer extends LazyLogging with IOApp {
     CORS(routes)
   }
 
-  val ip: String = {
-    val socket = new java.net.DatagramSocket()
-    socket.connect(java.net.InetAddress.getByName("8.8.8.8"), 10002)
-    val result = socket.getLocalAddress.getHostAddress
-    socket.close
-    result
-  }
-
   val stream: Stream[IO, ExitCode] = {
     for {
-      conf       <- Stream.eval(LoadConf().as[WmsConf])
-      _          <- Stream.eval(IO.pure(logger.info(s"Initializing WMS service at ${conf.http.interface}:${conf.http.port}")))
-      wmsRendering = new WmsService(new java.net.URI(conf.settings.catalog), ip, conf.http.port)
+      conf       <- Stream.eval(LoadConf().as[Conf])
+      _          <- Stream.eval(IO.pure(logger.info(s"Initializing WMS service at ${conf.http.interface}:${conf.http.port}/")))
+      model = RasterSourcesModel.fromConf(conf.layers)
+      wcsService = new WmsService(model, s"${conf.http.interface}", conf.http.port)
       exitCode   <- BlazeServerBuilder[IO]
+        .withIdleTimeout(Duration.Inf) // for test purposes only
         .enableHttp2(true)
         .bindHttp(conf.http.port, conf.http.interface)
-        .withHttpApp(Router("/" -> commonMiddleware(wmsRendering.routes)).orNotFound)
+        .withHttpApp(Router("/" -> commonMiddleware(wcsService.routes)).orNotFound)
         .serve
     } yield exitCode
   }
