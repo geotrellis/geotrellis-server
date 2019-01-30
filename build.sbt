@@ -39,6 +39,7 @@ lazy val commonSettings = Seq(
   addCompilerPlugin(macrosParadise cross CrossVersion.full),
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
   fork := true,
+  outputStrategy := Some(StdoutOutput),
   test in assembly := {},
   sources in (Compile, doc) := (sources in (Compile, doc)).value,
   assemblyMergeStrategy in assembly := {
