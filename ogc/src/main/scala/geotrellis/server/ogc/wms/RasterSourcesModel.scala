@@ -38,31 +38,6 @@ case class RasterSourcesModel(map: Map[String, RasterSource]) {
 }
 
 object RasterSourcesModel {
-  def fromURI(uri: URI): RasterSourcesModel = {
-    val list: List[URI] = uri.getScheme match {
-      case null | "file" =>
-        new File(uri)
-          .listFiles
-          .filter(f =>f.isFile && !f.getAbsolutePath.contains(".ovr"))
-          .toList
-          .map(f => new URI(s"file://${f.getAbsolutePath}"))
-
-      case "s3" =>
-        val s3Uri = new AmazonS3URI(java.net.URLDecoder.decode(uri.toString, "UTF-8"))
-        val s3Client = new AmazonS3Client(AmazonS3ClientBuilder.defaultClient())
-        s3Client
-          .listKeys(s3Uri.getBucket, s3Uri.getKey)
-          .filter(k => !k.contains(".ovr"))
-          .map { key => new URI(s"s3://${s3Uri.getBucket}/$key") }
-          .toList
-
-      case scheme =>
-        throw new IllegalArgumentException(s"Unable to read scheme $scheme at $uri")
-    }
-
-    RasterSourcesModel(list.map { uri => uri.toString.split("/").last.split("\\.").head -> Conf.http.rasterSource(uri.toString) }.toMap)
-  }
-
   def fromConf(layers: List[Conf.GeoTrellisLayer]): RasterSourcesModel = {
     val sources =
       layers.map {

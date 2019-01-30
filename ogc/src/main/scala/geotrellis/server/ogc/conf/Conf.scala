@@ -10,13 +10,7 @@ case class Conf(
   layers: List[Conf.GeoTrellisLayer])
 
 object Conf {
-  case class Http(interface: String, port: Int, backend: String) {
-    def rasterSource(uri: String): RasterSource = backend match {
-      case "GDAL" => GDALRasterSource(uri)
-      case _ => GeoTiffRasterSource(uri)
-    }
-  }
-
+  case class Http(interface: String, port: Int)
 
   sealed trait Layer
 
