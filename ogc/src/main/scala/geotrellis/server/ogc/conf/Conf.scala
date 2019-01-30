@@ -1,16 +1,22 @@
 package geotrellis.server.ogc.conf
 
-import geotrellis.contrib.vlm.RasterSource
-import geotrellis.contrib.vlm.gdal.GDALRasterSource
-import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
-import java.net.URI
+import java.net.{InetAddress, URL}
 
 case class Conf(
   http: Conf.Http,
   layers: List[Conf.GeoTrellisLayer])
 
 object Conf {
-  case class Http(interface: String, port: Int)
+
+  case class Http(interface: String, port: Int) {
+    def asUrl: URL = {
+      // TODO: move decision to attach WMS to the point where we decide which service (wms, wmts, wcs) to bind
+      if (interface == "0.0.0.0")
+        new URL("http", InetAddress.getLocalHost.getHostAddress, port, "/wms")
+      else
+        new URL("http", interface, port, "/wms")
+    }
+  }
 
   sealed trait Layer
 

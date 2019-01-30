@@ -13,9 +13,9 @@ import org.http4s.implicits._
 import cats.data.Validated
 import cats.effect._
 import com.typesafe.scalalogging.LazyLogging
-import java.net.URI
+import java.net.{URI, URL}
 
-class WmsService(model: RasterSourcesModel, authority: String, port: Int) extends Http4sDsl[IO] with LazyLogging {
+class WmsService(model: RasterSourcesModel, serviceUrl: URL) extends Http4sDsl[IO] with LazyLogging {
 
   def handleError[Result](result: Either[Throwable, Result])(implicit ee: EntityEncoder[IO, Result]): IO[Response[IO]] = result match {
     case Right(res) =>
@@ -36,7 +36,7 @@ class WmsService(model: RasterSourcesModel, authority: String, port: Int) extend
           BadRequest(msg)
 
         case Validated.Valid(wmsReq: GetCapabilities) =>
-          Ok.apply(new CapabilitiesView(model, authority, port, defaultCrs = LatLng).toXML)
+          Ok.apply(new CapabilitiesView(model, serviceUrl, defaultCrs = LatLng).toXML)
 
         case Validated.Valid(wmsReq: GetMap) =>
           val raster: Option[Raster[MultibandTile]] = model.getMap(wmsReq)

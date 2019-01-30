@@ -30,9 +30,9 @@ object WmsServer extends LazyLogging with IOApp {
   val stream: Stream[IO, ExitCode] = {
     for {
       conf       <- Stream.eval(LoadConf().as[Conf])
-      _          <- Stream.eval(IO.pure(logger.info(s"Initializing WMS service at ${conf.http.interface}:${conf.http.port}/")))
+      _          <- Stream.eval(IO.pure(logger.info(s"Initializing WMS service at ${conf.http.asUrl}")))
       model = RasterSourcesModel.fromConf(conf.layers)
-      wcsService = new WmsService(model, s"${conf.http.interface}", conf.http.port)
+      wcsService = new WmsService(model, serviceUrl = conf.http.asUrl)
       exitCode   <- BlazeServerBuilder[IO]
         .withIdleTimeout(Duration.Inf) // for test purposes only
         .enableHttp2(true)
