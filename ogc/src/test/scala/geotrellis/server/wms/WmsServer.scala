@@ -15,8 +15,6 @@ import scala.concurrent.duration._
 import java.net.URI
 
 object WmsServer extends LazyLogging with IOApp {
-  val catalogURI: URI = new URI("s3://geotrellis-test/daunnc/LC_TEST")
-
   private val corsConfig = CORSConfig(
     anyOrigin = true,
     anyMethod = false,
