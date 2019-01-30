@@ -1,6 +1,7 @@
 package geotrellis.server.ogc.wms
 
 import geotrellis.proj4.{CRS, LatLng}
+import geotrellis.raster.CellSize
 import java.net.URI
 
 import geotrellis.contrib.vlm.RasterSource
@@ -86,6 +87,30 @@ object CapabilitiesView {
   import opengis.wms._
   implicit def toRecord[T: CanWriteXML](t: T): scalaxb.DataRecord[T] = scalaxb.DataRecord(t)
 
+  def boundingBox(crs: CRS, extent: Extent, cellSize: CellSize): BoundingBox = {
+    if (crs == LatLng) {
+      BoundingBox(Map(
+        "@CRS" -> s"EPSG:${crs.epsgCode.get}",
+        "@minx" -> extent.ymin,
+        "@miny" -> extent.xmin,
+        "@maxx" -> extent.ymax,
+        "@maxy" -> extent.xmax,
+        "@resx" -> cellSize.width,
+        "@resy" -> cellSize.height
+      ))
+    } else {
+      BoundingBox(Map(
+        "@CRS" -> s"EPSG:${crs.epsgCode.get}",
+        "@minx" -> extent.xmin,
+        "@miny" -> extent.ymin,
+        "@maxx" -> extent.xmax,
+        "@maxy" -> extent.ymax,
+        "@resx" -> cellSize.width,
+        "@resy" -> cellSize.height
+      ))
+    }
+  }
+
   implicit class RasterSourceMethods(val self: RasterSource) {
     def toLayer(layerName: String, defaultCrs: CRS = LatLng): Layer = {
       Layer(
@@ -95,26 +120,14 @@ object CapabilitiesView {
         KeywordList = None,
         // extra CRS that is supported by this layer
         CRS = Set(defaultCrs, self.crs).flatMap(_.epsgCode).toList.map { code => s"EPSG:$code" },
-        // global Extent for the CRS
+        // TODO: global Extent for the CRS
         // EX_GeographicBoundingBox =   Some(self.extent.reproject(self.crs, LatLng)).map { case Extent(xmin, ymin, xmax, ymax) =>
         //  opengis.wms.EX_GeographicBoundingBox(xmin, xmax, ymin, ymax)
         // },
-        // no bounding box is required for the global layer
         BoundingBox =
           Set(self.crs, defaultCrs).toList.map { crs =>
-            val ex@Extent(xmin, ymin, xmax, ymax) = self.reproject(crs).extent
-            import geotrellis.vector.io._
-            println(s"Layer: $layerName, CRS: $crs, ${ex.toPolygon().toGeoJson()}")
-
-            BoundingBox(Map(
-              "@CRS" -> s"EPSG:${crs.epsgCode.get}",
-              "@minx" -> ymin,
-              "@miny" -> xmin,
-              "@maxx" -> ymax,
-              "@maxy" -> xmax,
-              "@resx" -> self.cellSize.width,
-              "@resy" -> self.cellSize.height
-            ))
+            val rs = self.reproject(crs)
+            boundingBox(crs, rs.extent, rs.cellSize)
           },
         Dimension = Nil,
         Attribution = None,
@@ -141,24 +154,13 @@ object CapabilitiesView {
       // All layers are avail at least at this CRS
       // All sublayers would have metadata in this CRS + its own
       CRS = crs.epsgCode.map { code => s"EPSG:$code" }.toList,
-      // Extent of all layers in LatLng
+      // Extent of all layers in default CRS
       // Should it be world extent? To simplify tests and QGIS work it's all RasterSources extent
       // EX_GeographicBoundingBox = model.extent(LatLng).map { case Extent(xmin, ymin, xmax, ymax) =>
       //   opengis.wms.EX_GeographicBoundingBox(xmin, xmax, ymin, ymax)
       // },
-      // no bounding box is required for the global layer
-      // BoundingBox = {
-      //   model.extent(LatLng).toList.map { case Extent(xmin, ymin, xmax, ymax) =>
-      //     BoundingBox(Map(
-      //       "@CRS" -> s"EPSG:${crs.epsgCode.get}",
-      //       "@minx" -> xmin,
-      //       "@miny" -> ymin,
-      //       "@maxx" -> xmax,
-      //       "@maxy" -> ymax
-      //     ))
-      //   }
-      // },
-      Dimension = Nil,
+      // TODO: bounding box for global layer
+      BoundingBox = Nil,      Dimension = Nil,
       Attribution = None,
       AuthorityURL = Nil,
       Identifier = Nil,

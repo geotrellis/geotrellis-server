@@ -2,6 +2,7 @@ package geotrellis.server.ogc.wms
 
 import geotrellis.server.ogc.wms.Constants.SUPPORTED_FORMATS
 import geotrellis.server.ogc.params._
+import geotrellis.proj4.LatLng
 
 import cats._
 import cats.implicits._
@@ -52,14 +53,18 @@ object WmsParams {
           val layers =
             params.validatedParam[Array[String]]("layers", { s => Some(s.split(",")) })
 
-          val bbox =
+          val crs = params.validatedParam("crs", { s => Try(CRS.fromName(s)).toOption })
+
+          val bbox = crs.andThen { crs =>
             params.validatedParam("bbox", {s =>
               s.split(",").map(_.toDouble) match {
                 case Array(xmin, ymin, xmax, ymax) =>
-                  Some(Extent(ymin, xmin, ymax, xmax))
+                  if (crs == LatLng) Some(Extent(ymin, xmin, ymax, xmax))
+                  else  Some(Extent(xmin, ymin, xmax, ymax))
                 case _ => None
               }
             })
+          }
 
           val width =
             params.validatedParam[Int]("width", { s => Try(s.toInt).toOption })
@@ -67,7 +72,6 @@ object WmsParams {
           val height =
             params.validatedParam[Int]("height", { s => Try(s.toInt).toOption })
 
-          val crs = params.validatedParam("crs", { s => Try(CRS.fromName(s)).toOption })
 
           val format =
             params.validatedParam("format")
