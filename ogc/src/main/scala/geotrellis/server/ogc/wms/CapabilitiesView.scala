@@ -2,7 +2,7 @@ package geotrellis.server.ogc.wms
 
 import geotrellis.proj4.{CRS, LatLng}
 import geotrellis.raster.CellSize
-import java.net.URI
+import java.net.{URI, URL}
 
 import geotrellis.contrib.vlm.RasterSource
 import geotrellis.vector.Extent
@@ -14,12 +14,10 @@ import scala.xml.{Elem, NodeSeq}
 /**
   *
   * @param model Model of layers we can report
-  * @param authority Host authority for the service
-  * @param port Port on which the service is bound
+  * @param serviceUrl URL where this service can be reached with addition of `?request=` query parameter
   * @param defaultCrs Common CRS, all layers must be available in at least this CRS
   */
-class CapabilitiesView(model: RasterSourcesModel, authority: String, port: Int, defaultCrs: CRS = LatLng) {
-  // TOOD: merge authority and port into single URI
+class CapabilitiesView(model: RasterSourcesModel, serviceUrl: URL, defaultCrs: CRS = LatLng) {
 
   def toXML: Elem = {
     import opengis.wms._
@@ -37,7 +35,7 @@ class CapabilitiesView(model: RasterSourcesModel, authority: String, port: Int, 
         Format = List("text/xml"),
         DCPType = List(DCPType(
           HTTP(Get = Get(OnlineResource(Map(
-            "@{http://www.w3.org/1999/xlink}href" -> scalaxb.DataRecord(new URI(s"http://${authority}:${port}/wms")),
+            "@{http://www.w3.org/1999/xlink}href" -> scalaxb.DataRecord(serviceUrl.toURI),
             "@{http://www.w3.org/1999/xlink}type" -> scalaxb.DataRecord(xlink.Simple: xlink.TypeType)))))
         )))
 
@@ -45,7 +43,7 @@ class CapabilitiesView(model: RasterSourcesModel, authority: String, port: Int, 
         Format = List("text/xml", "image/png", "image/geotiff", "image/jpeg"),
         DCPType = List(DCPType(
           HTTP(Get = Get(OnlineResource(Map(
-            "@{http://www.w3.org/1999/xlink}href" -> scalaxb.DataRecord(new URI(s"http://${authority}:${port}/wms")),
+            "@{http://www.w3.org/1999/xlink}href" -> scalaxb.DataRecord(serviceUrl.toURI),
             "@{http://www.w3.org/1999/xlink}type" -> scalaxb.DataRecord(xlink.Simple: xlink.TypeType)))))
         )))
 
