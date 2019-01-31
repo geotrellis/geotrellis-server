@@ -1,6 +1,7 @@
-package geotrellis.server.ogc.wms
+package geotrellis.server.ogc
 
 import geotrellis.server.ogc.conf._
+import geotrellis.server.ogc.wms._
 
 import cats.effect._
 import cats.implicits._
@@ -14,7 +15,7 @@ import com.typesafe.scalalogging.LazyLogging
 import scala.concurrent.duration._
 import java.net.URI
 
-object WmsServer extends LazyLogging with IOApp {
+object Server extends LazyLogging with IOApp {
   private val corsConfig = CORSConfig(
     anyOrigin = true,
     anyMethod = false,
