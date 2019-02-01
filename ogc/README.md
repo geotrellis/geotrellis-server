@@ -11,7 +11,7 @@ WMS Implements:
 Currently the code can be tested in development environment only, using SBT configuration for this project.
 
 ### Configuration
-Modify the [`application.conf`](ogc/main/resource/application.conf) to list the GeoTrellis layers that should be available
+Modify the [`application.conf`](main/resource/application.conf) to list the GeoTrellis layers that should be available
 
 ```
 http {
@@ -65,7 +65,7 @@ Connect to server from QGIS using URL: `http://localhost:5678/wms?`
 
 ### Docker Image
 
-This project can produces a Docker image as configured by [`docker.sbt`](ogc/docker.sbt).
+This project can produces a Docker image as configured by [`docker.sbt`](docker.sbt).
 
 To generate the image run:
 
