@@ -11,7 +11,7 @@ WMS Implements:
 Currently the code can be tested in development environment only, using SBT configuration for this project.
 
 ### Configuration
-Modify the [`application.conf`](main/resource/application.conf) to list the GeoTrellis layers that should be available
+Modify the [`application.conf`](src/main/resources/application.conf) to list the GeoTrellis layers that should be available
 
 ```
 http {
