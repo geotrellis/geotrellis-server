@@ -174,6 +174,7 @@ lazy val wcs = project
 
 lazy val ogc = project
   .enablePlugins(ScalaxbPlugin)
+  .enablePlugins(DockerPlugin)
   .settings(moduleName := "geotrellis-server-ogc")
   .settings(commonSettings)
   .settings(publishSettings)
