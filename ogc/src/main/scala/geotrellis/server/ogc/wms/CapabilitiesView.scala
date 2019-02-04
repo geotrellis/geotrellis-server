@@ -2,14 +2,14 @@ package geotrellis.server.ogc.wms
 
 import geotrellis.proj4.{CRS, LatLng}
 import geotrellis.raster.CellSize
-import java.net.{URI, URL}
-
 import geotrellis.contrib.vlm.RasterSource
 import geotrellis.server.ogc.conf._
 import geotrellis.vector.Extent
-import opengis.wms.Layer
-import scalaxb.CanWriteXML
 
+import scalaxb._
+import generated._
+
+import java.net.URL
 import scala.xml.{Elem, NodeSeq}
 
 /**
@@ -25,7 +25,7 @@ class CapabilitiesView(model: RasterSourcesModel, serviceUrl: URL, defaultCrs: C
     import CapabilitiesView._
 
     val service = Service(
-      Name = Name.fromString("WMS", opengis.wms.defaultScope),
+      Name = Name.fromString("WMS", generated.defaultScope),
       Title = "GeoTrellis WMS",
       OnlineResource = OnlineResource(),
       KeywordList = Some(KeywordList(Keyword("WMS") :: Keyword("GeoTrellis") :: Nil))
