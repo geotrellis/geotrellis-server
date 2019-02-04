@@ -1,0 +1,2 @@
+To avoid problems, use http://schemas.opengis.net/ to download XSD / WSDL. For instance: http://schemas.opengis.net/ows/.
+Usage of the GeoTools schemas version can lead to ScalaXB protocol generation issues.
