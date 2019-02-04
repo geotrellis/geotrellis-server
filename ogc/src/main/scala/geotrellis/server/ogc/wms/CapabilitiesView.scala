@@ -5,6 +5,7 @@ import geotrellis.raster.CellSize
 import java.net.{URI, URL}
 
 import geotrellis.contrib.vlm.RasterSource
+import geotrellis.server.ogc.conf.StyleModel
 import geotrellis.vector.Extent
 import opengis.wms.Layer
 import scalaxb.CanWriteXML
@@ -109,22 +110,29 @@ object CapabilitiesView {
     }
   }
 
-  implicit class RasterSourceMethods(val self: RasterSource) {
+  implicit class StyleModelMethods(val model: StyleModel) {
+    def render(): Style = {
+      Style(Name = model.name, Title = model.title)
+    }
+  }
+
+  implicit class RasterSourceMethods(val model: LayerModel) {
     def toLayer(layerName: String, defaultCrs: CRS = LatLng): Layer = {
+      val source = model.source
       Layer(
         Name = Some(layerName),
         Title = layerName,
         Abstract = Some(layerName),
         KeywordList = None,
         // extra CRS that is supported by this layer
-        CRS = Set(defaultCrs, self.crs).flatMap(_.epsgCode).toList.map { code => s"EPSG:$code" },
+        CRS = Set(defaultCrs, source.crs).flatMap(_.epsgCode).toList.map { code => s"EPSG:$code" },
         // TODO: global Extent for the CRS
         // EX_GeographicBoundingBox =   Some(self.extent.reproject(self.crs, LatLng)).map { case Extent(xmin, ymin, xmax, ymax) =>
         //  opengis.wms.EX_GeographicBoundingBox(xmin, xmax, ymin, ymax)
         // },
         BoundingBox =
-          Set(self.crs, defaultCrs).toList.map { crs =>
-            val rs = self.reproject(crs)
+          Set(source.crs, defaultCrs).toList.map { crs =>
+            val rs = source.reproject(crs)
             boundingBox(crs, rs.extent, rs.cellSize)
           },
         Dimension = Nil,
@@ -134,7 +142,7 @@ object CapabilitiesView {
         MetadataURL = Nil,
         DataURL = Nil,
         FeatureListURL = Nil,
-        Style = Nil,
+        Style = model.styles.values.map(_.render).toSeq,
         MinScaleDenominator = None,
         MaxScaleDenominator = None,
         Layer = Nil,
@@ -165,10 +173,10 @@ object CapabilitiesView {
       MetadataURL = Nil,
       DataURL = Nil,
       FeatureListURL = Nil,
-      Style = Nil,
+      Style = model.styles.values.map(_.render).toSeq,
       MinScaleDenominator = None,
       MaxScaleDenominator = None,
-      Layer = model.map.map { case (name, rs) => rs.toLayer(name, crs) }.toSeq,
+      Layer = model.map.map { case (name, model) => model.toLayer(name, crs) }.toSeq,
       attributes = Map.empty
     )
   }

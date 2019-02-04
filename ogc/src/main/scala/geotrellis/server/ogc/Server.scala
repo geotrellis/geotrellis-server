@@ -32,7 +32,8 @@ object Server extends LazyLogging with IOApp {
     for {
       conf       <- Stream.eval(LoadConf().as[Conf])
       _          <- Stream.eval(IO.pure(logger.info(s"Advertising service URL at ${conf.serviceUrl}")))
-      model = RasterSourcesModel.fromConf(conf.layers)
+      _          <- Stream.eval(IO.pure(println(conf.styles)))
+      model = RasterSourcesModel.fromConf(conf.layers, conf.styles)
       wcsService = new WmsService(model, conf.serviceUrl)
       exitCode   <- BlazeServerBuilder[IO]
         .withIdleTimeout(Duration.Inf) // for test purposes only

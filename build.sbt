@@ -22,7 +22,8 @@ lazy val commonSettings = Seq(
     "-language:experimental.macros",
     "-feature",
     "-Ypartial-unification",
-    "-Ypatmat-exhaust-depth", "100"
+    "-Ypatmat-exhaust-depth", "100",
+    "-Xmacro-settings:materialize-derivations"
   ),
   resolvers ++= Seq(
     Resolver.bintrayRepo("bkirwi", "maven"), // Required for `decline` dependency
