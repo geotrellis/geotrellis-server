@@ -35,7 +35,8 @@ object WmsParams {
 
   case class GetMap(
     version: String,
-    layers: Array[String],
+    layers: List[String],
+    styles: List[String],
     boundingBox: Extent,
     format: String,
     width: Int,
@@ -51,7 +52,10 @@ object WmsParams {
       versionParam
         .andThen { version: String =>
           val layers =
-            params.validatedParam[Array[String]]("layers", { s => Some(s.split(",")) })
+            params.validatedParam[List[String]]("layers", { s => Some(s.split(",").toList) })
+
+          val styles: ValidatedNel[ParamError, List[String]] =
+            params.validatedParam[List[String]]("styles", { s => Some(s.split(",").toList) })
 
           val crs = params.validatedParam("crs", { s => Try(CRS.fromName(s)).toOption })
 
@@ -83,8 +87,9 @@ object WmsParams {
                   }
               }
 
-          (layers, bbox, format, width, height, crs).mapN { case (layers, bbox, format, width, height, crs) =>
-            GetMap(version, layers, bbox, format = format, width = width, height = height, crs = crs)
+          (layers, styles, bbox, format, width, height, crs).mapN {
+            case (layers, styles, bbox, format, width, height, crs) =>
+              GetMap(version, layers, styles, bbox, format = format, width = width, height = height, crs = crs)
           }
         }
     }

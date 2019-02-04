@@ -29,6 +29,8 @@ class WmsService(model: RasterSourcesModel, serviceUrl: URL) extends Http4sDsl[I
 
   def routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
     case req @ GET -> Root / "wms" =>
+      println(req)
+
       WmsParams(req.multiParams) match {
         case Validated.Invalid(errors) =>
           val msg = ParamError.generateErrorMessage(errors.toList)
@@ -39,10 +41,8 @@ class WmsService(model: RasterSourcesModel, serviceUrl: URL) extends Http4sDsl[I
           Ok.apply(new CapabilitiesView(model, serviceUrl, defaultCrs = LatLng).toXML)
 
         case Validated.Valid(wmsReq: GetMap) =>
-          val raster: Option[Raster[MultibandTile]] = model.getMap(wmsReq)
-          raster match {
-            case Some(raster) =>
-              val bytes = raster.tile.band(0).renderPng.bytes
+          model.getMap(wmsReq) match {
+            case Some(bytes) =>
               Ok(bytes)
             case _ => BadRequest("Empty Tile")
           }
