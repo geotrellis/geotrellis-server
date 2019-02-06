@@ -57,7 +57,7 @@ object GDALNode extends RasterSourceUtils {
         case Some(lit) =>
           lit
         case None =>
-          new Exception(s"No tile avail for RasterExtent: ${RasterExtent(extent, cs)}")
+          throw new Exception(s"No tile avail for RasterExtent: ${RasterExtent(extent, cs)}")
       }
   }
 }
