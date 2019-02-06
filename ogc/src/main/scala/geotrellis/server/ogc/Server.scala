@@ -14,6 +14,7 @@ import org.http4s.syntax.kleisli._
 import com.typesafe.scalalogging.LazyLogging
 import scala.concurrent.duration._
 import java.net.URI
+import pureconfig._
 
 object Server extends LazyLogging with IOApp {
   private val corsConfig = CORSConfig(
@@ -29,12 +30,11 @@ object Server extends LazyLogging with IOApp {
   }
 
   val stream: Stream[IO, ExitCode] = {
+    import Conf._
     for {
       conf       <- Stream.eval(LoadConf().as[Conf])
       _          <- Stream.eval(IO.pure(logger.info(s"Advertising service URL at ${conf.serviceUrl}")))
-      _          <- Stream.eval(IO.pure(println(conf.styles)))
-      model = RasterSourcesModel.fromConf(conf.layers, conf.styles)
-      wcsService = new WmsService(model, conf.serviceUrl)
+      wcsService = new WmsService(RasterSourcesModel(conf.layers.map(_.model)), conf.serviceUrl)
       exitCode   <- BlazeServerBuilder[IO]
         .withIdleTimeout(Duration.Inf) // for test purposes only
         .enableHttp2(true)

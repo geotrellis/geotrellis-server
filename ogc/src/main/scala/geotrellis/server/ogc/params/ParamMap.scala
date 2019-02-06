@@ -12,7 +12,7 @@ class ParamMap(params: Map[String, Seq[String]]) extends LazyLogging {
   private val _params: Map[String, Seq[String]] = params.map { case (k, v) => (k.toLowerCase, v) }
 
   def getParams(field: String): Option[List[String]] =
-    _params.get(field).map(_.map(_.toLowerCase).toList)
+    _params.get(field).map(_.toList)
 
   /** Get a field that must appear only once, otherwise error */
   def validatedParam(field: String): ValidatedNel[ParamError, String] =
@@ -46,7 +46,7 @@ class ParamMap(params: Map[String, Seq[String]]) extends LazyLogging {
   /** Get a field that must appear only once, and should be one of a list of values, otherwise error */
   def validatedParam(field: String, validValues: Set[String]): ValidatedNel[ParamError, String] =
     (getParams(field) match {
-      case Some(v :: Nil) if validValues.contains(v) => Valid(v)
+      case Some(v :: Nil) if validValues.contains(v.toLowerCase) => Valid(v.toLowerCase)
       case Some(v :: Nil) => Invalid(ParamError.InvalidValue(field, v, validValues.toList))
       case Some(vs) => Invalid(ParamError.RepeatedParam(field))
       case None => Invalid(ParamError.MissingParam(field))
