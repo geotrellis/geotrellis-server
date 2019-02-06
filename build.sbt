@@ -78,8 +78,8 @@ lazy val docSettings = Seq(
   micrositeOrganizationHomepage := "https://www.azavea.com/",
   micrositeGithubOwner := "geotrellis",
   micrositeGithubRepo := "geotrellis-server",
-  micrositeBaseUrl := "/gtserver",
-  micrositeDocumentationUrl := "/gtserver/latest/api",
+  micrositeBaseUrl := "/geotrellis-server",
+  micrositeDocumentationUrl := "/geotrellis-server/docs",
   micrositeExtraMdFiles := Map(
     file("README.md") -> ExtraMdFileConfig(
       "index.md",
