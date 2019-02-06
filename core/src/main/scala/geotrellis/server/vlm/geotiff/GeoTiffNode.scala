@@ -48,13 +48,18 @@ object GeoTiffNode extends RasterSourceUtils {
 
   implicit val CogNodeExtentReification: ExtentReification[GeoTiffNode] = new ExtentReification[GeoTiffNode] {
     def kind(self: GeoTiffNode): MamlKind = MamlKind.Image
-    def extentReification(self: GeoTiffNode)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] = (extent: Extent, cs: CellSize) => {
-      getRasterSource(self.uri.toString)
-        .resample(TargetRegion(RasterExtent(extent, cs)), NearestNeighbor, AutoHigherResolution)
-        .read(extent, self.band :: Nil)
-        .map { RasterLit(_) }
-        .toIO { new Exception(s"No tile avail for RasterExtent: ${RasterExtent(extent, cs)}") }
-    }
+    def extentReification(self: GeoTiffNode)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] =
+      (extent: Extent, cs: CellSize) => IO {
+        getRasterSource(self.uri.toString)
+          .resample(TargetRegion(RasterExtent(extent, cs)), NearestNeighbor, AutoHigherResolution)
+          .read(extent, self.band :: Nil)
+          .map { RasterLit(_) }
+      } map {
+        case Some(lit) =>
+          lit
+        case None =>
+          throw new Exception(s"No tile avail for RasterExtent: ${RasterExtent(extent, cs)}")
+      }
   }
 }
 
