@@ -5,7 +5,7 @@ import geotrellis.raster.CellSize
 import java.net.{URI, URL}
 
 import geotrellis.contrib.vlm.RasterSource
-import geotrellis.server.ogc.conf.StyleModel
+import geotrellis.server.ogc.conf._
 import geotrellis.vector.Extent
 import opengis.wms.Layer
 import scalaxb.CanWriteXML
@@ -142,7 +142,7 @@ object CapabilitiesView {
         MetadataURL = Nil,
         DataURL = Nil,
         FeatureListURL = Nil,
-        Style = model.styles.values.map(_.render).toSeq,
+        Style = model.styles.map{ style => Style(style.name, style.title)},
         MinScaleDenominator = None,
         MaxScaleDenominator = None,
         Layer = Nil,
@@ -166,14 +166,15 @@ object CapabilitiesView {
       //   opengis.wms.EX_GeographicBoundingBox(xmin, xmax, ymin, ymax)
       // },
       // TODO: bounding box for global layer
-      BoundingBox = Nil,      Dimension = Nil,
+      BoundingBox = Nil,
+      Dimension = Nil,
       Attribution = None,
       AuthorityURL = Nil,
       Identifier = Nil,
       MetadataURL = Nil,
       DataURL = Nil,
       FeatureListURL = Nil,
-      Style = model.styles.values.map(_.render).toSeq,
+      Style = Nil,
       MinScaleDenominator = None,
       MaxScaleDenominator = None,
       Layer = model.map.map { case (name, model) => model.toLayer(name, crs) }.toSeq,
