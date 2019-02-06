@@ -30,20 +30,24 @@ trait RasterSourceUtils {
     for (zoom <- 0 to 64) yield scheme.levelForZoom(zoom).layout
   }.toArray
 
-  def fetchTile(uri: String, zoom: Int, x: Int, y: Int, crs: CRS = WebMercator, method: ResampleMethod = NearestNeighbor): IO[Raster[MultibandTile]] = {
-    val key = SpatialKey(x, y)
-    val ld = tmsLevels(zoom)
-    val rs = getRasterSource(uri).reproject(crs, method).tileToLayout(ld, method)
+  def fetchTile(uri: String, zoom: Int, x: Int, y: Int, crs: CRS = WebMercator, method: ResampleMethod = NearestNeighbor): IO[Raster[MultibandTile]] =
+    IO {
+      val key = SpatialKey(x, y)
+      val ld = tmsLevels(zoom)
+      val rs = getRasterSource(uri).reproject(crs, method).tileToLayout(ld, method)
 
-    rs.read(key) match {
-      case Some(t) => IO.pure(Raster(t, ld.mapTransform(key)))
-      case _ => IO.raiseError(new Exception(s"No Tile availble for the following SpatialKey: ${x}, ${y}"))
+      rs.read(key).map(Raster(_, ld.mapTransform(key)))
+    } flatMap {
+        case Some(t) =>
+          IO.pure(t)
+        case _ =>
+          IO.raiseError(new Exception(s"No Tile availble for the following SpatialKey: ${x}, ${y}"))
     }
-  }
 
   def getCRS(uri: String): IO[CRS] = IO { getRasterSource(uri).crs }
-  def getRasterExtents(uri: String): IO[NEL[RasterExtent]] = IO {
-    val rs = getRasterSource(uri)
-    NEL.fromList(rs.resolutions).getOrElse(NEL(rs.rasterExtent, Nil))
-  }
+  def getRasterExtents(uri: String): IO[NEL[RasterExtent]] =
+    IO {
+      val rs = getRasterSource(uri)
+      NEL.fromList(rs.resolutions).getOrElse(NEL(rs.rasterExtent, Nil))
+    }
 }

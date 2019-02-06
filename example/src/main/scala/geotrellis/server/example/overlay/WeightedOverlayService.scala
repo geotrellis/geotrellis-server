@@ -104,10 +104,10 @@ class WeightedOverlayService(
     case req @ POST -> Root / IdVar(key) =>
       (for {
          args <- req.as[Map[String, WeightedOverlayDefinition]]
-         _    <- req.bodyAsText.compile.toList flatMap { reqBody =>
-                   IO.pure(logger.info(s"Attempting to store expression (${reqBody.mkString("")}) at key ($key)"))
+         _    <- req.bodyAsText.compile.toList map { reqBody =>
+                   logger.info(s"Attempting to store expression (${reqBody.mkString("")}) at key ($key)")
                  }
-         _    <- IO.pure { demoStore.put(key, args.asJson) }
+         _    <- IO { demoStore.put(key, args.asJson) }
       } yield ()).attempt flatMap {
         case Right(_) =>
           // In parallel, store histogram
