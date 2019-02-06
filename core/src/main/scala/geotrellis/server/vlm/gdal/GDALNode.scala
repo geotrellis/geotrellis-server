@@ -47,12 +47,17 @@ object GDALNode extends RasterSourceUtils {
 
   implicit val gdalNodeExtentReification: ExtentReification[GDALNode] = new ExtentReification[GDALNode] {
     def kind(self: GDALNode): MamlKind = MamlKind.Image
-    def extentReification(self: GDALNode)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] = (extent: Extent, cs: CellSize) => {
-      getRasterSource(self.uri.toString)
-        .resample(TargetRegion(RasterExtent(extent, cs)), NearestNeighbor, AutoHigherResolution)
-        .read(extent, self.band :: Nil)
-        .map { RasterLit(_) }
-        .toIO { new Exception(s"No tile avail for RasterExtent: ${RasterExtent(extent, cs)}") }
-    }
+    def extentReification(self: GDALNode)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] =
+      (extent: Extent, cs: CellSize) => IO {
+        getRasterSource(self.uri.toString)
+          .resample(TargetRegion(RasterExtent(extent, cs)), NearestNeighbor, AutoHigherResolution)
+          .read(extent, self.band :: Nil)
+          .map { RasterLit(_) }
+      } map {
+        case Some(lit) =>
+          lit
+        case None =>
+          new Exception(s"No tile avail for RasterExtent: ${RasterExtent(extent, cs)}")
+      }
   }
 }

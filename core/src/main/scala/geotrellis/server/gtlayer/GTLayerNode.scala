@@ -41,62 +41,69 @@ object GTLayerNode {
   implicit val uriDecoder: Decoder[URI] = Decoder[String].emap { str => Right(URI.create(str)) }
 
   implicit val gtLayerNodeRasterExtents: HasRasterExtents[GTLayerNode] = new HasRasterExtents[GTLayerNode] {
-    def rasterExtents(self: GTLayerNode)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] = {
-      val allREs = Range(self.maxZoom, -1, -1).flatMap{ i =>
-        val md = self.allMetadata(i)
-        md.map{ meta =>
-          val ex = meta.layout.mapTransform.boundsToExtent(meta.bounds.asInstanceOf[KeyBounds[SpatialKey]].toGridBounds)
-          val cs = meta.cellSize
-          RasterExtent(ex, cs)
+    def rasterExtents(self: GTLayerNode)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] =
+      IO {
+        val allREs = Range(self.maxZoom, -1, -1).flatMap{ i =>
+          val md = self.allMetadata(i)
+          md.map{ meta =>
+            val ex = meta.layout.mapTransform.boundsToExtent(meta.bounds.asInstanceOf[KeyBounds[SpatialKey]].toGridBounds)
+            val cs = meta.cellSize
+            RasterExtent(ex, cs)
+          }
         }
+        NEL(allREs.head, allREs.tail.toList)
       }
-      IO{NEL(allREs.head, allREs.tail.toList)}
+
+      def crs(self: GTLayerNode)(implicit contextShift: ContextShift[IO]): IO[CRS] =
+        IO { self.allMetadata.head._2.get.crs }
     }
-    def crs(self: GTLayerNode)(implicit contextShift: ContextShift[IO]): IO[CRS] =
-      IO(self.allMetadata.head._2.get.crs)
-  }
 
   implicit val gtLayerNodeTmsReification: TmsReification[GTLayerNode] = new TmsReification[GTLayerNode] {
     def kind(self: GTLayerNode): MamlKind = MamlKind.Tile
     def tmsReification(self: GTLayerNode, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[Literal] =
-      (z: Int, x: Int, y: Int) => {
-        val bounds = GridBounds(x - 1, y - 1, x + 1, y + 1)
-        val values: Map[SpatialKey, Tile] = self.collectionReader
-          .query[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](LayerId(self.layer, z))
-          .where(Intersects(bounds))
-          .result
-          .toMap
-        def p2t(p: (Int, Int)): Tile = values.get(SpatialKey(p._1+x, p._2+y)).get
-        for {
-          nbhd <- IO.pure(
-            (p2t((-1, -1)), p2t((0, -1)), p2t((1, -1)), p2t((-1, 0)), p2t((1, 0)), p2t((-1, 1)), p2t((0, 1)), p2t((1, 1))) )
-          neighboring <- IO.pure(NeighboringTiles(nbhd._1, nbhd._2, nbhd._3, nbhd._4, nbhd._5, nbhd._6, nbhd._7, nbhd._8))
-          tile <- IO.pure(TileWithNeighbors(values.get(SpatialKey(x, y)).get, Some(neighboring)).withBuffer(buffer))
-          ex <- IO.pure(self.allMetadata(z).get.layout.mapTransform(SpatialKey(x, y)))
-        } yield RasterLit(Raster(tile, ex))
-      }
+      (z: Int, x: Int, y: Int) =>
+        IO {
+          val bounds = GridBounds(x - 1, y - 1, x + 1, y + 1)
+          val values: Map[SpatialKey, Tile] = self.collectionReader
+            .query[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](LayerId(self.layer, z))
+            .where(Intersects(bounds))
+            .result
+            .toMap
+          def p2t(p: (Int, Int)): Tile = values.get(SpatialKey(p._1+x, p._2+y)).get
+          for {
+            nbhd <- IO {
+                      (p2t((-1, -1)), p2t((0, -1)), p2t((1, -1)), p2t((-1, 0)), p2t((1, 0)), p2t((-1, 1)), p2t((0, 1)), p2t((1, 1)))
+                    }
+            neighboring <- IO.pure(NeighboringTiles(nbhd._1, nbhd._2, nbhd._3, nbhd._4, nbhd._5, nbhd._6, nbhd._7, nbhd._8))
+            tile <- IO { TileWithNeighbors(values.get(SpatialKey(x, y)).get, Some(neighboring)).withBuffer(buffer) }
+            ex <- IO { self.allMetadata(z).get.layout.mapTransform(SpatialKey(x, y)) }
+          } yield RasterLit(Raster(tile, ex))
+        }
   }
 
   implicit val gtLayerNodeExtentReification: ExtentReification[GTLayerNode] = new ExtentReification[GTLayerNode] {
     def kind(self: GTLayerNode): MamlKind = MamlKind.Tile
-    def extentReification(self: GTLayerNode)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] = { (ex: Extent, cs: CellSize) =>
-      def csToDiag(cell: CellSize) = math.sqrt(cell.width * cell.width + cell.height * cell.height)
-      val reqDiag = csToDiag(cs)
-      val z = self.allMetadata.mapValues{ md => csToDiag(md.get.cellSize) - reqDiag }
-                              .filter(_._2 <= 0)
-                              .map(_._1)
-                              .toList
-                              .sortBy{i => -i}
-                              .headOption
-                              .getOrElse(self.maxZoom)
-      val tile = self.collectionReader
-        .query[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](LayerId(self.layer, z))
-        .where(Intersects(ex))
-        .result
-        .stitch
-        .crop(ex)
-      IO{RasterLit(Raster(tile, ex))}
-    }
+    def extentReification(self: GTLayerNode)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] =
+      { (ex: Extent, cs: CellSize) =>
+        IO {
+          def csToDiag(cell: CellSize) = math.sqrt(cell.width * cell.width + cell.height * cell.height)
+          val reqDiag = csToDiag(cs)
+          val z = self.allMetadata.mapValues{ md => csToDiag(md.get.cellSize) - reqDiag }
+                                  .filter(_._2 <= 0)
+                                  .map(_._1)
+                                  .toList
+                                  .sortBy{i => -i}
+                                  .headOption
+                                  .getOrElse(self.maxZoom)
+          val tile = self.collectionReader
+            .query[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](LayerId(self.layer, z))
+            .where(Intersects(ex))
+            .result
+            .stitch
+            .crop(ex)
+          RasterLit(Raster(tile, ex))
+        }
+      }
   }
 
 }
