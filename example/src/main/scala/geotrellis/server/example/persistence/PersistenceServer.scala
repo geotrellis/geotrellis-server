@@ -37,7 +37,7 @@ object PersistenceServer extends LazyLogging with IOApp {
   val stream: Stream[IO, ExitCode] = {
     for {
       conf       <- Stream.eval(LoadConf().as[ExampleConf])
-      _          <- Stream.eval(IO.pure(logger.info(s"Initializing persistence demo at ${conf.http.interface}:${conf.http.port}/")))
+      _          <- Stream.eval(IO { logger.info(s"Initializing persistence demo at ${conf.http.interface}:${conf.http.port}/") })
       // This hashmap has a [MamlStore] implementation
       mamlStore = new ConcurrentLinkedHashMap.Builder[UUID, Expression]()
                     .maximumWeightedCapacity(1000)

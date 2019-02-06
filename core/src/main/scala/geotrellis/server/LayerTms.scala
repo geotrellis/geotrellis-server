@@ -37,15 +37,15 @@ object LayerTms extends LazyLogging {
   ): (Int, Int, Int) => IO[Interpreted[MultibandTile]] = (z: Int, x: Int, y: Int) => {
     for {
       expr             <- getExpression
-      _                <- IO.pure(logger.info(s"Retrieved MAML AST at TMS ($z, $x, $y): ${expr.toString}"))
+      _                <- IO { logger.info(s"Retrieved MAML AST at TMS ($z, $x, $y): ${expr.toString}") }
       paramMap         <- getParams
-      _                <- IO.pure(logger.info(s"Retrieved parameters for TMS ($z, $x, $y): ${paramMap.toString}"))
-      vars             <- IO.pure { Vars.varsWithBuffer(expr) }
+      _                <- IO { logger.info(s"Retrieved parameters for TMS ($z, $x, $y): ${paramMap.toString}") }
+      vars             <- IO { Vars.varsWithBuffer(expr) }
       params           <- vars.toList.parTraverse { case (varName, (_, buffer)) =>
                             val eval = paramMap(varName).tmsReification(buffer)
                             eval(z, x, y).map(varName -> _)
                           } map { _.toMap }
-      reified          <- IO.pure { Expression.bindParams(expr, params) }
+      reified          <- IO { Expression.bindParams(expr, params) }
     } yield reified.andThen(interpreter(_)).andThen(_.as[MultibandTile])
   }
 

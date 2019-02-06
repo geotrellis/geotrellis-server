@@ -36,7 +36,7 @@ object WeightedOverlayServer extends LazyLogging with IOApp {
   def stream: Stream[IO, ExitCode] = {
     for {
       conf       <- Stream.eval(LoadConf().as[ExampleConf])
-      _          <- Stream.eval(IO.pure(logger.info(s"Initializing Weighted Overlay at ${conf.http.interface}:${conf.http.port}/")))
+      _          <- Stream.eval(IO { logger.info(s"Initializing Weighted Overlay at ${conf.http.interface}:${conf.http.port}/") })
       overlayService = new WeightedOverlayService()
       exitCode   <- BlazeServerBuilder[IO]
         .enableHttp2(true)

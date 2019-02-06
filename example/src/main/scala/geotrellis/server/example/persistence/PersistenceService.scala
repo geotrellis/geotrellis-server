@@ -50,7 +50,7 @@ class PersistenceService[Store, Param](
     case req @ POST -> Root / IdVar(key) =>
       (for {
          expr <- req.as[Expression]
-         _    <- IO.pure(logger.info(s"Attempting to store expression (${req.bodyAsText}) at key ($key)"))
+         _    <- IO { logger.info(s"Attempting to store expression (${req.bodyAsText}) at key ($key)") }
          res  <- store.putMaml(key, expr)
        } yield res).attempt flatMap {
         case Right(created) =>

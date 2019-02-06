@@ -15,8 +15,8 @@ object LoadConf {
       IO {
         loadConfig[Conf](ConfigFactory.load(configFile))
       }.flatMap {
-        case Left(e) => IO.raiseError[Conf](new ConfigReaderException[Conf](e))
         case Right(config) => IO.pure(config)
+        case Left(e) => IO.raiseError[Conf](new ConfigReaderException[Conf](e))
       }
   }
 }
