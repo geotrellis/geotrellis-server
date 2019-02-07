@@ -15,7 +15,7 @@ responsive layers whose transformations can be described in MAML
 ### Including Geotrellis Server
 
 Current version:
- - 0.0.9
+ - 0.1.10
 
 Add the geotrellis-server dependency by declaring it within your
 project's `build.sbt`:
