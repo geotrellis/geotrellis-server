@@ -68,13 +68,13 @@ case class RasterSourcesModel(
       getLayerColorMap(layerModel, wmsReq.styles.headOption) match {
         case Some(colorMap) =>
           wmsReq.format match {
-            case "png" => raster.tile.band(bandIndex = 0).renderPng(colorMap).bytes
-            case "jpeg" => raster.tile.band(bandIndex = 0).renderJpg(colorMap).bytes
+            case Formats.Png => raster.tile.band(bandIndex = 0).renderPng(colorMap).bytes
+            case Formats.Jpg => raster.tile.band(bandIndex = 0).renderJpg(colorMap).bytes
           }
         case None =>
           wmsReq.format match {
-            case "png" => raster.tile.band(bandIndex = 0).renderPng.bytes
-            case "jpeg" => raster.tile.band(bandIndex = 0).renderJpg.bytes
+            case Formats.Png => raster.tile.band(bandIndex = 0).renderPng.bytes
+            case Formats.Jpg => raster.tile.band(bandIndex = 0).renderJpg.bytes
           }
       }
     }
