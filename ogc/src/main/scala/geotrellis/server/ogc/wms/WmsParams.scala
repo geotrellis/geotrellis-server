@@ -38,7 +38,7 @@ object WmsParams {
     layers: List[String],
     styles: List[String],
     boundingBox: Extent,
-    format: String,
+    format: Formats.Value,
     width: Int,
     height: Int,
     crs: CRS
