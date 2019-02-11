@@ -2,13 +2,14 @@ package geotrellis.server.ogc.wms
 
 import geotrellis.proj4.{CRS, LatLng}
 import geotrellis.raster.CellSize
-import java.net.{URI, URL}
-
 import geotrellis.contrib.vlm.RasterSource
 import geotrellis.server.ogc.conf._
 import geotrellis.vector.Extent
-import opengis.wms.Layer
-import scalaxb.CanWriteXML
+
+import opengis._
+import scalaxb._
+
+import java.net.URL
 
 import scala.xml.{Elem, NodeSeq}
 
@@ -25,7 +26,7 @@ class CapabilitiesView(model: RasterSourcesModel, serviceUrl: URL, defaultCrs: C
     import CapabilitiesView._
 
     val service = Service(
-      Name = Name.fromString("WMS", opengis.wms.defaultScope),
+      Name = Name.fromString("WMS", wmsScope),
       Title = "GeoTrellis WMS",
       OnlineResource = OnlineResource(),
       KeywordList = Some(KeywordList(Keyword("WMS") :: Keyword("GeoTrellis") :: Nil))
@@ -55,26 +56,11 @@ class CapabilitiesView(model: RasterSourcesModel, serviceUrl: URL, defaultCrs: C
       )
     }
 
-    /**
-      * Default scope generates an incorrect XML file (in the incorrect scope, prefixes all XML elements with `wms:` prefix.
-      *
-      * val defaultScope = scalaxb.toScope(Some("ogc") -> "http://www.opengis.net/ogc",
-      * Some("wms") -> "http://www.opengis.net/wms",
-      * Some("xlink") -> "http://www.w3.org/1999/xlink",
-      * Some("xs") -> "http://www.w3.org/2001/XMLSchema",
-      * Some("xsi") -> "http://www.w3.org/2001/XMLSchema-instance")
-      */
-
     val ret: NodeSeq = scalaxb.toXML[opengis.wms.WMS_Capabilities](
       obj = WMS_Capabilities(service, capability, Map("@version" -> scalaxb.DataRecord("1.3.0"))),
       namespace = None,
       elementLabel = Some("WMS_Capabilities"),
-      scope = scalaxb.toScope(
-        Some("ogc") -> "http://www.opengis.net/ogc",
-        Some("xlink") -> "http://www.w3.org/1999/xlink",
-        Some("xs") -> "http://www.w3.org/2001/XMLSchema",
-        Some("xsi") -> "http://www.w3.org/2001/XMLSchema-instance"
-      ),
+      scope = constrainedWMSScope,
       typeAttribute = false
     )
 

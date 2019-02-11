@@ -180,12 +180,19 @@ lazy val ogc = project
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(
-    scalaxbDispatchVersion in (Compile, scalaxb) := dispatchVer,
-    scalaxbPackageName in (Compile, scalaxb)     := "generated",
+    scalaxbDispatchVersion in (Compile, scalaxb)     := dispatchVer,
+    scalaxbPackageName in (Compile, scalaxb)         := "generated",
+    scalaxbProtocolPackageName in scalaxb in Compile := Some("opengis"),
     scalaxbPackageNames in scalaxb in Compile := Map(
-      uri("http://www.w3.org/1999/xlink") -> "xlink",
-      uri("http://www.opengis.net/wms") -> "opengis.wms",
-      uri("http://www.opengis.net/ogc") -> "opengis.ogc")
+      uri("http://www.w3.org/1999/xlink")           -> "xlink",
+      uri("http://www.opengis.net/wms")             -> "opengis.wms",
+      uri("http://www.opengis.net/ogc")             -> "opengis.ogc",
+      uri("http://www.opengis.net/wmts/1.0")        -> "opengis.wmts",
+      uri("http://www.opengis.net/ows/1.1")         -> "opengis.ows",
+      uri("http://www.opengis.net/gml")             -> "opengis.gml",
+      uri("http://www.w3.org/2001/SMIL20/")         -> "opengis.gml.smil",
+      uri("http://www.w3.org/2001/SMIL20/Language") -> "opengis.gml.smil"
+    )
   )
   .settings(
     assemblyJarName in assembly := "geotrellis-server-ogc.jar",
