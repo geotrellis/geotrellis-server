@@ -1,16 +1,17 @@
 package geotrellis.server.ogc.wms
 
+import geotrellis.server.ogc.wms.source._
+import geotrellis.server.ogc.conf._
+
 import geotrellis.proj4.{CRS, LatLng}
 import geotrellis.raster.CellSize
 import geotrellis.contrib.vlm.RasterSource
-import geotrellis.server.ogc.conf._
 import geotrellis.vector.Extent
-
+import opengis.wms._
 import opengis._
 import scalaxb._
 
 import java.net.URL
-
 import scala.xml.{Elem, NodeSeq}
 
 /**
@@ -22,7 +23,6 @@ import scala.xml.{Elem, NodeSeq}
 class CapabilitiesView(model: RasterSourcesModel, serviceUrl: URL, defaultCrs: CRS = LatLng) {
 
   def toXML: Elem = {
-    import opengis.wms._
     import CapabilitiesView._
 
     val service = Service(
@@ -69,7 +69,6 @@ class CapabilitiesView(model: RasterSourcesModel, serviceUrl: URL, defaultCrs: C
 }
 
 object CapabilitiesView {
-  import opengis.wms._
   implicit def toRecord[T: CanWriteXML](t: T): scalaxb.DataRecord[T] = scalaxb.DataRecord(t)
 
   def boundingBox(crs: CRS, extent: Extent, cellSize: CellSize): BoundingBox = {
@@ -102,24 +101,24 @@ object CapabilitiesView {
     }
   }
 
-  implicit class RasterSourceMethods(val model: LayerModel) {
+  implicit class RasterSourceMethods(val model: WmsSource) {
     def toLayer(layerName: String, defaultCrs: CRS = LatLng): Layer = {
-      val source = model.source
       Layer(
         Name = Some(layerName),
         Title = layerName,
         Abstract = Some(layerName),
         KeywordList = None,
         // extra CRS that is supported by this layer
-        CRS = Set(defaultCrs, source.crs).flatMap(_.epsgCode).toList.map { code => s"EPSG:$code" },
+        CRS = Set(defaultCrs, model.crs).flatMap(_.epsgCode).toList.map { code => s"EPSG:$code" },
         // TODO: global Extent for the CRS
         // EX_GeographicBoundingBox =   Some(self.extent.reproject(self.crs, LatLng)).map { case Extent(xmin, ymin, xmax, ymax) =>
         //  opengis.wms.EX_GeographicBoundingBox(xmin, xmax, ymin, ymax)
         // },
         BoundingBox =
-          Set(source.crs, defaultCrs).toList.map { crs =>
-            val rs = source.reproject(crs)
-            boundingBox(crs, rs.extent, rs.cellSize)
+          Set(model.crs, defaultCrs).toList.map { crs =>
+            model.bboxIn(crs)
+            //val rs = source.reproject(crs)
+            //boundingBox(crs, rs.extent, rs.cellSize)
           },
         Dimension = Nil,
         Attribution = None,
@@ -163,7 +162,7 @@ object CapabilitiesView {
       Style = Nil,
       MinScaleDenominator = None,
       MaxScaleDenominator = None,
-      Layer = model.map.map { case (name, model) => model.toLayer(name, crs) }.toSeq,
+      Layer = model.sourceLookup.map { case (name, model) => model.toLayer(name, crs) }.toSeq,
       attributes = Map.empty
     )
   }
