@@ -1,21 +1,34 @@
 package geotrellis.server.ogc.wms
 
-import geotrellis.spark._
-import geotrellis.proj4.{LatLng, WebMercator}
-import geotrellis.raster.{MultibandTile, Raster}
+import geotrellis.server.LayerExtent
+import geotrellis.server.ogc.wms.layer._
 import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wms.WmsParams.{GetCapabilities, GetMap}
+import geotrellis.server.ExtentReification.ops._
+
+import geotrellis.spark._
+import geotrellis.proj4.{LatLng, WebMercator}
+import geotrellis.raster.{MultibandTile, Raster, RasterExtent}
+import com.azavea.maml.error._
+import com.azavea.maml.eval._
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.io._
+import org.http4s.circe._
 import org.http4s.scalaxml._
 import org.http4s.implicits._
 import cats.data.Validated
+import cats.data.Validated._
 import cats.effect._
+import _root_.io.circe._
+import _root_.io.circe.syntax._
 import com.typesafe.scalalogging.LazyLogging
+
 import java.net.{URI, URL}
 
-class WmsService(model: RasterSourcesModel, serviceUrl: URL) extends Http4sDsl[IO] with LazyLogging {
+class WmsService(model: RasterSourcesModel, serviceUrl: URL)(implicit contextShift: ContextShift[IO])
+  extends Http4sDsl[IO]
+     with LazyLogging {
 
   def handleError[Result](result: Either[Throwable, Result])(implicit ee: EntityEncoder[IO, Result]): IO[Response[IO]] = result match {
     case Right(res) =>
@@ -41,11 +54,26 @@ class WmsService(model: RasterSourcesModel, serviceUrl: URL) extends Http4sDsl[I
           Ok.apply(new CapabilitiesView(model, serviceUrl, defaultCrs = LatLng).toXML)
 
         case Validated.Valid(wmsReq: GetMap) =>
-          model.getMap(wmsReq) match {
-            case Some(bytes) =>
-              Ok(bytes)
-            case _ => BadRequest("Empty Tile")
-          }
+          val re = RasterExtent(wmsReq.boundingBox, wmsReq.width, wmsReq.height)
+          model.getLayer(wmsReq).map { layer =>
+            val eval = layer match {
+              case sl@SimpleWmsLayer(_, _, _, _, _) =>
+                LayerExtent.identity(sl)
+              case sl@MapAlgebraWmsLayer(_, _, _, parameters, expr, _) =>
+                LayerExtent(IO.pure(expr), IO.pure(parameters), BufferingInterpreter.DEFAULT)
+            }
+            eval(re.extent, re.cellSize).attempt flatMap {
+              case Right(Valid(mbtile)) => // success
+                val rendered = Render(mbtile, layer.style, wmsReq.format)
+                Ok(rendered)
+              case Right(Invalid(errs)) => // maml-specific errors
+                logger.debug(errs.toList.toString)
+                BadRequest(errs.asJson)
+              case Left(err) =>            // exceptions
+                logger.debug(err.toString, err)
+                InternalServerError(err.toString)
+            }
+          }.getOrElse(BadRequest("No such layer"))
       }
 
     case req =>

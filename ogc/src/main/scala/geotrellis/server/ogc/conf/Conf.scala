@@ -5,7 +5,7 @@ import java.net.{InetAddress, URL}
 case class Conf(
   http: Conf.Http,
   service: Conf.Service,
-  layers: List[LayerConf]
+  layers: List[SourceConf]
 ) {
     def serviceUrl: URL = {
       // TODO: move decision to attach WMS to the point where we decide which service (wms, wmts, wcs) to bind
