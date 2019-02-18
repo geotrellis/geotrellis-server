@@ -109,13 +109,13 @@ object CapabilitiesView {
         Abstract = Some(layerName),
         KeywordList = None,
         // extra CRS that is supported by this layer
-        CRS = Set(defaultCrs, model.crs).flatMap(_.epsgCode).toList.map { code => s"EPSG:$code" },
+        CRS = Set(defaultCrs, model.nativeCrs).flatMap(_.epsgCode).toList.map { code => s"EPSG:$code" },
         // TODO: global Extent for the CRS
         // EX_GeographicBoundingBox =   Some(self.extent.reproject(self.crs, LatLng)).map { case Extent(xmin, ymin, xmax, ymax) =>
         //  opengis.wms.EX_GeographicBoundingBox(xmin, xmax, ymin, ymax)
         // },
         BoundingBox =
-          Set(model.crs, defaultCrs).toList.map { crs =>
+          Set(defaultCrs, model.nativeCrs).toList.map { crs =>
             model.bboxIn(crs)
             //val rs = source.reproject(crs)
             //boundingBox(crs, rs.extent, rs.cellSize)

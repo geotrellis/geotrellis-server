@@ -23,5 +23,7 @@ case class SimpleWmsSource(
     val reprojected = source.reproject(crs)
     CapabilitiesView.boundingBox(crs, reprojected.extent, reprojected.cellSize)
   }
+
+  def nativeCrs = source.crs
 }
 

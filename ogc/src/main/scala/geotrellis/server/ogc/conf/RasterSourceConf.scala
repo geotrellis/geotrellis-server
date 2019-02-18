@@ -13,12 +13,12 @@ sealed trait RasterSourceConf {
 
 case class GeoTrellis(
   catalogUri: String,
-  source: String,
+  layer: String,
   zoom: Int,
   bandCount: Int
 ) extends RasterSourceConf {
   def toRasterSource =
-    GeotrellisRasterSource(catalogUri, LayerId(source, zoom), bandCount)
+    GeotrellisRasterSource(catalogUri, LayerId(layer, zoom), bandCount)
 }
 
 case class GeoTiff(
