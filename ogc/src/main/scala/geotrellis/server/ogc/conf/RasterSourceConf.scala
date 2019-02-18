@@ -7,6 +7,7 @@ import geotrellis.contrib.vlm.avro.GeotrellisRasterSource
 import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
 import geotrellis.spark.LayerId
 
+// The sumtype responsible for providing a gt-contrib RasterSource from configuration
 sealed trait RasterSourceConf {
   def toRasterSource: RasterSource
 }

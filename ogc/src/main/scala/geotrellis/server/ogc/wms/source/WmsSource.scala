@@ -13,6 +13,11 @@ import cats.effect._
 import cats.implicits._
 import opengis.wms._
 
+/** This trait and its implementing types are jointly sufficienty, along with a WMS 'get map'
+ *  request to produce a visual layer (represented more fully by the [[WmsLayer]] hierarchy.
+ *  This type represents *merely* that there is some backing store from which valid WMS layers
+ *  can be sourced.
+ */
 trait WmsSource {
   def name: String
   def styles: List[StyleModel]
