@@ -31,6 +31,9 @@ case class RasterSourcesModel(
 
   val sourceLookup: Map[String, WmsSource] = sources.map({layer => layer.name -> layer}).toMap
 
+  /** Take a specific request for a map and combine it with the relevant [[WmsSource]]
+   *  to produce a [[WmsLayer]]
+   */
   def getLayer(wmsReq: GetMap): Option[WmsLayer] = {
     for {
       sourceName  <- wmsReq.layers.headOption

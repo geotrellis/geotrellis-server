@@ -9,6 +9,7 @@ import cats.implicits._
 
 import java.net.{InetAddress, URL}
 
+// This sumtype corresponds to the in-config representation of a WMS layer
 sealed trait LayerSourceConf {
   def name: String
   def styles: List[StyleConf]
