@@ -3,12 +3,15 @@ package geotrellis.server.ogc
 import com.amazonaws.services.s3._
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
+import geotrellis.proj4.{LatLng, CRS}
+import geotrellis.vector.Extent
 import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
 import pureconfig._
 
 import scala.io.Source
+import scala.util.Try
 import java.net.URI
 import java.io.{BufferedReader, InputStreamReader}
 import java.util.stream.Collectors
@@ -22,6 +25,14 @@ package object conf {
           success
         case Left(err) =>
           throw err
+      }
+    }
+
+  implicit val crsReader: ConfigReader[CRS] =
+    ConfigReader[Int].map { epsgCode =>
+      Try(CRS.fromEpsgCode(epsgCode)).toOption match {
+        case Some(crs) => crs
+        case None => throw new Exception(s"Invalid EPSG code: ${epsgCode}")
       }
     }
 

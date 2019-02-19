@@ -1,7 +1,8 @@
 package geotrellis.server.ogc.wmts
 
-import geotrellis.proj4.{CRS, LatLng}
+import geotrellis.proj4.{CRS, WebMercator, LatLng}
 import geotrellis.contrib.vlm.RasterSource
+import geotrellis.server.ogc._
 import geotrellis.vector.Extent
 
 import opengis._
@@ -13,11 +14,17 @@ import scala.xml.{Elem, NodeSeq}
 
 /**
   *
-  * @param model Model of layers we can report
+  * @param rasterSourcesModel Model of layers we can report
+  * @param tileMatrixModel Model of tile matrix set
   * @param serviceUrl URL where this service can be reached with addition of `?request=` query parameter
   * @param defaultCrs Common CRS, all layers must be available in at least this CRS
   */
-class CapabilitiesView(model: RasterSourcesModel, serviceUrl: URL, defaultCrs: CRS = LatLng) {
+class CapabilitiesView(
+  rasterSourcesModel: RasterSourcesModel,
+  tileMatrixModel: TileMatrixModel,
+  serviceUrl: URL,
+  defaultCrs: CRS = WebMercator
+) {
 
   def toXML: Elem = {
     import opengis.ows._
@@ -107,12 +114,13 @@ class CapabilitiesView(model: RasterSourcesModel, serviceUrl: URL, defaultCrs: C
       )
     }
 
-    val (layers, tileMatrixSet) = modelAsLayers(model, defaultCrs)
+    val layers = modelAsLayers(rasterSourcesModel)
+    val tileMatrixSets = tileMatrixModel.matrices.map(_.toXml)
 
     // that's how layers metadata is generated
     val contents = ContentsType(
       DatasetDescriptionSummary = layers,
-      TileMatrixSet = tileMatrixSet :: Nil
+      TileMatrixSet = tileMatrixSets
     )
 
     val ret: NodeSeq = scalaxb.toXML[opengis.wmts.Capabilities](
@@ -144,59 +152,39 @@ object CapabilitiesView {
       UpperCorner = Seq(extent.xmax, extent.ymax)
     )
 
-  implicit class RasterSourceMethods(val self: RasterSource) {
-    def toLayer(layerName: String, defaultCrs: CRS = LatLng): LayerType =
+  implicit class OgcSourceMethods(val self: OgcSource) {
+    def toLayerType(layerName: String, defaultCrs: CRS = WebMercator): LayerType =
       LayerType(
         Title = LanguageStringType(layerName) :: Nil,
         Abstract = Nil,
         Keywords= Nil,
-        WGS84BoundingBox = Set(self.crs, defaultCrs).toList.map { crs =>
-          val rs = self.reproject(crs)
-          boundingBox(rs.extent)
+        WGS84BoundingBox = Set(self.nativeCrs.head, defaultCrs).toList.map { crs =>
+          boundingBox(self.nativeExtent.reproject(self.nativeCrs.head, crs))
         },
         Identifier = CodeType(layerName),
         BoundingBox = Nil,
         Metadata = Nil,
         DatasetDescriptionSummary = Nil,
-        Style = Nil,
+        Style = List(Style(
+          Title=List(LanguageStringType("Style")),
+          Abstract=List(LanguageStringType("AbstractStyle")),
+          Identifier=CodeType("StyleID"),
+          Keywords=Nil,
+          LegendURL=Nil
+        )),
         Format = List("image/png", "image/jpeg"),
         InfoFormat = List("text/xml"),
         Dimension = Nil,
-        TileMatrixSetLink = List(TileMatrixSetLink(layerName)),
+        // NOTE: This "ID" MUST correspond to the TileMatrixSet ID for the layers to show up in QGIS
+        TileMatrixSetLink = List(TileMatrixSetLink("ID")),
         ResourceURL = Nil
       )
-
-    // to make it work we need to know information about layout
-    def toTileMatrix(layerName: String, defaultCRS: CRS = LatLng): TileMatrix = {
-      TileMatrix(
-        Title = LanguageStringType(layerName) :: Nil,
-        Abstract = LanguageStringType(layerName) :: Nil,
-        Keywords = Nil,
-        Identifier = CodeType(layerName),
-        ScaleDenominator = 1e-6,
-        TopLeftCorner = List(self.extent.xmin, self.extent.ymax),
-        TileWidth = 256,
-        TileHeight = 256,
-        MatrixWidth = 10000,
-        MatrixHeight = 10000
-      )
-    }
   }
 
-  def modelAsLayers(model: RasterSourcesModel, crs: CRS = LatLng): (List[scalaxb.DataRecord[LayerType]], TileMatrixSet) = {
-    val layers = model.map.map { case (key, value) => scalaxb.DataRecord(Some("wms"), Some("Layer"), value.toLayer(key)) }.toList
-    val matrixList = model.map.map { case (key, value) => value.toTileMatrix(key) }.toList
-
-    layers -> TileMatrixSet(
-      Title = LanguageStringType("GeoTrellis WMTS Layer") :: Nil,
-      Abstract = LanguageStringType("GeoTrellis WMTS Layer") :: Nil,
-      Keywords = Nil,
-      Identifier = CodeType("GeoTrellis WMTS Layer"),
-      // TODO: bounding box for global layer
-      BoundingBox = None,
-      SupportedCRS = new URI(s"urn:ogc:def:crs:OGC:1.3:${crs.epsgCode.map { code => s"EPSG:$code" }.getOrElse("CRS84")}"),
-      WellKnownScaleSet = None,
-      TileMatrix = matrixList
-    )
+  def modelAsLayers(model: RasterSourcesModel): List[scalaxb.DataRecord[LayerType]] = {
+    model
+      .sourceLookup
+      .map { case (key, value) => scalaxb.DataRecord(Some("wms"), Some("Layer"), value.toLayerType(key)) }
+      .toList
   }
 }

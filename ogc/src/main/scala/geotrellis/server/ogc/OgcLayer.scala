@@ -7,6 +7,9 @@ import geotrellis.server.ExtentReification.ops._
 import geotrellis.contrib.vlm._
 import geotrellis.raster._
 import geotrellis.raster.reproject.ReprojectRasterExtent
+import geotrellis.raster.resample.NearestNeighbor
+import geotrellis.spark.SpatialKey
+import geotrellis.spark.tiling.{LayoutDefinition}
 import geotrellis.vector.Extent
 import geotrellis.proj4.CRS
 import com.azavea.maml.ast._
@@ -25,7 +28,7 @@ trait OgcLayer {
   def style: Option[StyleModel]
 }
 
-case class SimpleLayer(
+case class SimpleWmsLayer(
   name: String,
   title: String,
   crs: CRS,
@@ -33,10 +36,9 @@ case class SimpleLayer(
   style: Option[StyleModel]
 ) extends OgcLayer
 
-object SimpleLayer {
-  implicit val mapAlgebraLayerReification = new ExtentReification[SimpleLayer] {
-    def kind(self: SimpleLayer): MamlKind = MamlKind.Image
-    def extentReification(self: SimpleLayer)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
+object SimpleWmsLayer {
+  implicit val simpleWmsReification = new ExtentReification[SimpleWmsLayer] {
+    def extentReification(self: SimpleWmsLayer)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
       (extent: Extent, cs: CellSize) =>  IO {
         val raster: Raster[MultibandTile] = self.source
           .reprojectToGrid(self.crs, RasterExtent(extent, cs))
@@ -47,8 +49,8 @@ object SimpleLayer {
       }
   }
 
-  implicit val cogNodeRasterExtents: HasRasterExtents[SimpleLayer] = new HasRasterExtents[SimpleLayer] {
-    def rasterExtents(self: SimpleLayer)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] =
+  implicit val simpleWmsRasterExtents: HasRasterExtents[SimpleWmsLayer] = new HasRasterExtents[SimpleWmsLayer] {
+    def rasterExtents(self: SimpleWmsLayer)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] =
       IO {
         val resolutions = self.source.resolutions.map { ge =>
           ReprojectRasterExtent(ge.toRasterExtent, self.source.crs, self.crs)
@@ -59,11 +61,69 @@ object SimpleLayer {
   }
 }
 
-case class MapAlgebraLayer(
+case class MapAlgebraWmsLayer(
   name: String,
   title: String,
   crs: CRS,
-  parameters: Map[String, SimpleLayer],
+  parameters: Map[String, SimpleWmsLayer],
+  algebra: Expression,
+  style: Option[StyleModel]
+) extends OgcLayer
+
+case class SimpleWmtsLayer(
+  name: String,
+  title: String,
+  crs: CRS,
+  layout: LayoutDefinition,
+  source: RasterSource,
+  style: Option[StyleModel]
+) extends OgcLayer
+
+object SimpleWmtsLayer {
+  implicit val simpleWmtsExtentReification = new ExtentReification[SimpleWmtsLayer] {
+    def extentReification(self: SimpleWmtsLayer)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
+      (extent: Extent, cs: CellSize) =>  IO {
+        val raster: Raster[MultibandTile] = self.source
+          .reprojectToGrid(self.crs, RasterExtent(extent, cs))
+          .read(extent)
+          .get
+
+        ProjectedRaster(raster, self.crs)
+      }
+  }
+
+  implicit val simpleWmtsReification = new TmsReification[SimpleWmtsLayer] {
+    def tmsReification(self: SimpleWmtsLayer, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[ProjectedRaster[MultibandTile]] =
+      (z: Int, x: Int, y: Int) => IO {
+        // NOTE: z comes from layout
+        val tile = self.source
+          .reproject(self.crs, NearestNeighbor)  // TODO: Check if necessary
+          .tileToLayout(self.layout, NearestNeighbor)
+          .read(SpatialKey(x, y))
+          .get
+        val extent = self.layout.mapTransform(SpatialKey(x, y))
+        ProjectedRaster(tile, extent, self.crs)
+      }
+  }
+
+  implicit val simpleWmtsRasterExtents: HasRasterExtents[SimpleWmtsLayer] = new HasRasterExtents[SimpleWmtsLayer] {
+    def rasterExtents(self: SimpleWmtsLayer)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] =
+      IO {
+        val resolutions = self.source.resolutions.map { ge =>
+          ReprojectRasterExtent(ge.toRasterExtent, self.source.crs, self.crs)
+        }
+        NEL.fromList(resolutions)
+          .getOrElse(NEL(ReprojectRasterExtent(self.source.gridExtent.toRasterExtent, self.source.crs, self.crs), Nil))
+      }
+  }
+}
+
+case class MapAlgebraWmtsLayer(
+  name: String,
+  title: String,
+  crs: CRS,
+  layout: LayoutDefinition,
+  parameters: Map[String, SimpleWmtsLayer],
   algebra: Expression,
   style: Option[StyleModel]
 ) extends OgcLayer
