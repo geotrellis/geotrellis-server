@@ -1,7 +1,7 @@
 package geotrellis.server.ogc
 
-import geotrellis.server.ogc._
 import geotrellis.server.ogc.wms.WmsParams.GetMap
+import geotrellis.server.ogc.wmts.WmtsParams.GetTile
 import geotrellis.server.ogc.conf._
 
 import geotrellis.contrib.vlm.RasterSource
@@ -43,11 +43,28 @@ case class RasterSourcesModel(
       source match {
         case MapAlgebraSource(name, title, rasterSources, algebra, styles) =>
           val simpleLayers = rasterSources.mapValues { rs =>
-            SimpleLayer(name, title, crs, rs, style)
+            SimpleWmsLayer(name, title, crs, rs, style)
           }
-          MapAlgebraLayer(name, title, crs, simpleLayers, algebra, style)
+          MapAlgebraWmsLayer(name, title, crs, simpleLayers, algebra, style)
         case SimpleSource(name, title, rasterSource, styles) =>
-          SimpleLayer(name, title, crs, rasterSource, style)
+          SimpleWmsLayer(name, title, crs, rasterSource, style)
+      }
+    }
+  }
+
+  def getWmtsLayer(crs: CRS, layerName: String, layout: LayoutDefinition, styleName: String): Option[OgcLayer] = {
+    for {
+      source <- sourceLookup.get(layerName)
+    } yield {
+      val style: Option[StyleModel] = source.styles.find(_.name == styleName)
+      source match {
+        case MapAlgebraSource(name, title, rasterSources, algebra, styles) =>
+          val simpleLayers = rasterSources.mapValues { rs =>
+            SimpleWmtsLayer(name, title, crs, layout, rs, style)
+          }
+          MapAlgebraWmtsLayer(name, title, crs, layout, simpleLayers, algebra, style)
+        case SimpleSource(name, title, rasterSource, styles) =>
+          SimpleWmtsLayer(name, title, crs, layout, rasterSource, style)
       }
     }
   }

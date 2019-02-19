@@ -70,16 +70,16 @@ class WmsService(
           val re = RasterExtent(wmsReq.boundingBox, wmsReq.width, wmsReq.height)
           model.getLayer(wmsReq.crs, wmsReq.layers.headOption, wmsReq.styles.headOption).map { layer =>
             val evalExtent = layer match {
-              case sl@SimpleLayer(_, _, _, _, _) =>
+              case sl@SimpleWmsLayer(_, _, _, _, _) =>
                 LayerExtent.identity(sl)
-              case sl@MapAlgebraLayer(_, _, _, parameters, expr, _) =>
+              case sl@MapAlgebraWmsLayer(_, _, _, parameters, expr, _) =>
                 LayerExtent(IO.pure(expr), IO.pure(parameters), Interpreter.DEFAULT)
             }
 
             val evalHisto = layer match {
-              case sl@SimpleLayer(_, _, _, _, _) =>
+              case sl@SimpleWmsLayer(_, _, _, _, _) =>
                 LayerHistogram.identity(sl, 512)
-              case sl@MapAlgebraLayer(_, _, _, parameters, expr, _) =>
+              case sl@MapAlgebraWmsLayer(_, _, _, parameters, expr, _) =>
                 LayerHistogram(IO.pure(expr), IO.pure(parameters), Interpreter.DEFAULT, 512)
             }
 

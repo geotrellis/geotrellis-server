@@ -28,6 +28,7 @@ trait OgcSource {
   def nativeRE: RasterExtent
   def bboxIn(crs: CRS): BoundingBox
   def nativeCrs: Set[CRS]
+  def nativeExtent: Extent
 }
 
 case class SimpleSource(
@@ -47,6 +48,8 @@ case class SimpleSource(
   }
 
   def nativeCrs: Set[CRS] = Set(source.crs)
+
+  def nativeExtent: Extent = source.extent
 }
 
 case class MapAlgebraSource(
@@ -101,5 +104,16 @@ case class MapAlgebraSource(
   }
 
   def nativeCrs: Set[CRS] = sources.values.map(_.crs).toSet
+<<<<<<< HEAD
+=======
+
+  lazy val nativeExtent : Extent = {
+    val reprojectedSources: NEL[RasterSource] =
+      NEL.fromListUnsafe(sources.values.map(_.reproject(nativeCrs.head)).toList)
+    val extents =
+      reprojectedSources.map(_.extent)
+    SampleUtils.intersectExtents(extents).getOrElse(throw new Exception("Map algebra extents must intersect"))
+  }
+>>>>>>> 30f5bd0... WMTS KVP
 
 }

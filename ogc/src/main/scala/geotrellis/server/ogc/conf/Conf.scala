@@ -18,9 +18,9 @@ case class Conf(
       // TODO: move decision to attach WMS to the point where we decide which service (wms, wmts, wcs) to bind
       service.url.getOrElse(
         if (http.interface == "0.0.0.0")
-          new URL("http", InetAddress.getLocalHost.getHostAddress, http.port, "/wms")
+          new URL("http", InetAddress.getLocalHost.getHostAddress, http.port, "/wmts")
         else
-          new URL("http", http.interface, http.port, "/wms")
+          new URL("http", http.interface, http.port, "/wmts")
       )
     }
     def serviceUrlWcs: URL = {
