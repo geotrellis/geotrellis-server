@@ -1,6 +1,6 @@
 package geotrellis.server.ogc.wms
 
-import geotrellis.server.ogc.wms.Constants.SUPPORTED_FORMATS
+import geotrellis.server.ogc.OutputFormat
 import geotrellis.server.ogc.params._
 import geotrellis.proj4.LatLng
 
@@ -38,7 +38,7 @@ object WmsParams {
     layers: List[String],
     styles: List[String],
     boundingBox: Extent,
-    format: Format,
+    format: OutputFormat,
     width: Int,
     height: Int,
     crs: CRS
@@ -80,7 +80,7 @@ object WmsParams {
           val format =
             params.validatedParam("format")
               .andThen { f =>
-                SUPPORTED_FORMATS.get(f) match {
+                OutputFormat.fromString(f) match {
                   case Some(format) => Valid(format).toValidatedNel
                   case None =>
                     Invalid(ParamError.UnsupportedFormatError(f)).toValidatedNel

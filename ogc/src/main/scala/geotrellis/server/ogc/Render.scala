@@ -1,6 +1,4 @@
-package geotrellis.server.ogc.wms
-
-import geotrellis.server.ogc.source._
+package geotrellis.server.ogc
 
 import geotrellis.raster._
 import geotrellis.raster.render._
@@ -29,19 +27,19 @@ object Render {
   }
 
 
-  def apply(mbtile: MultibandTile, style: Option[StyleModel], format: Format): Array[Byte] =
+  def apply(mbtile: MultibandTile, style: Option[StyleModel], format: OutputFormat): Array[Byte] =
     getLayerColorMap(style) match {
       case Some(colorMap) =>
         format match {
-          case Format.Png => mbtile.band(bandIndex = 0).renderPng(colorMap).bytes
-          case Format.Jpg => mbtile.band(bandIndex = 0).renderJpg(colorMap).bytes
-          case Format.GeoTiff => ??? // Implementation necessary
+          case OutputFormat.Png => mbtile.band(bandIndex = 0).renderPng(colorMap).bytes
+          case OutputFormat.Jpg => mbtile.band(bandIndex = 0).renderJpg(colorMap).bytes
+          case OutputFormat.GeoTiff => ??? // Implementation necessary
         }
       case None =>
         format match {
-          case Format.Png => mbtile.band(bandIndex = 0).renderPng.bytes
-          case Format.Jpg => mbtile.band(bandIndex = 0).renderJpg.bytes
-          case Format.GeoTiff => ??? // Implementation necessary
+          case OutputFormat.Png => mbtile.band(bandIndex = 0).renderPng.bytes
+          case OutputFormat.Jpg => mbtile.band(bandIndex = 0).renderJpg.bytes
+          case OutputFormat.GeoTiff => ??? // Implementation necessary
         }
     }
 
