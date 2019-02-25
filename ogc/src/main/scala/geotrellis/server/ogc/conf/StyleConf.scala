@@ -3,7 +3,7 @@ package geotrellis.server.ogc.conf
 import geotrellis.raster.Tile
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.render.{ColorMap, ColorRamp}
-import geotrellis.server.ogc.wms.StyleModel
+import geotrellis.server.ogc.StyleModel
 
 sealed trait StyleConf {
   def name: String
