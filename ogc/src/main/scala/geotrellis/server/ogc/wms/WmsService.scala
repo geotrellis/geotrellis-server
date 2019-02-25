@@ -1,7 +1,7 @@
 package geotrellis.server.ogc.wms
 
+import geotrellis.server.ogc._
 import geotrellis.server.LayerExtent
-import geotrellis.server.ogc.wms.layer._
 import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wms.WmsParams.{GetCapabilities, GetMap}
 import geotrellis.server.ExtentReification.ops._
@@ -55,11 +55,11 @@ class WmsService(model: RasterSourcesModel, serviceUrl: URL)(implicit contextShi
 
         case Validated.Valid(wmsReq: GetMap) =>
           val re = RasterExtent(wmsReq.boundingBox, wmsReq.width, wmsReq.height)
-          model.getLayer(wmsReq).map { layer =>
+          model.getLayer(wmsReq.crs, wmsReq.layers.headOption, wmsReq.styles.headOption).map { layer =>
             val eval = layer match {
-              case sl@SimpleWmsLayer(_, _, _, _, _) =>
+              case sl@SimpleLayer(_, _, _, _, _) =>
                 LayerExtent.identity(sl)
-              case sl@MapAlgebraWmsLayer(_, _, _, parameters, expr, _) =>
+              case sl@MapAlgebraLayer(_, _, _, parameters, expr, _) =>
                 LayerExtent(IO.pure(expr), IO.pure(parameters), BufferingInterpreter.DEFAULT)
             }
             eval(re.extent, re.cellSize).attempt flatMap {
