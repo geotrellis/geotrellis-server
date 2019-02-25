@@ -1,7 +1,6 @@
 package geotrellis.server.ogc.wms
 
-import geotrellis.server.ogc.wms.source._
-import geotrellis.server.ogc.wms.layer._
+import geotrellis.server.ogc._
 import geotrellis.server.ogc.wms.WmsParams.GetMap
 import geotrellis.server.ogc.conf._
 
@@ -26,30 +25,29 @@ import geotrellis.raster.histogram.Histogram
 import geotrellis.server.ogc.conf.{Conf}
 
 case class RasterSourcesModel(
-  sources: Seq[WmsSource]
+  sources: Seq[OgcSource]
 ) {
 
-  val sourceLookup: Map[String, WmsSource] = sources.map({layer => layer.name -> layer}).toMap
+  val sourceLookup: Map[String, OgcSource] = sources.map({layer => layer.name -> layer}).toMap
 
-  /** Take a specific request for a map and combine it with the relevant [[WmsSource]]
-   *  to produce a [[WmsLayer]]
+  /** Take a specific request for a map and combine it with the relevant [[OgcSource]]
+   *  to produce a [[Layer]]
    */
-  def getLayer(wmsReq: GetMap): Option[WmsLayer] = {
+  def getLayer(crs: CRS, maybeLayerName: Option[String], maybeStyleName: Option[String]): Option[OgcLayer] = {
     for {
-      sourceName  <- wmsReq.layers.headOption
-      source <- sourceLookup.get(sourceName)
+      layerName  <- maybeLayerName
+      source <- sourceLookup.get(layerName)
     } yield {
-      val re = RasterExtent(wmsReq.boundingBox, wmsReq.width, wmsReq.height)
-      val styleName: Option[String] = wmsReq.styles.headOption.orElse(source.styles.headOption.map(_.name))
+      val styleName: Option[String] = maybeStyleName.orElse(source.styles.headOption.map(_.name))
       val style: Option[StyleModel] = styleName.flatMap { name => source.styles.find(_.name == name) }
       source match {
-        case MapAlgebraWmsSource(name, title, rasterSources, algebra, styles) =>
+        case MapAlgebraSource(name, title, rasterSources, algebra, styles) =>
           val simpleLayers = rasterSources.mapValues { rs =>
-            SimpleWmsLayer(name, title, wmsReq.crs, rs, style)
+            SimpleLayer(name, title, crs, rs, style)
           }
-          MapAlgebraWmsLayer(name, title, wmsReq.crs, simpleLayers, algebra, style)
-        case SimpleWmsSource(name, title, rasterSource, styles) =>
-          SimpleWmsLayer(name, title, wmsReq.crs, rasterSource, style)
+          MapAlgebraLayer(name, title, crs, simpleLayers, algebra, style)
+        case SimpleSource(name, title, rasterSource, styles) =>
+          SimpleLayer(name, title, crs, rasterSource, style)
       }
     }
   }

@@ -1,10 +1,10 @@
-package geotrellis.server.ogc.wms.source
+package geotrellis.server.ogc
 
-import geotrellis.server.ogc.wms._
 import geotrellis.server._
 import geotrellis.server.extent.SampleUtils
+import geotrellis.server.ogc.wms._
+import geotrellis.server.ExtentReification.ops._
 
-import geotrellis.server.ogc.wms
 import geotrellis.contrib.vlm._
 import geotrellis.raster.CellSize
 import geotrellis.vector.Extent
@@ -13,14 +13,42 @@ import com.azavea.maml.ast._
 import cats.effect._
 import cats.implicits._
 import cats.data.{NonEmptyList => NEL}
+import opengis.wms.BoundingBox
 
-case class MapAlgebraWmsSource(
+/** This trait and its implementing types are jointly sufficienty, along with a WMS 'get map'
+ *  request to produce a visual layer (represented more fully by the [[OgcLayer]] hierarchy.
+ *  This type represents *merely* that there is some backing by which valid OGC layers
+ *  can be realized.
+ */
+trait OgcSource {
+  def name: String
+  def styles: List[StyleModel]
+  def bboxIn(crs: CRS): BoundingBox
+  def nativeCrs: CRS
+}
+
+case class SimpleSource(
+  name: String,
+  title: String,
+  source: RasterSource,
+  styles: List[StyleModel]
+) extends OgcSource {
+
+  def bboxIn(crs: CRS) = {
+    val reprojected = source.reproject(crs)
+    CapabilitiesView.boundingBox(crs, reprojected.extent, reprojected.cellSize)
+  }
+
+  def nativeCrs = source.crs
+}
+
+case class MapAlgebraSource(
   name: String,
   title: String,
   sources: Map[String, RasterSource],
   algebra: Expression,
   styles: List[StyleModel]
-) extends WmsSource {
+) extends OgcSource {
 
   def bboxIn(crs: CRS) = {
     val reprojectedSources: NEL[RasterSource] =

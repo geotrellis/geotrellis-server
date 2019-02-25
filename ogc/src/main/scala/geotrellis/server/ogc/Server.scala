@@ -34,8 +34,8 @@ object Server extends LazyLogging with IOApp {
     for {
       conf       <- Stream.eval(LoadConf().as[Conf])
       _          <- Stream.eval(IO.pure(logger.info(s"Advertising service URL at ${conf.serviceUrl}")))
-      simpleLayers = conf.layers.collect { case ssc@SimpleLayerSource(_, _, _, _) => ssc.model }
-      mapAlgebraLayers = conf.layers.collect { case mal@MapAlgebraLayerSource(_, _, _, _) => mal.model(simpleLayers) }
+      simpleLayers = conf.layers.collect { case ssc@SimpleSourceConf(_, _, _, _) => ssc.model }
+      mapAlgebraLayers = conf.layers.collect { case mal@MapAlgebraSourceConf(_, _, _, _) => mal.model(simpleLayers) }
       wcsService = new WmsService(RasterSourcesModel(simpleLayers ++ mapAlgebraLayers), conf.serviceUrl)
       exitCode   <- BlazeServerBuilder[IO]
         .withIdleTimeout(Duration.Inf) // for test purposes only

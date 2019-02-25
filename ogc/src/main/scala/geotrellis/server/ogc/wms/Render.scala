@@ -1,6 +1,6 @@
 package geotrellis.server.ogc.wms
 
-import geotrellis.server.ogc.wms.source._
+import geotrellis.server.ogc.source._
 
 import geotrellis.raster._
 import geotrellis.raster.render._

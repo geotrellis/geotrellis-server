@@ -1,6 +1,6 @@
 package geotrellis.server.ogc.wms
 
-import geotrellis.server.ogc.wms.source._
+import geotrellis.server.ogc._
 import geotrellis.server.ogc.conf._
 
 import geotrellis.proj4.{CRS, LatLng}
@@ -101,7 +101,7 @@ object CapabilitiesView {
     }
   }
 
-  implicit class RasterSourceMethods(val model: WmsSource) {
+  implicit class RasterSourceMethods(val model: OgcSource) {
     def toLayer(layerName: String, defaultCrs: CRS = LatLng): Layer = {
       Layer(
         Name = Some(layerName),
