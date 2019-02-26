@@ -28,7 +28,7 @@ object LayerHistogram extends LazyLogging {
   def apply[Param](
     getExpression: IO[Expression],
     getParams: IO[Map[String, Param]],
-    interpreter: BufferingInterpreter,
+    interpreter: Interpreter,
     maxCells: Int
   )(
     implicit reify: ExtentReification[Param],
@@ -68,7 +68,7 @@ object LayerHistogram extends LazyLogging {
   def generateExpression[Param](
     mkExpr: Map[String, Param] => Expression,
     getParams: IO[Map[String, Param]],
-    interpreter: BufferingInterpreter,
+    interpreter: Interpreter,
     maxCells: Int
   )(
     implicit reify: ExtentReification[Param],
@@ -80,7 +80,7 @@ object LayerHistogram extends LazyLogging {
   /** Provide an expression and expect arguments to fulfill its needs */
   def curried[Param](
     expr: Expression,
-    interpreter: BufferingInterpreter,
+    interpreter: Interpreter,
     maxCells: Int
   )(
     implicit reify: ExtentReification[Param],
@@ -101,7 +101,7 @@ object LayerHistogram extends LazyLogging {
              extended: HasRasterExtents[Param],
              contextShift: ContextShift[IO]
   ) = {
-    val eval = curried(RasterVar("identity"), BufferingInterpreter.DEFAULT, maxCells)
+    val eval = curried(RasterVar("identity"), Interpreter.DEFAULT, maxCells)
     eval(Map("identity" -> param))
   }
 
