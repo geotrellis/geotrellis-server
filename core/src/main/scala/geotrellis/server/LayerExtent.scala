@@ -45,7 +45,7 @@ object LayerExtent extends LazyLogging {
                             )
                             thingify(bufferedExtent, cs).map(varName -> _)
                           } map { _.toMap }
-      reified          <- IO { Expression.bindParams(expr, params) }
+      reified          <- IO { Expression.bindParams(expr, params.mapValues(RasterLit(_))) }
     } yield reified
       .andThen(interpreter(_))
       .andThen(_.as[MultibandTile])

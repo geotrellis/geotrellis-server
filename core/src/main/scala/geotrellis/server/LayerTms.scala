@@ -45,7 +45,7 @@ object LayerTms extends LazyLogging {
                             val eval = paramMap(varName).tmsReification(buffer)
                             eval(z, x, y).map(varName -> _)
                           } map { _.toMap }
-      reified          <- IO.pure { Expression.bindParams(expr, params) }
+      reified          <- IO.pure { Expression.bindParams(expr, params.mapValues(RasterLit(_))) }
     } yield reified.andThen(interpreter(_)).andThen(_.as[MultibandTile])
   }
 

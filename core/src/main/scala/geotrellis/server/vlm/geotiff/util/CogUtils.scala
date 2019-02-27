@@ -34,10 +34,10 @@ object CogUtils {
   def fetch(uri: String, extent: Extent): IO[Raster[MultibandTile]] =
     fromUri(uri).map { tiff => tiff.crop(RasterExtent(extent, tiff.cellSize)) }
 
-  def fetch(uri: String, zoom: Int, x: Int, y: Int): IO[Raster[MultibandTile]] =
+  def fetch(uri: String, zoom: Int, x: Int, y: Int, crs: CRS = WebMercator): IO[Raster[MultibandTile]] =
     CogUtils.fromUri(uri).flatMap { tiff =>
-      val transform = Proj4Transform(tiff.crs, WebMercator)
-      val inverseTransform = Proj4Transform(WebMercator, tiff.crs)
+      val transform = Proj4Transform(tiff.crs, crs)
+      val inverseTransform = Proj4Transform(crs, tiff.crs)
       val tmsTileRE = RasterExtent(
         extent = tmsLevels(zoom).mapTransform.keyToExtent(x, y),
         cols = 256, rows = 256
