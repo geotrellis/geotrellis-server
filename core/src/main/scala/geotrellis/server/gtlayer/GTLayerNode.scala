@@ -56,13 +56,12 @@ object GTLayerNode {
         }
 
         def crs(self: GTLayerNode)(implicit contextShift: ContextShift[IO]): IO[CRS] =
-          IO { self.allMetadata.head._2.get.crs }
+          IO { self.crs }
     }
 
   implicit val gtLayerNodeTmsReification: TmsReification[GTLayerNode] =
     new TmsReification[GTLayerNode] {
-      def kind(self: GTLayerNode): MamlKind = MamlKind.Image
-      def tmsReification(self: GTLayerNode, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[Literal] =
+      def tmsReification(self: GTLayerNode, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[ProjectedRaster[MultibandTile]] =
         (z: Int, x: Int, y: Int) => IO {
           val bounds = GridBounds(x - 1, y - 1, x + 1, y + 1)
           val values =
@@ -79,13 +78,12 @@ object GTLayerNode {
           val tile = TileWithNeighbors(values.get(SpatialKey(x, y)).get, Some(neighboring)).withBuffer(buffer)
           val ex = self.allMetadata(z).get.layout.mapTransform(SpatialKey(x, y))
 
-          RasterLit(Raster(tile, ex))
+          ProjectedRaster(MultibandTile(tile), ex, self.crs)
         }
     }
 
   implicit val gtLayerNodeExtentReification: ExtentReification[GTLayerNode] = new ExtentReification[GTLayerNode] {
-    def kind(self: GTLayerNode): MamlKind = MamlKind.Image
-    def extentReification(self: GTLayerNode)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] =
+    def extentReification(self: GTLayerNode)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
       { (ex: Extent, cs: CellSize) =>
         IO {
           def csToDiag(cell: CellSize) = math.sqrt(cell.width * cell.width + cell.height * cell.height)
@@ -97,13 +95,13 @@ object GTLayerNode {
                                   .sortBy{i => -i}
                                   .headOption
                                   .getOrElse(self.maxZoom)
-          val tile = self.collectionReader
+          val raster = self.collectionReader
             .query[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](LayerId(self.layer, z))
             .where(Intersects(ex))
             .result
             .stitch
             .crop(ex)
-          RasterLit(Raster(tile, ex))
+          ProjectedRaster(MultibandTile(raster.tile), raster.extent, self.crs)
         }
       }
   }
