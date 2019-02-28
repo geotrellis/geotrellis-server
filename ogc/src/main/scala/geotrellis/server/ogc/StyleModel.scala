@@ -1,4 +1,4 @@
-package geotrellis.server.ogc.wms
+package geotrellis.server.ogc
 
 import geotrellis.contrib.vlm.RasterSource
 import geotrellis.raster.render.{ColorMap, ColorRamp}

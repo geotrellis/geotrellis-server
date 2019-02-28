@@ -1,23 +1,13 @@
 package geotrellis.server.ogc.conf
 
+import geotrellis.server.ogc.wms.source._
 
-import geotrellis.server.ogc.wms.LayerModel
 import geotrellis.contrib.vlm.RasterSource
 import geotrellis.contrib.vlm.avro.GeotrellisRasterSource
 import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
 import geotrellis.spark.LayerId
 
-case class LayerConf(
-  name: String,
-  title: String,
-  source: RasterSourceConf,
-  styles: List[StyleConf]
-) {
-  def model: LayerModel = {
-    LayerModel(name, title, source.toRasterSource, styles.map(_.model))
-  }
-}
-
+// The sumtype responsible for providing a gt-contrib RasterSource from configuration
 sealed trait RasterSourceConf {
   def toRasterSource: RasterSource
 }
