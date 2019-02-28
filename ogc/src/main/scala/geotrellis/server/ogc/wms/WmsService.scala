@@ -79,6 +79,7 @@ class WmsService(model: RasterSourcesModel, serviceUrl: URL)(implicit contextShi
                 Invalid(errs)
             }.attempt flatMap {
               case Right(Valid((mbtile, hists))) => // success
+                println(hists.head.statistics)
                 val rendered = Render(mbtile, layer.style, wmsReq.format, hists)
                 Ok(rendered)
               case Right(Invalid(errs)) => // maml-specific errors
