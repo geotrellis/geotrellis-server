@@ -6,7 +6,7 @@ import geotrellis.raster.histogram._
 
 object Render {
 
-  private def getLayerColorMap(maybeStyle: Option[StyleModel]): Option[ColorMap] = {
+  private def getLayerColorMap(maybeStyle: Option[StyleModel], hists: List[Histogram[Double]]): Option[ColorMap] = {
     // TODO: add "default-style" to config file to explicitly select the style
     maybeStyle.flatMap { style =>
       style.colorMap.orElse {
@@ -17,18 +17,16 @@ object Render {
           // GeotrellisRasterSource would have access to attributeStore, we can match and pick
           // for other raster sources it would have to be sampled, stage 2
           // Note: MAML has utility function to sample histograms from RasterSource
-          val hist: Array[Histogram[Double]] = ???
 
           // we're assuming the layers are single band rasters
-          ColorMap.fromQuantileBreaks(hist.head, ramp)
+          ColorMap.fromQuantileBreaks(hists.head, ramp)
         }
       }
     }
   }
 
-
-  def apply(mbtile: MultibandTile, style: Option[StyleModel], format: OutputFormat): Array[Byte] =
-    getLayerColorMap(style) match {
+  def apply(mbtile: MultibandTile, style: Option[StyleModel], format: OutputFormat, hists: List[Histogram[Double]]): Array[Byte] =
+    getLayerColorMap(style, hists) match {
       case Some(colorMap) =>
         format match {
           case OutputFormat.Png => mbtile.band(bandIndex = 0).renderPng(colorMap).bytes
@@ -42,5 +40,4 @@ object Render {
           case OutputFormat.GeoTiff => ??? // Implementation necessary
         }
     }
-
 }

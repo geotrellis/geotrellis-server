@@ -30,7 +30,7 @@ object LayerTms extends LazyLogging {
   def apply[Param](
     getExpression: IO[Expression],
     getParams: IO[Map[String, Param]],
-    interpreter: BufferingInterpreter
+    interpreter: Interpreter
   )(
     implicit reify: TmsReification[Param],
              contextShift: ContextShift[IO]
@@ -45,7 +45,7 @@ object LayerTms extends LazyLogging {
                             val eval = paramMap(varName).tmsReification(buffer)
                             eval(z, x, y).map(varName -> _)
                           } map { _.toMap }
-      reified          <- IO.pure { Expression.bindParams(expr, params) }
+      reified          <- IO.pure { Expression.bindParams(expr, params.mapValues(RasterLit(_))) }
     } yield reified.andThen(interpreter(_)).andThen(_.as[MultibandTile])
   }
 
@@ -56,7 +56,7 @@ object LayerTms extends LazyLogging {
   def generateExpression[Param](
     mkExpr: Map[String, Param] => Expression,
     getParams: IO[Map[String, Param]],
-    interpreter: BufferingInterpreter
+    interpreter: Interpreter
   )(
     implicit reify: TmsReification[Param],
              contextShift: ContextShift[IO]
@@ -66,7 +66,7 @@ object LayerTms extends LazyLogging {
   /** Provide an expression and expect arguments to fulfill its needs */
   def curried[Param](
     expr: Expression,
-    interpreter: BufferingInterpreter
+    interpreter: Interpreter
   )(
     implicit reify: TmsReification[Param],
              contextShift: ContextShift[IO]
@@ -84,7 +84,7 @@ object LayerTms extends LazyLogging {
     implicit reify: TmsReification[Param],
              contextShift: ContextShift[IO]
   ) = (z: Int, x: Int, y: Int) => {
-    val eval = curried(RasterVar("identity"), BufferingInterpreter.DEFAULT)
+    val eval = curried(RasterVar("identity"), Interpreter.DEFAULT)
     eval(Map("identity" -> param), z, x, y)
   }
 
