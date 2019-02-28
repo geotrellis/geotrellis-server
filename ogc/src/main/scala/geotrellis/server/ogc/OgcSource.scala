@@ -24,7 +24,7 @@ trait OgcSource {
   def name: String
   def styles: List[StyleModel]
   def bboxIn(crs: CRS): BoundingBox
-  def nativeCrs: CRS
+  def nativeCrs: Set[CRS]
 }
 
 case class SimpleSource(
@@ -39,7 +39,7 @@ case class SimpleSource(
     CapabilitiesView.boundingBox(crs, reprojected.extent, reprojected.cellSize)
   }
 
-  def nativeCrs = source.crs
+  def nativeCrs: Set[CRS] = Set(source.crs)
 }
 
 case class MapAlgebraSource(
@@ -68,6 +68,6 @@ case class MapAlgebraSource(
     }
   }
 
-  def nativeCrs: CRS = WebMercator
+  def nativeCrs: Set[CRS] = sources.map(_.crs).toSet
 
 }
