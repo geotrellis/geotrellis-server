@@ -36,14 +36,14 @@ case class SimpleLayer(
 object SimpleLayer {
   implicit val mapAlgebraLayerReification = new ExtentReification[SimpleLayer] {
     def kind(self: SimpleLayer): MamlKind = MamlKind.Image
-    def extentReification(self: SimpleLayer)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] =
+    def extentReification(self: SimpleLayer)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
       (extent: Extent, cs: CellSize) =>  IO {
         val raster: Raster[MultibandTile] = self.source
           .reprojectToGrid(self.crs, RasterExtent(extent, cs))
           .read(extent)
           .get
 
-        RasterLit(ProjectedRaster(raster, self.crs))
+        ProjectedRaster(raster, self.crs)
       }
   }
 
