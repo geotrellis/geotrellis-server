@@ -68,6 +68,6 @@ case class MapAlgebraSource(
     }
   }
 
-  def nativeCrs: Set[CRS] = sources.map(_.crs).toSet
+  def nativeCrs: Set[CRS] = sources.values.map(_.crs).toSet
 
 }
