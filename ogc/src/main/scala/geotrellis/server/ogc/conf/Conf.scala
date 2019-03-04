@@ -44,12 +44,8 @@ object Conf {
     }
 
   implicit def keywordConfigReader: ConfigReader[opengis.wms.Keyword] =
-    ConfigReader.fromCursor[opengis.wms.Keyword] { cur =>
-      for {
-        str <- cur.asString.right
-      } yield {
-        opengis.wms.Keyword(str)
-      }
+    ConfigReader[String].map { str =>
+      opengis.wms.Keyword(str)
     }
 
   // This is a work-around to use pureconfig to read scalaxb generated case classes
