@@ -39,13 +39,9 @@ object Conf {
   implicit def ConfObjectToClass(obj: Conf.type): Conf = conf
 
   implicit def nameConfigReader: ConfigReader[opengis.wms.Name] =
-    ConfigReader.fromCursor[opengis.wms.Name] { cur =>
-    for {
-      str <- cur.asString.right
-    } yield {
+    ConfigReader[String].map { str =>
       opengis.wms.Name.fromString(str, wmsScope)
     }
-  }
 
   implicit def keywordConfigReader: ConfigReader[opengis.wms.Keyword] =
     ConfigReader.fromCursor[opengis.wms.Keyword] { cur =>
