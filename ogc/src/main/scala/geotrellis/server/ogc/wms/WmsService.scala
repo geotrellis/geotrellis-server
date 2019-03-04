@@ -26,7 +26,11 @@ import com.typesafe.scalalogging.LazyLogging
 
 import java.net.{URI, URL}
 
-class WmsService(model: RasterSourcesModel, serviceUrl: URL)(implicit contextShift: ContextShift[IO])
+class WmsService(
+  model: RasterSourcesModel,
+  serviceUrl: URL,
+  serviceMetadata: opengis.wms.Service
+)(implicit contextShift: ContextShift[IO])
   extends Http4sDsl[IO]
      with LazyLogging {
 
@@ -51,7 +55,7 @@ class WmsService(model: RasterSourcesModel, serviceUrl: URL)(implicit contextShi
           BadRequest(msg)
 
         case Valid(wmsReq: GetCapabilities) =>
-          Ok.apply(new CapabilitiesView(model, serviceUrl, defaultCrs = LatLng).toXML)
+          Ok.apply(new CapabilitiesView(model, serviceUrl, serviceMetadata, defaultCrs = LatLng).toXML)
 
         case Valid(wmsReq: GetMap) =>
           val re = RasterExtent(wmsReq.boundingBox, wmsReq.width, wmsReq.height)
