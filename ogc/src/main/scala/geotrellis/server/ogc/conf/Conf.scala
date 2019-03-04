@@ -2,9 +2,16 @@ package geotrellis.server.ogc.conf
 
 import java.net.{InetAddress, URL}
 
+import geotrellis.server.ogc.wms.wmsScope
+import pureconfig.ConfigReader
+import scalaxb.DataRecord
+
+case class WMS(serviceMetadata: opengis.wms.Service)
+
 case class Conf(
   http: Conf.Http,
   service: Conf.Service,
+  wms: WMS,
   layers: List[OgcSourceConf]
 ) {
     def serviceUrl: URL = {
@@ -30,4 +37,23 @@ object Conf {
 
   lazy val conf: Conf = pureconfig.loadConfigOrThrow[Conf]
   implicit def ConfObjectToClass(obj: Conf.type): Conf = conf
+
+  implicit def nameConfigReader: ConfigReader[opengis.wms.Name] =
+    ConfigReader[String].map { str =>
+      opengis.wms.Name.fromString(str, wmsScope)
+    }
+
+  implicit def keywordConfigReader: ConfigReader[opengis.wms.Keyword] =
+    ConfigReader.fromCursor[opengis.wms.Keyword] { cur =>
+      for {
+        str <- cur.asString.right
+      } yield {
+        opengis.wms.Keyword(str)
+      }
+    }
+
+  // This is a work-around to use pureconfig to read scalaxb generated case classes
+  // DataRecord should never be specified from configuration, this satisfied the resolution
+  // ConfigReader should be the containing class if DataRecord values need to be set
+  implicit def dataRecordReader: ConfigReader[DataRecord[Any]] = null
 }

@@ -20,17 +20,15 @@ import scala.xml.{Elem, NodeSeq}
   * @param serviceUrl URL where this service can be reached with addition of `?request=` query parameter
   * @param defaultCrs Common CRS, all layers must be available in at least this CRS
   */
-class CapabilitiesView(model: RasterSourcesModel, serviceUrl: URL, defaultCrs: CRS = LatLng) {
+class CapabilitiesView(
+  model: RasterSourcesModel,
+  serviceUrl: URL,
+  serviceMetadata: Service,
+  defaultCrs: CRS = LatLng
+) {
 
   def toXML: Elem = {
     import CapabilitiesView._
-
-    val service = Service(
-      Name = Name.fromString("WMS", wmsScope),
-      Title = "GeoTrellis WMS",
-      OnlineResource = OnlineResource(),
-      KeywordList = Some(KeywordList(Keyword("WMS") :: Keyword("GeoTrellis") :: Nil))
-    )
 
     val capability = {
       val getCapabilities = OperationType(
@@ -57,7 +55,7 @@ class CapabilitiesView(model: RasterSourcesModel, serviceUrl: URL, defaultCrs: C
     }
 
     val ret: NodeSeq = scalaxb.toXML[opengis.wms.WMS_Capabilities](
-      obj = WMS_Capabilities(service, capability, Map("@version" -> scalaxb.DataRecord("1.3.0"))),
+      obj = WMS_Capabilities(serviceMetadata, capability, Map("@version" -> scalaxb.DataRecord("1.3.0"))),
       namespace = None,
       elementLabel = Some("WMS_Capabilities"),
       scope = constrainedWMSScope,
