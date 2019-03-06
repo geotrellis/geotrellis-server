@@ -1,8 +1,9 @@
-package geotrellis.server.wcs.ops.version110
+package geotrellis.server.ogc.wcs.ops.version110
 
-import geotrellis.server.wcs.ops.{Common, MetadataCatalog}
-import geotrellis.server.wcs.ops.{GetCapabilities => GetCapabilitiesBase}
-import geotrellis.server.wcs.params.GetCapabilitiesWcsParams
+import geotrellis.server.ogc._
+import geotrellis.server.ogc.wcs.ops.Common
+import geotrellis.server.ogc.wcs.ops.{GetCapabilities => GetCapabilitiesBase}
+import geotrellis.server.ogc.wcs.params.GetCapabilitiesWcsParams
 
 import geotrellis.spark._
 import geotrellis.spark.io._
@@ -25,34 +26,28 @@ object GetCapabilities extends GetCapabilitiesBase with LazyLogging {
     </ows:Operation>
   }
 
-  private def addLayers(metadata: MetadataCatalog) = {
-    metadata.map { case (identifier, (zooms, maybeMetadata)) => {
+  private def addLayers(rsm: RasterSourcesModel) = {
+    rsm.sourceLookup.map { case (identifier, src) => {
       logger.info(s"Adding v1.1.0 tag for $identifier")
-      maybeMetadata match {
-        case Some(metadata) =>
-          val crs = metadata.crs
-          val ex = metadata.extent
-          <wcs:CoverageSummary>
-            <wcs:Identifier>{ identifier }</wcs:Identifier>
-            { Common.boundingBox110(ex, crs) }
-            {
-              if (crs.epsgCode.isDefined) {
-                <SupportedCRS>urn:ogs:def:crs:EPSG::{ crs.epsgCode.get.toString }</SupportedCRS>
-              }
-            }
-            <SupportedFormat>image/geotiff</SupportedFormat>
-            <SupportedFormat>image/geotif</SupportedFormat>
-            <SupportedFormat>image/tiff</SupportedFormat>
-            <SupportedFormat>image/tif</SupportedFormat>
-          </wcs:CoverageSummary>
-        case None =>
-          val comment = <!--  -->
-          comment.copy(commentText = s"Loading of $identifier failed")
-      }
+      val crs = src.nativeCrs.head
+      val ex = src.nativeExtent
+      <wcs:CoverageSummary>
+        <wcs:Identifier>{ identifier }</wcs:Identifier>
+        { Common.boundingBox110(ex, crs) }
+        {
+          if (crs.epsgCode.isDefined) {
+            <SupportedCRS>urn:ogs:def:crs:EPSG::{ crs.epsgCode.get.toString }</SupportedCRS>
+          }
+        }
+        <SupportedFormat>image/geotiff</SupportedFormat>
+        <SupportedFormat>image/geotif</SupportedFormat>
+        <SupportedFormat>image/tiff</SupportedFormat>
+        <SupportedFormat>image/tif</SupportedFormat>
+      </wcs:CoverageSummary>
     }}
   }
 
-  def build(requestURL: String, metadata: MetadataCatalog, params: GetCapabilitiesWcsParams): Elem = {
+  def build(requestURL: String, rsm: RasterSourcesModel, params: GetCapabilitiesWcsParams): Elem = {
     // Pulled example template from http://nsidc.org/cgi-bin/atlas_north?service=WCS&request=GetCapabilities&version=1.1.1
     val version = params.version.split('.')
     <wcs:Capabilities xmlns:wcs={"http://www.opengis.net/wcs/" + version(0) + "." + version(1)}
@@ -77,7 +72,7 @@ object GetCapabilities extends GetCapabilitiesBase with LazyLogging {
       <ows:ServiceProvider>
       </ows:ServiceProvider>
       <wcs:Contents>
-        { addLayers(metadata) }
+        { addLayers(rsm) }
       </wcs:Contents>
     </wcs:Capabilities>
   }

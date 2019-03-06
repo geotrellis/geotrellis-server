@@ -1,8 +1,8 @@
-package geotrellis.server.wcs.ops.version100
+package geotrellis.server.ogc.wcs.ops.version100
 
-import geotrellis.server.wcs.ops.MetadataCatalog
-import geotrellis.server.wcs.ops.{GetCapabilities => GetCapabilitiesBase}
-import geotrellis.server.wcs.params.GetCapabilitiesWcsParams
+import geotrellis.server.ogc._
+import geotrellis.server.ogc.wcs.ops.{GetCapabilities => GetCapabilitiesBase}
+import geotrellis.server.ogc.wcs.params.GetCapabilitiesWcsParams
 
 import geotrellis.spark._
 import geotrellis.spark.io._
@@ -25,24 +25,18 @@ object GetCapabilities extends GetCapabilitiesBase with LazyLogging {
     </HTTP>
   }
 
-  private def addLayers(metadata: MetadataCatalog) = {
-    metadata.map { case (identifier, (zooms, maybeMetadata)) => {
+  private def addLayers(rsm: RasterSourcesModel) = {
+    rsm.sourceLookup.map { case (identifier, src) => {
       logger.info(s"Adding v1.0.0 tag for $identifier")
-      maybeMetadata match {
-        case Some(metadata) =>
-          val crs = metadata.crs
-          val ex = metadata.extent
-          <CoverageOfferingBrief>
-            <name>{ identifier }</name>
-          </CoverageOfferingBrief>
-        case None =>
-          val comment = <!--  -->
-          comment.copy(commentText = s"Loading of $identifier failed")
-      }
+        val crs = src.nativeCrs
+        val ex = src.nativeExtent
+        <CoverageOfferingBrief>
+          <name>{ identifier }</name>
+        </CoverageOfferingBrief>
     }}
   }
 
-  def build(requestURL: String, metadata: MetadataCatalog, params: GetCapabilitiesWcsParams): Elem = {
+  def build(requestURL: String, rsm: RasterSourcesModel, params: GetCapabilitiesWcsParams): Elem = {
     <WCS_Capabilities xmlns="http://www.opengis.net/wcs"
                       xmlns:xlink="http://www.w3.org/1999/xlink"
                       xmlns:gml="http://www.opengis.net/gml"
@@ -79,7 +73,7 @@ object GetCapabilities extends GetCapabilitiesBase with LazyLogging {
         </Exception>
       </Capability>
       <ContentMetadata>
-        { addLayers(metadata) }
+        { addLayers(rsm) }
       </ContentMetadata>
     </WCS_Capabilities>
   }

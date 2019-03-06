@@ -1,6 +1,7 @@
-package geotrellis.server.wcs.ops
+package geotrellis.server.ogc.wcs.ops
 
-import geotrellis.server.wcs.params.DescribeCoverageWcsParams
+import geotrellis.server.ogc._
+import geotrellis.server.ogc.wcs.params.DescribeCoverageWcsParams
 
 import geotrellis.proj4._
 import geotrellis.raster._
@@ -13,5 +14,5 @@ import com.typesafe.scalalogging.LazyLogging
 import scala.xml._
 
 trait DescribeCoverage {
-  def build(metadata: MetadataCatalog, params: DescribeCoverageWcsParams): Elem
+  def build(rsm: RasterSourcesModel, params: DescribeCoverageWcsParams): Elem
 }

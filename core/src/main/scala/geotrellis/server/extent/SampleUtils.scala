@@ -45,6 +45,19 @@ object SampleUtils extends LazyLogging {
           chosenCS
       })
 
+  /** Choose the smallest cellsize */
+  final def chooseSmallestCellSize(nativeCellSizes: NEL[CellSize]): CellSize =
+    nativeCellSizes
+      .reduceLeft({ (chosenCS: CellSize, nextCS: CellSize) =>
+        val chosenSize = chosenCS.height * chosenCS.width
+        val nextSize = nextCS.height * nextCS.width
+
+        if (nextSize < chosenSize)
+          nextCS
+        else
+          chosenCS
+      })
+
   final def intersectExtents(extents: NEL[Extent]): Option[Extent] = {
     extents.tail.foldLeft(Option(extents.head))({
       case (Some(ex1), ex2) => ex1 intersection ex2

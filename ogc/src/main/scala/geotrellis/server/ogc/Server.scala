@@ -2,6 +2,7 @@ package geotrellis.server.ogc
 
 import geotrellis.server.ogc.conf._
 import geotrellis.server.ogc.wms._
+import geotrellis.server.ogc.wcs._
 
 import cats.effect._
 import cats.implicits._
@@ -33,15 +34,22 @@ object Server extends LazyLogging with IOApp {
     import Conf._
     for {
       conf       <- Stream.eval(LoadConf().as[Conf])
-      _          <- Stream.eval(IO.pure(logger.info(s"Advertising service URL at ${conf.serviceUrl}")))
+      _          <- Stream.eval(IO.pure(logger.info(s"Advertising service URL at ${conf.serviceUrlWms}")))
+      _          <- Stream.eval(IO.pure(logger.info(s"Advertising service URL at ${conf.serviceUrlWcs}")))
       simpleLayers = conf.layers.collect { case ssc@SimpleSourceConf(_, _, _, _) => ssc.model }
       mapAlgebraLayers = conf.layers.collect { case mal@MapAlgebraSourceConf(_, _, _, _) => mal.model(simpleLayers) }
-      wcsService = new WmsService(RasterSourcesModel(simpleLayers ++ mapAlgebraLayers), conf.serviceUrl, conf.wms.serviceMetadata)
+      rsm = RasterSourcesModel(simpleLayers ++ mapAlgebraLayers)
+
+      wmsService = new WmsService(rsm, conf.serviceUrlWms, conf.wms.serviceMetadata)
+      wcsService = new WcsService(rsm, conf.serviceUrlWcs)
       exitCode   <- BlazeServerBuilder[IO]
         .withIdleTimeout(Duration.Inf) // for test purposes only
         .enableHttp2(true)
         .bindHttp(conf.http.port, conf.http.interface)
-        .withHttpApp(Router("/" -> commonMiddleware(wcsService.routes)).orNotFound)
+        .withHttpApp(Router(
+          "/wms" -> commonMiddleware(wmsService.routes),
+          "/wcs" -> commonMiddleware(wcsService.routes)
+        ).orNotFound)
         .serve
     } yield exitCode
   }
