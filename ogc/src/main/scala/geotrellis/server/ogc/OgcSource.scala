@@ -6,9 +6,9 @@ import geotrellis.server.ogc.wms._
 import geotrellis.server.ExtentReification.ops._
 
 import geotrellis.contrib.vlm._
-import geotrellis.raster.CellSize
+import geotrellis.raster.{RasterExtent, CellSize}
 import geotrellis.vector.Extent
-import geotrellis.proj4.{CRS, WebMercator}
+import geotrellis.proj4.{CRS, WebMercator, LatLng}
 import com.azavea.maml.ast._
 import cats.effect._
 import cats.implicits._
@@ -22,7 +22,10 @@ import opengis.wms.BoundingBox
  */
 trait OgcSource {
   def name: String
+  def title: String
   def styles: List[StyleModel]
+  def nativeExtent: Extent
+  def nativeRE: RasterExtent
   def bboxIn(crs: CRS): BoundingBox
   def nativeCrs: Set[CRS]
 }
@@ -33,6 +36,10 @@ case class SimpleSource(
   source: RasterSource,
   styles: List[StyleModel]
 ) extends OgcSource {
+
+  def nativeExtent = source.extent
+
+  def nativeRE = source.gridExtent.toRasterExtent
 
   def bboxIn(crs: CRS) = {
     val reprojected = source.reproject(crs)
@@ -49,6 +56,31 @@ case class MapAlgebraSource(
   algebra: Expression,
   styles: List[StyleModel]
 ) extends OgcSource {
+
+  def nativeExtent = {
+    val reprojectedSources: NEL[RasterSource] =
+      NEL.fromListUnsafe(sources.values.map(_.reproject(nativeCrs.head)).toList)
+    val extents =
+      reprojectedSources.map(_.extent)
+    val extentIntersection =
+      SampleUtils.intersectExtents(extents)
+
+    extentIntersection match {
+      case Some(extent) =>
+        extent
+      case None =>
+        throw new Exception("no intersection found among map algebra sources")
+    }
+  }
+
+  def nativeRE = {
+    val reprojectedSources: NEL[RasterSource] =
+      NEL.fromListUnsafe(sources.values.map(_.reproject(nativeCrs.head)).toList)
+    val cellSize =
+      SampleUtils.chooseSmallestCellSize(reprojectedSources.map(_.cellSize))
+
+    RasterExtent(nativeExtent, cellSize)
+  }
 
   def bboxIn(crs: CRS) = {
     val reprojectedSources: NEL[RasterSource] =

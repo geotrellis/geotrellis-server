@@ -1,4 +1,4 @@
-package geotrellis.server.wcs.params
+package geotrellis.server.ogc.wcs.params
 
 
 sealed abstract class WcsParamsError { def errorMessage: String }

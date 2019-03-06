@@ -1,4 +1,4 @@
-package geotrellis.server.ogc.wms
+package geotrellis.server.ogc
 
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.wms.WmsParams.GetMap

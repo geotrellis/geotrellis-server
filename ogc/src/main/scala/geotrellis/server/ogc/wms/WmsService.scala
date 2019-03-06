@@ -45,9 +45,8 @@ class WmsService(
   }
 
   def routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
-    case req @ GET -> Root / "wms" =>
-      println(req)
-
+    case req @ GET -> Root =>
+     logger.warn(s"""Recv'd request: $req""")
       WmsParams(req.multiParams) match {
         case Invalid(errors) =>
           val msg = ParamError.generateErrorMessage(errors.toList)

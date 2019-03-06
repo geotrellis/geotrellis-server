@@ -1,6 +1,6 @@
-package geotrellis.server.wcs.params
+package geotrellis.server.ogc.wcs.params
 
-import geotrellis.server.wcs.Constants.SUPPORTED_FORMATS
+import geotrellis.server.ogc.OutputFormat
 
 import cats._
 import cats.implicits._
@@ -23,7 +23,7 @@ case class GetCoverageWcsParams(
   version: String,
   identifier: String,
   boundingBox: Extent,
-  format: String,
+  format: OutputFormat,
   width: Int,
   height: Int,
   crs: CRS
@@ -166,7 +166,7 @@ object GetCoverageWcsParams {
         val format =
           params.validatedParam("format")
             .andThen { f =>
-              SUPPORTED_FORMATS.get(f) match {
+              OutputFormat.fromString(f) match {
                 case Some(format) => Valid(format).toValidatedNel
                 case None =>
                   Invalid(UnsupportedFormatError(f)).toValidatedNel
