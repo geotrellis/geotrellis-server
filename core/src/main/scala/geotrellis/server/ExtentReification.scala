@@ -2,7 +2,6 @@ package geotrellis.server
 
 import geotrellis.raster.{ProjectedRaster, MultibandTile, CellSize}
 import geotrellis.vector.Extent
-import com.azavea.maml.ast.{Literal, MamlKind}
 import cats._
 import cats.data.EitherT
 import cats.effect._

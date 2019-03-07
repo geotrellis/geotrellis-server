@@ -9,7 +9,6 @@ import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.proj4.WebMercator
 import geotrellis.vector.Extent
 
-import com.azavea.maml.ast.{MamlKind, RasterLit}
 import cats.effect._
 import cats.data.{NonEmptyList => NEL}
 

@@ -1,6 +1,5 @@
 package geotrellis.server
 
-import com.azavea.maml.ast.{Literal, MamlKind}
 import geotrellis.raster.{ProjectedRaster, MultibandTile}
 import cats.effect._
 import simulacrum._

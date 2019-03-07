@@ -6,7 +6,6 @@ import cats.effect._
 import cats.data.{NonEmptyList => NEL}
 import cats.syntax.all._
 import cats.implicits._
-import com.azavea.maml.ast.{Expression, Literal, MamlKind, RasterLit}
 import com.azavea.maml.eval.tile._
 import io.circe._
 import io.circe.generic.semiauto._

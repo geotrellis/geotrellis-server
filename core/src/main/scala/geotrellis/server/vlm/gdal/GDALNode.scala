@@ -10,7 +10,6 @@ import geotrellis.contrib.vlm.TargetRegion
 import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.vector.Extent
 
-import com.azavea.maml.ast.{MamlKind, RasterLit}
 import _root_.io.circe._
 import _root_.io.circe.generic.semiauto._
 import cats.effect._

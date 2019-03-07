@@ -10,7 +10,6 @@ import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.raster.io.geotiff.AutoHigherResolution
 
 import geotrellis.vector.Extent
-import com.azavea.maml.ast.{MamlKind, RasterLit}
 
 import _root_.io.circe._
 import _root_.io.circe.generic.semiauto._
@@ -33,7 +32,6 @@ object GeoTiffNode extends RasterSourceUtils {
   }
 
   implicit val cogNodeTmsReification: TmsReification[GeoTiffNode] = new TmsReification[GeoTiffNode] {
-    def kind(self: GeoTiffNode): MamlKind = MamlKind.Image
     def tmsReification(self: GeoTiffNode, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[ProjectedRaster[MultibandTile]] = (z: Int, x: Int, y: Int) => {
       def fetch(xCoord: Int, yCoord: Int) =
         fetchTile(self.uri.toString, z, xCoord, yCoord, WebMercator)
