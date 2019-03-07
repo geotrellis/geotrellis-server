@@ -28,36 +28,45 @@ import scala.concurrent.duration._
 
 class GetCoverage(rsm: RasterSourcesModel) extends LazyLogging {
 
-  // TODO: implement some caching to handle this case
   /*
   QGIS appears to sample WCS service by placing low and high resolution requests at coverage center. 
   These sampling requests happen for every actual WCS request, we can get really great cache hit rates.
   */
-  //lazy val requestCache: Cache[(LayerId, GridBounds, RasterExtent), Raster[Tile]] =
-  //    Scaffeine()
-  //      .recordStats()
-  //      .expireAfterWrite(1.hour)
-  //      .maximumSize(32)
-  //      .build()
+  lazy val requestCache: Cache[GetCoverageWcsParams, Array[Byte]] =
+      Scaffeine()
+        .recordStats()
+        .expireAfterWrite(1.hour)
+        .maximumSize(32)
+        .build()
 
-  def build(params: GetCoverageWcsParams)(implicit contextShift: ContextShift[IO]): Array[Byte] = {
-    val src = rsm.sourceLookup(params.identifier)
-    val re = RasterExtent(params.boundingBox, params.width, params.height)
+  def build(params: GetCoverageWcsParams)(implicit contextShift: ContextShift[IO]): Array[Byte] =
+  requestCache.getIfPresent(params) match {
+    case Some(bytes) =>
+      logger.trace(s"GetCoverage cache HIT: $params")
+      println(s"GetCoverage cache HIT: $params")
+      bytes
+    case None =>
+      logger.trace(s"GetCoverage cache MISS: $params")
+      println(s"GetCoverage cache MISS: $params")
+      val src = rsm.sourceLookup(params.identifier)
+      val re = RasterExtent(params.boundingBox, params.width, params.height)
 
-    val eval = src match {
-      case SimpleSource(name, title, source, styles) =>
-        LayerExtent.identity(SimpleLayer(name, title, LatLng, source, None))
-      case MapAlgebraSource(name, title, sources, algebra, styles) =>
-        val simpleLayers = sources.mapValues { rs => SimpleLayer(name, title, LatLng, rs, None) }
-        LayerExtent(IO.pure(algebra), IO.pure(simpleLayers), Interpreter.DEFAULT)
-    }
+      val eval = src match {
+        case SimpleSource(name, title, source, styles) =>
+          LayerExtent.identity(SimpleLayer(name, title, LatLng, source, None))
+        case MapAlgebraSource(name, title, sources, algebra, styles) =>
+          val simpleLayers = sources.mapValues { rs => SimpleLayer(name, title, LatLng, rs, None) }
+          LayerExtent(IO.pure(algebra), IO.pure(simpleLayers), Interpreter.DEFAULT)
+      }
 
-    // TODO: Return IO instead
-    eval(re.extent, re.cellSize).unsafeRunSync match {
-      case Valid(mbtile) =>
-        GeoTiff(Raster(mbtile, re.extent), LatLng).toByteArray
-      case Invalid(errs) =>
-        throw new MamlException(errs)
-    }
+      // TODO: Return IO instead
+      eval(re.extent, re.cellSize).unsafeRunSync match {
+        case Valid(mbtile) =>
+          val bytes = GeoTiff(Raster(mbtile, re.extent), LatLng).toByteArray
+          requestCache.put(params, bytes)
+          bytes
+        case Invalid(errs) =>
+          throw new MamlException(errs)
+      }
   }
 }
