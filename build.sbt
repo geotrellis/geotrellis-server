@@ -194,6 +194,7 @@ lazy val ogc = project
       slf4jSimple,
       http4sBlazeServer % Test,
       pureConfig,
+      scaffeine,
       scalatest
     )
   )
