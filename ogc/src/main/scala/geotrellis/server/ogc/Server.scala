@@ -1,8 +1,13 @@
 package geotrellis.server.ogc
 
+import geotrellis.proj4.LatLng
+import geotrellis.raster.TileLayout
+import geotrellis.spark.tiling.LayoutDefinition
+import geotrellis.vector.Extent
 import geotrellis.server.ogc.conf._
 import geotrellis.server.ogc.wms._
 import geotrellis.server.ogc.wcs._
+import geotrellis.server.ogc.wmts._
 
 import cats.effect._
 import cats.implicits._
@@ -38,17 +43,27 @@ object Server extends LazyLogging with IOApp {
       _          <- Stream.eval(IO.pure(logger.info(s"Advertising service URL at ${conf.serviceUrlWcs}")))
       simpleLayers = conf.layers.collect { case ssc@SimpleSourceConf(_, _, _, _) => ssc.model }
       mapAlgebraLayers = conf.layers.collect { case mal@MapAlgebraSourceConf(_, _, _, _) => mal.model(simpleLayers) }
-      rsm = RasterSourcesModel(simpleLayers ++ mapAlgebraLayers)
+      rasterSourcesModel = RasterSourcesModel(simpleLayers ++ mapAlgebraLayers)
 
-      wmsService = new WmsService(rsm, conf.serviceUrlWms, conf.wms.serviceMetadata)
+      // TODO: Make this come from config instead of being hardcoded
+      worldExtent = Extent(-180.0000, -90.0000, 180.0000, 90.0000)
+      tileLayout = TileLayout(layoutCols = 360, layoutRows = 180, tileCols = 256, tileRows = 256)
+      layoutDefinition = LayoutDefinition(worldExtent, tileLayout)
+      tileMatrix = TileMatrix("Title", "Abstract", "ID", worldExtent, tileLayout)
+      tileMatrixSet = TileMatrixSet(LatLng, "Title", "Abstract", "ID", List(tileMatrix))
+      tileMatrixSetModel = TileMatrixModel(List(tileMatrixSet))
+      wmsService = new WmsService(rasterSourcesModel, conf.serviceUrl)
       wcsService = new WcsService(rsm, conf.serviceUrlWcs)
+      wmtsService = new WmtsService(rasterSourcesModel, tileMatrixSetModel, conf.serviceUrl)
+
       exitCode   <- BlazeServerBuilder[IO]
         .withIdleTimeout(Duration.Inf) // for test purposes only
         .enableHttp2(true)
         .bindHttp(conf.http.port, conf.http.interface)
         .withHttpApp(Router(
           "/wms" -> commonMiddleware(wmsService.routes),
-          "/wcs" -> commonMiddleware(wcsService.routes)
+          "/wcs" -> commonMiddleware(wcsService.routes),
+          "/wmts" -> commonMiddleware(wmtsService.routes)
         ).orNotFound)
         .serve
     } yield exitCode
