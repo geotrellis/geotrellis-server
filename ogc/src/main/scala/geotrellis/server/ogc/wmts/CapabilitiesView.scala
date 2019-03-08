@@ -4,6 +4,7 @@ import geotrellis.proj4.{CRS, WebMercator, LatLng}
 import geotrellis.contrib.vlm.RasterSource
 import geotrellis.server.ogc._
 import geotrellis.vector.Extent
+import geotrellis.raster.reproject._
 
 import opengis._
 import scalaxb._
@@ -153,14 +154,14 @@ object CapabilitiesView {
     )
 
   implicit class OgcSourceMethods(val self: OgcSource) {
-    def toLayerType(layerName: String, defaultCrs: CRS = WebMercator): LayerType =
+    def toLayerType(layerName: String): LayerType = {
+      val wgs84extent: Extent = ReprojectRasterExtent(self.nativeRE, self.nativeCrs.head, LatLng).extent
+
       LayerType(
         Title = LanguageStringType(layerName) :: Nil,
         Abstract = Nil,
         Keywords= Nil,
-        WGS84BoundingBox = Set(self.nativeCrs.head, defaultCrs).toList.map { crs =>
-          boundingBox(self.nativeExtent.reproject(self.nativeCrs.head, crs))
-        },
+        WGS84BoundingBox = List(boundingBox(wgs84extent)),
         Identifier = CodeType(layerName),
         BoundingBox = Nil,
         Metadata = Nil,
@@ -179,6 +180,7 @@ object CapabilitiesView {
         TileMatrixSetLink = List(TileMatrixSetLink("ID")),
         ResourceURL = Nil
       )
+    }
   }
 
   def modelAsLayers(model: RasterSourcesModel): List[scalaxb.DataRecord[LayerType]] = {
