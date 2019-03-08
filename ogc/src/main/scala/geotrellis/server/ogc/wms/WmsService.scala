@@ -9,6 +9,7 @@ import geotrellis.server.ExtentReification.ops._
 import geotrellis.spark._
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.{MultibandTile, Raster, RasterExtent}
+import geotrellis.raster.histogram._
 import com.azavea.maml.error._
 import com.azavea.maml.eval._
 import org.http4s._
@@ -23,8 +24,10 @@ import cats.effect._
 import _root_.io.circe._
 import _root_.io.circe.syntax._
 import com.typesafe.scalalogging.LazyLogging
+import com.github.blemale.scaffeine.{Cache, Scaffeine}
 
 import java.net.{URI, URL}
+import scala.concurrent.duration._
 
 class WmsService(
   model: RasterSourcesModel,
@@ -33,6 +36,13 @@ class WmsService(
 )(implicit contextShift: ContextShift[IO])
   extends Http4sDsl[IO]
      with LazyLogging {
+
+  val histoCache: Cache[OgcLayer, Interpreted[List[Histogram[Double]]]] =
+    Scaffeine()
+      .recordStats()
+      .expireAfterWrite(1.hour)
+      .maximumSize(500)
+      .build[OgcLayer, Interpreted[List[Histogram[Double]]]]()
 
   def handleError[Result](result: Either[Throwable, Result])(implicit ee: EntityEncoder[IO, Result]): IO[Response[IO]] = result match {
     case Right(res) =>
@@ -45,9 +55,8 @@ class WmsService(
   }
 
   def routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
-    case req @ GET -> Root / "wms" =>
-      println(req)
-
+    case req @ GET -> Root =>
+     logger.warn(s"""Recv'd request: $req""")
       WmsParams(req.multiParams) match {
         case Invalid(errors) =>
           val msg = ParamError.generateErrorMessage(errors.toList)
@@ -74,7 +83,16 @@ class WmsService(
                 LayerHistogram(IO.pure(expr), IO.pure(parameters), Interpreter.DEFAULT, 512)
             }
 
-            (evalExtent(re.extent, re.cellSize), evalHisto).parMapN {
+            val histIO = for {
+              cached <- IO { histoCache.getIfPresent(layer) }
+              hist   <- cached match {
+                          case Some(h) => IO.pure(h)
+                          case None => evalHisto
+                        }
+              _ <-  IO { histoCache.put(layer, hist) }
+            } yield hist
+
+            (evalExtent(re.extent, re.cellSize), histIO).parMapN {
               case (Valid(mbtile), Valid(hists)) =>
                 Valid((mbtile, hists))
               case (Invalid(errs), _) =>
@@ -83,7 +101,6 @@ class WmsService(
                 Invalid(errs)
             }.attempt flatMap {
               case Right(Valid((mbtile, hists))) => // success
-                println(hists.head.statistics)
                 val rendered = Render(mbtile, layer.style, wmsReq.format, hists)
                 Ok(rendered)
               case Right(Invalid(errs)) => // maml-specific errors

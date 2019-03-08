@@ -14,13 +14,22 @@ case class Conf(
   wms: WMS,
   layers: List[OgcSourceConf]
 ) {
-    def serviceUrl: URL = {
+    def serviceUrlWms: URL = {
       // TODO: move decision to attach WMS to the point where we decide which service (wms, wmts, wcs) to bind
       service.url.getOrElse(
         if (http.interface == "0.0.0.0")
           new URL("http", InetAddress.getLocalHost.getHostAddress, http.port, "/wms")
         else
           new URL("http", http.interface, http.port, "/wms")
+      )
+    }
+    def serviceUrlWcs: URL = {
+      // TODO: move decision to attach WMS to the point where we decide which service (wms, wmts, wcs) to bind
+      service.url.getOrElse(
+        if (http.interface == "0.0.0.0")
+          new URL("http", InetAddress.getLocalHost.getHostAddress, http.port, "/wcs")
+        else
+          new URL("http", http.interface, http.port, "/wcs")
       )
     }
 }

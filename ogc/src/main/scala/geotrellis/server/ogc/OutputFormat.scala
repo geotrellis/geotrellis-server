@@ -5,9 +5,9 @@ import scala.util.Try
 sealed trait OutputFormat
 
 object OutputFormat {
-  case object GeoTiff extends OutputFormat
-  case object Png extends OutputFormat
-  case object Jpg extends OutputFormat
+  case object GeoTiff extends OutputFormat { override def toString = "image/geotiff" }
+  case object Png extends OutputFormat { override def toString = "image/png" }
+  case object Jpg extends OutputFormat { override def toString = "image/jpg" }
 
   def fromStringUnsafe(str: String) = str match {
     case "geotiff" | "geotif" | "image/geotiff" =>

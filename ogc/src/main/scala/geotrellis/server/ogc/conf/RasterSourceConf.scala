@@ -1,6 +1,6 @@
 package geotrellis.server.ogc.conf
 
-import geotrellis.server.ogc.wms.source._
+import geotrellis.server.ogc._
 
 import geotrellis.contrib.vlm.RasterSource
 import geotrellis.contrib.vlm.avro.GeotrellisRasterSource
