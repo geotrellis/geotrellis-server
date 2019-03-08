@@ -28,7 +28,7 @@ case class TileMatrixSet(
       Identifier = CodeType(identifier),
       // TODO: bounding box for global layer
       BoundingBox = None,
-      SupportedCRS = new URI(s"urn:ogc:def:crs:OGC:1.3:${supportedCrs.epsgCode.map { code => s"EPSG:$code" }.getOrElse("CRS84")}"),
+      SupportedCRS = new URI(s"urn:ogc:def:crs:EPSG:9.2:${supportedCrs.epsgCode.getOrElse(4326)}"),
       WellKnownScaleSet = None,
       TileMatrix = matrices.map(_.toXml(supportedCrs))
     )
