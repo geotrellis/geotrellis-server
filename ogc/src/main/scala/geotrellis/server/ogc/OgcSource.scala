@@ -104,8 +104,6 @@ case class MapAlgebraSource(
   }
 
   def nativeCrs: Set[CRS] = sources.values.map(_.crs).toSet
-<<<<<<< HEAD
-=======
 
   lazy val nativeExtent : Extent = {
     val reprojectedSources: NEL[RasterSource] =
@@ -114,6 +112,4 @@ case class MapAlgebraSource(
       reprojectedSources.map(_.extent)
     SampleUtils.intersectExtents(extents).getOrElse(throw new Exception("Map algebra extents must intersect"))
   }
->>>>>>> 30f5bd0... WMTS KVP
-
 }
