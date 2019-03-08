@@ -29,7 +29,7 @@ import scala.concurrent.duration._
 class GetCoverage(rsm: RasterSourcesModel) extends LazyLogging {
 
   /*
-  QGIS appears to sample WCS service by placing low and high resolution requests at coverage center. 
+  QGIS appears to sample WCS service by placing low and high resolution requests at coverage center.
   These sampling requests happen for every actual WCS request, we can get really great cache hit rates.
   */
   lazy val requestCache: Cache[GetCoverageWcsParams, Array[Byte]] =
@@ -53,9 +53,9 @@ class GetCoverage(rsm: RasterSourcesModel) extends LazyLogging {
 
       val eval = src match {
         case SimpleSource(name, title, source, styles) =>
-          LayerExtent.identity(SimpleLayer(name, title, LatLng, source, None))
+          LayerExtent.identity(SimpleWmsLayer(name, title, LatLng, source, None))
         case MapAlgebraSource(name, title, sources, algebra, styles) =>
-          val simpleLayers = sources.mapValues { rs => SimpleLayer(name, title, LatLng, rs, None) }
+          val simpleLayers = sources.mapValues { rs => SimpleWmsLayer(name, title, LatLng, rs, None) }
           LayerExtent(IO.pure(algebra), IO.pure(simpleLayers), Interpreter.DEFAULT)
       }
 

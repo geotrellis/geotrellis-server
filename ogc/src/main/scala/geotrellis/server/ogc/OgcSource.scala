@@ -28,7 +28,6 @@ trait OgcSource {
   def nativeRE: RasterExtent
   def bboxIn(crs: CRS): BoundingBox
   def nativeCrs: Set[CRS]
-  def nativeExtent: Extent
 }
 
 case class SimpleSource(
@@ -37,8 +36,6 @@ case class SimpleSource(
   source: RasterSource,
   styles: List[StyleModel]
 ) extends OgcSource {
-
-  def nativeExtent = source.extent
 
   def nativeRE = source.gridExtent.toRasterExtent
 
