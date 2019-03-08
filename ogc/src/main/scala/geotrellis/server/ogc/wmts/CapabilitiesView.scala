@@ -18,13 +18,11 @@ import scala.xml.{Elem, NodeSeq}
   * @param rasterSourcesModel Model of layers we can report
   * @param tileMatrixModel Model of tile matrix set
   * @param serviceUrl URL where this service can be reached with addition of `?request=` query parameter
-  * @param defaultCrs Common CRS, all layers must be available in at least this CRS
   */
 class CapabilitiesView(
   rasterSourcesModel: RasterSourcesModel,
   tileMatrixModel: TileMatrixModel,
-  serviceUrl: URL,
-  defaultCrs: CRS = WebMercator
+  serviceUrl: URL
 ) {
 
   def toXML: Elem = {

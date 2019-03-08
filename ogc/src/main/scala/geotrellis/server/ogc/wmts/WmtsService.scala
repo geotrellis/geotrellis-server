@@ -50,7 +50,7 @@ class WmtsService(
           BadRequest(msg)
 
         case Valid(wmtsReq: GetCapabilities) =>
-          Ok.apply(new CapabilitiesView(rasterSourcesModel, tileMatrixModel, serviceUrl, defaultCrs = LatLng).toXML)
+          Ok.apply(new CapabilitiesView(rasterSourcesModel, tileMatrixModel, serviceUrl).toXML)
 
         case Valid(wmtsReq: GetTile) =>
           val tileCol = wmtsReq.tileCol
@@ -105,4 +105,3 @@ class WmtsService(
       BadRequest("Don't know what that is")
   }
 }
-
