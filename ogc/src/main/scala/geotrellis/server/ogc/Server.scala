@@ -52,9 +52,9 @@ object Server extends LazyLogging with IOApp {
       tileMatrix = TileMatrix("Title", "Abstract", "ID", worldExtent, tileLayout)
       tileMatrixSet = TileMatrixSet(LatLng, "Title", "Abstract", "ID", List(tileMatrix))
       tileMatrixSetModel = TileMatrixModel(List(tileMatrixSet))
-      wmsService = new WmsService(rasterSourcesModel, conf.serviceUrl)
-      wcsService = new WcsService(rsm, conf.serviceUrlWcs)
-      wmtsService = new WmtsService(rasterSourcesModel, tileMatrixSetModel, conf.serviceUrl)
+      wmsService = new WmsService(rasterSourcesModel, conf.serviceUrlWms, conf.wms.serviceMetadata)
+      wcsService = new WcsService(rasterSourcesModel, conf.serviceUrlWcs)
+      wmtsService = new WmtsService(rasterSourcesModel, tileMatrixSetModel, conf.serviceUrlWmts)
 
       exitCode   <- BlazeServerBuilder[IO]
         .withIdleTimeout(Duration.Inf) // for test purposes only
