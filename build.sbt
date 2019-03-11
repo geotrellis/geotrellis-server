@@ -1,6 +1,8 @@
 import Dependencies._
 import microsites._
 
+addCommandAlias("bintrayPublish", ";publish;bintrayRelease")
+
 scalaVersion := scalaVer
 scalaVersion in ThisBuild := scalaVer
 
@@ -54,6 +56,18 @@ lazy val commonSettings = Seq(
 )
 
 lazy val publishSettings = Seq(
+  bintrayReleaseOnPublish := false,
+  publishTo := {
+    val bintrayPublishTo = publishTo.value
+    val nexus = "http://nexus.internal.azavea.com"
+
+    if (isSnapshot.value) {
+      Some("snapshots" at nexus + "/repository/azavea-snapshots")
+    } else {
+      bintrayPublishTo
+    }
+  },
+  credentials += Credentials(Path.userHome / ".sbt" / ".credentials"),
   bintrayOrganization := Some("azavea"),
   bintrayRepository := "geotrellis",
   bintrayVcsUrl := Some("https://github.com/geotrellis/geotrellis-server.git"),
@@ -80,7 +94,7 @@ lazy val docSettings = Seq(
   micrositeGitterChannel := false,
   micrositeOrganizationHomepage := "https://www.azavea.com/",
   micrositeGithubOwner := "geotrellis",
-  micrositeGithubRepo := "geotrellis-server",
+  micrositeGithubRepo := "geotrellis-servern",
   micrositeBaseUrl := "/gtserver",
   micrositeDocumentationUrl := "/gtserver/latest/api",
   micrositeExtraMdFiles := Map(
