@@ -25,7 +25,7 @@ object WmtsParams {
 
   object GetCapabilities {
     def build(params: ParamMap): ValidatedNel[ParamError, WmtsParams] = {
-      (params.validatedVersion("1.3.0"),
+      (params.validatedVersion("1.0.0"),
         params.validatedOptionalParam("format"),
         params.validatedOptionalParam("updatesequence")
       ).mapN(GetCapabilities.apply)
@@ -45,8 +45,9 @@ object WmtsParams {
 
   object GetTile {
     def build(params: ParamMap): ValidatedNel[ParamError, WmtsParams] = {
+      println(s"PARAM MAP: ${params.params}")
       val versionParam =
-        params.validatedVersion("1.3.0")
+        params.validatedVersion("1.0.0")
 
       versionParam
         .andThen { version: String =>
@@ -102,4 +103,3 @@ object WmtsParams {
     }
   }
 }
-

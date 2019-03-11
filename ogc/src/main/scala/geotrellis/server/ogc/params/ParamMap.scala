@@ -8,7 +8,7 @@ import com.typesafe.scalalogging.LazyLogging
 import geotrellis.server.ogc.params._
 
 
-class ParamMap(params: Map[String, Seq[String]]) extends LazyLogging {
+class ParamMap(val params: Map[String, Seq[String]]) extends LazyLogging {
   private val _params: Map[String, Seq[String]] = params.map { case (k, v) => (k.toLowerCase, v) }
 
   def getParams(field: String): Option[List[String]] =
@@ -54,11 +54,14 @@ class ParamMap(params: Map[String, Seq[String]]) extends LazyLogging {
 
   def validatedVersion(default: String): ValidatedNel[ParamError, String] =
     (getParams("version") match {
+      case Some(Nil) => Valid(default)
       case Some(version :: Nil) => Valid(version)
       case Some(s) => Invalid(ParamError.RepeatedParam("version"))
       case None =>
         // Can send "acceptversions" instead
         getParams("acceptversions") match {
+          case Some(Nil) =>
+            Valid(default)
           case Some(versions :: Nil) =>
             Valid(versions.split(",").max)
           case Some(s) =>
