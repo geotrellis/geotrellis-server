@@ -41,17 +41,14 @@ object Server extends LazyLogging with IOApp {
       conf       <- Stream.eval(LoadConf().as[Conf])
       _          <- Stream.eval(IO.pure(logger.info(s"Advertising service URL at ${conf.serviceUrlWms}")))
       _          <- Stream.eval(IO.pure(logger.info(s"Advertising service URL at ${conf.serviceUrlWcs}")))
+
       simpleLayers = conf.layers.collect { case ssc@SimpleSourceConf(_, _, _, _) => ssc.model }
       mapAlgebraLayers = conf.layers.collect { case mal@MapAlgebraSourceConf(_, _, _, _) => mal.model(simpleLayers) }
       rasterSourcesModel = RasterSourcesModel(simpleLayers ++ mapAlgebraLayers)
 
       // TODO: Make this come from config instead of being hardcoded
-      worldExtent = Extent(-180.0000, -90.0000, 180.0000, 90.0000)
-      tileLayout = TileLayout(layoutCols = 360, layoutRows = 180, tileCols = 256, tileRows = 256)
-      layoutDefinition = LayoutDefinition(worldExtent, tileLayout)
-      tileMatrix = TileMatrix("Title", "Abstract", "ID", worldExtent, tileLayout)
-      tileMatrixSet = TileMatrixSet(LatLng, "Title", "Abstract", "ID", List(tileMatrix))
-      tileMatrixSetModel = TileMatrixModel(List(tileMatrixSet))
+      tileMatrixSetModel = TileMatrixModel(List(TileMatrixSet.GoogleMapsCompatible))
+
       wmsService = new WmsService(rasterSourcesModel, conf.serviceUrlWms, conf.wms.serviceMetadata)
       wcsService = new WcsService(rasterSourcesModel, conf.serviceUrlWcs)
       wmtsService = new WmtsService(rasterSourcesModel, tileMatrixSetModel, conf.serviceUrlWmts)
