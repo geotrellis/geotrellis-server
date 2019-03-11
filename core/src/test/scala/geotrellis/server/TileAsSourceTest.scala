@@ -28,9 +28,9 @@ trait TileAsSourceImplicits {
   }.toArray
 
   implicit val extentReification: ExtentReification[Tile] = new ExtentReification[Tile] {
-    def kind(self: Tile): MamlKind = MamlKind.Image
-    def extentReification(self: Tile)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] =
-      (extent: Extent, cs: CellSize) => IO.pure(RasterLit(Raster(MultibandTile(self), extent)))
+    def extentReification(self: Tile)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
+      (extent: Extent, cs: CellSize) =>
+        IO.pure(ProjectedRaster(MultibandTile(self), extent, WebMercator))
   }
 
   implicit val nodeRasterExtents: HasRasterExtents[Tile] = new HasRasterExtents[Tile] {
@@ -40,10 +40,10 @@ trait TileAsSourceImplicits {
   }
 
   implicit val tmsReification: TmsReification[Tile] = new TmsReification[Tile] {
-    def kind(self: Tile): MamlKind = MamlKind.Image
-    def tmsReification(self: Tile, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[Literal] = (z: Int, x: Int, y: Int) => {
+    def tmsReification(self: Tile, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[ProjectedRaster[MultibandTile]] =
+      (z: Int, x: Int, y: Int) => {
         val extent = tmsLevels(z).mapTransform.keyToExtent(x, y)
-        IO.pure(RasterLit(Raster(MultibandTile(self), extent)))
+        IO.pure(ProjectedRaster(MultibandTile(self), extent, WebMercator))
       }
     }
 

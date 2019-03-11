@@ -19,7 +19,7 @@ Current version:
 
 Add the geotrellis-server dependency by declaring it within your
 project's `build.sbt`:
-`libraryDependencies += "com.azavea" %% "geotrellis-server-core" % "0.0.9"`
+`libraryDependencies += "com.azavea" %% "geotrellis-server-core" % "0.1.10"`
 
 
 ### High level concepts
@@ -78,7 +78,6 @@ case class RasterRef(uri: URI, band: Int)
 object RasterRef {
   // reification means 'thingification', and that's what we're proving we can do here
   implicit val rasterRefExtentReification: ExtentReification[RasterRef] = new ExtentReification[RasterRef] {
-    def kind(self: RasterRef): MamlKind = ???
     def extentReification(self: CogNode, buffer: Int)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[Literal] = ???
   }
   // We can lean on circe's automatic derivation to provide an encoder
