@@ -175,7 +175,7 @@ object CapabilitiesView {
         InfoFormat = List("text/xml"),
         Dimension = Nil,
         // NOTE: This "ID" MUST correspond to the TileMatrixSet ID for the layers to show up in QGIS
-        TileMatrixSetLink = List(TileMatrixSetLink("ID")),
+        TileMatrixSetLink = List(TileMatrixSetLink("GoogleMapsCompatible")),
         ResourceURL = Nil
       )
     }

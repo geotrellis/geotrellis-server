@@ -20,8 +20,8 @@ case class TileMatrixModel(
   def getLayoutDefinition(tileMatrixSetId: String, tileMatrixId: String): Option[LayoutDefinition] =
     for {
       matrixSet <- matrixSetLookup.get(tileMatrixSetId)
-      matrix <- matrixSet.matrices.find(_.identifier == tileMatrixId)
-    } yield matrix.toLayout(matrixSet.supportedCrs)
+      matrix <- matrixSet.tileMatrix.find(_.identifier == tileMatrixId)
+    } yield matrix.layout
 
   def getCrs(tileMatrixSetId: String): Option[CRS] =
     for {
