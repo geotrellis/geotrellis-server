@@ -49,10 +49,8 @@ class WcsService(rsm: RasterSourcesModel, serviceUrl: URL)(implicit cs: ContextS
        case Validated.Valid(wcsParams) =>
          wcsParams match {
            case p: GetCapabilitiesWcsParams =>
-             val link = s"${serviceUrl}${req.uri.path}"
-             //val link = s"http://${authority}:${port}${req.uri.path}?"
-             logger.debug(s"\033[1mGetCapabilities: $link\033[0m")
-             val result = Operations.getCapabilities(link, rsm, p)
+             logger.debug(s"\033[1mGetCapabilities: $serviceUrl\033[0m")
+             val result = Operations.getCapabilities(serviceUrl.toString, rsm, p)
              logger.debug(result.toString)
              Ok(result)
 
