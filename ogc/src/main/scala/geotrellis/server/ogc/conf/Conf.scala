@@ -1,49 +1,47 @@
 package geotrellis.server.ogc.conf
 
+import geotrellis.server.ogc.ows
+import geotrellis.server.ogc.{OgcSource, SimpleSource}
+
 import java.net.{InetAddress, URL}
 
-import geotrellis.server.ogc.wms.wmsScope
 import pureconfig.ConfigReader
 import scalaxb.DataRecord
 
-case class WMS(serviceMetadata: opengis.wms.Service)
 
 case class Conf(
   http: Conf.Http,
   service: Conf.Service,
-  wms: WMS,
-  layers: List[OgcSourceConf]
+  layers: Map[String, OgcSourceConf],
+  wms: Conf.WMS,
+  wmts: Conf.WMTS,
+  wcs: Conf.WCS
 ) {
-  def serviceUrlWms: URL = {
+  def serviceUrl(path: String): URL = {
     // TODO: move decision to attach WMS to the point where we decide which service (wms, wmts, wcs) to bind
     service.url.getOrElse(
       if (http.interface == "0.0.0.0")
-        new URL("http", InetAddress.getLocalHost.getHostAddress, http.port, "/wms")
+        new URL("http", InetAddress.getLocalHost.getHostAddress, http.port, path)
       else
-        new URL("http", http.interface, http.port, "/wms")
+        new URL("http", http.interface, http.port, path)
     )
   }
-    def serviceUrlWmts: URL = {
-      // TODO: move decision to attach WMS to the point where we decide which service (wms, wmts, wcs) to bind
-      service.url.getOrElse(
-        if (http.interface == "0.0.0.0")
-          new URL("http", InetAddress.getLocalHost.getHostAddress, http.port, "/wmts")
-        else
-          new URL("http", http.interface, http.port, "/wmts")
-      )
-    }
-    def serviceUrlWcs: URL = {
-      // TODO: move decision to attach WMS to the point where we decide which service (wms, wmts, wcs) to bind
-      service.url.getOrElse(
-        if (http.interface == "0.0.0.0")
-          new URL("http", InetAddress.getLocalHost.getHostAddress, http.port, "/wcs")
-        else
-          new URL("http", http.interface, http.port, "/wcs")
-      )
-    }
 }
 
 object Conf {
+  trait OgcService {
+    def layerDefinitions: List[OgcSourceConf]
+    def layerSources(simpleSources: List[SimpleSource]): List[OgcSource] = {
+      val simpleLayers =
+        layerDefinitions.collect { case ssc@SimpleSourceConf(_, _, _, _) => ssc.model }
+      val mapAlgebraLayers =
+        layerDefinitions.collect { case masc@MapAlgebraSourceConf(_, _, _, _) => masc.model(simpleSources) }
+      simpleLayers ++ mapAlgebraLayers
+    }
+  }
+  case class WMS(serviceMetadata: opengis.wms.Service, layerDefinitions: List[OgcSourceConf]) extends OgcService
+  case class WMTS(serviceMetadata: ows.ServiceMetadata, layerDefinitions: List[OgcSourceConf]) extends OgcService
+  case class WCS(serviceMetadata: ows.ServiceMetadata, layerDefinitions: List[OgcSourceConf]) extends OgcService
 
   /** Public URL for this service that will be reported.
     * This may need to be set externall due to containerization or proxies.
@@ -55,16 +53,6 @@ object Conf {
 
   lazy val conf: Conf = pureconfig.loadConfigOrThrow[Conf]
   implicit def ConfObjectToClass(obj: Conf.type): Conf = conf
-
-  implicit def nameConfigReader: ConfigReader[opengis.wms.Name] =
-    ConfigReader[String].map { str =>
-      opengis.wms.Name.fromString(str, wmsScope)
-    }
-
-  implicit def keywordConfigReader: ConfigReader[opengis.wms.Keyword] =
-    ConfigReader[String].map { str =>
-      opengis.wms.Keyword(str)
-    }
 
   // This is a work-around to use pureconfig to read scalaxb generated case classes
   // DataRecord should never be specified from configuration, this satisfied the resolution

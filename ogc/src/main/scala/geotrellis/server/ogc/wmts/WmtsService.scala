@@ -21,7 +21,8 @@ import java.net.URL
 class WmtsService(
   rasterSourcesModel: RasterSourcesModel,
   tileMatrixModel: TileMatrixModel,
-  serviceUrl: URL
+  serviceUrl: URL,
+  serviceMetadata: ows.ServiceMetadata
 )(implicit contextShift: ContextShift[IO]) extends Http4sDsl[IO] with LazyLogging {
 
   def handleError[Result](result: Either[Throwable, Result])(implicit ee: EntityEncoder[IO, Result]): IO[Response[IO]] = result match {
@@ -36,7 +37,7 @@ class WmtsService(
 
   def routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
     case req @ GET -> Root =>
-      println(req)
+      logger.debug(s"WMTS Request received: $req")
 
       WmtsParams(req.multiParams) match {
         case Invalid(errors) =>
@@ -45,7 +46,7 @@ class WmtsService(
           BadRequest(msg)
 
         case Valid(wmtsReq: GetCapabilities) =>
-          Ok.apply(new CapabilitiesView(rasterSourcesModel, tileMatrixModel, serviceUrl).toXML)
+          Ok.apply(new CapabilitiesView(serviceMetadata, rasterSourcesModel, tileMatrixModel, serviceUrl).toXML)
 
         case Valid(wmtsReq: GetTile) =>
           val tileCol = wmtsReq.tileCol
@@ -82,7 +83,6 @@ class WmtsService(
                 Invalid(errs)
             }.attempt flatMap {
               case Right(Valid((mbtile, hists))) => // success
-                println(hists.head.statistics)
                 val rendered = Render(mbtile, layer.style, wmtsReq.format, hists)
                 Ok(rendered)
               case Right(Invalid(errs)) => // maml-specific errors

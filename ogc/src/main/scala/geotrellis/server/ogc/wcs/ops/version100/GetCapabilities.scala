@@ -36,7 +36,7 @@ object GetCapabilities extends GetCapabilitiesBase with LazyLogging {
     }}
   }
 
-  def build(requestURL: String, rsm: RasterSourcesModel, params: GetCapabilitiesWcsParams): Elem = {
+  def build(metadata: ows.ServiceMetadata, requestURL: String, rsm: RasterSourcesModel, params: GetCapabilitiesWcsParams): Elem = {
     <WCS_Capabilities xmlns="http://www.opengis.net/wcs"
                       xmlns:xlink="http://www.w3.org/1999/xlink"
                       xmlns:gml="http://www.opengis.net/gml"

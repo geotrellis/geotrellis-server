@@ -83,7 +83,10 @@ object DescribeCoverage extends DescribeCoverageBase with LazyLogging {
                          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                          xsi:schemaLocation="http://www.opengis.net/wcs http://schemas.opengis.net/wcs/1.0.0/describeCoverage.xsd"
                          version="1.0.0">
-      { rsm.sources.map(createDescription(_)) }
+      { params.identifiers.map({ id =>
+          createDescription(rsm.sourceLookup(id))
+        })
+      }
     </CoverageDescription>
   }
 }

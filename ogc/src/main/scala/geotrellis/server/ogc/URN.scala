@@ -8,6 +8,7 @@ object URN {
   }
 
   def unsafeFromCrs(crs: CRS): String = {
-    fromCrs(crs).get
+    fromCrs(crs)
+      .getOrElse(throw new Exception(s"Unrecognized CRS: $crs. Unable to construct URN"))
   }
 }

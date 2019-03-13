@@ -36,7 +36,7 @@ object GetCapabilities extends GetCapabilitiesBase with LazyLogging {
         { Common.boundingBox110(ex, crs) }
         {
           if (crs.epsgCode.isDefined) {
-            <SupportedCRS>urn:ogs:def:crs:EPSG::{ crs.epsgCode.get.toString }</SupportedCRS>
+            <SupportedCRS>{ URN.unsafeFromCrs(crs) }</SupportedCRS>
           }
         }
         <SupportedFormat>image/geotiff</SupportedFormat>
@@ -47,7 +47,7 @@ object GetCapabilities extends GetCapabilitiesBase with LazyLogging {
     }}
   }
 
-  def build(requestURL: String, rsm: RasterSourcesModel, params: GetCapabilitiesWcsParams): Elem = {
+  def build(metadata: ows.ServiceMetadata, requestURL: String, rsm: RasterSourcesModel, params: GetCapabilitiesWcsParams): Elem = {
     // Pulled example template from http://nsidc.org/cgi-bin/atlas_north?service=WCS&request=GetCapabilities&version=1.1.1
     val version = params.version.split('.')
     <wcs:Capabilities xmlns:wcs={"http://www.opengis.net/wcs/" + version(0) + "." + version(1)}
@@ -58,7 +58,8 @@ object GetCapabilities extends GetCapabilitiesBase with LazyLogging {
                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                       version={params.version}>
       <ows:ServiceIdentification>
-        <ows:Title>GeoTrellis Web Coverage Service</ows:Title>
+        <ows:Title>{ metadata.identification.title }</ows:Title>
+        <ows:Abstract>{ metadata.identification.description }</ows:Abstract>
         <ows:ServiceType>OGS WCS</ows:ServiceType>
         <ows:ServiceTypeVersion>1.1.0</ows:ServiceTypeVersion>
         <ows:Fees>NONE</ows:Fees>
@@ -70,6 +71,11 @@ object GetCapabilities extends GetCapabilitiesBase with LazyLogging {
         { makeElement(requestURL, "GetCoverage") }
       </ows:OperationsMetadata>
       <ows:ServiceProvider>
+        <ows:ProviderName></ows:ProviderName>
+        { metadata.provider.site
+          .map({ site => <ows:ProviderSite>{ site }</ows:ProviderSite> })
+          .getOrElse(NodeSeq.Empty)
+        }
       </ows:ServiceProvider>
       <wcs:Contents>
         { addLayers(rsm) }

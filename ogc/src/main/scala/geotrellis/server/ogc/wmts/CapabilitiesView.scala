@@ -1,15 +1,12 @@
 package geotrellis.server.ogc.wmts
 
-import geotrellis.proj4.LatLng
+import geotrellis.server.ogc.ows.ResponsiblePartySubset
 import geotrellis.server.ogc._
 import geotrellis.vector.Extent
 import geotrellis.raster.reproject._
-
-import opengis._
-import scalaxb._
+import geotrellis.proj4.LatLng
 
 import java.net.{URI, URL}
-
 import scala.xml.{Elem, NodeSeq}
 
 /**
@@ -19,29 +16,41 @@ import scala.xml.{Elem, NodeSeq}
   * @param serviceUrl URL where this service can be reached with addition of `?request=` query parameter
   */
 class CapabilitiesView(
+  metadata: ows.ServiceMetadata,
   rasterSourcesModel: RasterSourcesModel,
   tileMatrixModel: TileMatrixModel,
   serviceUrl: URL
 ) {
+  import opengis.ows._
+  import opengis.wmts._
+  import opengis._
+  import scalaxb._
 
   def toXML: Elem = {
-    import opengis.ows._
-    import opengis.wmts._
     import CapabilitiesView._
 
     val serviceIdentification =
       ServiceIdentification(
-        Title = LanguageStringType("GeoTrellis Web Map Tile Service") :: Nil,
-        Abstract = LanguageStringType("GeoTrellis Web Map Tile Service") :: Nil,
-        Keywords = KeywordsType(LanguageStringType("GeoTrellis") :: LanguageStringType("WMTS") :: LanguageStringType("map") :: Nil, None) :: Nil,
+        Title = LanguageStringType(metadata.identification.title) :: Nil,
+        Abstract = LanguageStringType(metadata.identification.description) :: Nil,
+        Keywords = KeywordsType(metadata.identification.keywords.map(LanguageStringType(_)), None) :: Nil,
         ServiceType = CodeType("OGC WMTS"),
         ServiceTypeVersion = "1.0.0" :: Nil
       )
 
+    val contact = metadata.provider.contact.map({ contact: ResponsiblePartySubset =>
+      ResponsiblePartySubsetType(
+        IndividualName = contact.name,
+        PositionName = contact.position,
+        ContactInfo = None,
+        Role = contact.role.map(CodeType(_, Map()))
+      )
+    }).getOrElse(ResponsiblePartySubsetType())
+
     val serviceProvider =
       ServiceProvider(
-        ProviderName = "Azavea, Inc.",
-        ServiceContact = ResponsiblePartySubsetType()
+        ProviderName = metadata.provider.name,
+        ServiceContact = contact
       )
 
     val operationsMetadata = {
@@ -66,7 +75,7 @@ class CapabilitiesView(
                       ) :: Nil
                     )
                   ),
-                  attributes = Map("@name" -> "GetEncoding")
+                  attributes = Map("@name" -> scalaxb.DataRecord("GetEncoding"))
                 ) :: Nil,
                 attributes = Map("@{http://www.w3.org/1999/xlink}href" -> scalaxb.DataRecord(serviceUrl.toURI))
               )) :: Nil)
@@ -139,8 +148,10 @@ class CapabilitiesView(
 }
 
 object CapabilitiesView {
-  import opengis.wmts._
+  import opengis._
   import opengis.ows._
+  import opengis.wmts._
+  import scalaxb._
 
   implicit def toRecord[T: CanWriteXML](t: T): scalaxb.DataRecord[T] = scalaxb.DataRecord(t)
 

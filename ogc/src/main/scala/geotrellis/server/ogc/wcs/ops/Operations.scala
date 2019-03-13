@@ -6,11 +6,11 @@ import geotrellis.server.ogc.wcs.params._
 import scala.xml._
 
 object Operations {
-  def getCapabilities(requestURL: String, rsm: RasterSourcesModel, params: GetCapabilitiesWcsParams): Elem = {
+  def getCapabilities(metadata: ows.ServiceMetadata, requestURL: String, rsm: RasterSourcesModel, params: GetCapabilitiesWcsParams): Elem = {
     if (params.version < "1.1")
-      version100.GetCapabilities.build(requestURL, rsm, params)
+      version100.GetCapabilities.build(metadata, requestURL, rsm, params)
     else
-      version110.GetCapabilities.build(requestURL, rsm, params)
+      version110.GetCapabilities.build(metadata, requestURL, rsm, params)
   }
 
   def describeCoverage(rsm: RasterSourcesModel, params: DescribeCoverageWcsParams): Elem = {

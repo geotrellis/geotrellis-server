@@ -42,7 +42,7 @@ object WmtsParams {
 
   object GetTile {
     def build(params: ParamMap): ValidatedNel[ParamError, WmtsParams] = {
-      println(s"PARAM MAP: ${params.params}")
+      logger.debug(s"PARAM MAP: ${params.params}")
       val versionParam =
         params.validatedVersion("1.0.0")
 

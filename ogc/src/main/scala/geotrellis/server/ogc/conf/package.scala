@@ -1,5 +1,7 @@
 package geotrellis.server.ogc
 
+import geotrellis.server.ogc.wms.wmsScope
+
 import com.amazonaws.services.s3._
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
@@ -17,6 +19,16 @@ import java.io.{BufferedReader, InputStreamReader}
 import java.util.stream.Collectors
 
 package object conf {
+
+  implicit def keywordConfigReader: ConfigReader[opengis.wms.Keyword] =
+    ConfigReader[String].map { str =>
+      opengis.wms.Keyword(str)
+    }
+
+  implicit def nameConfigReader: ConfigReader[opengis.wms.Name] =
+    ConfigReader[String].map { str =>
+      opengis.wms.Name.fromString(str, wmsScope)
+    }
 
   implicit val expressionReader: ConfigReader[Expression] =
     ConfigReader[String].map { expressionString =>

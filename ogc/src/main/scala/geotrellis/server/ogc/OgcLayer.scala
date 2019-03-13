@@ -37,10 +37,12 @@ object SimpleWmsLayer {
   implicit val simpleWmsReification = new ExtentReification[SimpleWmsLayer] {
     def extentReification(self: SimpleWmsLayer)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
       (extent: Extent, cs: CellSize) =>  IO {
+        logger.debug(s"attempting to retrieve layer $self at extent $extent with cell size of $cs")
         val raster: Raster[MultibandTile] = self.source
           .reprojectToGrid(self.crs, RasterExtent(extent, cs))
           .read(extent)
-          .get
+          .getOrElse(throw new Exception(s"Unable to retrieve layer $self at extent $extent with cell size of $cs"))
+        logger.debug(s"Successfully retrieved layer $self at extent $extent with cell size of $cs")
 
         ProjectedRaster(raster, self.crs)
       }
@@ -83,7 +85,7 @@ object SimpleWmtsLayer {
         val raster: Raster[MultibandTile] = self.source
           .reprojectToGrid(self.crs, RasterExtent(extent, cs))
           .read(extent)
-          .get
+          .getOrElse(throw new Exception(s"Unable to retrieve layer $self at extent $extent with cell size of $cs"))
 
         ProjectedRaster(raster, self.crs)
       }
@@ -94,10 +96,11 @@ object SimpleWmtsLayer {
       (z: Int, x: Int, y: Int) => IO {
         // NOTE: z comes from layout
         val tile = self.source
-          .reproject(self.crs, NearestNeighbor)  // TODO: Check if necessary
+          .reproject(self.crs, NearestNeighbor)
           .tileToLayout(self.layout, NearestNeighbor)
           .read(SpatialKey(x, y))
-          .get
+          .getOrElse(throw new Exception(s"Unable to retrieve layer $self at XY of ($x, $y)"))
+
         val extent = self.layout.mapTransform(SpatialKey(x, y))
         ProjectedRaster(tile, extent, self.crs)
       }

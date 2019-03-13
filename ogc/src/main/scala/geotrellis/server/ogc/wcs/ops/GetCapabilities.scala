@@ -12,5 +12,5 @@ import scala.xml._
 
 trait GetCapabilities extends LazyLogging {
   // Cribbed from https://github.com/ngageoint/mrgeo/blob/master/mrgeo-services/mrgeo-services-wcs/src/main/java/org/mrgeo/services/wcs/WcsCapabilities.java
-  def build(requestURL: String, rsm: RasterSourcesModel, params: GetCapabilitiesWcsParams): Elem
+  def build(metadata: ows.ServiceMetadata, requestURL: String, rsm: RasterSourcesModel, params: GetCapabilitiesWcsParams): Elem
 }
