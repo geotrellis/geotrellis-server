@@ -37,7 +37,7 @@ case class SimpleSource(
   styles: List[StyleModel]
 ) extends OgcSource {
 
-  def nativeRE = source.gridExtent.toRasterExtent
+  def nativeRE = source.rasterExtent
 
   def bboxIn(crs: CRS) = {
     val reprojected = source.reproject(crs)

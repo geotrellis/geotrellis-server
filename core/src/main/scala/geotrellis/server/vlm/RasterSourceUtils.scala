@@ -44,6 +44,6 @@ trait RasterSourceUtils {
   def getCRS(uri: String): IO[CRS] = IO { getRasterSource(uri).crs }
   def getRasterExtents(uri: String): IO[NEL[RasterExtent]] = IO {
     val rs = getRasterSource(uri)
-    NEL.fromList(rs.resolutions.map(_.toRasterExtent)).getOrElse(NEL(rs.gridExtent.toRasterExtent, Nil))
+    NEL.fromList(rs.resolutions.map(_.toRasterExtent)).getOrElse(NEL(rs.rasterExtent, Nil))
   }
 }

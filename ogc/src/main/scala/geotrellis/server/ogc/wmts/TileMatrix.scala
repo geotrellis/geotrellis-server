@@ -6,10 +6,7 @@ import geotrellis.spark.tiling.LayoutDefinition
 import geotrellis.vector.Extent
 
 import opengis.ows._
-import opengis.wmts._
-import opengis.wmts.{TileMatrix => TileMatrixXml, TileMatrixSet => TileMatrixSetXml}
-import java.net.{InetAddress, URI}
-
+import opengis.wmts.{TileMatrix => TileMatrixXml}
 
 case class TileMatrix(
   identifier: String,

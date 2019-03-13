@@ -1,14 +1,7 @@
 package geotrellis.server.ogc.wmts
 
-import geotrellis.contrib.vlm.geotiff._
-import geotrellis.contrib.vlm.gdal._
-import geotrellis.contrib.vlm.avro._
 import geotrellis.spark.tiling._
-import geotrellis.spark._
 import geotrellis.proj4._
-import geotrellis.raster._
-import java.io.File
-import java.net._
 
 case class TileMatrixModel(
   matrices: List[TileMatrixSet]
