@@ -1,27 +1,22 @@
 package geotrellis.server.ogc.wmts
 
-import geotrellis.spark._
-import geotrellis.proj4.{LatLng, WebMercator}
-import geotrellis.raster.{MultibandTile, Raster, TileLayout}
 import geotrellis.server._
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wmts.WmtsParams.{GetCapabilities, GetTile}
-import com.azavea.maml.error._
 import com.azavea.maml.eval._
+
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io._
 import org.http4s.circe._
 import org.http4s.scalaxml._
-import org.http4s.implicits._
 import cats.data.Validated._
 import cats.effect._
 import cats.implicits._
-import _root_.io.circe._
 import _root_.io.circe.syntax._
 import com.typesafe.scalalogging.LazyLogging
-import java.net.{URI, URL}
+
+import java.net.URL
 
 class WmtsService(
   rasterSourcesModel: RasterSourcesModel,

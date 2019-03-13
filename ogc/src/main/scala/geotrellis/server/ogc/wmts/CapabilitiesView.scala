@@ -1,7 +1,6 @@
 package geotrellis.server.ogc.wmts
 
-import geotrellis.proj4.{CRS, WebMercator, LatLng}
-import geotrellis.contrib.vlm.RasterSource
+import geotrellis.proj4.LatLng
 import geotrellis.server.ogc._
 import geotrellis.vector.Extent
 import geotrellis.raster.reproject._
@@ -148,7 +147,8 @@ object CapabilitiesView {
   def boundingBox(extent: Extent): WGS84BoundingBoxType =
     WGS84BoundingBoxType(
       LowerCorner = Seq(extent.xmin, extent.ymin),
-      UpperCorner = Seq(extent.xmax, extent.ymax)
+      UpperCorner = Seq(extent.xmax, extent.ymax),
+      attributes = Map("@crs" -> scalaxb.DataRecord(new URI("urn:ogc:def:crs:OGC:2:84")))
     )
 
   implicit class OgcSourceMethods(val self: OgcSource) {

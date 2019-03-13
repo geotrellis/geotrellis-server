@@ -1,20 +1,17 @@
 package geotrellis.server.ogc
 
 import geotrellis.server._
-import geotrellis.server.ogc.wms._
-import geotrellis.server.ExtentReification.ops._
-
 import geotrellis.contrib.vlm._
 import geotrellis.raster._
 import geotrellis.raster.reproject.ReprojectRasterExtent
 import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.spark.SpatialKey
-import geotrellis.spark.tiling.{LayoutDefinition}
+import geotrellis.spark.tiling.LayoutDefinition
 import geotrellis.vector.Extent
 import geotrellis.proj4.CRS
 import com.azavea.maml.ast._
+
 import cats.effect._
-import cats.implicits._
 import cats.data.{NonEmptyList => NEL}
 
 /** Layer instances are sufficent to produce displayed the end product of 'get map'
@@ -56,7 +53,7 @@ object SimpleWmsLayer {
           ReprojectRasterExtent(ge.toRasterExtent, self.source.crs, self.crs)
         }
         NEL.fromList(resolutions)
-          .getOrElse(NEL(ReprojectRasterExtent(self.source.gridExtent.toRasterExtent, self.source.crs, self.crs), Nil))
+          .getOrElse(NEL(ReprojectRasterExtent(self.source.rasterExtent, self.source.crs, self.crs), Nil))
       }
   }
 }
@@ -113,7 +110,7 @@ object SimpleWmtsLayer {
           ReprojectRasterExtent(ge.toRasterExtent, self.source.crs, self.crs)
         }
         NEL.fromList(resolutions)
-          .getOrElse(NEL(ReprojectRasterExtent(self.source.gridExtent.toRasterExtent, self.source.crs, self.crs), Nil))
+          .getOrElse(NEL(ReprojectRasterExtent(self.source.rasterExtent, self.source.crs, self.crs), Nil))
       }
   }
 }

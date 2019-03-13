@@ -1,14 +1,15 @@
 package geotrellis.server.ogc.wmts
 
-import geotrellis.proj4.{CRS, WebMercator, LatLng}
+import geotrellis.proj4.{CRS, WebMercator}
 import geotrellis.raster.TileLayout
-import geotrellis.spark.tiling.LayoutDefinition
 import geotrellis.vector.Extent
+import geotrellis.spark.tiling._
 
 import opengis.ows._
-import opengis.wmts._
-import opengis.wmts.{TileMatrix => TileMatrixXml, TileMatrixSet => TileMatrixSetXml}
-import java.net.{InetAddress, URI}
+import opengis._
+import opengis.wmts.{TileMatrixSet => TileMatrixSetXml}
+
+import java.net.URI
 
 case class TileMatrixSet(
   identifier: String,
@@ -25,6 +26,11 @@ case class TileMatrixSet(
       Abstract = `abstract`.map(LanguageStringType(_)).toList,
       Keywords = Nil,
       Identifier = CodeType(identifier),
+      BoundingBox = boundingBox.map(extent => scalaxb.DataRecord(Some("ows"), Some("ows:BoundingBox"), BoundingBoxType(
+        LowerCorner = Seq(extent.xmin, extent.ymin),
+        UpperCorner = Seq(extent.xmax, extent.ymax),
+        attributes = Map("@crs" -> scalaxb.DataRecord(new URI(s"urn:ogc:def:crs:EPSG:9.2:${supportedCrs.epsgCode.get}")))
+      ))),
       TileMatrix = tileMatrix.map(_.toXml(supportedCrs)),
       SupportedCRS = new URI(s"urn:ogc:def:crs:EPSG:9.2:${supportedCrs.epsgCode.get}")
     )
@@ -40,7 +46,7 @@ case class TileMatrixSet(
 object TileMatrixSet {
   final val GoogleMapsCompatible: TileMatrixSet = {
     // EPSG:3857 world extent
-    val extent = Extent(-20037508.34278925, -20037508.34278925, 20037508.34278925, 20037508.34278925)
+    val extent = WebMercator.worldExtent
 
     val tileMatrix: List[TileMatrix] = {
       for (zoom <- 1 to 21) yield {
@@ -52,10 +58,12 @@ object TileMatrixSet {
 
     TileMatrixSet(
       identifier = "GoogleMapsCompatible",
+      boundingBox = Some(extent),
       title = Some("GoogleMapsCompatible"),
       supportedCrs = WebMercator,
       wellKnownScaleSet = Some("urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible"),
-      tileMatrix = tileMatrix)
+      tileMatrix = tileMatrix
+    )
   }
 
 

@@ -2,12 +2,9 @@ package geotrellis.server.ogc.wmts
 
 import geotrellis.server.ogc.OutputFormat
 import geotrellis.server.ogc.params._
-import geotrellis.proj4.{LatLng, CRS}
-import geotrellis.vector.Extent
 
-import cats._
 import cats.implicits._
-import cats.data.{NonEmptyList, Validated, ValidatedNel}
+import cats.data.{Validated, ValidatedNel}
 import Validated._
 
 import scala.util.Try
