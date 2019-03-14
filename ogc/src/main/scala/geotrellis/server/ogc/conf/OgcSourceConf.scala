@@ -41,6 +41,11 @@ case class MapAlgebraSourceConf(
     eval(expr)
   }
 
+  /**
+   * Given a list of all available `SimpleSourceConf` instances in the global [[Conf]] object,
+   *  attempt to produce the parameter bindings necessary for evaluating the MAML [[Expression]]
+   *  in the algebra field
+   */
   def model(possibleSources: List[SimpleSource]): MapAlgebraSource = {
     val layerNames = listParams(algebra)
     val sourceList = layerNames.map { name =>

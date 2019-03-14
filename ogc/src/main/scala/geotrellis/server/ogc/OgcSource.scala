@@ -15,10 +15,13 @@ import cats.implicits._
 import cats.data.{NonEmptyList => NEL}
 import opengis.wms.BoundingBox
 
-/** This trait and its implementing types are jointly sufficienty, along with a WMS 'get map'
- *  request to produce a visual layer (represented more fully by the [[OgcLayer]] hierarchy.
+/**
+ * This trait and its implementing types should be jointly sufficient, along with a WMS 'GetMap'
+ *  (or a WMTS 'GetTile' or a WCS 'GetCoverage' etc etc) request to produce a visual layer
+ *  (represented more fully by the [[OgcLayer]] hierarchy.
  *  This type represents *merely* that there is some backing by which valid OGC layers
- *  can be realized.
+ *  can be realized. Its purpose is to provide the appropriate level of abstraction for OGC
+ *  services to conveniently reuse the same data about underlying imagery
  */
 trait OgcSource {
   def name: String
@@ -30,6 +33,9 @@ trait OgcSource {
   def nativeCrs: Set[CRS]
 }
 
+/**
+ * An imagery source with a [[RasterSource]] that defines its capacities
+ */
 case class SimpleSource(
   name: String,
   title: String,
@@ -37,18 +43,22 @@ case class SimpleSource(
   styles: List[StyleModel]
 ) extends OgcSource {
 
-  def nativeRE = source.rasterExtent
+  lazy val nativeRE = source.rasterExtent
 
   def bboxIn(crs: CRS) = {
     val reprojected = source.reproject(crs)
     CapabilitiesView.boundingBox(crs, reprojected.extent, reprojected.cellSize)
   }
 
-  def nativeCrs: Set[CRS] = Set(source.crs)
+  lazy val nativeCrs: Set[CRS] = Set(source.crs)
 
-  def nativeExtent: Extent = source.extent
+  lazy val nativeExtent: Extent = source.rasterExtent.extent
 }
 
+/**
+ * A complex layer, constructed from an [[Expression]] and one or more [[RasterSource]]
+ *  mappings which allow evaluation of said [[Expression]]
+ */
 case class MapAlgebraSource(
   name: String,
   title: String,
@@ -57,7 +67,7 @@ case class MapAlgebraSource(
   styles: List[StyleModel]
 ) extends OgcSource {
 
-  def nativeExtent = {
+  lazy val nativeExtent = {
     val reprojectedSources: NEL[RasterSource] =
       NEL.fromListUnsafe(sources.values.map(_.reproject(nativeCrs.head)).toList)
     val extents =
@@ -73,7 +83,7 @@ case class MapAlgebraSource(
     }
   }
 
-  def nativeRE = {
+  lazy val nativeRE = {
     val reprojectedSources: NEL[RasterSource] =
       NEL.fromListUnsafe(sources.values.map(_.reproject(nativeCrs.head)).toList)
     val cellSize =
@@ -100,6 +110,6 @@ case class MapAlgebraSource(
     }
   }
 
-  def nativeCrs: Set[CRS] = sources.values.map(_.crs).toSet
+  lazy val nativeCrs: Set[CRS] = sources.values.map(_.crs).toSet
 
 }

@@ -14,9 +14,11 @@ import com.azavea.maml.ast._
 import cats.effect._
 import cats.data.{NonEmptyList => NEL}
 
-/** Layer instances are sufficent to produce displayed the end product of 'get map'
- *  requests. They are produced in [[RasterSourcesModel]] from a combination of a [[GetMap]]
- *  and an instance of [[Source]]
+/**
+ * Layer instances are sufficent to produce displayed the end product of 'get map'
+ *  requests. They are produced in [[RasterSourcesModel]] from a combination of a WMS 'GetMap'
+ *  (or whatever the analogous request in whatever OGC service is being produced) and an instance
+ *  of [[OgcSource]]
  */
 trait OgcLayer {
   def name: String
