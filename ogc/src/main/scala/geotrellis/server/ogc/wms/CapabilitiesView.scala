@@ -129,7 +129,7 @@ object CapabilitiesView {
         MinScaleDenominator = None,
         MaxScaleDenominator = None,
         Layer = Nil,
-        attributes = Map.empty
+        attributes = Map("@queryable" -> scalaxb.DataRecord(false))
       )
     }
   }
@@ -161,7 +161,7 @@ object CapabilitiesView {
       MinScaleDenominator = None,
       MaxScaleDenominator = None,
       Layer = model.sourceLookup.map { case (name, model) => model.toLayer(name, crs) }.toSeq,
-      attributes = Map.empty
+      attributes = Map("@queryable" -> scalaxb.DataRecord(false))
     )
   }
 }
