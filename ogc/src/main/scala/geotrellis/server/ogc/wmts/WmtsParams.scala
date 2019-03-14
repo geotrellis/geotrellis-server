@@ -6,6 +6,7 @@ import geotrellis.server.ogc.params._
 import cats.implicits._
 import cats.data.{Validated, ValidatedNel}
 import Validated._
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.util.Try
 
@@ -13,7 +14,7 @@ abstract sealed class WmtsParams {
   val version: String
 }
 
-object WmtsParams {
+object WmtsParams extends LazyLogging {
   final case class GetCapabilities(
     version: String,
     format: Option[String],

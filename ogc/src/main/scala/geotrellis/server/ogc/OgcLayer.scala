@@ -10,6 +10,7 @@ import geotrellis.spark.tiling.LayoutDefinition
 import geotrellis.vector.Extent
 import geotrellis.proj4.CRS
 import com.azavea.maml.ast._
+import com.typesafe.scalalogging.LazyLogging
 
 import cats.effect._
 import cats.data.{NonEmptyList => NEL}
@@ -35,7 +36,7 @@ case class SimpleWmsLayer(
   style: Option[StyleModel]
 ) extends OgcLayer
 
-object SimpleWmsLayer {
+object SimpleWmsLayer extends LazyLogging {
   implicit val simpleWmsReification = new ExtentReification[SimpleWmsLayer] {
     def extentReification(self: SimpleWmsLayer)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
       (extent: Extent, cs: CellSize) =>  IO {
