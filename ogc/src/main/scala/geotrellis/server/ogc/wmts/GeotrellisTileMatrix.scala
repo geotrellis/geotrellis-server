@@ -6,9 +6,12 @@ import geotrellis.spark.tiling.LayoutDefinition
 import geotrellis.vector.Extent
 
 import opengis.ows._
-import opengis.wmts.{TileMatrix => TileMatrixXml}
+import opengis.wmts._
+import opengis.wmts.{TileMatrix, TileMatrixSet}
+import java.net.{InetAddress, URI}
 
-case class TileMatrix(
+
+case class GeotrellisTileMatrix(
   identifier: String,
   extent: Extent,
   tileLayout: TileLayout,
@@ -26,11 +29,11 @@ case class TileMatrix(
     WebMercator -> 1
   )
 
-  def toXml(crs: CRS): TileMatrixXml = {
+  def toXml(crs: CRS): TileMatrix = {
     projectionMetersPerUnit.get(crs) match {
       case Some(metersPerUnit) =>
         val scaleDenominator = layout.cellSize.width / 0.00028 * metersPerUnit
-        TileMatrixXml(
+        TileMatrix(
           Title = title.map(LanguageStringType(_)).toList,
           Abstract = `abstract`.map(LanguageStringType(_)).toList,
           Keywords = Nil,

@@ -7,6 +7,7 @@ import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
 import geotrellis.proj4.{LatLng, CRS}
 import geotrellis.vector.Extent
+import geotrellis.raster.TileLayout
 import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
@@ -45,6 +46,22 @@ package object conf {
       Try(CRS.fromEpsgCode(epsgCode)).toOption match {
         case Some(crs) => crs
         case None => throw new Exception(s"Invalid EPSG code: ${epsgCode}")
+      }
+    }
+
+  implicit val extentReader: ConfigReader[Extent] =
+    ConfigReader[(Double, Double, Double, Double)].map { case extent@(xmin, ymin, xmax, ymax) =>
+      Try(Extent(xmin, ymin, xmax, ymax)).toOption match {
+        case Some(extent) => extent
+        case None => throw new Exception(s"Invalid extent: ${extent}. Should be (xmin, ymin, xmax, ymax)")
+      }
+    }
+
+  implicit val tileLayoutReader: ConfigReader[TileLayout] =
+    ConfigReader[(Int, Int, Int, Int)].map { case layout@(layoutCols, layoutRows, tileCols, tileRows) =>
+      Try(TileLayout(layoutCols, layoutRows, tileCols, tileRows)).toOption match {
+        case Some(layout) => layout
+        case None => throw new Exception(s"Invalid layout: ${layout}. Should be (layoutCols, layoutRows, tileCols, tileRows)")
       }
     }
 

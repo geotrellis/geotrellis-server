@@ -49,8 +49,7 @@ object Server extends LazyLogging with IOApp {
       wmtsModel = RasterSourcesModel(conf.wmts.layerSources(simpleSources))
       wcsModel = RasterSourcesModel(conf.wcs.layerSources(simpleSources))
 
-      // TODO: Make this come from config instead of being hardcoded
-      tileMatrixSetModel = TileMatrixModel(List(TileMatrixSet.GoogleMapsCompatible))
+      tileMatrixSetModel = TileMatrixModel(conf.wmts.tileMatrixSets)
 
       wmsService = new WmsService(wmsModel, conf.serviceUrl("/wms"), conf.wms.serviceMetadata)
       wcsService = new WcsService(wcsModel, conf.serviceUrl("/wcs"), conf.wcs.serviceMetadata)

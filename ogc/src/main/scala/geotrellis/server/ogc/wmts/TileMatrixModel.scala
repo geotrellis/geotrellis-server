@@ -4,10 +4,10 @@ import geotrellis.spark.tiling._
 import geotrellis.proj4._
 
 case class TileMatrixModel(
-  matrices: List[TileMatrixSet]
+  matrices: List[GeotrellisTileMatrixSet]
 ) {
 
-  val matrixSetLookup: Map[String, TileMatrixSet] =
+  val matrixSetLookup: Map[String, GeotrellisTileMatrixSet] =
     matrices.map({tileMatrixSet => tileMatrixSet.identifier -> tileMatrixSet}).toMap
 
   def getLayoutDefinition(tileMatrixSetId: String, tileMatrixId: String): Option[LayoutDefinition] =

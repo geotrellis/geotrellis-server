@@ -2,6 +2,7 @@ package geotrellis.server.ogc.conf
 
 import geotrellis.server.ogc.ows
 import geotrellis.server.ogc.{OgcSource, SimpleSource}
+import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
 
 import java.net.{InetAddress, URL}
 
@@ -40,7 +41,11 @@ object Conf {
     }
   }
   case class WMS(serviceMetadata: opengis.wms.Service, layerDefinitions: List[OgcSourceConf]) extends OgcService
-  case class WMTS(serviceMetadata: ows.ServiceMetadata, layerDefinitions: List[OgcSourceConf]) extends OgcService
+  case class WMTS(
+    serviceMetadata: ows.ServiceMetadata,
+    layerDefinitions: List[OgcSourceConf],
+    tileMatrixSets: List[GeotrellisTileMatrixSet]
+  ) extends OgcService
   case class WCS(serviceMetadata: ows.ServiceMetadata, layerDefinitions: List[OgcSourceConf]) extends OgcService
 
   /** Public URL for this service that will be reported.
