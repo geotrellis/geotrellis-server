@@ -11,14 +11,11 @@ import scala.xml.{Elem, NodeSeq}
 
 /**
   *
-  * @param rasterSourcesModel Model of layers we can report
-  * @param tileMatrixModel Model of tile matrix set
+  * @param wmtsModel WmtsModel of layers and tile matrices we can report
   * @param serviceUrl URL where this service can be reached with addition of `?request=` query parameter
   */
 class CapabilitiesView(
-  metadata: ows.ServiceMetadata,
-  rasterSourcesModel: RasterSourcesModel,
-  tileMatrixModel: TileMatrixModel,
+  wmtsModel: WmtsModel,
   serviceUrl: URL
 ) {
   import opengis.ows._
@@ -31,14 +28,14 @@ class CapabilitiesView(
 
     val serviceIdentification =
       ServiceIdentification(
-        Title = LanguageStringType(metadata.identification.title) :: Nil,
-        Abstract = LanguageStringType(metadata.identification.description) :: Nil,
-        Keywords = KeywordsType(metadata.identification.keywords.map(LanguageStringType(_)), None) :: Nil,
+        Title = LanguageStringType(wmtsModel.serviceMetadata.identification.title) :: Nil,
+        Abstract = LanguageStringType(wmtsModel.serviceMetadata.identification.description) :: Nil,
+        Keywords = KeywordsType(wmtsModel.serviceMetadata.identification.keywords.map(LanguageStringType(_)), None) :: Nil,
         ServiceType = CodeType("OGC WMTS"),
         ServiceTypeVersion = "1.0.0" :: Nil
       )
 
-    val contact = metadata.provider.contact.map({ contact: ResponsiblePartySubset =>
+    val contact = wmtsModel.serviceMetadata.provider.contact.map({ contact: ResponsiblePartySubset =>
       ResponsiblePartySubsetType(
         IndividualName = contact.name,
         PositionName = contact.position,
@@ -49,7 +46,7 @@ class CapabilitiesView(
 
     val serviceProvider =
       ServiceProvider(
-        ProviderName = metadata.provider.name,
+        ProviderName = wmtsModel.serviceMetadata.provider.name,
         ServiceContact = contact
       )
 
@@ -121,8 +118,8 @@ class CapabilitiesView(
       )
     }
 
-    val layers = modelAsLayers(rasterSourcesModel)
-    val tileMatrixSets = tileMatrixModel.matrices.map(_.toXml)
+    val layers = modelAsLayers(wmtsModel)
+    val tileMatrixSets = wmtsModel.matrices.map(_.toXml)
 
     // that's how layers metadata is generated
     val contents = ContentsType(
@@ -192,8 +189,8 @@ object CapabilitiesView {
     }
   }
 
-  def modelAsLayers(model: RasterSourcesModel): List[scalaxb.DataRecord[LayerType]] = {
-    model
+  def modelAsLayers(wmtsModel: WmtsModel): List[scalaxb.DataRecord[LayerType]] = {
+    wmtsModel
       .sourceLookup
       .map { case (key, value) => scalaxb.DataRecord(Some("wms"), Some("Layer"), value.toLayerType(key)) }
       .toList

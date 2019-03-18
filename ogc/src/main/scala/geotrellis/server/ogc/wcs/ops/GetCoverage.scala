@@ -2,6 +2,7 @@ package geotrellis.server.ogc.wcs.ops
 
 import geotrellis.server._
 import geotrellis.server.ogc._
+import geotrellis.server.ogc.wcs._
 import geotrellis.server.ogc.wcs.params.GetCoverageWcsParams
 
 import com.azavea.maml.eval.Interpreter
@@ -26,7 +27,7 @@ import cats.data.Validated._
 import scala.util.Try
 import scala.concurrent.duration._
 
-class GetCoverage(rsm: RasterSourcesModel) extends LazyLogging {
+class GetCoverage(wcsModel: WcsModel) extends LazyLogging {
 
   /*
   QGIS appears to sample WCS service by placing low and high resolution requests at coverage center.
@@ -46,14 +47,14 @@ class GetCoverage(rsm: RasterSourcesModel) extends LazyLogging {
         bytes
       case None =>
         logger.trace(s"GetCoverage cache MISS: $params")
-        val src = rsm.sourceLookup(params.identifier)
+        val src = wcsModel.sourceLookup(params.identifier)
         val re = RasterExtent(params.boundingBox, params.width, params.height)
 
         val eval = src match {
           case SimpleSource(name, title, source, styles) =>
-            LayerExtent.identity(SimpleWmsLayer(name, title, LatLng, source, None))
+            LayerExtent.identity(SimpleOgcLayer(name, title, LatLng, source, None))
           case MapAlgebraSource(name, title, sources, algebra, styles) =>
-            val simpleLayers = sources.mapValues { rs => SimpleWmsLayer(name, title, LatLng, rs, None) }
+            val simpleLayers = sources.mapValues { rs => SimpleOgcLayer(name, title, LatLng, rs, None) }
             LayerExtent(IO.pure(algebra), IO.pure(simpleLayers), Interpreter.DEFAULT)
         }
 

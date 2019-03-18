@@ -45,15 +45,24 @@ object Server extends LazyLogging with IOApp {
       _          <- Stream.eval(IO.pure(logger.info(s"Advertising service URL at ${conf.serviceUrl("/wmts")}")))
 
       simpleSources = conf.layers.values.collect { case ssc@SimpleSourceConf(_, _, _, _) => ssc.model }.toList
-      wmsModel = RasterSourcesModel(conf.wms.layerSources(simpleSources))
-      wmtsModel = RasterSourcesModel(conf.wmts.layerSources(simpleSources))
-      wcsModel = RasterSourcesModel(conf.wcs.layerSources(simpleSources))
+      wmsModel = WmsModel(
+        conf.wms.serviceMetadata,
+        conf.wms.parentLayerMeta,
+        conf.wms.layerSources(simpleSources)
+      )
+      wmtsModel = WmtsModel(
+        conf.wmts.serviceMetadata,
+        conf.wmts.tileMatrixSets,
+        conf.wmts.layerSources(simpleSources)
+      )
+      wcsModel = WcsModel(
+        conf.wcs.serviceMetadata,
+        conf.wcs.layerSources(simpleSources)
+        )
 
-      tileMatrixSetModel = TileMatrixModel(conf.wmts.tileMatrixSets)
-
-      wmsService = new WmsService(wmsModel, conf.serviceUrl("/wms"), conf.wms.serviceMetadata)
-      wcsService = new WcsService(wcsModel, conf.serviceUrl("/wcs"), conf.wcs.serviceMetadata)
-      wmtsService = new WmtsService(wmtsModel, tileMatrixSetModel, conf.serviceUrl("/wmts"), conf.wmts.serviceMetadata)
+      wmsService = new WmsService(wmsModel, conf.serviceUrl("/wms"))
+      wcsService = new WcsService(wcsModel, conf.serviceUrl("/wcs"))
+      wmtsService = new WmtsService(wmtsModel, conf.serviceUrl("/wmts"))
 
       exitCode   <- BlazeServerBuilder[IO]
         .withIdleTimeout(Duration.Inf) // for test purposes only

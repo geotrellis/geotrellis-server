@@ -21,47 +21,63 @@ import cats.data.{NonEmptyList => NEL}
  *  (or whatever the analogous request in whatever OGC service is being produced) and an instance
  *  of [[OgcSource]]
  */
-sealed trait OgcLayer {
+sealed trait TiledOgcLayer {
   def name: String
   def title: String
   def crs: CRS
   def style: Option[StyleModel]
+  def layout: LayoutDefinition
 }
 
-case class SimpleOgcLayer(
+case class SimpleTiledOgcLayer(
   name: String,
   title: String,
   crs: CRS,
+  layout: LayoutDefinition,
   source: RasterSource,
   style: Option[StyleModel]
-) extends OgcLayer
+) extends TiledOgcLayer
 
-case class MapAlgebraOgcLayer(
+case class MapAlgebraTiledOgcLayer(
   name: String,
   title: String,
   crs: CRS,
-  parameters: Map[String, SimpleOgcLayer],
+  layout: LayoutDefinition,
+  parameters: Map[String, SimpleTiledOgcLayer],
   algebra: Expression,
   style: Option[StyleModel]
-) extends OgcLayer
+) extends TiledOgcLayer
 
-object SimpleOgcLayer extends LazyLogging {
-  implicit val simpleOgcReification = new ExtentReification[SimpleOgcLayer] {
-    def extentReification(self: SimpleOgcLayer)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
+object SimpleTiledOgcLayer {
+  implicit val simpleTiledExtentReification = new ExtentReification[SimpleTiledOgcLayer] {
+    def extentReification(self: SimpleTiledOgcLayer)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
       (extent: Extent, cs: CellSize) =>  IO {
-        logger.debug(s"attempting to retrieve layer $self at extent $extent with cell size of $cs")
         val raster: Raster[MultibandTile] = self.source
           .reprojectToGrid(self.crs, RasterExtent(extent, cs))
           .read(extent)
           .getOrElse(throw new Exception(s"Unable to retrieve layer $self at extent $extent with cell size of $cs"))
-        logger.debug(s"Successfully retrieved layer $self at extent $extent with cell size of $cs")
 
         ProjectedRaster(raster, self.crs)
       }
   }
 
-  implicit val simpleOgcHasRasterExtents: HasRasterExtents[SimpleOgcLayer] = new HasRasterExtents[SimpleOgcLayer] {
-    def rasterExtents(self: SimpleOgcLayer)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] =
+  implicit val simpleTiledReification = new TmsReification[SimpleTiledOgcLayer] {
+    def tmsReification(self: SimpleTiledOgcLayer, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[ProjectedRaster[MultibandTile]] =
+      (z: Int, x: Int, y: Int) => IO {
+        // NOTE: z comes from layout
+        val tile = self.source
+          .reproject(self.crs, NearestNeighbor)
+          .tileToLayout(self.layout, NearestNeighbor)
+          .read(SpatialKey(x, y))
+          .getOrElse(throw new Exception(s"Unable to retrieve layer $self at XY of ($x, $y)"))
+
+        val extent = self.layout.mapTransform(SpatialKey(x, y))
+        ProjectedRaster(tile, extent, self.crs)
+      }
+  }
+
+  implicit val simpleTiledRasterExtents: HasRasterExtents[SimpleTiledOgcLayer] = new HasRasterExtents[SimpleTiledOgcLayer] {
+    def rasterExtents(self: SimpleTiledOgcLayer)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] =
       IO {
         val resolutions = self.source.resolutions.map { ge =>
           ReprojectRasterExtent(ge.toRasterExtent, self.source.crs, self.crs)

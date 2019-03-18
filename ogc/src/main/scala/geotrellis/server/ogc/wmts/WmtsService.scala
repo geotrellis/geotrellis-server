@@ -19,10 +19,8 @@ import com.typesafe.scalalogging.LazyLogging
 import java.net.URL
 
 class WmtsService(
-  rasterSourcesModel: RasterSourcesModel,
-  tileMatrixModel: TileMatrixModel,
-  serviceUrl: URL,
-  serviceMetadata: ows.ServiceMetadata
+  wmtsModel: WmtsModel,
+  serviceUrl: URL
 )(implicit contextShift: ContextShift[IO]) extends Http4sDsl[IO] with LazyLogging {
 
   def handleError[Result](result: Either[Throwable, Result])(implicit ee: EntityEncoder[IO, Result]): IO[Response[IO]] = result match {
@@ -46,7 +44,7 @@ class WmtsService(
           BadRequest(msg)
 
         case Valid(wmtsReq: GetCapabilities) =>
-          Ok.apply(new CapabilitiesView(serviceMetadata, rasterSourcesModel, tileMatrixModel, serviceUrl).toXML)
+          Ok.apply(new CapabilitiesView(wmtsModel, serviceUrl).toXML)
 
         case Valid(wmtsReq: GetTile) =>
           val tileCol = wmtsReq.tileCol
@@ -54,22 +52,22 @@ class WmtsService(
           val style = wmtsReq.style
           val layerName = wmtsReq.layer
           (for {
-            crs <- tileMatrixModel.getCrs(wmtsReq.tileMatrixSet)
-            layoutDefinition <- tileMatrixModel.getLayoutDefinition(wmtsReq.tileMatrixSet, wmtsReq.tileMatrix)
-            layer <- rasterSourcesModel.getWmtsLayer(crs, layerName, layoutDefinition, style)
+            crs <- wmtsModel.getMatrixCrs(wmtsReq.tileMatrixSet)
+            layoutDefinition <- wmtsModel.getMatrixLayoutDefinition(wmtsReq.tileMatrixSet, wmtsReq.tileMatrix)
+            layer <- wmtsModel.getLayer(crs, layerName, layoutDefinition, style)
           } yield {
             val evalWmts = layer match {
-              case sl@SimpleWmtsLayer(_, _, _, _, _, _) =>
+              case sl@SimpleTiledOgcLayer(_, _, _, _, _, _) =>
                 LayerTms.identity(sl)
-              case sl@MapAlgebraWmtsLayer(_, _, _, _, parameters, expr, _) =>
+              case sl@MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _) =>
                 LayerTms(IO.pure(expr), IO.pure(parameters), Interpreter.DEFAULT)
               case _ => throw new Exception("This shouldn't happen")
             }
 
             val evalHisto = layer match {
-              case sl@SimpleWmtsLayer(_, _, _, _, _, _) =>
+              case sl@SimpleTiledOgcLayer(_, _, _, _, _, _) =>
                 LayerHistogram.identity(sl, 512)
-              case sl@MapAlgebraWmtsLayer(_, _, _, _, parameters, expr, _) =>
+              case sl@MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _) =>
                 LayerHistogram(IO.pure(expr), IO.pure(parameters), Interpreter.DEFAULT, 512)
               case _ => throw new Exception("This shouldn't happen")
             }
