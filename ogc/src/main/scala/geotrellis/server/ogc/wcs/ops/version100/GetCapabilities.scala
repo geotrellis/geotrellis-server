@@ -1,6 +1,7 @@
 package geotrellis.server.ogc.wcs.ops.version100
 
 import geotrellis.server.ogc._
+import geotrellis.server.ogc.wcs._
 import geotrellis.server.ogc.wcs.ops.{GetCapabilities => GetCapabilitiesBase}
 import geotrellis.server.ogc.wcs.params.GetCapabilitiesWcsParams
 
@@ -25,8 +26,8 @@ object GetCapabilities extends GetCapabilitiesBase with LazyLogging {
     </HTTP>
   }
 
-  private def addLayers(rsm: RasterSourcesModel) = {
-    rsm.sourceLookup.map { case (identifier, src) => {
+  private def addLayers(wcsModel: WcsModel) = {
+    wcsModel.sourceLookup.map { case (identifier, src) => {
       logger.info(s"Adding v1.0.0 tag for $identifier")
         val crs = src.nativeCrs
         val ex = src.nativeExtent
@@ -36,7 +37,7 @@ object GetCapabilities extends GetCapabilitiesBase with LazyLogging {
     }}
   }
 
-  def build(requestURL: String, rsm: RasterSourcesModel, params: GetCapabilitiesWcsParams): Elem = {
+  def build(requestURL: String, wcsModel: WcsModel, params: GetCapabilitiesWcsParams): Elem = {
     <WCS_Capabilities xmlns="http://www.opengis.net/wcs"
                       xmlns:xlink="http://www.w3.org/1999/xlink"
                       xmlns:gml="http://www.opengis.net/gml"
@@ -44,10 +45,10 @@ object GetCapabilities extends GetCapabilitiesBase with LazyLogging {
                       xsi:schemaLocation={"http://www.opengis.net/wcs http://schemas.opengeospatial.net/wcs/" + params.version + "/wcsCapabilities.xsd"}
                       version={params.version}>
       <Service>
-        <name>OGC:WC</name>
-        <description>Geotrellis Web Coverage Service</description>
-        <label>Geotrellis Web Coverage Service</label>
-        <fees>NONE</fees>
+        <name>{ wcsModel.serviceMetadata.identification.title }</name>
+        <description>{ wcsModel.serviceMetadata.identification.description }</description>
+        <label>{ wcsModel.serviceMetadata.identification.title }</label>
+        <fees>{ wcsModel.serviceMetadata.identification.fees.getOrElse("NONE") }</fees>
         <accessConstraints>NONE</accessConstraints>
       </Service>
       <Capability>
@@ -73,7 +74,7 @@ object GetCapabilities extends GetCapabilitiesBase with LazyLogging {
         </Exception>
       </Capability>
       <ContentMetadata>
-        { addLayers(rsm) }
+        { addLayers(wcsModel) }
       </ContentMetadata>
     </WCS_Capabilities>
   }

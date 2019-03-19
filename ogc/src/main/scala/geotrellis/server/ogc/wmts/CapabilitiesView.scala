@@ -1,47 +1,53 @@
 package geotrellis.server.ogc.wmts
 
-import geotrellis.proj4.LatLng
+import geotrellis.server.ogc.ows.ResponsiblePartySubset
 import geotrellis.server.ogc._
 import geotrellis.vector.Extent
 import geotrellis.raster.reproject._
-
-import opengis._
-import scalaxb._
+import geotrellis.proj4.LatLng
 
 import java.net.{URI, URL}
-
 import scala.xml.{Elem, NodeSeq}
 
 /**
   *
-  * @param rasterSourcesModel Model of layers we can report
-  * @param tileMatrixModel Model of tile matrix set
+  * @param wmtsModel WmtsModel of layers and tile matrices we can report
   * @param serviceUrl URL where this service can be reached with addition of `?request=` query parameter
   */
 class CapabilitiesView(
-  rasterSourcesModel: RasterSourcesModel,
-  tileMatrixModel: TileMatrixModel,
+  wmtsModel: WmtsModel,
   serviceUrl: URL
 ) {
+  import opengis.ows._
+  import opengis.wmts._
+  import opengis._
+  import scalaxb._
 
   def toXML: Elem = {
-    import opengis.ows._
-    import opengis.wmts._
     import CapabilitiesView._
 
     val serviceIdentification =
       ServiceIdentification(
-        Title = LanguageStringType("GeoTrellis Web Map Tile Service") :: Nil,
-        Abstract = LanguageStringType("GeoTrellis Web Map Tile Service") :: Nil,
-        Keywords = KeywordsType(LanguageStringType("GeoTrellis") :: LanguageStringType("WMTS") :: LanguageStringType("map") :: Nil, None) :: Nil,
+        Title = LanguageStringType(wmtsModel.serviceMetadata.identification.title) :: Nil,
+        Abstract = LanguageStringType(wmtsModel.serviceMetadata.identification.description) :: Nil,
+        Keywords = KeywordsType(wmtsModel.serviceMetadata.identification.keywords.map(LanguageStringType(_)), None) :: Nil,
         ServiceType = CodeType("OGC WMTS"),
         ServiceTypeVersion = "1.0.0" :: Nil
       )
 
+    val contact = wmtsModel.serviceMetadata.provider.contact.map({ contact: ResponsiblePartySubset =>
+      ResponsiblePartySubsetType(
+        IndividualName = contact.name,
+        PositionName = contact.position,
+        ContactInfo = None,
+        Role = contact.role.map(CodeType(_, Map()))
+      )
+    }).getOrElse(ResponsiblePartySubsetType())
+
     val serviceProvider =
       ServiceProvider(
-        ProviderName = "Azavea, Inc.",
-        ServiceContact = ResponsiblePartySubsetType()
+        ProviderName = wmtsModel.serviceMetadata.provider.name,
+        ServiceContact = contact
       )
 
     val operationsMetadata = {
@@ -66,7 +72,7 @@ class CapabilitiesView(
                       ) :: Nil
                     )
                   ),
-                  attributes = Map("@name" -> "GetEncoding")
+                  attributes = Map("@name" -> scalaxb.DataRecord("GetEncoding"))
                 ) :: Nil,
                 attributes = Map("@{http://www.w3.org/1999/xlink}href" -> scalaxb.DataRecord(serviceUrl.toURI))
               )) :: Nil)
@@ -112,8 +118,8 @@ class CapabilitiesView(
       )
     }
 
-    val layers = modelAsLayers(rasterSourcesModel)
-    val tileMatrixSets = tileMatrixModel.matrices.map(_.toXml)
+    val layers = modelAsLayers(wmtsModel)
+    val tileMatrixSets = wmtsModel.matrices.map(_.toXml)
 
     // that's how layers metadata is generated
     val contents = ContentsType(
@@ -139,8 +145,10 @@ class CapabilitiesView(
 }
 
 object CapabilitiesView {
-  import opengis.wmts._
+  import opengis._
   import opengis.ows._
+  import opengis.wmts._
+  import scalaxb._
 
   implicit def toRecord[T: CanWriteXML](t: T): scalaxb.DataRecord[T] = scalaxb.DataRecord(t)
 
@@ -181,8 +189,8 @@ object CapabilitiesView {
     }
   }
 
-  def modelAsLayers(model: RasterSourcesModel): List[scalaxb.DataRecord[LayerType]] = {
-    model
+  def modelAsLayers(wmtsModel: WmtsModel): List[scalaxb.DataRecord[LayerType]] = {
+    wmtsModel
       .sourceLookup
       .map { case (key, value) => scalaxb.DataRecord(Some("wms"), Some("Layer"), value.toLayerType(key)) }
       .toList

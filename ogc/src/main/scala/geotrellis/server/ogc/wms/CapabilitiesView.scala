@@ -7,6 +7,9 @@ import geotrellis.proj4.{CRS, LatLng}
 import geotrellis.raster.CellSize
 import geotrellis.contrib.vlm.RasterSource
 import geotrellis.vector.Extent
+import cats._
+import cats.implicits._
+
 import opengis.wms._
 import opengis._
 import scalaxb._
@@ -21,10 +24,8 @@ import scala.xml.{Elem, NodeSeq}
   * @param defaultCrs Common CRS, all layers must be available in at least this CRS
   */
 class CapabilitiesView(
-  model: RasterSourcesModel,
-  serviceUrl: URL,
-  serviceMetadata: Service,
-  defaultCrs: CRS = LatLng
+  model: WmsModel,
+  serviceUrl: URL
 ) {
 
   def toXML: Elem = {
@@ -50,12 +51,12 @@ class CapabilitiesView(
       Capability(
         Request = Request(GetCapabilities = getCapabilities, GetMap = getMap, GetFeatureInfo = None),
         Exception = Exception(List("XML", "INIMAGE", "BLANK")),
-        Layer = Some(modelAsLayer(model, defaultCrs))
+        Layer = Some(modelAsLayer(model.parentLayerMeta, model))
       )
     }
 
     val ret: NodeSeq = scalaxb.toXML[opengis.wms.WMS_Capabilities](
-      obj = WMS_Capabilities(serviceMetadata, capability, Map("@version" -> scalaxb.DataRecord("1.3.0"))),
+      obj = WMS_Capabilities(model.serviceMeta, capability, Map("@version" -> scalaxb.DataRecord("1.3.0"))),
       namespace = None,
       elementLabel = Some("WMS_Capabilities"),
       scope = constrainedWMSScope,
@@ -100,23 +101,25 @@ object CapabilitiesView {
   }
 
   implicit class RasterSourceMethods(val model: OgcSource) {
-    def toLayer(layerName: String, defaultCrs: CRS = LatLng): Layer = {
+    def toLayer(layerName: String, parentProjections: List[CRS]): Layer = {
       Layer(
         Name = Some(layerName),
         Title = layerName,
         Abstract = Some(layerName),
         KeywordList = None,
         // extra CRS that is supported by this layer
-        CRS = (model.nativeCrs + defaultCrs).flatMap(_.epsgCode).toList.map { code => s"EPSG:$code" },
+        CRS = (parentProjections ++ model.nativeCrs).map { crs =>
+          crs.epsgCode
+            .map { code => s"EPSG:$code" }
+            .getOrElse(throw new java.lang.Exception(s"Unable to construct EPSG code from $crs"))
+        },
         // TODO: global Extent for the CRS
         // EX_GeographicBoundingBox =   Some(self.extent.reproject(self.crs, LatLng)).map { case Extent(xmin, ymin, xmax, ymax) =>
         //  opengis.wms.EX_GeographicBoundingBox(xmin, xmax, ymin, ymax)
         // },
         BoundingBox =
-          (model.nativeCrs + defaultCrs).toList.map { crs =>
+          (parentProjections ++ model.nativeCrs).toList.map { crs =>
             model.bboxIn(crs)
-            //val rs = source.reproject(crs)
-            //boundingBox(crs, rs.extent, rs.cellSize)
           },
         Dimension = Nil,
         Attribution = None,
@@ -134,15 +137,19 @@ object CapabilitiesView {
     }
   }
 
-  def modelAsLayer(model: RasterSourcesModel, crs: CRS = LatLng): Layer = {
+  def modelAsLayer(parentLayerMeta: WmsParentLayerMeta, model: WmsModel): Layer = {
     Layer(
-      Name = Some("GeoTrellis WMS Layer"),
-      Title = "GeoTrellis WMS Layer",
-      Abstract = Some("GeoTrellis WMS Layer"),
+      Name = parentLayerMeta.name,
+      Title = parentLayerMeta.title,
+      Abstract = parentLayerMeta.description,
       KeywordList = None,
       // All layers are avail at least at this CRS
       // All sublayers would have metadata in this CRS + its own
-      CRS = crs.epsgCode.map { code => s"EPSG:$code" }.toList,
+      CRS = parentLayerMeta.supportedProjections.map { crs =>
+        crs.epsgCode
+          .map { code => s"EPSG:$code" }
+          .getOrElse(throw new java.lang.Exception(s"Unable to construct EPSG code from $crs"))
+      },
       // Extent of all layers in default CRS
       // Should it be world extent? To simplify tests and QGIS work it's all RasterSources extent
       // EX_GeographicBoundingBox = model.extent(LatLng).map { case Extent(xmin, ymin, xmax, ymax) =>
@@ -160,7 +167,7 @@ object CapabilitiesView {
       Style = Nil,
       MinScaleDenominator = None,
       MaxScaleDenominator = None,
-      Layer = model.sourceLookup.map { case (name, model) => model.toLayer(name, crs) }.toSeq,
+      Layer = model.sourceLookup.map { case (name, model) => model.toLayer(name, parentLayerMeta.supportedProjections) }.toSeq,
       attributes = Map("@queryable" -> scalaxb.DataRecord(false))
     )
   }

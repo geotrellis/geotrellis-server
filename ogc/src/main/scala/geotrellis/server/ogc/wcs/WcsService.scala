@@ -1,8 +1,8 @@
 package geotrellis.server.ogc.wcs
 
-import geotrellis.server.ogc.RasterSourcesModel
 import geotrellis.server.ogc.wcs.params._
 import geotrellis.server.ogc.wcs.ops._
+import geotrellis.server.ogc.ows
 
 import geotrellis.spark.io.AttributeStore
 import geotrellis.spark._
@@ -24,18 +24,21 @@ import scala.util.Try
 import scala.xml.NodeSeq
 import java.net.URL
 
-class WcsService(rsm: RasterSourcesModel, serviceUrl: URL)(implicit cs: ContextShift[IO]) extends Http4sDsl[IO] with LazyLogging {
+class WcsService(
+  wcsModel: WcsModel,
+  serviceUrl: URL
+)(implicit cs: ContextShift[IO]) extends Http4sDsl[IO] with LazyLogging {
 
  def handleError[Result](result: Either[Throwable, Result])(implicit ee: EntityEncoder[IO, Result]) = result match {
    case Right(res) =>
-     logger.info(res.toString)
+     logger.info("response", res.toString)
      Ok(res)
    case Left(err) =>
-     logger.error(err.toString)
+     logger.error(s"error: $err", err)
      InternalServerError(err.toString)
  }
 
- val getCoverage = new GetCoverage(rsm)
+ val getCoverage = new GetCoverage(wcsModel)
 
  def routes = HttpRoutes.of[IO] {
    case req @ GET -> Root =>
@@ -50,14 +53,14 @@ class WcsService(rsm: RasterSourcesModel, serviceUrl: URL)(implicit cs: ContextS
          wcsParams match {
            case p: GetCapabilitiesWcsParams =>
              logger.debug(s"\033[1mGetCapabilities: $serviceUrl\033[0m")
-             val result = Operations.getCapabilities(serviceUrl.toString, rsm, p)
+             val result = Operations.getCapabilities(serviceUrl.toString, wcsModel, p)
              logger.debug(result.toString)
              Ok(result)
 
            case p: DescribeCoverageWcsParams =>
              logger.debug(s"\033[1mDescribeCoverage: ${req.uri}\033[0m")
              for {
-               describeCoverage <- IO { Operations.describeCoverage(rsm, p) }.attempt
+               describeCoverage <- IO { Operations.describeCoverage(wcsModel, p) }.attempt
                result <- handleError(describeCoverage)
              } yield {
                logger.debug("describecoverage result", result)

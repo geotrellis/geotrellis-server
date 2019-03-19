@@ -1,7 +1,7 @@
 package geotrellis.server.ogc.wms
 
-import geotrellis.server.ogc._
 import geotrellis.server._
+import geotrellis.server.ogc._
 import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wms.WmsParams.{GetCapabilities, GetMap}
 import geotrellis.server.ExtentReification.ops._
@@ -30,9 +30,8 @@ import java.net.{URI, URL}
 import scala.concurrent.duration._
 
 class WmsService(
-  model: RasterSourcesModel,
-  serviceUrl: URL,
-  serviceMetadata: opengis.wms.Service
+  model: WmsModel,
+  serviceUrl: URL
 )(implicit contextShift: ContextShift[IO])
   extends Http4sDsl[IO]
      with LazyLogging {
@@ -64,22 +63,22 @@ class WmsService(
           BadRequest(msg)
 
         case Valid(wmsReq: GetCapabilities) =>
-          Ok.apply(new CapabilitiesView(model, serviceUrl, serviceMetadata, defaultCrs = LatLng).toXML)
+          Ok.apply(new CapabilitiesView(model, serviceUrl).toXML)
 
         case Valid(wmsReq: GetMap) =>
           val re = RasterExtent(wmsReq.boundingBox, wmsReq.width, wmsReq.height)
           model.getLayer(wmsReq.crs, wmsReq.layers.headOption, wmsReq.styles.headOption).map { layer =>
             val evalExtent = layer match {
-              case sl@SimpleWmsLayer(_, _, _, _, _) =>
+              case sl@SimpleOgcLayer(_, _, _, _, _) =>
                 LayerExtent.identity(sl)
-              case sl@MapAlgebraWmsLayer(_, _, _, parameters, expr, _) =>
+              case sl@MapAlgebraOgcLayer(_, _, _, parameters, expr, _) =>
                 LayerExtent(IO.pure(expr), IO.pure(parameters), Interpreter.DEFAULT)
             }
 
             val evalHisto = layer match {
-              case sl@SimpleWmsLayer(_, _, _, _, _) =>
+              case sl@SimpleOgcLayer(_, _, _, _, _) =>
                 LayerHistogram.identity(sl, 512)
-              case sl@MapAlgebraWmsLayer(_, _, _, parameters, expr, _) =>
+              case sl@MapAlgebraOgcLayer(_, _, _, parameters, expr, _) =>
                 LayerHistogram(IO.pure(expr), IO.pure(parameters), Interpreter.DEFAULT, 512)
             }
 

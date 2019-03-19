@@ -1,6 +1,7 @@
 package geotrellis.server.ogc.wcs.ops.version110
 
 import geotrellis.server.ogc._
+import geotrellis.server.ogc.wcs._
 import geotrellis.server.ogc.wcs.ops.Common
 import geotrellis.server.ogc.wcs.ops.{GetCapabilities => GetCapabilitiesBase}
 import geotrellis.server.ogc.wcs.params.GetCapabilitiesWcsParams
@@ -26,8 +27,8 @@ object GetCapabilities extends GetCapabilitiesBase with LazyLogging {
     </ows:Operation>
   }
 
-  private def addLayers(rsm: RasterSourcesModel) = {
-    rsm.sourceLookup.map { case (identifier, src) => {
+  private def addLayers(wcsModel: WcsModel) = {
+    wcsModel.sourceLookup.map { case (identifier, src) => {
       logger.info(s"Adding v1.1.0 tag for $identifier")
       val crs = src.nativeCrs.head
       val ex = src.nativeExtent
@@ -36,7 +37,7 @@ object GetCapabilities extends GetCapabilitiesBase with LazyLogging {
         { Common.boundingBox110(ex, crs) }
         {
           if (crs.epsgCode.isDefined) {
-            <SupportedCRS>urn:ogs:def:crs:EPSG::{ crs.epsgCode.get.toString }</SupportedCRS>
+            <SupportedCRS>{ URN.unsafeFromCrs(crs) }</SupportedCRS>
           }
         }
         <SupportedFormat>image/geotiff</SupportedFormat>
@@ -47,7 +48,7 @@ object GetCapabilities extends GetCapabilitiesBase with LazyLogging {
     }}
   }
 
-  def build(requestURL: String, rsm: RasterSourcesModel, params: GetCapabilitiesWcsParams): Elem = {
+  def build(requestURL: String, wcsModel: WcsModel, params: GetCapabilitiesWcsParams): Elem = {
     // Pulled example template from http://nsidc.org/cgi-bin/atlas_north?service=WCS&request=GetCapabilities&version=1.1.1
     val version = params.version.split('.')
     <wcs:Capabilities xmlns:wcs={"http://www.opengis.net/wcs/" + version(0) + "." + version(1)}
@@ -58,10 +59,11 @@ object GetCapabilities extends GetCapabilitiesBase with LazyLogging {
                       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                       version={params.version}>
       <ows:ServiceIdentification>
-        <ows:Title>GeoTrellis Web Coverage Service</ows:Title>
+        <ows:Title>{ wcsModel.serviceMetadata.identification.title }</ows:Title>
+        <ows:Abstract>{ wcsModel.serviceMetadata.identification.description }</ows:Abstract>
         <ows:ServiceType>OGS WCS</ows:ServiceType>
         <ows:ServiceTypeVersion>1.1.0</ows:ServiceTypeVersion>
-        <ows:Fees>NONE</ows:Fees>
+        <ows:Fees>{ wcsModel.serviceMetadata.identification.fees.getOrElse("NONE") }</ows:Fees>
         <ows:AccessConstraints>NONE</ows:AccessConstraints>
       </ows:ServiceIdentification>
       <ows:OperationsMetadata>
@@ -70,9 +72,14 @@ object GetCapabilities extends GetCapabilitiesBase with LazyLogging {
         { makeElement(requestURL, "GetCoverage") }
       </ows:OperationsMetadata>
       <ows:ServiceProvider>
+        <ows:ProviderName></ows:ProviderName>
+        { wcsModel.serviceMetadata.provider.site
+          .map({ site => <ows:ProviderSite>{ site }</ows:ProviderSite> })
+          .getOrElse(NodeSeq.Empty)
+        }
       </ows:ServiceProvider>
       <wcs:Contents>
-        { addLayers(rsm) }
+        { addLayers(wcsModel) }
       </wcs:Contents>
     </wcs:Capabilities>
   }

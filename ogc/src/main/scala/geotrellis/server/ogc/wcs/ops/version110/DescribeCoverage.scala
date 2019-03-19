@@ -1,6 +1,7 @@
 package geotrellis.server.ogc.wcs.ops.version110
 
 import geotrellis.server.ogc._
+import geotrellis.server.ogc.wcs._
 import geotrellis.server.ogc.wcs.ops.Common
 import geotrellis.server.ogc.wcs.ops.{DescribeCoverage => DescribeCoverageBase}
 import geotrellis.server.ogc.wcs.params.DescribeCoverageWcsParams
@@ -75,8 +76,8 @@ object DescribeCoverage extends DescribeCoverageBase with LazyLogging {
     </CoverageDescription>
   }
 
-  def build(rsm: RasterSourcesModel, params: DescribeCoverageWcsParams): Elem = {
-    logger.info("BUILDING COVERAGE", rsm, params)
+  def build(wcsModel: WcsModel, params: DescribeCoverageWcsParams): Elem = {
+    logger.info("BUILDING COVERAGE", wcsModel, params)
     <CoverageDescriptions xmlns="http://www.opengis.net/wcs/1.1"
                           xmlns:ows="http://www.opengis.net/ows"
                           xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -84,7 +85,7 @@ object DescribeCoverage extends DescribeCoverageBase with LazyLogging {
                           xmlns:ogc="http://www.opengis.net/ogc"
                           xmlns:gml="http://www.opengis.net/gml"
                           version="1.1.0">
-      { rsm.sources.map(createDescription(_)) }
+      { wcsModel.sources.map(createDescription(_)) }
     </CoverageDescriptions>
   }
 }
