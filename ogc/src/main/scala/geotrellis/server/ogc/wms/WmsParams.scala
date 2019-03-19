@@ -4,9 +4,8 @@ import geotrellis.server.ogc.OutputFormat
 import geotrellis.server.ogc.params._
 import geotrellis.proj4.LatLng
 
-import cats._
 import cats.implicits._
-import cats.data.{NonEmptyList, Validated, ValidatedNel}
+import cats.data.{Validated, ValidatedNel}
 import Validated._
 import geotrellis.proj4.CRS
 import geotrellis.vector.Extent

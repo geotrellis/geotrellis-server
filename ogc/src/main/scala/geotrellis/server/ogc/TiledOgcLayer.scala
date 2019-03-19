@@ -10,7 +10,6 @@ import geotrellis.spark.tiling.LayoutDefinition
 import geotrellis.vector.Extent
 import geotrellis.proj4.CRS
 import com.azavea.maml.ast._
-import com.typesafe.scalalogging.LazyLogging
 
 import cats.effect._
 import cats.data.{NonEmptyList => NEL}

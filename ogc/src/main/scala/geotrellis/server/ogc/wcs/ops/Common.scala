@@ -5,7 +5,7 @@ import geotrellis.server.ogc.URN
 import geotrellis.proj4.CRS
 import geotrellis.vector.Extent
 
-import scala.xml.{Attribute, NodeSeq, Null, Text}
+import scala.xml.{Attribute, Null, Text}
 
 object Common {
   def boundingBox110(ex: Extent, crs: CRS, tagName: String = "ows:BoundingBox") = {

@@ -1,14 +1,12 @@
 package geotrellis.server.ogc.wmts
 
-import geotrellis.proj4.{CRS, WebMercator, LatLng}
-import geotrellis.raster.TileLayout
-import geotrellis.spark.tiling.LayoutDefinition
+import geotrellis.proj4.CRS
 import geotrellis.vector.Extent
 
 import opengis.ows._
-import opengis.wmts._
-import opengis.wmts.{TileMatrix, TileMatrixSet}
-import java.net.{InetAddress, URI}
+import opengis.wmts.TileMatrixSet
+
+import java.net.URI
 
 case class GeotrellisTileMatrixSet(
   identifier: String,

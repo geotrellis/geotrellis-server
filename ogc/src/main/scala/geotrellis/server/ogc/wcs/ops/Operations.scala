@@ -1,6 +1,5 @@
 package geotrellis.server.ogc.wcs.ops
 
-import geotrellis.server.ogc._
 import geotrellis.server.ogc.wcs._
 import geotrellis.server.ogc.wcs.params._
 

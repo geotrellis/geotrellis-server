@@ -5,13 +5,10 @@ import geotrellis.server.ogc.wms.WmsParentLayerMeta
 import geotrellis.server.ogc.{OgcSource, SimpleSource}
 import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
 
-import geotrellis.proj4.CRS
-
 import java.net.{InetAddress, URL}
 
 import pureconfig.ConfigReader
 import scalaxb.DataRecord
-
 
 case class Conf(
   http: Conf.Http,
