@@ -1,15 +1,11 @@
 package geotrellis.server.ogc.wcs.ops.version100
 
-import geotrellis.server.ogc._
 import geotrellis.server.ogc.wcs._
 import geotrellis.server.ogc.wcs.ops.{GetCapabilities => GetCapabilitiesBase}
 import geotrellis.server.ogc.wcs.params.GetCapabilitiesWcsParams
 
-import geotrellis.spark._
-import geotrellis.spark.io._
 import com.typesafe.scalalogging.LazyLogging
 
-import scala.util.Try
 import scala.xml._
 
 object GetCapabilities extends GetCapabilitiesBase with LazyLogging {

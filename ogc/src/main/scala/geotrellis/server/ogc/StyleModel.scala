@@ -1,6 +1,5 @@
 package geotrellis.server.ogc
 
-import geotrellis.contrib.vlm.RasterSource
 import geotrellis.raster.render.{ColorMap, ColorRamp}
 
 case class StyleModel(

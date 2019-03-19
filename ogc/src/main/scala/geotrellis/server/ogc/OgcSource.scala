@@ -1,17 +1,13 @@
 package geotrellis.server.ogc
 
-import geotrellis.server._
 import geotrellis.server.extent.SampleUtils
 import geotrellis.server.ogc.wms._
-import geotrellis.server.ExtentReification.ops._
-
 import geotrellis.contrib.vlm._
-import geotrellis.raster.{RasterExtent, CellSize}
+import geotrellis.raster.RasterExtent
 import geotrellis.vector.Extent
-import geotrellis.proj4.{CRS, WebMercator, LatLng}
+import geotrellis.proj4.CRS
 import com.azavea.maml.ast._
-import cats.effect._
-import cats.implicits._
+
 import cats.data.{NonEmptyList => NEL}
 import opengis.wms.BoundingBox
 

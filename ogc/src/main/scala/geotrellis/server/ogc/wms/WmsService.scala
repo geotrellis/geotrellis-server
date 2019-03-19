@@ -4,29 +4,23 @@ import geotrellis.server._
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wms.WmsParams.{GetCapabilities, GetMap}
-import geotrellis.server.ExtentReification.ops._
-
-import geotrellis.spark._
-import geotrellis.proj4.{LatLng, WebMercator}
-import geotrellis.raster.{MultibandTile, Raster, RasterExtent}
+import geotrellis.raster.RasterExtent
 import geotrellis.raster.histogram._
+
 import com.azavea.maml.error._
 import com.azavea.maml.eval._
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
-import org.http4s.dsl.io._
 import org.http4s.circe._
 import org.http4s.scalaxml._
-import org.http4s.implicits._
 import cats.data.Validated._
 import cats.implicits._
 import cats.effect._
-import _root_.io.circe._
 import _root_.io.circe.syntax._
 import com.typesafe.scalalogging.LazyLogging
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
 
-import java.net.{URI, URL}
+import java.net.URL
 import scala.concurrent.duration._
 
 class WmsService(

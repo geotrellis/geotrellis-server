@@ -7,7 +7,6 @@ import Validated._
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.server.ogc.params._
 
-
 class ParamMap(val params: Map[String, Seq[String]]) extends LazyLogging {
   private val _params: Map[String, Seq[String]] = params.map { case (k, v) => (k.toLowerCase, v) }
 

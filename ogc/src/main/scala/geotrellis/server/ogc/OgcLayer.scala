@@ -4,14 +4,11 @@ import geotrellis.server._
 import geotrellis.contrib.vlm._
 import geotrellis.raster._
 import geotrellis.raster.reproject.ReprojectRasterExtent
-import geotrellis.raster.resample.NearestNeighbor
-import geotrellis.spark.SpatialKey
-import geotrellis.spark.tiling.LayoutDefinition
 import geotrellis.vector.Extent
 import geotrellis.proj4.CRS
 import com.azavea.maml.ast._
-import com.typesafe.scalalogging.LazyLogging
 
+import com.typesafe.scalalogging.LazyLogging
 import cats.effect._
 import cats.data.{NonEmptyList => NEL}
 

@@ -1,6 +1,5 @@
 package geotrellis.server.ogc.params
 
-
 sealed abstract class ParamError {
   def errorMessage: String
 }

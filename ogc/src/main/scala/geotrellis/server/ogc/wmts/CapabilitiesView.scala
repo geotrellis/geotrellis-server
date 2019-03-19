@@ -160,39 +160,55 @@ object CapabilitiesView {
     )
 
   implicit class OgcSourceMethods(val self: OgcSource) {
-    def toLayerType(layerName: String): LayerType = {
+    def toLayerType(layerName: String, tileMatrixSet: List[GeotrellisTileMatrixSet]): LayerType = {
       val wgs84extent: Extent = ReprojectRasterExtent(self.nativeRE, self.nativeCrs.head, LatLng).extent
+      val tileMatrixLimits: List[TileMatrixLimits] = tileMatrixSet.flatMap { tms =>
+        tms.tileMatrix.map { tm =>
+          val gridBounds = tm.layout.mapTransform(ReprojectRasterExtent(self.nativeRE, self.nativeCrs.head, tms.supportedCrs).extent)
+          TileMatrixLimits(
+            TileMatrix = tm.identifier,
+            MinTileRow = gridBounds.rowMin,
+            MaxTileRow = gridBounds.rowMax,
+            MinTileCol = gridBounds.colMin,
+            MaxTileCol = gridBounds.colMax
+          )
+        }
+      }
 
       LayerType(
         Title = LanguageStringType(layerName) :: Nil,
         Abstract = Nil,
-        Keywords= Nil,
+        Keywords = Nil,
         WGS84BoundingBox = List(boundingBox(wgs84extent)),
         Identifier = CodeType(layerName),
         BoundingBox = Nil,
         Metadata = Nil,
         DatasetDescriptionSummary = Nil,
         Style = List(Style(
-          Title=List(LanguageStringType("Style")),
-          Abstract=List(LanguageStringType("AbstractStyle")),
-          Identifier=CodeType("StyleID"),
-          Keywords=Nil,
-          LegendURL=Nil
+          Title = List(LanguageStringType("Style")),
+          Abstract = List(LanguageStringType("AbstractStyle")),
+          Identifier = CodeType("StyleID"),
+          Keywords = Nil,
+          LegendURL = Nil
         )),
         Format = List("image/png", "image/jpeg"),
         InfoFormat = List("text/xml"),
         Dimension = Nil,
         // NOTE: This "ID" MUST correspond to the TileMatrixSet ID for the layers to show up in QGIS
-        TileMatrixSetLink = List(TileMatrixSetLink("GoogleMapsCompatible")),
+        TileMatrixSetLink = List(
+          TileMatrixSetLink(
+            TileMatrixSet = "GoogleMapsCompatible",
+            TileMatrixSetLimits = Some(TileMatrixSetLimits(tileMatrixLimits))
+          )
+        ),
         ResourceURL = Nil
       )
     }
   }
 
-  def modelAsLayers(wmtsModel: WmtsModel): List[scalaxb.DataRecord[LayerType]] = {
+  def modelAsLayers(wmtsModel: WmtsModel): List[scalaxb.DataRecord[LayerType]] =
     wmtsModel
       .sourceLookup
-      .map { case (key, value) => scalaxb.DataRecord(Some("wms"), Some("Layer"), value.toLayerType(key)) }
+      .map { case (key, value) => scalaxb.DataRecord(Some("wms"), Some("Layer"), value.toLayerType(key, wmtsModel.matrices)) }
       .toList
-  }
 }

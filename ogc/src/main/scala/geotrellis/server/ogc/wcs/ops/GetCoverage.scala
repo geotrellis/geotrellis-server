@@ -9,22 +9,13 @@ import com.azavea.maml.eval.Interpreter
 import com.azavea.maml.error._
 import geotrellis.proj4._
 import geotrellis.raster._
-import geotrellis.raster.crop._
-import geotrellis.raster.reproject._
 import geotrellis.raster.io.geotiff._
-import geotrellis.spark._
-import geotrellis.spark.io._
-import geotrellis.spark.stitch._
 import com.typesafe.scalalogging.LazyLogging
 
-import com.typesafe.config.ConfigFactory
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
-import cats._
-import cats.implicits._
 import cats.effect._
 import cats.data.Validated._
 
-import scala.util.Try
 import scala.concurrent.duration._
 
 class GetCoverage(wcsModel: WcsModel) extends LazyLogging {
