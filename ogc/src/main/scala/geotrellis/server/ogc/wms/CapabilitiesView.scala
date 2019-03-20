@@ -94,13 +94,13 @@ object CapabilitiesView {
     }
   }
 
-  implicit class StyleModelMethods(val model: StyleModel) {
+  implicit class StyleMethods(val style: OgcStyle) {
     def render(): Style = {
-      Style(Name = model.name, Title = model.title)
+      Style(Name = style.name, Title = style.title)
     }
   }
 
-  implicit class RasterSourceMethods(val model: OgcSource) {
+  implicit class RasterSourceMethods(val source: OgcSource) {
     def toLayer(layerName: String, parentProjections: List[CRS]): Layer = {
       Layer(
         Name = Some(layerName),
@@ -108,7 +108,7 @@ object CapabilitiesView {
         Abstract = Some(layerName),
         KeywordList = None,
         // extra CRS that is supported by this layer
-        CRS = (parentProjections ++ model.nativeCrs).map { crs =>
+        CRS = (parentProjections ++ source.nativeCrs).distinct.map { crs =>
           crs.epsgCode
             .map { code => s"EPSG:$code" }
             .getOrElse(throw new java.lang.Exception(s"Unable to construct EPSG code from $crs"))
@@ -118,8 +118,8 @@ object CapabilitiesView {
         //  opengis.wms.EX_GeographicBoundingBox(xmin, xmax, ymin, ymax)
         // },
         BoundingBox =
-          (parentProjections ++ model.nativeCrs).toList.map { crs =>
-            model.bboxIn(crs)
+          (parentProjections ++ source.nativeCrs).distinct.toList.map { crs =>
+            source.bboxIn(crs)
           },
         Dimension = Nil,
         Attribution = None,
@@ -128,7 +128,7 @@ object CapabilitiesView {
         MetadataURL = Nil,
         DataURL = Nil,
         FeatureListURL = Nil,
-        Style = model.styles.map{ style => Style(style.name, style.title)},
+        Style = source.styles.map{ style => Style(style.name, style.title)},
         MinScaleDenominator = None,
         MaxScaleDenominator = None,
         Layer = Nil,
@@ -145,7 +145,7 @@ object CapabilitiesView {
       KeywordList = None,
       // All layers are avail at least at this CRS
       // All sublayers would have metadata in this CRS + its own
-      CRS = parentLayerMeta.supportedProjections.map { crs =>
+      CRS = parentLayerMeta.supportedProjections.distinct.map { crs =>
         crs.epsgCode
           .map { code => s"EPSG:$code" }
           .getOrElse(throw new java.lang.Exception(s"Unable to construct EPSG code from $crs"))

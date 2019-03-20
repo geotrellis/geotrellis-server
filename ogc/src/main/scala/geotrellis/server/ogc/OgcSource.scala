@@ -22,7 +22,7 @@ import opengis.wms.BoundingBox
 trait OgcSource {
   def name: String
   def title: String
-  def styles: List[StyleModel]
+  def styles: List[OgcStyle]
   def nativeExtent: Extent
   def nativeRE: RasterExtent
   def bboxIn(crs: CRS): BoundingBox
@@ -36,7 +36,7 @@ case class SimpleSource(
   name: String,
   title: String,
   source: RasterSource,
-  styles: List[StyleModel]
+  styles: List[OgcStyle]
 ) extends OgcSource {
 
   lazy val nativeRE = source.rasterExtent
@@ -60,7 +60,7 @@ case class MapAlgebraSource(
   title: String,
   sources: Map[String, RasterSource],
   algebra: Expression,
-  styles: List[StyleModel]
+  styles: List[OgcStyle]
 ) extends OgcSource {
 
   lazy val nativeExtent = {

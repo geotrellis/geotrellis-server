@@ -22,7 +22,7 @@ case class WmsModel(
       source <- sourceLookup.get(layerName)
     } yield {
       val styleName: Option[String] = maybeStyleName.orElse(source.styles.headOption.map(_.name))
-      val style: Option[StyleModel] = styleName.flatMap { name => source.styles.find(_.name == name) }
+      val style: Option[OgcStyle] = styleName.flatMap { name => source.styles.find(_.name == name) }
       source match {
         case MapAlgebraSource(name, title, rasterSources, algebra, styles) =>
           val simpleLayers = rasterSources.mapValues { rs =>

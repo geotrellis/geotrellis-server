@@ -22,7 +22,7 @@ case class SimpleSourceConf(
   styles: List[StyleConf]
 ) extends OgcSourceConf {
   def model: SimpleSource =
-    SimpleSource(name, title, source.toRasterSource, styles.map(_.model))
+    SimpleSource(name, title, source.toRasterSource, styles.map(_.toStyle))
 }
 
 case class MapAlgebraSourceConf(
@@ -55,7 +55,7 @@ case class MapAlgebraSourceConf(
       }
       (name -> layerSrc.source)
     }
-    MapAlgebraSource(name, title, sourceList.toMap, algebra, styles.map(_.model))
+    MapAlgebraSource(name, title, sourceList.toMap, algebra, styles.map(_.toStyle))
   }
 
 }
