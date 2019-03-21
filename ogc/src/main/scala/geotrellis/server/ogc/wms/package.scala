@@ -38,7 +38,7 @@ package object wms {
       LegendURL(
         Format = that.format,
         OnlineResource = that.onlineResource.toOnlineResource,
-        attributes = Map("@width" -> DataRecord(that.width), "@height" -> DataRecord(that.height))
+        attributes = Map("@width" -> DataRecord(BigInt(that.width)), "@height" -> DataRecord(BigInt(that.height)))
       )
   }
 
