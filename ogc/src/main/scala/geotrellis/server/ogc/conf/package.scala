@@ -2,23 +2,18 @@ package geotrellis.server.ogc
 
 import geotrellis.server.ogc.wms.wmsScope
 
-import com.amazonaws.services.s3._
-import com.azavea.maml.ast._
-import com.azavea.maml.ast.codec.tree._
-import geotrellis.proj4.{LatLng, CRS}
+import geotrellis.proj4.CRS
 import geotrellis.vector.Extent
 import geotrellis.raster.TileLayout
 import geotrellis.raster.render.{ColorMap, ColorRamp}
-import io.circe._
-import io.circe.syntax._
+
+import com.azavea.maml.ast._
+import com.azavea.maml.ast.codec.tree._
+
 import io.circe.parser._
 import pureconfig._
 
-import scala.io.Source
 import scala.util.Try
-import java.net.URI
-import java.io.{BufferedReader, InputStreamReader}
-import java.util.stream.Collectors
 
 package object conf {
 

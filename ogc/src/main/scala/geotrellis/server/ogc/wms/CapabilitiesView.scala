@@ -95,9 +95,12 @@ object CapabilitiesView {
   }
 
   implicit class StyleMethods(val style: OgcStyle) {
-    def render(): Style = {
-      Style(Name = style.name, Title = style.title)
-    }
+    def render(): Style =
+      Style(
+        Name = style.name,
+        Title = style.title,
+        LegendURL = style.legends.map(_.toLegendURL)
+      )
   }
 
   implicit class RasterSourceMethods(val source: OgcSource) {
