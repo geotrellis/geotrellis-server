@@ -8,6 +8,7 @@ import com.azavea.maml.ast.codec.tree._
 import geotrellis.proj4.{LatLng, CRS}
 import geotrellis.vector.Extent
 import geotrellis.raster.TileLayout
+import geotrellis.raster.render.{ColorMap, ColorRamp}
 import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
@@ -20,6 +21,16 @@ import java.io.{BufferedReader, InputStreamReader}
 import java.util.stream.Collectors
 
 package object conf {
+
+  implicit def colorRampReader: ConfigReader[ColorRamp] =
+    ConfigReader[List[String]].map { colors =>
+      ColorRamp(colors.map(java.lang.Long.decode(_).toInt))
+    }
+
+  implicit def colormapReader: ConfigReader[ColorMap] =
+    ConfigReader[Map[String, String]].map { cmap =>
+      ColorMap(cmap.map { case (k, v) => (k.toDouble -> java.lang.Long.decode(v).toInt) }.toMap)
+    }
 
   implicit def keywordConfigReader: ConfigReader[opengis.wms.Keyword] =
     ConfigReader[String].map { str =>

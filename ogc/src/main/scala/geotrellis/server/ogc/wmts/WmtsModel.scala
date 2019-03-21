@@ -22,7 +22,7 @@ case class WmtsModel(
     for {
       source <- sourceLookup.get(layerName)
     } yield {
-      val style: Option[StyleModel] = source.styles.find(_.name == styleName)
+      val style: Option[OgcStyle] = source.styles.find(_.name == styleName)
       source match {
         case MapAlgebraSource(name, title, rasterSources, algebra, styles) =>
           val simpleLayers = rasterSources.mapValues { rs =>

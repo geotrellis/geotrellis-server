@@ -22,7 +22,7 @@ sealed trait OgcLayer {
   def name: String
   def title: String
   def crs: CRS
-  def style: Option[StyleModel]
+  def style: Option[OgcStyle]
 }
 
 case class SimpleOgcLayer(
@@ -30,7 +30,7 @@ case class SimpleOgcLayer(
   title: String,
   crs: CRS,
   source: RasterSource,
-  style: Option[StyleModel]
+  style: Option[OgcStyle]
 ) extends OgcLayer
 
 case class MapAlgebraOgcLayer(
@@ -39,7 +39,7 @@ case class MapAlgebraOgcLayer(
   crs: CRS,
   parameters: Map[String, SimpleOgcLayer],
   algebra: Expression,
-  style: Option[StyleModel]
+  style: Option[OgcStyle]
 ) extends OgcLayer
 
 object SimpleOgcLayer extends LazyLogging {

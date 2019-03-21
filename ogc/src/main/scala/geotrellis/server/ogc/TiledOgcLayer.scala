@@ -24,7 +24,7 @@ sealed trait TiledOgcLayer {
   def name: String
   def title: String
   def crs: CRS
-  def style: Option[StyleModel]
+  def style: Option[OgcStyle]
   def layout: LayoutDefinition
 }
 
@@ -34,7 +34,7 @@ case class SimpleTiledOgcLayer(
   crs: CRS,
   layout: LayoutDefinition,
   source: RasterSource,
-  style: Option[StyleModel]
+  style: Option[OgcStyle]
 ) extends TiledOgcLayer
 
 case class MapAlgebraTiledOgcLayer(
@@ -44,7 +44,7 @@ case class MapAlgebraTiledOgcLayer(
   layout: LayoutDefinition,
   parameters: Map[String, SimpleTiledOgcLayer],
   algebra: Expression,
-  style: Option[StyleModel]
+  style: Option[OgcStyle]
 ) extends TiledOgcLayer
 
 object SimpleTiledOgcLayer {
