@@ -2,12 +2,7 @@ package geotrellis.server.ogc.conf
 
 import geotrellis.server.ogc._
 
-import geotrellis.raster.Tile
-import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.render.{ColorMap, ColorRamp}
-import com.typesafe.config.ConfigFactory
-import pureconfig._
-
 
 sealed trait StyleConf {
   def name: String
@@ -19,15 +14,17 @@ final case class ColorRampConf(
   name: String,
   title: String,
   colors: ColorRamp,
-  stops: Option[Int]
+  stops: Option[Int],
+  legends: List[LegendModel] = Nil
 ) extends StyleConf {
-  def toStyle: OgcStyle = ColorRampStyle(name, title, colors, stops)
+  def toStyle: OgcStyle = ColorRampStyle(name, title, colors, stops, legends)
 }
 
 final case class ColorMapConf(
   name: String,
   title: String,
-  colorMap: ColorMap
+  colorMap: ColorMap,
+  legends: List[LegendModel] = Nil
 ) extends StyleConf {
-  def toStyle: OgcStyle = ColorMapStyle(name, title, colorMap)
+  def toStyle: OgcStyle = ColorMapStyle(name, title, colorMap, legends)
 }

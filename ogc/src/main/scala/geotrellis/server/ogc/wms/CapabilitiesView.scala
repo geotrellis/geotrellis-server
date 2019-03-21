@@ -1,14 +1,10 @@
 package geotrellis.server.ogc.wms
 
 import geotrellis.server.ogc._
-import geotrellis.server.ogc.conf._
 
 import geotrellis.proj4.{CRS, LatLng}
 import geotrellis.raster.CellSize
-import geotrellis.contrib.vlm.RasterSource
 import geotrellis.vector.Extent
-import cats._
-import cats.implicits._
 
 import opengis.wms._
 import opengis._
@@ -95,9 +91,12 @@ object CapabilitiesView {
   }
 
   implicit class StyleMethods(val style: OgcStyle) {
-    def render(): Style = {
-      Style(Name = style.name, Title = style.title)
-    }
+    def render(): Style =
+      Style(
+        Name = style.name,
+        Title = style.title,
+        LegendURL = style.legends.map(_.toLegendURL)
+      )
   }
 
   implicit class RasterSourceMethods(val source: OgcSource) {
@@ -128,7 +127,7 @@ object CapabilitiesView {
         MetadataURL = Nil,
         DataURL = Nil,
         FeatureListURL = Nil,
-        Style = source.styles.map{ style => Style(style.name, style.title)},
+        Style = source.styles.map(_.render),
         MinScaleDenominator = None,
         MaxScaleDenominator = None,
         Layer = Nil,
