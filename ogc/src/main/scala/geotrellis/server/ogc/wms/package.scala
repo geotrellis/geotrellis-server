@@ -51,6 +51,6 @@ package object wms {
         "@{http://www.w3.org/1999/xlink}title" -> that.title.map(v => DataRecord(v)),
         "@{http://www.w3.org/1999/xlink}show" -> that.show.map(v => DataRecord(xlink.ShowType.fromString(v, scope = scalaxb.toScope(Some("xlink") -> "http://www.w3.org/1999/xlink")))),
         "@{http://www.w3.org/1999/xlink}actuate" -> that.actuate.map(v => DataRecord(xlink.ActuateType.fromString(v, scope = scalaxb.toScope(Some("xlink") -> "http://www.w3.org/1999/xlink"))))
-      ).collect { case (k, v) if v.nonEmpty => k -> v.get })
+      ).collect { case (k, Some(v)) => k -> v })
   }
 }
