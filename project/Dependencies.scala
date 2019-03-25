@@ -2,10 +2,10 @@ import sbt._
 
 object Dependencies {
 
-  val circeVer         = "0.10.0"
+  val circeVer         = "0.11.1"
   val gtVer            = "2.2.0"
   val gtcVer           = "0.9.1"
-  val http4sVer        = "0.19.0"
+  val http4sVer        = "0.20.0-M6"
   val scalaVer         = "2.11.12"
   val crossScalaVer    = Seq(scalaVer, "2.12.7")
   val tsecVer          = "0.0.1-M11"
@@ -18,7 +18,7 @@ object Dependencies {
   val circeCore         = "io.circe"                      %% "circe-core"           % circeVer
   val circeShapes       = "io.circe"                      %% "circe-shapes"         % circeVer
   val circeGeneric      = "io.circe"                      %% "circe-generic"        % circeVer
-  val circeOptics       = "io.circe"                      %% "circe-optics"         % circeVer
+  val circeOptics       = "io.circe"                      %% "circe-optics"         % "0.11.0"
   val circeParser       = "io.circe"                      %% "circe-parser"         % circeVer
   val commonsIO         = "commons-io"                    %  "commons-io"           % "2.6"
   val commonsLang       = "org.apache.commons"            %  "commons-lang3"        % "3.7"
