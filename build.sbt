@@ -1,6 +1,8 @@
 import Dependencies._
 import microsites._
 
+addCommandAlias("bintrayPublish", ";publish;bintrayRelease")
+
 scalaVersion := scalaVer
 scalaVersion in ThisBuild := scalaVer
 
@@ -22,7 +24,8 @@ lazy val commonSettings = Seq(
     "-language:experimental.macros",
     "-feature",
     "-Ypartial-unification",
-    "-Ypatmat-exhaust-depth", "100"
+    "-Ypatmat-exhaust-depth", "100",
+    "-Xmacro-settings:materialize-derivations"
   ),
   resolvers ++= Seq(
     Resolver.bintrayRepo("bkirwi", "maven"), // Required for `decline` dependency
@@ -30,6 +33,7 @@ lazy val commonSettings = Seq(
     Resolver.bintrayRepo("azavea", "geotrellis"),
     Resolver.sonatypeRepo("releases"),
     Resolver.sonatypeRepo("snapshots"),
+    "osgeo" at "http://download.osgeo.org/webdav/geotools/",
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
     "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
     "geotrellis-staging" at "https://oss.sonatype.org/service/local/repositories/orglocationtechgeotrellis-1009/content"
@@ -38,6 +42,7 @@ lazy val commonSettings = Seq(
   addCompilerPlugin(macrosParadise cross CrossVersion.full),
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
   fork := true,
+  outputStrategy := Some(StdoutOutput),
   test in assembly := {},
   sources in (Compile, doc) := (sources in (Compile, doc)).value,
   assemblyMergeStrategy in assembly := {
@@ -51,6 +56,18 @@ lazy val commonSettings = Seq(
 )
 
 lazy val publishSettings = Seq(
+  bintrayReleaseOnPublish := false,
+  publishTo := {
+    val bintrayPublishTo = publishTo.value
+    val nexus = "http://nexus.internal.azavea.com"
+
+    if (isSnapshot.value) {
+      Some("snapshots" at nexus + "/repository/azavea-snapshots")
+    } else {
+      bintrayPublishTo
+    }
+  },
+  credentials += Credentials(Path.userHome / ".sbt" / ".credentials"),
   bintrayOrganization := Some("azavea"),
   bintrayRepository := "geotrellis",
   bintrayVcsUrl := Some("https://github.com/geotrellis/geotrellis-server.git"),
@@ -77,9 +94,9 @@ lazy val docSettings = Seq(
   micrositeGitterChannel := false,
   micrositeOrganizationHomepage := "https://www.azavea.com/",
   micrositeGithubOwner := "geotrellis",
-  micrositeGithubRepo := "geotrellis-server",
-  micrositeBaseUrl := "/geotrellis-server",
-  micrositeDocumentationUrl := "/geotrellis-server/docs",
+  micrositeGithubRepo := "geotrellis-servern",
+  micrositeBaseUrl := "/gtserver",
+  micrositeDocumentationUrl := "/gtserver/latest/api",
   micrositeExtraMdFiles := Map(
     file("README.md") -> ExtraMdFileConfig(
       "index.md",
@@ -151,21 +168,47 @@ lazy val example = project
     )
   )
 
-lazy val wcs = project
-  .settings(moduleName := "geotrellis-server-wcs")
+lazy val ogc = project
+  .dependsOn(core)
+  .enablePlugins(ScalaxbPlugin)
+  .enablePlugins(DockerPlugin)
+  .settings(moduleName := "geotrellis-server-ogc")
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(
-    assemblyJarName in assembly := "geotrellis-server-wcs.jar",
+    scalaxbDispatchVersion in (Compile, scalaxb)     := dispatchVer,
+    scalaxbPackageName in (Compile, scalaxb)         := "generated",
+    scalaxbProtocolPackageName in scalaxb in Compile := Some("opengis"),
+    scalaxbPackageNames in scalaxb in Compile := Map(
+      uri("http://www.w3.org/1999/xlink")           -> "xlink",
+      uri("http://www.opengis.net/wms")             -> "opengis.wms",
+      uri("http://www.opengis.net/ogc")             -> "opengis.ogc",
+      uri("http://www.opengis.net/wmts/1.0")        -> "opengis.wmts",
+      uri("http://www.opengis.net/ows/1.1")         -> "opengis.ows",
+      uri("http://www.opengis.net/gml")             -> "opengis.gml",
+      uri("http://www.w3.org/2001/SMIL20/")         -> "opengis.gml.smil",
+      uri("http://www.w3.org/2001/SMIL20/Language") -> "opengis.gml.smil"
+    )
+  )
+  .settings(
+    assemblyJarName in assembly := "geotrellis-server-ogc.jar",
     libraryDependencies ++= Seq(
       http4sDsl,
-      http4sXml,
+      http4sBlazeServer,
+      http4sBlazeClient,
       http4sCirce,
-      http4sBlazeServer % Test,
+      http4sXml,
+      spark,
       geotrellisS3,
       geotrellisSpark,
-      spark,
+      geotrellisVlm,
       typesafeLogging,
+      commonsIo, // to make GeoTiffRasterSources work
+      slf4jApi, // enable logging
+      slf4jSimple,
+      http4sBlazeServer % Test,
+      pureConfig,
+      scaffeine,
       scalatest
     )
   )

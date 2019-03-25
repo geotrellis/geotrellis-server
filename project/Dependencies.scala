@@ -2,13 +2,14 @@ import sbt._
 
 object Dependencies {
 
-  val circeVer         = "0.10.0"
+  val circeVer         = "0.11.1"
   val gtVer            = "2.2.0"
-  val gtcVer           = "0.7.10-2.2"
-  val http4sVer        = "0.19.0"
+  val gtcVer           = "0.9.1"
+  val http4sVer        = "0.20.0-M6"
   val scalaVer         = "2.11.12"
   val crossScalaVer    = Seq(scalaVer, "2.12.7")
   val tsecVer          = "0.0.1-M11"
+  val dispatchVer      = "0.11.3"
 
   //val kamonZipkin       = "io.kamon"                      %% "kamon-zipkin"         % "1.0.1"
   val caffeine          = "com.github.ben-manes.caffeine" %  "caffeine"             % "2.3.5"
@@ -17,7 +18,7 @@ object Dependencies {
   val circeCore         = "io.circe"                      %% "circe-core"           % circeVer
   val circeShapes       = "io.circe"                      %% "circe-shapes"         % circeVer
   val circeGeneric      = "io.circe"                      %% "circe-generic"        % circeVer
-  val circeOptics       = "io.circe"                      %% "circe-optics"         % circeVer
+  val circeOptics       = "io.circe"                      %% "circe-optics"         % "0.11.0"
   val circeParser       = "io.circe"                      %% "circe-parser"         % circeVer
   val commonsIO         = "commons-io"                    %  "commons-io"           % "2.6"
   val commonsLang       = "org.apache.commons"            %  "commons-lang3"        % "3.7"
@@ -40,7 +41,7 @@ object Dependencies {
   val mamlJvm           = "com.azavea"                    %% "maml-jvm"             % "0.2.0"
   // Note: pureconfig is not yet stable, version 0.10.0 is not binary copatible with 0.9.2 which is used by GT
   val pureConfig        = "com.github.pureconfig"         %% "pureconfig"           % "0.9.2"
-  val scaffeine         = "com.github.blemale"            %% "scaffeine"            % "2.0.0"
+  val scaffeine         = "com.github.blemale"            %% "scaffeine"            % "2.6.0"
   val scalaXml          = "org.scala-lang.modules"        %% "scala-xml"            % "1.1.0"
   val scalatest         = "org.scalatest"                 %%  "scalatest"           % "3.0.4" % Test
   val simulacrum        = "com.github.mpilquist"          %% "simulacrum"           % "0.12.0"
@@ -49,4 +50,10 @@ object Dependencies {
   val tsecHttp4s        = "io.github.jmcardon"            %% "tsec-http4s"          % tsecVer
   val typesafeLogging   = "com.typesafe.scala-logging"    %% "scala-logging"        % "3.9.0"
   val macrosParadise    = "org.scalamacros"                % "paradise"             % "2.1.0"
+  val scalaParser       = "org.scala-lang.modules"        %% "scala-parser-combinators" % "1.1.1"
+  val dispatch          = "net.databinder.dispatch"       %% "dispatch-core"        % dispatchVer
+  val apacheMath        = "org.apache.commons"             % "commons-math3"        % "3.6.1"
+  val commonsIo         = "commons-io"                     % "commons-io"           % "2.6"
+  val slf4jApi          = "org.slf4j"                      % "slf4j-api"            % "1.7.25"
+  val slf4jSimple       = "org.slf4j"                      % "slf4j-simple"         % "1.7.25"
 }

@@ -15,3 +15,9 @@ addSbtPlugin("com.47deg" % "sbt-microsites" % "0.7.23")
 addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.5.4")
 
 addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.10")
+
+addSbtPlugin("org.scalaxb" % "sbt-scalaxb" % "1.7.0")
+
+addSbtPlugin("se.marcuslonnberg" % "sbt-docker" % "1.5.0")
+
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "2.4")

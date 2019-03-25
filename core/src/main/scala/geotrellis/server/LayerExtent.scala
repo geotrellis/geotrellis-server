@@ -24,7 +24,7 @@ object LayerExtent extends LazyLogging {
   def apply[Param](
     getExpression: IO[Expression],
     getParams: IO[Map[String, Param]],
-    interpreter: BufferingInterpreter
+    interpreter: Interpreter
   )(
     implicit reify: ExtentReification[Param],
              contextShift: ContextShift[IO]
@@ -36,9 +36,9 @@ object LayerExtent extends LazyLogging {
       _                <- IO { logger.trace(s"[LayerExtent] Retrieved parameters for extent ($extent) and cellsize ($cs): ${paramMap.toString}") }
       vars             <- IO { Vars.varsWithBuffer(expr) }
       params           <- vars.toList.parTraverse { case (varName, (_, buffer)) =>
-                            val thingify = paramMap(varName).extentReification
-                            thingify(extent, cs).map(varName -> _)
-                          } map { _.toMap }
+        val thingify = paramMap(varName).extentReification
+        thingify(extent, cs).map(varName -> _)
+      } map { _.toMap }
       reified          <- IO { Expression.bindParams(expr, params.mapValues(RasterLit(_))) }
     } yield reified
       .andThen(interpreter(_))
@@ -52,7 +52,7 @@ object LayerExtent extends LazyLogging {
   def generateExpression[Param](
     mkExpr: Map[String, Param] => Expression,
     getParams: IO[Map[String, Param]],
-    interpreter: BufferingInterpreter
+    interpreter: Interpreter
   )(
     implicit reify: ExtentReification[Param],
              contextShift: ContextShift[IO]
@@ -62,7 +62,7 @@ object LayerExtent extends LazyLogging {
   /** Provide an expression and expect arguments to fulfill its needs */
   def curried[Param](
     expr: Expression,
-    interpreter: BufferingInterpreter
+    interpreter: Interpreter
   )(
     implicit reify: ExtentReification[Param],
              contextShift: ContextShift[IO]
@@ -81,7 +81,7 @@ object LayerExtent extends LazyLogging {
              contextShift: ContextShift[IO]
   ): (Extent, CellSize) => IO[Interpreted[MultibandTile]] =
     (extent: Extent, cellsize: CellSize) => {
-      val eval = curried(RasterVar("identity"), BufferingInterpreter.DEFAULT)
+      val eval = curried(RasterVar("identity"), Interpreter.DEFAULT)
       eval(Map("identity" -> param), extent, cellsize)
     }
 }
