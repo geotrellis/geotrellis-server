@@ -58,7 +58,7 @@ object Conf {
   ) extends OgcService
 
   /** Public URL for this service that will be reported.
-    * This may need to be set externall due to containerization or proxies.
+    * This may need to be set externally due to containerization or proxies.
     */
   case class Service(url: Option[URL])
 
