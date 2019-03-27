@@ -38,7 +38,7 @@ object Dependencies {
   val kamonPrometheus   = "io.kamon"                      %% "kamon-prometheus"     % "1.0.0"
   val kamonSysMetrics   = "io.kamon"                      %% "kamon-system-metrics" % "1.0.0"
   val kindProjector     = "org.spire-math"                %% "kind-projector"       % "0.9.4"
-  val mamlJvm           = "com.azavea"                    %% "maml-jvm"             % "0.2.0"
+  val mamlJvm           = "com.azavea"                    %% "maml-jvm"             % "0.2.1"
   // Note: pureconfig is not yet stable, version 0.10.0 is not binary copatible with 0.9.2 which is used by GT
   val pureConfig        = "com.github.pureconfig"         %% "pureconfig"           % "0.9.2"
   val scaffeine         = "com.github.blemale"            %% "scaffeine"            % "2.6.0"
