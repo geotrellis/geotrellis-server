@@ -144,7 +144,7 @@ addition-house-income = {
 Three pieces of configuration are expected by the top level 'wms'
 property:
 1. [Parent layer metadata](#wms-parent-layer-metadata)
-2. [Service level metadata](#wms-service-level-metadata)
+2. [Service level metadata](#wms-service-metadata)
 3. [Layer definitions](#layer-definitions)
 
 #### WMS Parent Layer Metadata
@@ -231,7 +231,7 @@ The corresponding XML:
 
 Three pieces of configuration are expected by the top level 'wms'
 property:
-1. [Service level metadata](#wcs-service-level-metadata)
+1. [Service level metadata](#wcs/wmts-service-metadata)
 2. [Layer definitions](#layer-definitions)
 
 
@@ -239,10 +239,48 @@ property:
 
 Three pieces of configuration are expected by the top level 'wms'
 property:
-1. [Parent layer metadata](#wcs-parent-layer-metadata)
-2. [Service level metadata](#wcs-service-level-metadata)
+1. [Service level metadata](#wcs/wmts-service-metadata)
+2. [Tile matrix sets](#wmts-tile-matrix-sets)
 3. [Layer definitions](#layer-definitions)
 
+
+### WMTS Tile Matrix Sets
+
+The WMTS spec requires services to advertise matrices which correspond
+to the tile-pattern to be served. If you've worked with TMS services,
+the conceit is familiar: different resolutions require different tile
+sizes. As you zoom in and out, different imagery is loaded at discrete
+levels.
+
+Provided in the example configuration is a tile matrix set that
+corresponds to the familiar TMS scheme (here, labeled
+'GoogleMapsCompatible' because this is the standard name for such a
+layout when working with OGC services).
+
+Each tile matrix set should provide metadata which tells SOAP services
+how to refer to them and under which projections they are applicable. In
+addition, it should supply a list of tile matrices (which have an ID,
+some extent of coverage, and a tile layout (tile columns, tile rows
+covering said extent as well as pixel columns and pixel rows per tile).
+
+Tile matrix set metadata:
+```
+identifier = "GoogleMapsCompatible"
+supported-crs = 3857
+title = "GoogleMapCompatible"
+abstract = "Google Maps compatible tile matrix set"
+well-known-scale-set = "urn:ogc:def:wkss:OGC:1.0:GoogleMapsCompatible"
+```
+
+A tile matrix (note that the extent is specified in the supported
+projection!):
+```
+{
+    identifier = "8",
+    extent = [-20037508.34278925, -20037508.34278925, 20037508.34278925, 20037508.34278925],
+    tile-layout = [256, 256, 256, 256]
+}
+```
 
 ### WCS/WMTS Service Metadata
 
