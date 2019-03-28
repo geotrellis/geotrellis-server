@@ -108,7 +108,8 @@ us-census-median-household-income = {
 }
 ```
 
-A map algebra source:
+A map algebra source (note the algebra section's reference to the simple
+source above):
 ```
 addition-house-income = {
     type = "mapalgebrasourceconf"

@@ -2,6 +2,7 @@ package geotrellis.server.ogc
 
 import scala.util.Try
 
+/** The output formats supported across currently implemented OGC services */
 sealed trait OutputFormat
 
 object OutputFormat {

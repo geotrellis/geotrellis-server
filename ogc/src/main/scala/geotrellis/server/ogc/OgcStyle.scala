@@ -4,6 +4,10 @@ import geotrellis.raster._
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.render.{ColorMap, ColorRamp}
 
+/**
+ * Any object implementing this trait should be able to render a multibandtile
+ * into an array of bytes which are PNG or JPG imagery
+ **/
 trait OgcStyle {
   def name: String
   def title: String

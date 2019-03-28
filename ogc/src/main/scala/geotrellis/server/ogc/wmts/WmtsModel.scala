@@ -4,6 +4,7 @@ import geotrellis.server.ogc._
 import geotrellis.spark.tiling._
 import geotrellis.proj4._
 
+/** This class holds all the information necessary to serve a basic WMTS service */
 case class WmtsModel(
   serviceMetadata: ows.ServiceMetadata,
   matrices: List[GeotrellisTileMatrixSet],

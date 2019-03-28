@@ -15,6 +15,7 @@ import pureconfig._
 
 import scala.util.Try
 
+/** Grab bag of [[ConfigReader]] instances necessary to read the configuration */
 package object conf {
 
   implicit def colorRampReader: ConfigReader[ColorRamp] =

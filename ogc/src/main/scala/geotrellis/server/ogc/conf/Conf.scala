@@ -10,6 +10,15 @@ import java.net.{InetAddress, URL}
 import pureconfig.ConfigReader
 import scalaxb.DataRecord
 
+/**
+ * The top level configuration object.
+ * This object should be realized from all the sections in application.conf. If the
+ * application won't start because of a bad configuration, start here and recursively
+ * descend through properties verifying that the configuration file provides sufficient
+ * information.
+ *
+ * Complex types can be read with the help of [[ConfigReader]] instances (see package.scala)
+ */
 case class Conf(
   http: Conf.Http,
   service: Conf.Service,
@@ -40,18 +49,22 @@ object Conf {
       simpleLayers ++ mapAlgebraLayers
     }
   }
+
+  /** WMS service configuration */
   case class WMS(
     parentLayerMeta: WmsParentLayerMeta,
     serviceMetadata: opengis.wms.Service,
     layerDefinitions: List[OgcSourceConf]
   ) extends OgcService
 
+  /** WMTS service configuration */
   case class WMTS(
     serviceMetadata: ows.ServiceMetadata,
     layerDefinitions: List[OgcSourceConf],
     tileMatrixSets: List[GeotrellisTileMatrixSet]
   ) extends OgcService
 
+  /** WCS service configuration */
   case class WCS(
     serviceMetadata: ows.ServiceMetadata,
     layerDefinitions: List[OgcSourceConf]
@@ -59,6 +72,8 @@ object Conf {
 
   /** Public URL for this service that will be reported.
     * This may need to be set externally due to containerization or proxies.
+    * (NOTE: If your SOAP client is able to connect but unable to further interact with
+    *  the service, it may be due to an incorrectly advertised URL)
     */
   case class Service(url: Option[URL])
 

@@ -2,6 +2,7 @@ package geotrellis.server.ogc
 
 import geotrellis.proj4.CRS
 
+/** Helper code to convert CRSs to URN strings */
 object URN {
   def fromCrs(crs: CRS): Option[String] = crs.epsgCode.map { code =>
     s"urn:ogc:def:crs:EPSG:9.2:$code"

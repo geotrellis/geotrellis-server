@@ -2,7 +2,7 @@ package geotrellis.server.ogc.ows
 
 import java.net.URI
 
-// Service-level metadata; roughly corresponds to ows service identification and service providers
+/** Service-level metadata; roughly corresponds to ows service identification and service providers */
 case class ServiceMetadata(
   identification: Identification,
   provider: Provider
@@ -23,7 +23,7 @@ case class Provider(
   contact: Option[ResponsiblePartySubset]
 )
 
-// corresponds roughly to opengis.ows.ResponsiblePartySubsetType
+/** corresponds roughly to opengis.ows.ResponsiblePartySubsetType */
 case class ResponsiblePartySubset(
   name: Option[String],
   position: Option[String],

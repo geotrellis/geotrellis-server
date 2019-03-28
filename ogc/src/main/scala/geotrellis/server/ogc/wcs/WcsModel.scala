@@ -23,6 +23,7 @@ import java.net._
 import geotrellis.raster.histogram.Histogram
 import geotrellis.server.ogc.conf.{Conf}
 
+/** This class holds all the information necessary to serve a basic WCS service */
 case class WcsModel(
   serviceMetadata: ows.ServiceMetadata,
   sources: Seq[OgcSource]

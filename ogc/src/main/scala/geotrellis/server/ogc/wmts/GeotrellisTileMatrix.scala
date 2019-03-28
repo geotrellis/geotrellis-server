@@ -10,6 +10,7 @@ import opengis.wmts._
 import opengis.wmts.{TileMatrix, TileMatrixSet}
 import java.net.{InetAddress, URI}
 
+/** Relates Geotrellis Extent and TileLayout to an OGC Tile Matrix */
 case class GeotrellisTileMatrix(
   identifier: String,
   extent: Extent,
