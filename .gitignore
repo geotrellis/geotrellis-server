@@ -19,3 +19,4 @@ pc.stdout.log
 *.log
 .DS_Store
 .bloop
+.metals
