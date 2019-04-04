@@ -52,7 +52,7 @@ object SimpleTiledOgcLayer {
     def extentReification(self: SimpleTiledOgcLayer)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
       (extent: Extent, cs: CellSize) =>  IO {
         val raster: Raster[MultibandTile] = self.source
-          .reprojectToGrid(self.crs, new GridExtent[Long](extent, cs))
+          .reprojectToRegion(self.crs, new GridExtent[Long](extent, cs).toRasterExtent)
           .read(extent)
           .getOrElse(throw new Exception(s"Unable to retrieve layer $self at extent $extent with cell size of $cs"))
 
