@@ -5,6 +5,7 @@ addCommandAlias("bintrayPublish", ";publish;bintrayRelease")
 
 scalaVersion := scalaVer
 scalaVersion in ThisBuild := scalaVer
+updateOptions := updateOptions.value.withCachedResolution(true)
 
 lazy val commonSettings = Seq(
   organization := "com.azavea",
@@ -38,6 +39,7 @@ lazy val commonSettings = Seq(
     "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
     "geotrellis-staging" at "https://oss.sonatype.org/service/local/repositories/orglocationtechgeotrellis-1009/content"
   ),
+  updateOptions := updateOptions.value.withCachedResolution(true),
   addCompilerPlugin(kindProjector cross CrossVersion.binary),
   addCompilerPlugin(macrosParadise cross CrossVersion.full),
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },

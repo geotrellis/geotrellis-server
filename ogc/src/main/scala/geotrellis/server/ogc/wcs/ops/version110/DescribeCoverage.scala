@@ -22,14 +22,14 @@ object DescribeCoverage extends DescribeCoverageBase with LazyLogging {
     val re = src.nativeRE
     val llre = src match {
       case SimpleSource(name, title, rs, styles) =>
-        ReprojectRasterExtent(rs.rasterExtent, rs.crs, LatLng)
+        ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng)
       case MapAlgebraSource(name, title, rss, algebra, styles) =>
         rss.values.map { rs =>
-          ReprojectRasterExtent(rs.rasterExtent, rs.crs, LatLng)
+          ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng)
         }.reduce({ (re1, re2) =>
             val e = re1.extent combine re2.extent
             val cs = if (re1.cellSize.resolution < re2.cellSize.resolution) re1.cellSize else re2.cellSize
-            RasterExtent(e, cs)
+            new GridExtent[Long](e, cs)
         })
     }
     val llex = llre.extent

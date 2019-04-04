@@ -43,11 +43,11 @@ object LayerHistogram extends LazyLogging {
                              .map(_.flatten)
       intersection      <- IO { SampleUtils.intersectExtents(rasterExtents.map(_.extent))
                                   .getOrElse(throw new RequireIntersectingSources()) }
-      _                 <- IO { logger.trace(s"[LayerHistogram] Intersection of provided layer extents calculated: $intersection") }
+      _                 <- IO { logger.debug(s"[LayerHistogram] Intersection of provided layer extents calculated: $intersection") }
       cellSize          <- IO { SampleUtils.chooseLargestCellSize(rasterExtents.map(_.cellSize)) }
-      _                 <- IO { logger.trace(s"[LayerHistogram] Largest cell size of provided layers calculated: $cellSize") }
+      _                 <- IO { logger.debug(s"[LayerHistogram] Largest cell size of provided layers calculated: $cellSize") }
       mbtileForExtent   <- IO { LayerExtent(getExpression, getParams, interpreter) }
-      _                 <- IO { logger.trace(s"[LayerHistogram] calculating histogram from (approximately) ${intersection.area / (cellSize.width * cellSize.height)} cells") }
+      _                 <- IO { logger.debug(s"[LayerHistogram] calculating histogram from (approximately) ${intersection.area / (cellSize.width * cellSize.height)} cells") }
       interpretedTile   <- mbtileForExtent(intersection, cellSize)
     } yield {
       interpretedTile.map { mbtile =>
@@ -96,4 +96,3 @@ object LayerHistogram extends LazyLogging {
   }
 
 }
-

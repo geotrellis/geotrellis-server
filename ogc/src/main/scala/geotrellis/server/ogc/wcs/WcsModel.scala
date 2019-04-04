@@ -5,7 +5,6 @@ import geotrellis.server.ogc.conf._
 
 import geotrellis.contrib.vlm.RasterSource
 import geotrellis.contrib.vlm.geotiff._
-import geotrellis.contrib.vlm.gdal._
 import geotrellis.contrib.vlm.avro._
 import geotrellis.spark.tiling._
 import geotrellis.spark._

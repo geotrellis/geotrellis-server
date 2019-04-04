@@ -17,7 +17,7 @@ case class GeoTrellis(
   bandCount: Int
 ) extends RasterSourceConf {
   def toRasterSource =
-    GeotrellisRasterSource(catalogUri, LayerId(layer, zoom), bandCount)
+    new GeotrellisRasterSource(catalogUri, LayerId(layer, zoom), bandCount)
 }
 
 case class GeoTiff(

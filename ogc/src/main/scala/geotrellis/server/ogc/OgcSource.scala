@@ -3,7 +3,7 @@ package geotrellis.server.ogc
 import geotrellis.server.extent.SampleUtils
 import geotrellis.server.ogc.wms._
 import geotrellis.contrib.vlm._
-import geotrellis.raster.RasterExtent
+import geotrellis.raster.GridExtent
 import geotrellis.vector.Extent
 import geotrellis.proj4.CRS
 import com.azavea.maml.ast._
@@ -24,7 +24,7 @@ trait OgcSource {
   def title: String
   def styles: List[OgcStyle]
   def nativeExtent: Extent
-  def nativeRE: RasterExtent
+  def nativeRE: GridExtent[Long]
   def bboxIn(crs: CRS): BoundingBox
   def nativeCrs: Set[CRS]
 }
@@ -39,7 +39,7 @@ case class SimpleSource(
   styles: List[OgcStyle]
 ) extends OgcSource {
 
-  lazy val nativeRE = source.rasterExtent
+  lazy val nativeRE = source.gridExtent
 
   def bboxIn(crs: CRS) = {
     val reprojected = source.reproject(crs)
@@ -48,7 +48,7 @@ case class SimpleSource(
 
   lazy val nativeCrs: Set[CRS] = Set(source.crs)
 
-  lazy val nativeExtent: Extent = source.rasterExtent.extent
+  lazy val nativeExtent: Extent = source.extent
 }
 
 /**
@@ -85,7 +85,7 @@ case class MapAlgebraSource(
     val cellSize =
       SampleUtils.chooseSmallestCellSize(reprojectedSources.map(_.cellSize))
 
-    RasterExtent(nativeExtent, cellSize)
+    new GridExtent[Long](nativeExtent, cellSize)
   }
 
   def bboxIn(crs: CRS) = {

@@ -51,7 +51,7 @@ object CogUtils {
     }
 
     /** Work around GeoTiff.closestTiffOverview being private to geotrellis */
-  def closestTiffOverview[T <: CellGrid](tiff: GeoTiff[T], cs: CellSize, strategy: OverviewStrategy): GeoTiff[T] = {
+  def closestTiffOverview[T <: CellGrid[Int]](tiff: GeoTiff[T], cs: CellSize, strategy: OverviewStrategy): GeoTiff[T] = {
     geotrellis.hack.GTHack.closestTiffOverview(tiff, cs, strategy)
   }
 
@@ -61,7 +61,7 @@ object CogUtils {
       GeoTiffReader.readMultiband(rr, streaming = true)
     }
 
-  def cropGeoTiff[T <: CellGrid](tiff: GeoTiff[T], extent: Extent): IO[Raster[T]] = IO {
+  def cropGeoTiff[T <: CellGrid[Int]](tiff: GeoTiff[T], extent: Extent): IO[Raster[T]] = IO {
     if (extent.intersects(tiff.extent)) {
       val bounds = tiff.rasterExtent.gridBoundsFor(extent)
       val clipExtent = tiff.rasterExtent.extentFor(bounds)
@@ -83,6 +83,3 @@ object CogUtils {
 
 
 }
-
-
-
