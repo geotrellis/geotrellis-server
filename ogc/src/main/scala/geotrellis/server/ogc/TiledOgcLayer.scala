@@ -81,9 +81,9 @@ object SimpleTiledOgcLayer {
         val resolutions = self.source.resolutions.map { ge =>
           ReprojectRasterExtent(ge.toRasterExtent, self.source.crs, self.crs)
         }
-        import geotrellis.proj4._
+
         NEL.fromList(resolutions.map(_.toRasterExtent))
-          .getOrElse(NEL(ReprojectRasterExtent.apply[Long](self.source.gridExtent, self.source.crs, self.crs), Nil))
+          .getOrElse(NEL(self.source.gridExtent.reproject(self.source.crs, self.crs).toRasterExtent, Nil))
       }
   }
 }
