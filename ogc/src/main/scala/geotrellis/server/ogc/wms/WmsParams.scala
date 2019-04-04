@@ -40,20 +40,8 @@ object WmsParams {
     format: OutputFormat,
     width: Int,
     height: Int,
-    crs: Option[CRS]
-  ) extends WmsParams {
-    def getCorrectedRasterExtent(crs: CRS): RasterExtent = {
-      val correctedBBox =
-        if (layer.crs == LatLng) Extent(
-          boundingBox.ymin,
-          boundingBox.xmin,
-          boundingBox.ymax,
-          boundingBox.xmax
-        )
-        else boundingBox
-      RasterExtent(correctedBBox, width, height)
-    }
-  }
+    crs: CRS
+  ) extends WmsParams
 
   object GetMap {
     def build(params: ParamMap): ValidatedNel[ParamError, WmsParams] = {
@@ -68,17 +56,18 @@ object WmsParams {
           val styles: ValidatedNel[ParamError, List[String]] =
             params.validatedParam[List[String]]("styles", { s => Some(s.split(",").toList) })
 
-          val crs = params.params.get("crs").flatMap({ s => Try(CRS.fromName(s.head)).toOption })
+          val crs = params.validatedParam("crs", { s => Try(CRS.fromName(s)).toOption })
 
-          val bbox =
+          val bbox = crs.andThen { crs =>
             params.validatedParam("bbox", {s =>
               s.split(",").map(_.toDouble) match {
                 case Array(xmin, ymin, xmax, ymax) =>
-                  Some(Extent(xmin, ymin, xmax, ymax))
-                case _ =>
-                  None
+                  if (crs == LatLng) Some(Extent(ymin, xmin, ymax, xmax))
+                  else  Some(Extent(xmin, ymin, xmax, ymax))
+                case _ => None
               }
             })
+          }
 
           val width =
             params.validatedParam[Int]("width", { s => Try(s.toInt).toOption })
@@ -91,15 +80,14 @@ object WmsParams {
             params.validatedParam("format")
               .andThen { f =>
                 OutputFormat.fromString(f) match {
-                  case Some(format) =>
-                    Valid(format).toValidatedNel
+                  case Some(format) => Valid(format).toValidatedNel
                   case None =>
                     Invalid(ParamError.UnsupportedFormatError(f)).toValidatedNel
                   }
               }
 
-          (layers, styles, bbox, format, width, height).mapN {
-            case (layers, styles, bbox, format, width, height) =>
+          (layers, styles, bbox, format, width, height, crs).mapN {
+            case (layers, styles, bbox, format, width, height, crs) =>
               GetMap(version, layers, styles, bbox, format = format, width = width, height = height, crs = crs)
           }
         }

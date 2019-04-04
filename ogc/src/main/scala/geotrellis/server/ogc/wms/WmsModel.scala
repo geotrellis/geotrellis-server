@@ -16,7 +16,7 @@ case class WmsModel(
   /** Take a specific request for a map and combine it with the relevant [[OgcSource]]
    *  to produce a [[Layer]]
    */
-  def getLayer(crs: Option[CRS], maybeLayerName: Option[String], maybeStyleName: Option[String]): Option[OgcLayer] = {
+  def getLayer(crs: CRS, maybeLayerName: Option[String], maybeStyleName: Option[String]): Option[OgcLayer] = {
     for {
       layerName  <- maybeLayerName
       source <- sourceLookup.get(layerName)
@@ -24,14 +24,13 @@ case class WmsModel(
       val styleName: Option[String] = maybeStyleName.orElse(source.styles.headOption.map(_.name))
       val style: Option[OgcStyle] = styleName.flatMap { name => source.styles.find(_.name == name) }
       source match {
-        case mas@MapAlgebraSource(name, title, rasterSources, algebra, styles) =>
-          val outputCrs = crs.getOrElse(mas.nativeCrs.head)
+        case MapAlgebraSource(name, title, rasterSources, algebra, styles) =>
           val simpleLayers = rasterSources.mapValues { rs =>
-            SimpleOgcLayer(name, title, outputCrs, rs, style)
+            SimpleOgcLayer(name, title, crs, rs, style)
           }
-          MapAlgebraOgcLayer(name, title, outputCrs, simpleLayers, algebra, style)
-        case ss@SimpleSource(name, title, rasterSource, styles) =>
-          SimpleOgcLayer(name, title, crs.getOrElse(ss.nativeCrs.head), rasterSource, style)
+          MapAlgebraOgcLayer(name, title, crs, simpleLayers, algebra, style)
+        case SimpleSource(name, title, rasterSource, styles) =>
+          SimpleOgcLayer(name, title, crs, rasterSource, style)
       }
     }
   }

@@ -10,9 +10,6 @@ import java.net.{InetAddress, URL}
 import pureconfig.ConfigReader
 import scalaxb.DataRecord
 
-/**
- * The top level configuration object which has a direct mapping to the HOCON in application.conf
- */
 case class Conf(
   http: Conf.Http,
   service: Conf.Service,
