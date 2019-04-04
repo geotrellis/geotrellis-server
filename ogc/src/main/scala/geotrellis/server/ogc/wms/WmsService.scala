@@ -60,7 +60,6 @@ class WmsService(
           Ok.apply(new CapabilitiesView(model, serviceUrl).toXML)
 
         case Valid(wmsReq: GetMap) =>
-          val re = RasterExtent(wmsReq.boundingBox, wmsReq.width, wmsReq.height)
           model.getLayer(wmsReq.crs, wmsReq.layers.headOption, wmsReq.styles.headOption).map { layer =>
             val evalExtent = layer match {
               case sl@SimpleOgcLayer(_, _, _, _, _) =>
@@ -85,6 +84,7 @@ class WmsService(
               _ <-  IO { histoCache.put(layer, hist) }
             } yield hist
 
+            val re = wmsReq.getCorrectedRasterExtent(layer.crs)
             (evalExtent(re.extent, re.cellSize), histIO).parMapN {
               case (Valid(mbtile), Valid(hists)) =>
                 Valid((mbtile, hists))

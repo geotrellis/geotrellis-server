@@ -41,7 +41,19 @@ object WmsParams {
     width: Int,
     height: Int,
     crs: Option[CRS]
-  ) extends WmsParams
+  ) extends WmsParams {
+    def getCorrectedRasterExtent(crs: CRS): RasterExtent = {
+      val correctedBBox =
+        if (layer.crs == LatLng) Extent(
+          boundingBox.ymin,
+          boundingBox.xmin,
+          boundingBox.ymax,
+          boundingBox.xmax
+        )
+        else boundingBox
+      RasterExtent(correctedBBox, width, height)
+    }
+  }
 
   object GetMap {
     def build(params: ParamMap): ValidatedNel[ParamError, WmsParams] = {
@@ -57,7 +69,6 @@ object WmsParams {
             params.validatedParam[List[String]]("styles", { s => Some(s.split(",").toList) })
 
           val crs = params.params.get("crs").flatMap({ s => Try(CRS.fromName(s.head)).toOption })
-          println("crs", crs)
 
           val bbox =
             params.validatedParam("bbox", {s =>
