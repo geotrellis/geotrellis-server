@@ -207,7 +207,6 @@ lazy val ogc = project
       typesafeLogging,
       commonsIo, // to make GeoTiffRasterSources work
       slf4jApi, // enable logging
-      slf4jSimple,
       http4sBlazeServer % Test,
       pureConfig,
       scaffeine,
