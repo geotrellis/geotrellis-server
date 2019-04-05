@@ -36,8 +36,7 @@ lazy val commonSettings = Seq(
     Resolver.sonatypeRepo("snapshots"),
     "osgeo" at "http://download.osgeo.org/webdav/geotools/",
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
-    "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
-    "geotrellis-staging" at "https://oss.sonatype.org/service/local/repositories/orglocationtechgeotrellis-1009/content"
+    "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots"
   ),
   updateOptions := updateOptions.value.withCachedResolution(true),
   addCompilerPlugin(kindProjector cross CrossVersion.binary),
@@ -69,7 +68,6 @@ lazy val publishSettings = Seq(
       bintrayPublishTo
     }
   },
-  credentials += Credentials(Path.userHome / ".sbt" / ".credentials"),
   bintrayOrganization := Some("azavea"),
   bintrayRepository := "geotrellis",
   bintrayVcsUrl := Some("https://github.com/geotrellis/geotrellis-server.git"),
