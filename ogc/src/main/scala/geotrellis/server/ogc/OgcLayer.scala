@@ -64,7 +64,7 @@ object SimpleOgcLayer extends LazyLogging {
         val resolutions = self.source.resolutions.map { ge =>
           ReprojectRasterExtent(ge, self.source.crs, self.crs).toRasterExtent
         }
-        NEL.fromList(self.source.resolutions.map(_.toRasterExtent)).getOrElse(NEL(self.source.gridExtent.toRasterExtent, Nil))
+        NEL.fromList(resolutions).get
       }
   }
 }
