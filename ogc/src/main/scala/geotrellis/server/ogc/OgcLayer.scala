@@ -3,6 +3,8 @@ package geotrellis.server.ogc
 import geotrellis.server._
 import geotrellis.contrib.vlm._
 import geotrellis.raster._
+import geotrellis.raster.resample._
+import geotrellis.raster.io.geotiff._
 import geotrellis.raster.reproject.ReprojectRasterExtent
 import geotrellis.vector.Extent
 import geotrellis.proj4.CRS
@@ -49,7 +51,7 @@ object SimpleOgcLayer extends LazyLogging {
         val targetGrid = new GridExtent[Long](extent, cs)
         logger.debug(s"attempting to retrieve layer $self at extent $extent with $cs ${targetGrid.cols}x${targetGrid.rows}")
         val raster: Raster[MultibandTile] = self.source
-          .reprojectToRegion(self.crs, targetGrid.toRasterExtent)
+          .reprojectToRegion(self.crs, targetGrid.toRasterExtent, NearestNeighbor, AutoHigherResolution)
           .read(extent)
           .getOrElse(throw new Exception(s"Unable to retrieve layer $self at extent $extent $cs"))
         logger.debug(s"Successfully retrieved layer $self at extent $extent with f $cs ${targetGrid.cols}x${targetGrid.rows}")
