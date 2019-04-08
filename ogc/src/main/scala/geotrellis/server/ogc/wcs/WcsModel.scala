@@ -1,11 +1,11 @@
 package geotrellis.server.ogc.wcs
 
 import geotrellis.server.ogc._
-import geotrellis.server.ogc.conf._
 
 import geotrellis.contrib.vlm.RasterSource
 import geotrellis.contrib.vlm.geotiff._
 import geotrellis.contrib.vlm.avro._
+import geotrellis.raster.histogram.Histogram
 import geotrellis.spark.tiling._
 import geotrellis.spark._
 import geotrellis.proj4._
@@ -16,11 +16,10 @@ import geotrellis.vector.Extent
 import opengis.wms._
 import scalaxb.CanWriteXML
 import com.amazonaws.services.s3.{AmazonS3ClientBuilder, AmazonS3URI}
+
 import java.io.File
 import java.net._
 
-import geotrellis.raster.histogram.Histogram
-import geotrellis.server.ogc.conf.{Conf}
 
 case class WcsModel(
   serviceMetadata: ows.ServiceMetadata,

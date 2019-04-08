@@ -195,18 +195,12 @@ lazy val opengis = project
 
 lazy val ogc = project
   .dependsOn(core, opengis)
-  .enablePlugins(DockerPlugin)
   .settings(moduleName := "geotrellis-server-ogc")
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(
     assemblyJarName in assembly := "geotrellis-server-ogc.jar",
     libraryDependencies ++= Seq(
-      http4sDsl,
-      http4sBlazeServer,
-      http4sBlazeClient,
-      http4sCirce,
-      http4sXml,
       spark,
       geotrellisS3,
       geotrellisSpark,
@@ -214,7 +208,29 @@ lazy val ogc = project
       typesafeLogging,
       commonsIo, // to make GeoTiffRasterSources work
       slf4jApi, // enable logging
-      http4sBlazeServer % Test,
+      scaffeine,
+      scalatest
+    )
+  )
+
+lazy val ogcServer = project
+  .dependsOn(ogc)
+  .enablePlugins(DockerPlugin)
+  .settings(moduleName := "geotrellis-server-ogc-server")
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(
+    assemblyJarName in assembly := "geotrellis-ogc-server.jar",
+    libraryDependencies ++= Seq(
+      spark,
+      http4sDsl,
+      http4sBlazeServer,
+      http4sBlazeClient,
+      http4sCirce,
+      http4sXml,
+      typesafeLogging,
+      commonsIo, // to make GeoTiffRasterSources work
+      slf4jApi, // enable logging
       pureConfig,
       scaffeine,
       scalatest
