@@ -213,7 +213,7 @@ lazy val ogc = project
     )
   )
 
-lazy val ogcServer = project
+lazy val ogcExample = (project in file("ogc-example"))
   .dependsOn(ogc)
   .enablePlugins(DockerPlugin)
   .settings(moduleName := "geotrellis-server-ogc-server")
