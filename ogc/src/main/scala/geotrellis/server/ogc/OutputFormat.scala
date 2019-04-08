@@ -41,7 +41,8 @@ object OutputFormat {
     def render(tile: Tile): Array[Byte] = {
       encoding match {
         case None =>
-          tile.renderPng.bytes
+          val nd = noDataValue(tile.cellType)
+          tile.renderPng(GreyPngEncoding(nd)).bytes
 
         case Some(GreyPngEncoding(None)) =>
           val nd = noDataValue(tile.cellType)
