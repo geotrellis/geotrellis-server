@@ -132,7 +132,8 @@ class CapabilitiesView(
         ServiceIdentification = Some(serviceIdentification),
         ServiceProvider       = Some(serviceProvider),
         OperationsMetadata    = Some(operationsMetadata),
-        Contents              = Some(contents)
+        Contents              = Some(contents),
+        attributes            = Map("@version" -> scalaxb.DataRecord("1.0.0"))
       ),
       namespace = None,
       elementLabel = Some("Capabilities"),
