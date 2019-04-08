@@ -50,7 +50,7 @@ object Conf {
   case class Http(interface: String, port: Int, publicUrl: Option[String]) {
     def serviceUrl(svc: String): URL =
       publicUrl
-        .map({ url => new URL(url + s"/$svc") })
+        .map({ url => new URL(url + s"$svc") })
         .getOrElse(
           new URL("http", interface, port, svc)
         )
