@@ -168,13 +168,15 @@ lazy val example = project
     )
   )
 
-lazy val ogc = project
-  .dependsOn(core)
+lazy val opengis = project
   .enablePlugins(ScalaxbPlugin)
-  .enablePlugins(DockerPlugin)
-  .settings(moduleName := "geotrellis-server-ogc")
-  .settings(commonSettings)
-  .settings(publishSettings)
+  .settings(moduleName := "geotrellis-server-opengis")
+  .settings(
+    libraryDependencies ++= Seq(
+      scalaXml,
+      scalaParser
+    )
+  )
   .settings(
     scalaxbDispatchVersion in (Compile, scalaxb)     := dispatchVer,
     scalaxbPackageName in (Compile, scalaxb)         := "generated",
@@ -190,6 +192,13 @@ lazy val ogc = project
       uri("http://www.w3.org/2001/SMIL20/Language") -> "opengis.gml.smil"
     )
   )
+
+lazy val ogc = project
+  .dependsOn(core, opengis)
+  .enablePlugins(DockerPlugin)
+  .settings(moduleName := "geotrellis-server-ogc")
+  .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     assemblyJarName in assembly := "geotrellis-server-ogc.jar",
     libraryDependencies ++= Seq(
