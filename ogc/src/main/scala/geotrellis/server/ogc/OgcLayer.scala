@@ -3,6 +3,8 @@ package geotrellis.server.ogc
 import geotrellis.server._
 import geotrellis.contrib.vlm._
 import geotrellis.raster._
+import geotrellis.raster.resample._
+import geotrellis.raster.io.geotiff._
 import geotrellis.raster.reproject.ReprojectRasterExtent
 import geotrellis.vector.Extent
 import geotrellis.proj4.CRS
@@ -46,12 +48,13 @@ object SimpleOgcLayer extends LazyLogging {
   implicit val simpleOgcReification = new ExtentReification[SimpleOgcLayer] {
     def extentReification(self: SimpleOgcLayer)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
       (extent: Extent, cs: CellSize) =>  IO {
-        logger.debug(s"attempting to retrieve layer $self at extent $extent with cell size of $cs")
+        val targetGrid = new GridExtent[Long](extent, cs)
+        logger.debug(s"attempting to retrieve layer $self at extent $extent with $cs ${targetGrid.cols}x${targetGrid.rows}")
         val raster: Raster[MultibandTile] = self.source
-          .reprojectToGrid(self.crs, RasterExtent(extent, cs))
+          .reprojectToRegion(self.crs, targetGrid.toRasterExtent, NearestNeighbor, AutoHigherResolution)
           .read(extent)
-          .getOrElse(throw new Exception(s"Unable to retrieve layer $self at extent $extent with cell size of $cs"))
-        logger.debug(s"Successfully retrieved layer $self at extent $extent with cell size of $cs")
+          .getOrElse(throw new Exception(s"Unable to retrieve layer $self at extent $extent $cs"))
+        logger.debug(s"Successfully retrieved layer $self at extent $extent with f $cs ${targetGrid.cols}x${targetGrid.rows}")
 
         ProjectedRaster(raster, self.crs)
       }
@@ -61,10 +64,9 @@ object SimpleOgcLayer extends LazyLogging {
     def rasterExtents(self: SimpleOgcLayer)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] =
       IO {
         val resolutions = self.source.resolutions.map { ge =>
-          ReprojectRasterExtent(ge.toRasterExtent, self.source.crs, self.crs)
+          ReprojectRasterExtent(ge, self.source.crs, self.crs).toRasterExtent
         }
-        NEL.fromList(resolutions)
-          .getOrElse(NEL(ReprojectRasterExtent(self.source.rasterExtent, self.source.crs, self.crs), Nil))
+        NEL.fromList(resolutions).get
       }
   }
 }

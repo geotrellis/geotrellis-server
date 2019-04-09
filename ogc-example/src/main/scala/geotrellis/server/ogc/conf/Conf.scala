@@ -12,22 +12,11 @@ import scalaxb.DataRecord
 
 case class Conf(
   http: Conf.Http,
-  service: Conf.Service,
   layers: Map[String, OgcSourceConf],
   wms: Conf.WMS,
   wmts: Conf.WMTS,
   wcs: Conf.WCS
-) {
-  def serviceUrl(path: String): URL = {
-    // TODO: move decision to attach WMS to the point where we decide which service (wms, wmts, wcs) to bind
-    service.url.getOrElse(
-      if (http.interface == "0.0.0.0")
-        new URL("http", InetAddress.getLocalHost.getHostAddress, http.port, path)
-      else
-        new URL("http", http.interface, http.port, path)
-    )
-  }
-}
+)
 
 object Conf {
   trait OgcService {
@@ -57,13 +46,15 @@ object Conf {
     layerDefinitions: List[OgcSourceConf]
   ) extends OgcService
 
-  /** Public URL for this service that will be reported.
-    * This may need to be set externall due to containerization or proxies.
-    */
-  case class Service(url: Option[URL])
-
-  /** Local interface and port binding for the service */
-  case class Http(interface: String, port: Int)
+  /** Local interface and port binding for the service + public (advertised by XML) endpoint */
+  case class Http(interface: String, port: Int, publicUrl: Option[String]) {
+    def serviceUrl(svc: String): URL =
+      publicUrl
+        .map({ url => new URL(url + s"$svc") })
+        .getOrElse(
+          new URL("http", interface, port, svc)
+        )
+  }
 
   lazy val conf: Conf = pureconfig.loadConfigOrThrow[Conf]
   implicit def ConfObjectToClass(obj: Conf.type): Conf = conf

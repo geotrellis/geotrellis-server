@@ -18,3 +18,5 @@ pc.stdout.log
 .idea
 *.log
 .DS_Store
+.bloop
+.metals

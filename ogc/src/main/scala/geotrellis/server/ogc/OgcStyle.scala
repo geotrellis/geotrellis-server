@@ -23,8 +23,12 @@ case class ColorMapStyle(
     hists: List[Histogram[Double]]
   ): Array[Byte] = {
     format match {
-      case OutputFormat.Png => mbtile.band(bandIndex = 0).renderPng(colorMap).bytes
-      case OutputFormat.Jpg => mbtile.band(bandIndex = 0).renderJpg(colorMap).bytes
+      case format: OutputFormat.Png =>
+        format.render(mbtile.band(bandIndex = 0), colorMap)
+
+      case OutputFormat.Jpg =>
+        mbtile.band(bandIndex = 0).renderJpg(colorMap).bytes
+
       case OutputFormat.GeoTiff => ??? // Implementation necessary
     }
   }
@@ -48,8 +52,12 @@ case class ColorRampStyle(
     // we're assuming the layers are single band rasters
     val cmap = ColorMap.fromQuantileBreaks(hists.head, ramp)
     format match {
-      case OutputFormat.Png => mbtile.band(bandIndex = 0).renderPng(cmap).bytes
-      case OutputFormat.Jpg => mbtile.band(bandIndex = 0).renderJpg(cmap).bytes
+      case format: OutputFormat.Png =>
+       format.render(mbtile.band(bandIndex = 0), cmap)
+
+      case OutputFormat.Jpg =>
+        mbtile.band(bandIndex = 0).renderJpg(cmap).bytes
+
       case OutputFormat.GeoTiff => ??? // Implementation necessary
     }
   }

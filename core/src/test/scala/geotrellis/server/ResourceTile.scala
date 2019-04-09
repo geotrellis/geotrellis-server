@@ -1,7 +1,8 @@
 package geotrellis.server
 
 import geotrellis.server.vlm._
-import geotrellis.contrib.vlm.gdal._
+import geotrellis.contrib.vlm._
+import geotrellis.contrib.vlm.geotiff._
 import geotrellis.contrib.vlm.TargetRegion
 import geotrellis.raster._
 import geotrellis.raster.io.geotiff.AutoHigherResolution
@@ -20,13 +21,13 @@ case class ResourceTile(name: String) {
 }
 
 object ResourceTile extends RasterSourceUtils {
-  def getRasterSource(uri: String): GDALBaseRasterSource = GDALRasterSource(uri)
+  def getRasterSource(uri: String): RasterSource = GeoTiffRasterSource(uri)
 
   implicit val extentReification: ExtentReification[ResourceTile] = new ExtentReification[ResourceTile] {
     def extentReification(self: ResourceTile)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
       (extent: Extent, cs: CellSize) => {
         val rs = getRasterSource(self.uri.toString)
-        rs.resample(TargetRegion(RasterExtent(extent, cs)), NearestNeighbor, AutoHigherResolution)
+        rs.resample(TargetRegion(new GridExtent[Long](extent, cs)), NearestNeighbor, AutoHigherResolution)
           .read(extent)
           .map { raster => ProjectedRaster(raster, rs.crs) }
           .toIO { new Exception(s"No tile avail for RasterExtent: ${RasterExtent(extent, cs)}") }
@@ -39,5 +40,3 @@ object ResourceTile extends RasterSourceUtils {
   }
 
 }
-
-

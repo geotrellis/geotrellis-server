@@ -40,9 +40,9 @@ object Server extends LazyLogging with IOApp {
     import Conf._
     for {
       conf       <- Stream.eval(LoadConf().as[Conf])
-      _          <- Stream.eval(IO.pure(logger.info(s"Advertising service URL at ${conf.serviceUrl("/wms")}")))
-      _          <- Stream.eval(IO.pure(logger.info(s"Advertising service URL at ${conf.serviceUrl("/wcs")}")))
-      _          <- Stream.eval(IO.pure(logger.info(s"Advertising service URL at ${conf.serviceUrl("/wmts")}")))
+      _          <- Stream.eval(IO(println(s"Advertising service URL at ${conf.http.serviceUrl("/wms")}")))
+      _          <- Stream.eval(IO(println(s"Advertising service URL at ${conf.http.serviceUrl("/wcs")}")))
+      _          <- Stream.eval(IO(println(s"Advertising service URL at ${conf.http.serviceUrl("/wmts")}")))
 
       simpleSources = conf.layers.values.collect { case ssc@SimpleSourceConf(_, _, _, _) => ssc.model }.toList
       wmsModel = WmsModel(
@@ -60,9 +60,9 @@ object Server extends LazyLogging with IOApp {
         conf.wcs.layerSources(simpleSources)
         )
 
-      wmsService = new WmsService(wmsModel, conf.serviceUrl("/wms"))
-      wcsService = new WcsService(wcsModel, conf.serviceUrl("/wcs"))
-      wmtsService = new WmtsService(wmtsModel, conf.serviceUrl("/wmts"))
+      wmsService = new WmsService(wmsModel, conf.http.serviceUrl("/wms"))
+      wcsService = new WcsService(wcsModel, conf.http.serviceUrl("/wcs"))
+      wmtsService = new WmtsService(wmtsModel, conf.http.serviceUrl("/wmts"))
 
       exitCode   <- BlazeServerBuilder[IO]
         .withIdleTimeout(Duration.Inf) // for test purposes only

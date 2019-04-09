@@ -1,7 +1,6 @@
 package geotrellis.server
 
 import geotrellis.server.vlm._
-import geotrellis.contrib.vlm.gdal._
 import geotrellis.raster._
 import geotrellis.raster.io.geotiff.AutoHigherResolution
 import geotrellis.proj4._
@@ -48,4 +47,3 @@ trait TileAsSourceImplicits {
     }
 
 }
-

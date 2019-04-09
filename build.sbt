@@ -5,6 +5,7 @@ addCommandAlias("bintrayPublish", ";publish;bintrayRelease")
 
 scalaVersion := scalaVer
 scalaVersion in ThisBuild := scalaVer
+updateOptions := updateOptions.value.withCachedResolution(true)
 
 lazy val commonSettings = Seq(
   organization := "com.azavea",
@@ -35,9 +36,9 @@ lazy val commonSettings = Seq(
     Resolver.sonatypeRepo("snapshots"),
     "osgeo" at "http://download.osgeo.org/webdav/geotools/",
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
-    "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots",
-    "geotrellis-staging" at "https://oss.sonatype.org/service/local/repositories/orglocationtechgeotrellis-1009/content"
+    "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots"
   ),
+  updateOptions := updateOptions.value.withCachedResolution(true),
   addCompilerPlugin(kindProjector cross CrossVersion.binary),
   addCompilerPlugin(macrosParadise cross CrossVersion.full),
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
@@ -67,7 +68,6 @@ lazy val publishSettings = Seq(
       bintrayPublishTo
     }
   },
-  credentials += Credentials(Path.userHome / ".sbt" / ".credentials"),
   bintrayOrganization := Some("azavea"),
   bintrayRepository := "geotrellis",
   bintrayVcsUrl := Some("https://github.com/geotrellis/geotrellis-server.git"),
@@ -168,13 +168,15 @@ lazy val example = project
     )
   )
 
-lazy val ogc = project
-  .dependsOn(core)
+lazy val opengis = project
   .enablePlugins(ScalaxbPlugin)
-  .enablePlugins(DockerPlugin)
-  .settings(moduleName := "geotrellis-server-ogc")
-  .settings(commonSettings)
-  .settings(publishSettings)
+  .settings(moduleName := "geotrellis-server-opengis")
+  .settings(
+    libraryDependencies ++= Seq(
+      scalaXml,
+      scalaParser
+    )
+  )
   .settings(
     scalaxbDispatchVersion in (Compile, scalaxb)     := dispatchVer,
     scalaxbPackageName in (Compile, scalaxb)         := "generated",
@@ -190,14 +192,15 @@ lazy val ogc = project
       uri("http://www.w3.org/2001/SMIL20/Language") -> "opengis.gml.smil"
     )
   )
+
+lazy val ogc = project
+  .dependsOn(core, opengis)
+  .settings(moduleName := "geotrellis-server-ogc")
+  .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     assemblyJarName in assembly := "geotrellis-server-ogc.jar",
     libraryDependencies ++= Seq(
-      http4sDsl,
-      http4sBlazeServer,
-      http4sBlazeClient,
-      http4sCirce,
-      http4sXml,
       spark,
       geotrellisS3,
       geotrellisSpark,
@@ -205,8 +208,29 @@ lazy val ogc = project
       typesafeLogging,
       commonsIo, // to make GeoTiffRasterSources work
       slf4jApi, // enable logging
-      slf4jSimple,
-      http4sBlazeServer % Test,
+      scaffeine,
+      scalatest
+    )
+  )
+
+lazy val ogcExample = (project in file("ogc-example"))
+  .dependsOn(ogc)
+  .enablePlugins(DockerPlugin)
+  .settings(moduleName := "geotrellis-server-ogc-server")
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(
+    assemblyJarName in assembly := "geotrellis-ogc-server.jar",
+    libraryDependencies ++= Seq(
+      spark,
+      http4sDsl,
+      http4sBlazeServer,
+      http4sBlazeClient,
+      http4sCirce,
+      http4sXml,
+      typesafeLogging,
+      commonsIo, // to make GeoTiffRasterSources work
+      slf4jApi, // enable logging
       pureConfig,
       scaffeine,
       scalatest
