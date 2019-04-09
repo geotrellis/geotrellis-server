@@ -26,8 +26,8 @@ import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 import java.net.URL
 
-object OgcMain extends CommandApp(
-  name = "Geotrellis OGC Server",
+object Main extends CommandApp(
+  name = "java -jar geotrellis-ogc-server.jar",
   header = "Host GT layers through WMS, WMTS, and WCS services",
   main = {
     val publicUrlReq =
@@ -52,7 +52,7 @@ object OgcMain extends CommandApp(
     val configPathOpt = Opts
       .option[String]("conf",
                    short = "c",
-                   help = "The interface for this server to bind on")
+                   help = "Full path to a HOCON configuration file (https://github.com/lightbend/config/blob/master/HOCON.md)")
       .orNone
 
     (publicUrlReq, interfaceOpt, portOpt, configPathOpt).mapN {
@@ -60,8 +60,13 @@ object OgcMain extends CommandApp(
 
         println(ansi"%green{Locally binding services to ${interface}:${port}}")
         println(ansi"%green{Advertising services at ${publicUrl}}")
-        if (configPath.isEmpty)
-          println(ansi"%red{Warning}: No configuration path provided. Loading defaults.")
+        configPath match {
+          case Some(path) =>
+            println(ansi"%green{Layer and style configurations loaded from ${path}.}")
+          case None =>
+            println(ansi"%red{Warning}: No configuration path provided. Loading defaults.")
+        }
+
 
         implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
         implicit val timer = IO.timer(ExecutionContext.global)
