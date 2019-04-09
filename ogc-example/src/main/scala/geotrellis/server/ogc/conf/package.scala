@@ -15,6 +15,7 @@ import pureconfig._
 
 import scala.util.Try
 
+/** A grab bag of [[ConfigReader]] instances necessary to read the configuration */
 package object conf {
 
   implicit def colorRampReader: ConfigReader[ColorRamp] =
@@ -72,7 +73,6 @@ package object conf {
     }
 
   /** An alternative AST reading strategy that uses a separate json file */
-
   //private lazy val s3client = AmazonS3ClientBuilder.defaultClient()
 
   //def readString(uri: URI): String = uri.getScheme match {

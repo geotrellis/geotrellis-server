@@ -23,7 +23,7 @@ object Dependencies {
   val commonsIO         = "commons-io"                    %  "commons-io"           % "2.6"
   val commonsLang       = "org.apache.commons"            %  "commons-lang3"        % "3.7"
   val concHashMap       = "com.googlecode.concurrentlinkedhashmap" % "concurrentlinkedhashmap-lru" % "1.4.2"
-  val decline           = "com.monovore"                  %% "decline"              % "0.4.0"
+  val decline           = "com.monovore"                  %% "decline"              % "0.5.0"
   val geotrellisS3      = "org.locationtech.geotrellis"   %% "geotrellis-s3"        % gtVer
   val geotrellisSpark   = "org.locationtech.geotrellis"   %% "geotrellis-spark"     % gtVer
   val geotrellisVlm     = "com.azavea.geotrellis"         %% "geotrellis-contrib-vlm" % gtcVer
@@ -57,4 +57,5 @@ object Dependencies {
   val commonsIo         = "commons-io"                     % "commons-io"           % "2.6"
   val slf4jApi          = "org.slf4j"                      % "slf4j-api"            % "1.7.25"
   val slf4jSimple       = "org.slf4j"                      % "slf4j-simple"         % "1.7.25"
+  val ansiColors        = "org.backuity"                  %% "ansi-interpolator"    % "1.1" % Provided
 }

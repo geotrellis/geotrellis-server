@@ -20,7 +20,7 @@ import com.amazonaws.services.s3.{AmazonS3ClientBuilder, AmazonS3URI}
 import java.io.File
 import java.net._
 
-
+/** This class holds all the information necessary to construct a response to a WCS request */
 case class WcsModel(
   serviceMetadata: ows.ServiceMetadata,
   sources: Seq[OgcSource]

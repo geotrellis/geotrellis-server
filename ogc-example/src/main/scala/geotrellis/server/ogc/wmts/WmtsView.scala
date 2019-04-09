@@ -6,37 +6,31 @@ import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wmts.WmtsParams.{GetCapabilities, GetTile}
 import com.azavea.maml.eval._
 
-import org.http4s._
-import org.http4s.dsl.Http4sDsl
-import org.http4s.circe._
-import org.http4s.scalaxml._
-import cats.data.Validated._
-import cats.effect._
-import cats.implicits._
-import _root_.io.circe.syntax._
+import geotrellis.contrib.vlm.RasterSource
+import geotrellis.contrib.vlm.geotiff._
+import geotrellis.contrib.vlm.avro._
+import geotrellis.spark.tiling._
+import geotrellis.spark._
+import geotrellis.proj4._
+import geotrellis.raster.render.{ColorMap, ColorRamp, Png}
+import geotrellis.raster._
 import com.typesafe.scalalogging.LazyLogging
+import geotrellis.spark.io.s3.AmazonS3Client
+import scalaxb.CanWriteXML
+import org.http4s.scalaxml._
+import org.http4s._, org.http4s.dsl.io._, org.http4s.implicits._
+import org.http4s.circe._
+import _root_.io.circe.syntax._
+import cats._, cats.implicits._
+import cats.effect._
+import cats.data.Validated._
 
-import java.net.URL
+import java.io.File
+import java.net._
 
-class WmtsService(
-  wmtsModel: WmtsModel,
-  serviceUrl: URL
-)(implicit contextShift: ContextShift[IO]) extends Http4sDsl[IO] with LazyLogging {
+class WmtsView(wmtsModel: WmtsModel, serviceUrl: URL) extends LazyLogging {
 
-  def handleError[Result](result: Either[Throwable, Result])(implicit ee: EntityEncoder[IO, Result]): IO[Response[IO]] = result match {
-    case Right(res) =>
-      logger.trace(res.toString)
-      Ok(res)
-
-    case Left(err) =>
-      logger.error(err.toString)
-      InternalServerError(err.toString)
-  }
-
-  def routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
-    case req @ GET -> Root =>
-      logger.debug(s"WMTS Request received: $req")
-
+  def responseFor(req: Request[IO])(implicit cs: ContextShift[IO]): IO[Response[IO]] = {
       WmtsParams(req.multiParams) match {
         case Invalid(errors) =>
           val msg = ParamError.generateErrorMessage(errors.toList)
@@ -44,7 +38,7 @@ class WmtsService(
           BadRequest(msg)
 
         case Valid(wmtsReq: GetCapabilities) =>
-          Ok.apply(new CapabilitiesView(wmtsModel, serviceUrl).toXML)
+          Ok(new CapabilitiesView(wmtsModel, serviceUrl).toXML)
 
         case Valid(wmtsReq: GetTile) =>
           val tileCol = wmtsReq.tileCol
@@ -61,7 +55,6 @@ class WmtsService(
                 LayerTms.identity(sl)
               case sl@MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _) =>
                 LayerTms(IO.pure(expr), IO.pure(parameters), Interpreter.DEFAULT)
-              case _ => throw new Exception("This shouldn't happen")
             }
 
             val evalHisto = layer match {
@@ -69,7 +62,6 @@ class WmtsService(
                 LayerHistogram.identity(sl, 512)
               case sl@MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _) =>
                 LayerHistogram(IO.pure(expr), IO.pure(parameters), Interpreter.DEFAULT, 512)
-              case _ => throw new Exception("This shouldn't happen")
             }
 
             (evalWmts(0, tileCol, tileRow), evalHisto).parMapN {
@@ -90,11 +82,7 @@ class WmtsService(
                 logger.error(err.toString, err)
                 InternalServerError(err.toString)
             }
-          }).getOrElse(BadRequest("No such layer"))
+          }).getOrElse(BadRequest(s"Layer (${layerName}) not found"))
       }
-
-    case req =>
-      logger.warn(s"""Recv'd UNHANDLED request: $req""")
-      BadRequest("Don't know what that is")
   }
 }
