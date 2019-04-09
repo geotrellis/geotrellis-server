@@ -16,6 +16,7 @@ import geotrellis.raster._
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.spark.io.s3.AmazonS3Client
 import scalaxb.CanWriteXML
+import org.backuity.ansi.AnsiFormatter.FormattedHelper
 import org.http4s.scalaxml._
 import org.http4s._, org.http4s.dsl.io._, org.http4s.implicits._
 import cats._, cats.implicits._
@@ -48,13 +49,13 @@ class WcsView(wcsModel: WcsModel, serviceUrl: URL) extends LazyLogging {
       case Validated.Valid(wcsParams) =>
         wcsParams match {
           case p: GetCapabilitiesWcsParams =>
-            logger.debug(s"\033[1mGetCapabilities: $serviceUrl\033[0m")
+            logger.debug(ansi"%bold{GetCapabilities: $serviceUrl}")
             val result = Operations.getCapabilities(serviceUrl.toString, wcsModel, p)
             logger.debug(result.toString)
             Ok(result)
 
           case p: DescribeCoverageWcsParams =>
-            logger.debug(s"\033[1mDescribeCoverage: ${req.uri}\033[0m")
+            logger.debug(ansi"%bold{DescribeCoverage: ${req.uri}}")
             for {
               describeCoverage <- IO { Operations.describeCoverage(wcsModel, p) }.attempt
               result <- handleError(describeCoverage)
@@ -64,7 +65,7 @@ class WcsView(wcsModel: WcsModel, serviceUrl: URL) extends LazyLogging {
             }
 
           case p: GetCoverageWcsParams =>
-            logger.debug(s"\033[1mGetCoverage: ${req.uri}\033[0m")
+            logger.debug(ansi"%bold{GetCoverage: ${req.uri}}")
             for {
               getCoverage <- IO { getCoverage.build(p) }.attempt
               result <- handleError(getCoverage)
