@@ -113,7 +113,12 @@ object OgcMain extends CommandApp(
           } yield exitCode
         }
 
-        stream.compile.drain.as(ExitCode.Success).unsafeRunSync
+        /** End of the world - wrap up the work defined above and execute it */
+        stream
+          .compile
+          .drain
+          .as(ExitCode.Success)
+          .unsafeRunSync
       }
     }
   }

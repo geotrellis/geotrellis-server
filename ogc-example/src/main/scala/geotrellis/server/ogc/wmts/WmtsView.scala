@@ -55,7 +55,6 @@ class WmtsView(wmtsModel: WmtsModel, serviceUrl: URL) extends LazyLogging {
                 LayerTms.identity(sl)
               case sl@MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _) =>
                 LayerTms(IO.pure(expr), IO.pure(parameters), Interpreter.DEFAULT)
-              case _ => throw new Exception("This shouldn't happen")
             }
 
             val evalHisto = layer match {
@@ -63,7 +62,6 @@ class WmtsView(wmtsModel: WmtsModel, serviceUrl: URL) extends LazyLogging {
                 LayerHistogram.identity(sl, 512)
               case sl@MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _) =>
                 LayerHistogram(IO.pure(expr), IO.pure(parameters), Interpreter.DEFAULT, 512)
-              case _ => throw new Exception("This shouldn't happen")
             }
 
             (evalWmts(0, tileCol, tileRow), evalHisto).parMapN {
@@ -84,7 +82,7 @@ class WmtsView(wmtsModel: WmtsModel, serviceUrl: URL) extends LazyLogging {
                 logger.error(err.toString, err)
                 InternalServerError(err.toString)
             }
-          }).getOrElse(BadRequest("No such layer"))
+          }).getOrElse(BadRequest("Layer not found"))
       }
   }
 }

@@ -51,7 +51,7 @@ class WmsView(wmsModel: WmsModel, serviceUrl: URL) extends LazyLogging {
         BadRequest(msg)
 
       case Valid(wmsReq: GetCapabilities) =>
-        Ok.apply(new CapabilitiesView(wmsModel, serviceUrl).toXML)
+        Ok(new CapabilitiesView(wmsModel, serviceUrl).toXML)
 
       case Valid(wmsReq: GetMap) =>
         val re = RasterExtent(wmsReq.boundingBox, wmsReq.width, wmsReq.height)
@@ -97,7 +97,7 @@ class WmsView(wmsModel: WmsModel, serviceUrl: URL) extends LazyLogging {
               logger.error(err.toString, err)
               InternalServerError(err.toString)
           }
-        }.getOrElse(BadRequest("No such layer"))
+        }.getOrElse(BadRequest("Layer not found"))
     }
   }
 }

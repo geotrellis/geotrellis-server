@@ -42,6 +42,6 @@ class OgcService(
       wmtsView.responseFor(req)
     case req =>
       logger.warn(s"""Recv'd UNHANDLED request: $req""")
-      BadRequest("Don't know what that is")
+      NotFound()
   }
 }
