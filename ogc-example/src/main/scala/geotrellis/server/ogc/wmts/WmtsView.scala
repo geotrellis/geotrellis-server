@@ -82,7 +82,7 @@ class WmtsView(wmtsModel: WmtsModel, serviceUrl: URL) extends LazyLogging {
                 logger.error(err.toString, err)
                 InternalServerError(err.toString)
             }
-          }).getOrElse(BadRequest("Layer not found"))
+          }).getOrElse(BadRequest(s"Layer (${layerName}) not found"))
       }
   }
 }
