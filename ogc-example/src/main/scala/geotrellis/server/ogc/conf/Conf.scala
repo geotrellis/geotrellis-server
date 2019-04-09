@@ -11,7 +11,6 @@ import pureconfig.ConfigReader
 import scalaxb.DataRecord
 
 case class Conf(
-  http: Conf.Http,
   layers: Map[String, OgcSourceConf],
   wms: Conf.WMS,
   wmts: Conf.WMTS,
@@ -19,7 +18,7 @@ case class Conf(
 )
 
 object Conf {
-  trait OgcService {
+  trait OgcServiceConf {
     def layerDefinitions: List[OgcSourceConf]
     def layerSources(simpleSources: List[SimpleSource]): List[OgcSource] = {
       val simpleLayers =
@@ -33,28 +32,18 @@ object Conf {
     parentLayerMeta: WmsParentLayerMeta,
     serviceMetadata: opengis.wms.Service,
     layerDefinitions: List[OgcSourceConf]
-  ) extends OgcService
+  ) extends OgcServiceConf
 
   case class WMTS(
     serviceMetadata: ows.ServiceMetadata,
     layerDefinitions: List[OgcSourceConf],
     tileMatrixSets: List[GeotrellisTileMatrixSet]
-  ) extends OgcService
+  ) extends OgcServiceConf
 
   case class WCS(
     serviceMetadata: ows.ServiceMetadata,
     layerDefinitions: List[OgcSourceConf]
-  ) extends OgcService
-
-  /** Local interface and port binding for the service + public (advertised by XML) endpoint */
-  case class Http(interface: String, port: Int, publicUrl: Option[String]) {
-    def serviceUrl(svc: String): URL =
-      publicUrl
-        .map({ url => new URL(url + s"$svc") })
-        .getOrElse(
-          new URL("http", interface, port, svc)
-        )
-  }
+  ) extends OgcServiceConf
 
   lazy val conf: Conf = pureconfig.loadConfigOrThrow[Conf]
   implicit def ConfObjectToClass(obj: Conf.type): Conf = conf

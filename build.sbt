@@ -115,7 +115,7 @@ lazy val root = project.in(file("."))
   .settings(moduleName := "root")
   .settings(commonSettings)
   .settings(noPublishSettings)
-  .aggregate(core, example, docs)
+  .aggregate(core, example, docs, ogc, ogcExample)
 
 lazy val core = project
   .settings(moduleName := "geotrellis-server-core")
@@ -229,11 +229,12 @@ lazy val ogcExample = (project in file("ogc-example"))
       http4sCirce,
       http4sXml,
       typesafeLogging,
-      commonsIo, // to make GeoTiffRasterSources work
       slf4jApi, // enable logging
       pureConfig,
       scaffeine,
-      scalatest
+      scalatest,
+      decline,
+      ansiColors
     )
   )
 

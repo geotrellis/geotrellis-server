@@ -7,7 +7,6 @@ import com.azavea.maml.ast._
 import cats._
 import cats.implicits._
 
-import java.net.{InetAddress, URL}
 
 // This sumtype corresponds to the in-config representation of a source
 sealed trait OgcSourceConf {

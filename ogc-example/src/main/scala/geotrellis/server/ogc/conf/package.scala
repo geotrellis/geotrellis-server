@@ -72,7 +72,6 @@ package object conf {
     }
 
   /** An alternative AST reading strategy that uses a separate json file */
-
   //private lazy val s3client = AmazonS3ClientBuilder.defaultClient()
 
   //def readString(uri: URI): String = uri.getScheme match {
