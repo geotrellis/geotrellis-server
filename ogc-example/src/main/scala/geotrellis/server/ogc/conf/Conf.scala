@@ -2,49 +2,29 @@ package geotrellis.server.ogc.conf
 
 import geotrellis.server.ogc.ows
 import geotrellis.server.ogc.wms.WmsParentLayerMeta
-import geotrellis.server.ogc.{OgcSource, SimpleSource}
-import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
-
-import java.net.{InetAddress, URL}
 
 import pureconfig.ConfigReader
 import scalaxb.DataRecord
 
+/**
+ * The top level configuration object for all layers and styles.
+ * This object should be supplied by the various sections in the provided configuration. If
+ * the application won't start because of a bad configuration, start here and recursively
+ * descend through properties verifying that the configuration file provides sufficient
+ * information.
+ *
+ * Complex types can be read with the help of [[ConfigReader]] instances. See package.scala
+ *  and https://pureconfig.github.io/docs/supporting-new-types.html for more examples and
+ *  explanation of ConfigReader instances.
+ */
 case class Conf(
   layers: Map[String, OgcSourceConf],
-  wms: Conf.WMS,
-  wmts: Conf.WMTS,
-  wcs: Conf.WCS
+  wms: WmsConf,
+  wmts: WmtsConf,
+  wcs: WcsConf
 )
 
 object Conf {
-  trait OgcServiceConf {
-    def layerDefinitions: List[OgcSourceConf]
-    def layerSources(simpleSources: List[SimpleSource]): List[OgcSource] = {
-      val simpleLayers =
-        layerDefinitions.collect { case ssc@SimpleSourceConf(_, _, _, _) => ssc.model }
-      val mapAlgebraLayers =
-        layerDefinitions.collect { case masc@MapAlgebraSourceConf(_, _, _, _) => masc.model(simpleSources) }
-      simpleLayers ++ mapAlgebraLayers
-    }
-  }
-  case class WMS(
-    parentLayerMeta: WmsParentLayerMeta,
-    serviceMetadata: opengis.wms.Service,
-    layerDefinitions: List[OgcSourceConf]
-  ) extends OgcServiceConf
-
-  case class WMTS(
-    serviceMetadata: ows.ServiceMetadata,
-    layerDefinitions: List[OgcSourceConf],
-    tileMatrixSets: List[GeotrellisTileMatrixSet]
-  ) extends OgcServiceConf
-
-  case class WCS(
-    serviceMetadata: ows.ServiceMetadata,
-    layerDefinitions: List[OgcSourceConf]
-  ) extends OgcServiceConf
-
   lazy val conf: Conf = pureconfig.loadConfigOrThrow[Conf]
   implicit def ConfObjectToClass(obj: Conf.type): Conf = conf
 

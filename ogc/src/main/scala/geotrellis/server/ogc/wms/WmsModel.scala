@@ -5,6 +5,7 @@ import geotrellis.proj4._
 
 import opengis.wms._
 
+/** This class holds all the information necessary to construct a response to a WMS request */
 case class WmsModel(
   serviceMeta: opengis.wms.Service,
   parentLayerMeta: WmsParentLayerMeta,

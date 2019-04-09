@@ -5,11 +5,15 @@ import geotrellis.contrib.vlm.avro.GeotrellisRasterSource
 import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
 import geotrellis.spark.LayerId
 
-// The sumtype responsible for providing a gt-contrib RasterSource from configuration
+/**
+ * Encodes an expectation that implementing classes be able to realize
+ *  a geotrellis-contrib [[RasterSource]].
+ */
 sealed trait RasterSourceConf {
   def toRasterSource: RasterSource
 }
 
+/** An avro-backed (geotrellis) raster source */
 case class GeoTrellis(
   catalogUri: String,
   layer: String,
@@ -20,6 +24,7 @@ case class GeoTrellis(
     new GeotrellisRasterSource(catalogUri, LayerId(layer, zoom), bandCount)
 }
 
+/** A geotiff (COG) raster source */
 case class GeoTiff(
   uri: String
  ) extends RasterSourceConf {
