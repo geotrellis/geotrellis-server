@@ -12,12 +12,12 @@ dockerfile in docker := {
 
 imageNames in docker := Seq(
   // Sets the latest tag
-  ImageName(s"geotrellis/geotrellis-server-ogc:latest"),
+  ImageName(s"geotrellis/geotrellis-server-ogc-services:latest"),
 
   // Sets a name with a tag that contains the project version
   ImageName(
     namespace = Some("geotrellis"),
-    repository = "geotrellis-server-ogc",
+    repository = "geotrellis-server-ogc-services",
     tag = Some("v" + version.value)
   )
 )

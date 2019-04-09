@@ -216,11 +216,11 @@ lazy val ogc = project
 lazy val ogcExample = (project in file("ogc-example"))
   .dependsOn(ogc)
   .enablePlugins(DockerPlugin)
-  .settings(moduleName := "geotrellis-server-ogc-server")
+  .settings(moduleName := "geotrellis-server-ogc-example")
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(
-    assemblyJarName in assembly := "geotrellis-ogc-server.jar",
+    assemblyJarName in assembly := "geotrellis-server-ogc-services.jar",
     libraryDependencies ++= Seq(
       spark,
       http4sDsl,
