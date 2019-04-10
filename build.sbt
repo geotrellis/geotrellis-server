@@ -219,7 +219,6 @@ lazy val ogcExample = (project in file("ogc-example"))
   .settings(moduleName := "geotrellis-server-ogc-example")
   .settings(commonSettings)
   .settings(publishSettings)
-  .settings(javaOptions ++= Seq("-Dlog4j.debug"))
   .settings(
     assemblyJarName in assembly := "geotrellis-server-ogc-services.jar",
     libraryDependencies ++= Seq(
@@ -229,13 +228,17 @@ lazy val ogcExample = (project in file("ogc-example"))
       http4sBlazeClient,
       http4sCirce,
       http4sXml,
-      slf4jSimple,
+      logback,
       typesafeLogging,
       pureConfig,
       scaffeine,
       scalatest,
       decline,
       ansiColors
+    ),
+    excludeDependencies ++= Seq(
+      // log4j brought in via uzaygezen is a pain for us
+      ExclusionRule("log4j", "log4j")
     )
   )
 
