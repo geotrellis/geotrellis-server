@@ -101,3 +101,25 @@ Using a custom configuration (probably what you want):
 ```sh
 java -jar geotrellis-server-ogc-services.jar --public-url http://127.0.0.1:9000 --interface 0.0.0.0 --port 9000 --conf /path/to/myconf.conf
 ```
+
+### Logging
+
+Throughout the server, logging statements have been used to keep track
+of requests, the resolving of imagery, and other areas in which errors
+are likely to pop up or in which code complexity makes reasoning more
+difficult. By default, few logs should appear. If increased logging
+output is desirable, it can be configured via environment variable.
+
+Turning on logging for *all* log levels:
+```sh
+export GT_OGC_LOG_LEVEL=ALL
+```
+
+> NOTE: If using docker, be sure to set this environment variable
+> through the docker CLI upon container creation. It won't automatically
+> carry through from the host machine.
+
+Once this environment variable is set, you should be able to run the
+server as you would otherwise. Be warned: the server can be *very*
+chatty if this setting is changed.
+
