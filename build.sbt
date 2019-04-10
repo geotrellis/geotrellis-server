@@ -219,6 +219,7 @@ lazy val ogcExample = (project in file("ogc-example"))
   .settings(moduleName := "geotrellis-server-ogc-server")
   .settings(commonSettings)
   .settings(publishSettings)
+  .settings(javaOptions ++= Seq("-Dlog4j.debug"))
   .settings(
     assemblyJarName in assembly := "geotrellis-ogc-server.jar",
     libraryDependencies ++= Seq(
@@ -228,8 +229,8 @@ lazy val ogcExample = (project in file("ogc-example"))
       http4sBlazeClient,
       http4sCirce,
       http4sXml,
+      slf4jSimple,
       typesafeLogging,
-      slf4jApi, // enable logging
       pureConfig,
       scaffeine,
       scalatest,

@@ -39,7 +39,7 @@ object Dependencies {
   val kamonSysMetrics   = "io.kamon"                      %% "kamon-system-metrics" % "1.0.0"
   val kindProjector     = "org.spire-math"                %% "kind-projector"       % "0.9.4"
   val mamlJvm           = "com.azavea"                    %% "maml-jvm"             % "0.3.0"
-  
+
   // Note: pureconfig is not yet stable, version 0.10.0 is not binary copatible with 0.9.2 which is used by GT
   val pureConfig        = "com.github.pureconfig"         %% "pureconfig"           % "0.9.2"
   val scaffeine         = "com.github.blemale"            %% "scaffeine"            % "2.6.0"
@@ -57,5 +57,6 @@ object Dependencies {
   val commonsIo         = "commons-io"                     % "commons-io"           % "2.6"
   val slf4jApi          = "org.slf4j"                      % "slf4j-api"            % "1.7.25"
   val slf4jSimple       = "org.slf4j"                      % "slf4j-simple"         % "1.7.25"
+  val log4j             =  "log4j"                         % "log4j"                % "1.2.17"
   val ansiColors        = "org.backuity"                  %% "ansi-interpolator"    % "1.1" % Provided
 }
