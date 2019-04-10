@@ -37,7 +37,7 @@ class CapabilitiesView(
         )))
 
       val getMap = OperationType(
-        Format = List("text/xml", "image/png", "image/jpeg"),
+        Format = List("image/png", "image/jpeg"),
         DCPType = List(DCPType(
           HTTP(Get = Get(OnlineResource(Map(
             "@{http://www.w3.org/1999/xlink}href" -> scalaxb.DataRecord(serviceUrl.toURI),
