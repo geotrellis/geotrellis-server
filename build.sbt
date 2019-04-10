@@ -145,6 +145,7 @@ lazy val core = project
 lazy val example = project
   .settings(commonSettings)
   .settings(publishSettings)
+  .settings(publish / skip := true)
   .dependsOn(core)
   .settings(
     moduleName := "geotrellis-server-example",
@@ -219,6 +220,7 @@ lazy val ogcExample = (project in file("ogc-example"))
   .settings(moduleName := "geotrellis-server-ogc-example")
   .settings(commonSettings)
   .settings(publishSettings)
+  .settings(publish / skip := true)
   .settings(
     assemblyJarName in assembly := "geotrellis-server-ogc-services.jar",
     libraryDependencies ++= Seq(
@@ -246,6 +248,7 @@ lazy val docs = project
   .enablePlugins(MicrositesPlugin)
   .enablePlugins(SiteScaladocPlugin)
   .settings(moduleName := "geotrellis-server-docs")
+  .settings(publish / skip := true)
   .settings(commonSettings)
   .settings(docSettings)
   .settings(noPublishSettings)
@@ -253,5 +256,6 @@ lazy val docs = project
 
 lazy val bench = project
   .dependsOn(core)
+  .settings(publish / skip := true)
   .settings(commonSettings)
   .enablePlugins(JmhPlugin)
