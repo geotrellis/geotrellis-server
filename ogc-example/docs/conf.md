@@ -118,6 +118,104 @@ addition-house-income = {
 }
 ```
 
+#### Styling layers
+
+Note above that each layer is configured with 0 or more style
+objects. Each provided style object defines an alternative coloring
+strategy. At the highest level, this server has two flavors of styling
+object: `ColorRamp` and `ColorMap` based.
+
+Color ramps are just a list of colors and it is up to the server to
+produce the statistics necessary to make decisions about where (in
+terms of image data) to break between the various colors in the ramp.
+This is suitable for a wide range of maps because it requires no special
+domain knowledge about the data which is being colored.
+
+A color ramp style definition from `application.conf` (note the HOCON
+reference):
+```
+{
+    name = "red-to-blue"
+    title = "Red To Blue"
+    type = "colorrampconf"
+    colors = ${color-ramps.red-to-blue}
+    stops = 64
+}
+```
+
+The color ramp referred to above:
+```
+color-ramps = {
+    "red-to-blue": [
+        0x2A2E7FFF, 0x3D5AA9FF, 0x4698D3FF, 0x39C6F0FF,
+        0x76C9B3FF, 0xA8D050FF, 0xF6EB14FF, 0xFCB017FF,
+        0xF16022FF, 0xEE2C24FF, 0x7D1416FF
+    ]
+```
+
+A word of caution about color ramps: statistically derived rendering
+strategies can mislead if the entire layer being colored is markedly
+different from a well known distribution. If, for instance, we have NDVI
+values from a recent wildfire and our layer contains little information
+outside of the damaged area, statistically derived styling will see a
+distribution skewing towards -1 (or 0, depending on how the NDVI is
+calculated) and is therefore likely to use too many color breaks in the
+low end of the NDVI range.
+
+In a cases like the one just described, you're better off using a color map
+that is defined specifically for the range of values capable of being
+represented (e.g. for NDVI -1 is red, 0 is yellow, and 1 is green
+regardless of the distribution of NDVI values I happen to be looking
+at).
+
+A color map style definition from `application.conf` (note the HOCON
+reference):
+```
+{
+    name = "official"
+    title = "NLCD Official Color Classes"
+    type = "colormapconf"
+    color-map = ${color-maps.nlcd}
+}
+```
+
+(Part of) the color map referred to above:
+```
+color-maps = {
+    "nlcd":  {
+      11: 0x526095FF,
+      12: 0xFFFFFFFF,
+      21: 0xD28170FF,
+      22: 0xEE0006FF,
+      23: 0x990009FF,
+      31: 0xBFB8B1FF,
+      32: 0x969798FF,
+```
+
+#### Providing a style legend
+
+In addition to defining rendering, styles optionally provide legends to help
+make sense of the semantics of their rendered layers. Each style object
+can optionally provide a list of such objects in their configuration.
+
+Here's an example from the `us-ned-slope` example layer in
+`application.conf`. As you can see, the configurable fields are
+relatively straightforward; we simply provide a link to the image and
+make sure to set the dimensions for clients to display:
+```
+legends = [
+    {
+        format = "image/png"
+        width = 75
+        height = 10
+        online-resource = {
+            type = "simple"
+            href = "http://services.ga.gov.au/gis/rest/directories/capabilities/Northern_Australia_Land_Tenure/No_Value_Legend.png"
+        }
+    }
+]
+```
+
 ## WMS Configuration
 
 Three pieces of configuration are expected by the top level 'wms'
