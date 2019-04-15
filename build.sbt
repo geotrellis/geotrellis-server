@@ -144,8 +144,7 @@ lazy val core = project
 
 lazy val example = project
   .settings(commonSettings)
-  .settings(publishSettings)
-  .settings(publish / skip := true)
+  .settings(noPublishSettings)
   .dependsOn(core)
   .settings(
     moduleName := "geotrellis-server-example",
@@ -172,6 +171,8 @@ lazy val example = project
 lazy val opengis = project
   .enablePlugins(ScalaxbPlugin)
   .settings(moduleName := "geotrellis-server-opengis")
+  .settings(commonSettings)
+  .settings(publishSettings)
   .settings(
     libraryDependencies ++= Seq(
       scalaXml,
