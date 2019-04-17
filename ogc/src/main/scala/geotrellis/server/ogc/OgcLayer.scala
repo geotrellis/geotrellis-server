@@ -7,6 +7,7 @@ import geotrellis.raster.resample._
 import geotrellis.raster.io.geotiff._
 import geotrellis.raster.reproject.ReprojectRasterExtent
 import geotrellis.vector.Extent
+import geotrellis.vector.io._
 import geotrellis.proj4.CRS
 import com.azavea.maml.ast._
 
@@ -50,6 +51,7 @@ object SimpleOgcLayer extends LazyLogging {
       (extent: Extent, cs: CellSize) =>  IO {
         val targetGrid = new GridExtent[Long](extent, cs)
         logger.debug(s"attempting to retrieve layer $self at extent $extent with $cs ${targetGrid.cols}x${targetGrid.rows}")
+        logger.trace(s"Requested extent geojson: ${extent.toPolygon.toGeoJson}")
         val raster: Raster[MultibandTile] = self.source
           .reprojectToRegion(self.crs, targetGrid.toRasterExtent, NearestNeighbor, AutoHigherResolution)
           .read(extent)
