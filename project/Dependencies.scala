@@ -4,7 +4,7 @@ object Dependencies {
 
   val circeVer         = "0.11.1"
   val gtVer            = "3.0.0-M3-SNAPSHOT"
-  val gtcVer           = "3.11.0"
+  val gtcVer           = "3.12.0"
   val http4sVer        = "0.20.0-M6"
   val scalaVer         = "2.11.12"
   val crossScalaVer    = Seq(scalaVer, "2.12.7")
@@ -38,7 +38,7 @@ object Dependencies {
   val kamonPrometheus   = "io.kamon"                      %% "kamon-prometheus"     % "1.0.0"
   val kamonSysMetrics   = "io.kamon"                      %% "kamon-system-metrics" % "1.0.0"
   val kindProjector     = "org.spire-math"                %% "kind-projector"       % "0.9.4"
-  val mamlJvm           = "com.azavea"                    %% "maml-jvm"             % "0.3.0"
+  val mamlJvm           = "com.azavea"                    %% "maml-jvm"             % "0.3.2"
 
   // Note: pureconfig is not yet stable, version 0.10.0 is not binary copatible with 0.9.2 which is used by GT
   val pureConfig        = "com.github.pureconfig"         %% "pureconfig"           % "0.9.2"
