@@ -11,6 +11,7 @@ import org.http4s.server._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.{CORS, CORSConfig}
 import org.http4s.syntax.kleisli._
+import pureconfig.generic.auto._
 import com.typesafe.scalalogging.LazyLogging
 
 import scala.concurrent.duration._

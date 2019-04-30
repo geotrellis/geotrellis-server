@@ -12,6 +12,7 @@ import com.azavea.maml.ast.codec.tree._
 
 import io.circe.parser._
 import pureconfig._
+import pureconfig.generic.auto._
 
 import scala.util.Try
 
