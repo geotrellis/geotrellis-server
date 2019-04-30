@@ -98,8 +98,10 @@ class WmsView(wmsModel: WmsModel, serviceUrl: URL) extends LazyLogging {
               InternalServerError(err.toString)
           }
         }.getOrElse(wmsReq.layers.headOption match {
-          case Some(layerName) => BadRequest(s"Layer (${layerName}) not found")
-          case None => BadRequest(s"Layer not found (no layer name provided in request)")
+          case Some(layerName) =>
+            BadRequest(s"Layer (${layerName}) not found or CRS (${wmsReq.crs}) not supported")
+          case None =>
+            BadRequest(s"Layer not found (no layer name provided in request)")
         })
     }
   }

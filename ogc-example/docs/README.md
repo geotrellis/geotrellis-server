@@ -23,9 +23,10 @@ layers) are interpreted.
 
 ### Contents
 
-- [Starting the Server](usage.md)
-- [Modifying Configuration](conf.md)
+- [Starting the server](usage.md)
+- [Modifying configuration](conf.md)
 - [Custom MAML](maml.md)
-- [Available Maml Operations](maml-operations.md)
+- [Available MAML operations](maml-operations.md)
+
 
 

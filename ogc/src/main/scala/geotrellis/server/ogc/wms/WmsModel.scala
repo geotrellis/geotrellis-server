@@ -21,17 +21,18 @@ case class WmsModel(
     for {
       layerName  <- maybeLayerName
       source <- sourceLookup.get(layerName)
+      supportedCrs <- parentLayerMeta.supportedProjections.find(_ == crs)
     } yield {
       val styleName: Option[String] = maybeStyleName.orElse(source.styles.headOption.map(_.name))
       val style: Option[OgcStyle] = styleName.flatMap { name => source.styles.find(_.name == name) }
       source match {
         case MapAlgebraSource(name, title, rasterSources, algebra, styles) =>
           val simpleLayers = rasterSources.mapValues { rs =>
-            SimpleOgcLayer(name, title, crs, rs, style)
+            SimpleOgcLayer(name, title, supportedCrs, rs, style)
           }
-          MapAlgebraOgcLayer(name, title, crs, simpleLayers, algebra, style)
+          MapAlgebraOgcLayer(name, title, supportedCrs, simpleLayers, algebra, style)
         case SimpleSource(name, title, rasterSource, styles) =>
-          SimpleOgcLayer(name, title, crs, rasterSource, style)
+          SimpleOgcLayer(name, title, supportedCrs, rasterSource, style)
       }
     }
   }
