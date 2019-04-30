@@ -153,6 +153,8 @@ reference):
     name = "red-to-blue"
     title = "Red To Blue"
     type = "colorrampconf"
+    min-render = 42
+    max-render = 400.5
     colors = ${color-ramps.red-to-blue}
     stops = 64
 }
@@ -181,7 +183,8 @@ In a cases like the one just described, you're better off using a color map
 that is defined specifically for the range of values capable of being
 represented (e.g. for NDVI -1 is red, 0 is yellow, and 1 is green
 regardless of the distribution of NDVI values I happen to be looking
-at).
+at). If only the minimum and maximum values are known, they may
+optionally be specified in color ramp configuration (as above).
 
 A color map style definition from `application.conf` (note the HOCON
 reference):
