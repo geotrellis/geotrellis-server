@@ -118,6 +118,21 @@ addition-house-income = {
 }
 ```
 
+##### Alternative layer backends
+
+`RasterSource`s support s3, filesystem, HDFS, HBase, Accumulo, and
+Cassandra backed layers. GTServer decides which backend to use based on
+the 'authority' of the URI provided in configuration. Authorities
+currently supported:
+
+- File: 'file://'
+- S3: 's3://'
+- HDFS: 'hdfs://', 'hdfs+file://', 's3n://', 's3a://', 'wasb://',
+  and 'wasbs://' (see [here](https://github.com/locationtech/geotrellis/blob/3.0/spark/src/main/scala/geotrellis/spark/io/hadoop/HadoopLayerProvider.scala#L27-L34) for more details)
+- Cassandra: 'cassandra://'
+- HBase: 'hbase://'
+- Accumulo: 'accumulo://'
+
 #### Styling layers
 
 Note above that each layer is configured with 0 or more style

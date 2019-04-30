@@ -226,6 +226,12 @@ lazy val ogcExample = (project in file("ogc-example"))
     assemblyJarName in assembly := "geotrellis-server-ogc-services.jar",
     libraryDependencies ++= Seq(
       spark,
+      geotrellisS3,
+      geotrellisSpark,
+      geotrellisCassandra,
+      geotrellisHBase,
+      geotrellisAccumulo,
+      geotrellisVlm,
       http4sDsl,
       http4sBlazeServer,
       http4sBlazeClient,

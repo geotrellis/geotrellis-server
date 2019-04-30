@@ -56,6 +56,70 @@ construct the correct case class nesting. A full list of the available
 symbols (which are sometimes short strings of letters) can be found
 [here](maml-operations.md).
 
+##### AST Serialization/Deserialization
+
+Writing MAML programs is largely a matter of determining how to
+construct the JSON which corresponds to said program. When having
+trouble writing an AST that can be deserialized as the server loads
+configuration there are a couple of places to check:
+First, try to find the `Expression` which corresponds to the operations
+you're attempting to implement. [Here are all the expressions
+classes](https://github.com/geotrellis/maml/blob/ffcf3fa0db6a58b44aebfa30e0a099bfed590e43/shared/src/main/scala/ast/Expression.scala).
+The fields on each `Expression` are important. Each field them will have a
+corresponding JSON value. Additionally, `Expression` is required to have
+an identifying symbol that distinguishes it in case of ambiguity (for
+example, addition uses '+' whereas subtraction gets '-').
+
+If the class itself is not helpful, the serialization mappings can be
+found
+[here](https://github.com/geotrellis/maml/blob/ffcf3fa0db6a58b44aebfa30e0a099bfed590e43/shared/src/main/scala/ast/codec/MamlCodecInstances.scala).
+Each encoder (denoted as `Encoder` in the type system) specifies which
+fields are mapped to JSON during serialization and, thus, which fields
+are expected during deserialization.
+
+##### Complex ASTs
+
+An AST need not be a single calculation over two or more image sources.
+Complex ASTs with children that are themselves calculations are
+supported. For instance, we can implement
+[NDVI](https://en.wikipedia.org/wiki/Normalized_difference_vegetation_index)
+in MAML like this (the names 'red' and 'nir' corresponds to the red and
+near-infrared bands respectively):
+
+```json
+{
+  "args" : [
+    {
+      "args" : [
+        {
+          "name" : "red",
+          "symbol" : "rasterV"
+        },
+        {
+          "name" : "nir",
+          "symbol" : "rasterV"
+        }
+      ],
+      "symbol" : "-"
+    },
+    {
+      "args" : [
+        {
+          "name" : "red",
+          "symbol" : "rasterV"
+        },
+        {
+          "name" : "nir",
+          "symbol" : "rasterV"
+        }
+      ],
+      "symbol" : "+"
+    }
+  ],
+  "symbol" : "/"
+}
+```
+
 #### Interpreting MAML
 
 In addition to the provided AST for describing raster computations, an
@@ -79,7 +143,6 @@ up from the leaves until it reaches the new node. Upon reaching the new
 node, the "fallback directive" (a catch-all provided by `Interpreter`s)
 will be executed and the program will report an `UnhandledCase` error.
 
-
 #### Changing Behavior of the Provided Interpreter
 
 Because the structure of the `Interpreter`s we've provided is designed
@@ -87,7 +150,6 @@ to to be highly modular, individual directives can be replaced
 if desired. There are two necessary steps
 1. construction of the new `Directive`
 2. registration of the new `Directive` when constructing an `Interpreter`
-
 
 ##### Constructing a Directive
 
@@ -127,7 +189,6 @@ val myAddition = Directive { case (a@Addition(_), childResults) if (a.kind == Ma
 Because the construct underlying `Directive` is simply that of the
 partial function, we are free to do whatever we like in the body of the
 function.
-
 
 ###### Constructing a new Interpreter
 
