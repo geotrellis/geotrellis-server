@@ -25,6 +25,7 @@ trait OgcSource {
   def styles: List[OgcStyle]
   def nativeExtent: Extent
   def nativeRE: GridExtent[Long]
+  def extentIn(crs: CRS): Extent
   def bboxIn(crs: CRS): BoundingBox
   def nativeCrs: Set[CRS]
 }
@@ -40,6 +41,11 @@ case class SimpleSource(
 ) extends OgcSource {
 
   lazy val nativeRE = source.gridExtent
+
+  def extentIn(crs: CRS): Extent = {
+    val reprojected = source.reproject(crs)
+    reprojected.extent
+  }
 
   def bboxIn(crs: CRS) = {
     val reprojected = source.reproject(crs)
@@ -86,6 +92,17 @@ case class MapAlgebraSource(
       SampleUtils.chooseSmallestCellSize(reprojectedSources.map(_.cellSize))
 
     new GridExtent[Long](nativeExtent, cellSize)
+  }
+
+  def extentIn(crs: CRS): Extent = {
+    val reprojectedSources: NEL[RasterSource] =
+      NEL.fromListUnsafe(sources.values.map(_.reproject(crs)).toList)
+    val extents =
+      reprojectedSources.map(_.extent)
+
+    SampleUtils.intersectExtents(extents).getOrElse {
+      throw new Exception("no intersection found among map map algebra sources")
+    }
   }
 
   def bboxIn(crs: CRS) = {

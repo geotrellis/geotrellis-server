@@ -116,10 +116,7 @@ object CapabilitiesView {
         // EX_GeographicBoundingBox =   Some(self.extent.reproject(self.crs, LatLng)).map { case Extent(xmin, ymin, xmax, ymax) =>
         //  opengis.wms.EX_GeographicBoundingBox(xmin, xmax, ymin, ymax)
         // },
-        BoundingBox =
-          (parentProjections ++ source.nativeCrs).distinct.toList.map { crs =>
-            source.bboxIn(crs)
-          },
+        BoundingBox = Nil,
         Dimension = Nil,
         Attribution = None,
         AuthorityURL = Nil,
@@ -151,9 +148,13 @@ object CapabilitiesView {
       },
       // Extent of all layers in default CRS
       // Should it be world extent? To simplify tests and QGIS work it's all RasterSources extent
-      // EX_GeographicBoundingBox = model.extent(LatLng).map { case Extent(xmin, ymin, xmax, ymax) =>
-      //   opengis.wms.EX_GeographicBoundingBox(xmin, xmax, ymin, ymax)
-      // },
+      EX_GeographicBoundingBox = {
+        val llExtents = model.sourceLookup.map { case (_, src) =>
+          src.extentIn(LatLng)
+        }
+        val llExtent = llExtents.tail.fold(llExtents.head)(_ combine _)
+        Some(EX_GeographicBoundingBox(llExtent.xmin, llExtent.xmax, llExtent.ymin, llExtent.ymax))
+      },
       // TODO: bounding box for global layer
       BoundingBox = Nil,
       Dimension = Nil,
@@ -166,7 +167,7 @@ object CapabilitiesView {
       Style = Nil,
       MinScaleDenominator = None,
       MaxScaleDenominator = None,
-      Layer = model.sourceLookup.map { case (name, model) => model.toLayer(name, parentLayerMeta.supportedProjections) }.toSeq,
+      Layer = model.sourceLookup.map { case (name, src) => src.toLayer(name, parentLayerMeta.supportedProjections) }.toSeq,
       attributes = Map("@queryable" -> scalaxb.DataRecord(false))
     )
   }

@@ -3,6 +3,7 @@ package geotrellis.server.ogc.conf
 import geotrellis.server.ogc.ows
 import geotrellis.server.ogc.wms.WmsParentLayerMeta
 
+import pureconfig.generic.auto._
 import pureconfig.ConfigReader
 import scalaxb.DataRecord
 

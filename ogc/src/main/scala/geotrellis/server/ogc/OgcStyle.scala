@@ -39,6 +39,8 @@ case class ColorRampStyle(
   title: String,
   colorRamp: ColorRamp,
   stops: Option[Int],
+  minRender: Option[Double],
+  maxRender: Option[Double],
   legends: List[LegendModel] = Nil
 ) extends OgcStyle {
   def renderImage(
@@ -47,10 +49,21 @@ case class ColorRampStyle(
     hists: List[Histogram[Double]]
   ): Array[Byte] = {
     val numStops: Int = stops.getOrElse(colorRamp.colors.length)
-    val ramp: ColorRamp = colorRamp.stops(numStops)
 
-    // we're assuming the layers are single band rasters
-    val cmap = ColorMap.fromQuantileBreaks(hists.head, ramp)
+    val clampedBreaks =
+      mbtile.band(0)
+        .mapDouble { z =>
+          val min = minRender.getOrElse(Double.MinValue)
+          val max = maxRender.getOrElse(Double.MaxValue)
+          if (isData(z)) { if(z > max) { max } else if(z < min) { min } else { z } }
+          else { z }
+        }.histogramDouble()
+        .quantileBreaks(numStops)
+
+    val interpolatedBreaks =
+      Render.linearInterpolationBreaks(clampedBreaks, numStops)
+
+    val cmap = colorRamp.toColorMap(interpolatedBreaks)
     format match {
       case format: OutputFormat.Png =>
        format.render(mbtile.band(bandIndex = 0), cmap)

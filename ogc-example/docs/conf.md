@@ -118,6 +118,21 @@ addition-house-income = {
 }
 ```
 
+##### Alternative layer backends
+
+`RasterSource`s support s3, filesystem, HDFS, HBase, Accumulo, and
+Cassandra backed layers. GTServer decides which backend to use based on
+the 'authority' of the URI provided in configuration. Authorities
+currently supported:
+
+- File: 'file://'
+- S3: 's3://'
+- HDFS: 'hdfs://', 'hdfs+file://', 's3n://', 's3a://', 'wasb://',
+  and 'wasbs://' (see [here](https://github.com/locationtech/geotrellis/blob/3.0/spark/src/main/scala/geotrellis/spark/io/hadoop/HadoopLayerProvider.scala#L27-L34) for more details)
+- Cassandra: 'cassandra://'
+- HBase: 'hbase://'
+- Accumulo: 'accumulo://'
+
 #### Styling layers
 
 Note above that each layer is configured with 0 or more style
@@ -138,6 +153,8 @@ reference):
     name = "red-to-blue"
     title = "Red To Blue"
     type = "colorrampconf"
+    min-render = 42
+    max-render = 400.5
     colors = ${color-ramps.red-to-blue}
     stops = 64
 }
@@ -166,7 +183,8 @@ In a cases like the one just described, you're better off using a color map
 that is defined specifically for the range of values capable of being
 represented (e.g. for NDVI -1 is red, 0 is yellow, and 1 is green
 regardless of the distribution of NDVI values I happen to be looking
-at).
+at). If only the minimum and maximum values are known, they may
+optionally be specified in color ramp configuration (as above).
 
 A color map style definition from `application.conf` (note the HOCON
 reference):
