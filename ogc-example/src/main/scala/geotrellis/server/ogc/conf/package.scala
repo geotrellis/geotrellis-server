@@ -6,18 +6,38 @@ import geotrellis.proj4.CRS
 import geotrellis.vector.Extent
 import geotrellis.raster.TileLayout
 import geotrellis.raster.render.{ColorMap, ColorRamp}
-
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
+import com.typesafe.config.{ConfigValue, ConfigRenderOptions}
 
+import io.circe._
 import io.circe.parser._
 import pureconfig._
+import pureconfig.error.CannotConvert
 import pureconfig.generic.auto._
 
 import scala.util.Try
 
 /** A grab bag of [[ConfigReader]] instances necessary to read the configuration */
 package object conf {
+
+  implicit def circeJsonReader: ConfigReader[Json] =
+    ConfigReader[ConfigValue].emap { cv =>
+      val renderOptions = ConfigRenderOptions.concise().setJson(true)
+      val jsonString = cv.render(renderOptions)
+      parse(jsonString) match {
+        case Left(parsingFailure) => Left(CannotConvert(jsonString, "json",  parsingFailure.getMessage))
+        case Right(json) => Right(json)
+      }
+    }
+
+  implicit val expressionReader: ConfigReader[Expression] =
+    ConfigReader[Json].map { expressionJson =>
+      expressionJson.as[Expression] match {
+        case Right(success) => success
+        case Left(err) => throw err
+      }
+    }
 
   implicit def colorRampReader: ConfigReader[ColorRamp] =
     ConfigReader[List[String]].map { colors =>
@@ -37,16 +57,6 @@ package object conf {
   implicit def nameConfigReader: ConfigReader[opengis.wms.Name] =
     ConfigReader[String].map { str =>
       opengis.wms.Name.fromString(str, wmsScope)
-    }
-
-  implicit val expressionReader: ConfigReader[Expression] =
-    ConfigReader[String].map { expressionString =>
-      decode[Expression](expressionString) match {
-        case Right(success) =>
-          success
-        case Left(err) =>
-          throw err
-      }
     }
 
   implicit val crsReader: ConfigReader[CRS] =
