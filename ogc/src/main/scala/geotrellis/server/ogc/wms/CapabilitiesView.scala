@@ -112,10 +112,10 @@ object CapabilitiesView {
             .map { code => s"EPSG:$code" }
             .getOrElse(throw new java.lang.Exception(s"Unable to construct EPSG code from $crs"))
         },
-        // TODO: global Extent for the CRS
-        // EX_GeographicBoundingBox =   Some(self.extent.reproject(self.crs, LatLng)).map { case Extent(xmin, ymin, xmax, ymax) =>
-        //  opengis.wms.EX_GeographicBoundingBox(xmin, xmax, ymin, ymax)
-        // },
+        EX_GeographicBoundingBox = {
+          val llExtent = source.extentIn(LatLng)
+          Some(EX_GeographicBoundingBox(llExtent.xmin, llExtent.xmax, llExtent.ymin, llExtent.ymax))
+        },
         BoundingBox = Nil,
         Dimension = Nil,
         Attribution = None,
