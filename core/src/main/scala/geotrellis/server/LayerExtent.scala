@@ -12,6 +12,7 @@ import com.typesafe.scalalogging.LazyLogging
 import io.circe._
 import io.circe.syntax._
 import cats._
+import cats.data.Validated._
 import cats.data.{NonEmptyList => NEL}
 import cats.effect._
 import cats.implicits._
@@ -24,10 +25,11 @@ object LayerExtent extends LazyLogging {
   def apply[Param](
     getExpression: IO[Expression],
     getParams: IO[Map[String, Param]],
-    interpreter: Interpreter
+    interpreter: Interpreter[IO]
   )(
     implicit reify: ExtentReification[Param],
-             contextShift: ContextShift[IO]
+             contextShift: ContextShift[IO],
+             applicativeError: ApplicativeError[IO, NEL[MamlError]]
   ): (Extent, CellSize) => IO[Interpreted[MultibandTile]]  = (extent: Extent, cs: CellSize) =>  {
     for {
       expr             <- getExpression
@@ -39,9 +41,12 @@ object LayerExtent extends LazyLogging {
         val thingify = paramMap(varName).extentReification
         thingify(extent, cs).map(varName -> _)
       } map { _.toMap }
-      reified          <- IO { Expression.bindParams(expr, params.mapValues(RasterLit(_))) }
-    } yield reified
-      .andThen(interpreter(_))
+      reified          <- Expression.bindParams(expr, params.mapValues(RasterLit(_))) match {
+        case Valid(expression) => interpreter(expression)
+        case Invalid(errors) => applicativeError.raiseError(errors)
+      }
+    } yield
+    reified
       .andThen(_.as[MultibandTile])
       .map {
         _.crop(RasterExtent(extent, cs)
@@ -52,20 +57,22 @@ object LayerExtent extends LazyLogging {
   def generateExpression[Param](
     mkExpr: Map[String, Param] => Expression,
     getParams: IO[Map[String, Param]],
-    interpreter: Interpreter
+    interpreter: Interpreter[IO]
   )(
     implicit reify: ExtentReification[Param],
-             contextShift: ContextShift[IO]
+             contextShift: ContextShift[IO],
+             applicativeError: ApplicativeError[IO, NEL[MamlError]]
   ) = apply[Param](getParams.map(mkExpr(_)), getParams, interpreter)
 
 
   /** Provide an expression and expect arguments to fulfill its needs */
   def curried[Param](
     expr: Expression,
-    interpreter: Interpreter
+    interpreter: Interpreter[IO]
   )(
     implicit reify: ExtentReification[Param],
-             contextShift: ContextShift[IO]
+             contextShift: ContextShift[IO],
+             applicativeError: ApplicativeError[IO, NEL[MamlError]]
   ): (Map[String, Param], Extent, CellSize) => IO[Interpreted[MultibandTile]] =
     (paramMap: Map[String, Param], extent: Extent, cellsize: CellSize) => {
       val eval = apply[Param](IO.pure(expr), IO.pure(paramMap), interpreter)
@@ -78,11 +85,11 @@ object LayerExtent extends LazyLogging {
     param: Param
   )(
     implicit reify: ExtentReification[Param],
-             contextShift: ContextShift[IO]
+             contextShift: ContextShift[IO],
+             applicativeError: ApplicativeError[IO, NEL[MamlError]]
   ): (Extent, CellSize) => IO[Interpreted[MultibandTile]] =
     (extent: Extent, cellsize: CellSize) => {
-      val eval = curried(RasterVar("identity"), Interpreter.DEFAULT)
+      val eval = curried(RasterVar("identity"), ConcurrentInterpreter.DEFAULT)
       eval(Map("identity" -> param), extent, cellsize)
     }
 }
-

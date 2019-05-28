@@ -6,6 +6,7 @@ import geotrellis.raster.render._
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
 import com.azavea.maml.eval._
+import com.azavea.maml.error._
 
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
@@ -15,13 +16,15 @@ import _root_.io.circe.parser._
 import _root_.io.circe.syntax._
 import cats.data._
 import Validated._
+import cats._
+import cats.data.{NonEmptyList => NEL}
 import cats.effect._
 import com.typesafe.scalalogging.LazyLogging
 
 import java.net.URLDecoder
 
 class NdviService[Param](
-  interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
+  interpreter: Interpreter[IO]
 )(implicit contextShift: ContextShift[IO],
            enc: Encoder[Param],
            dec: Decoder[Param],
@@ -53,6 +56,7 @@ class NdviService[Param](
       ))
     )
 
+  implicit val applicativeErrorIO: ApplicativeError[IO, NEL[MamlError]] = ???
   final val eval = LayerTms.curried(ndvi, interpreter)
 
   // http://0.0.0.0:9000/{z}/{x}/{y}.png
@@ -74,4 +78,3 @@ class NdviService[Param](
       }
   }
 }
-

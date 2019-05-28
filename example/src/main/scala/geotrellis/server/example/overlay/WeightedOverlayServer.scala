@@ -14,6 +14,7 @@ import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.{CORS, CORSConfig}
 import org.http4s.syntax.kleisli._
 import pureconfig.generic.auto._
+import com.azavea.maml.eval._
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -38,7 +39,7 @@ object WeightedOverlayServer extends LazyLogging with IOApp {
     for {
       conf       <- Stream.eval(LoadConf().as[ExampleConf])
       _          <- Stream.eval(IO { logger.info(s"Initializing Weighted Overlay at ${conf.http.interface}:${conf.http.port}/") })
-      overlayService = new WeightedOverlayService()
+      overlayService = new WeightedOverlayService(ConcurrentInterpreter.DEFAULT)
       exitCode   <- BlazeServerBuilder[IO]
         .enableHttp2(true)
         .bindHttp(conf.http.port, conf.http.interface)

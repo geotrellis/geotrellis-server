@@ -5,7 +5,7 @@ import geotrellis.server.ogc._
 import geotrellis.server.ogc.wcs._
 import geotrellis.server.ogc.wcs.params.GetCoverageWcsParams
 
-import com.azavea.maml.eval.Interpreter
+import com.azavea.maml.eval._
 import com.azavea.maml.error._
 import geotrellis.proj4._
 import geotrellis.raster._
@@ -13,8 +13,10 @@ import geotrellis.raster.io.geotiff._
 import com.typesafe.scalalogging.LazyLogging
 
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
+import cats._
 import cats.effect._
 import cats.data.Validated._
+import cats.data.{NonEmptyList => NEL}
 
 import scala.concurrent.duration._
 
@@ -31,7 +33,7 @@ class GetCoverage(wcsModel: WcsModel) extends LazyLogging {
         .maximumSize(32)
         .build()
 
-  def build(params: GetCoverageWcsParams)(implicit contextShift: ContextShift[IO]): Array[Byte] =
+  def build(params: GetCoverageWcsParams)(implicit contextShift: ContextShift[IO], applicativeError: ApplicativeError[IO, NEL[MamlError]]): Array[Byte] =
     requestCache.getIfPresent(params) match {
       case Some(bytes) =>
         logger.trace(s"GetCoverage cache HIT: $params")
@@ -46,7 +48,7 @@ class GetCoverage(wcsModel: WcsModel) extends LazyLogging {
             LayerExtent.identity(SimpleOgcLayer(name, title, LatLng, source, None))
           case MapAlgebraSource(name, title, sources, algebra, styles) =>
             val simpleLayers = sources.mapValues { rs => SimpleOgcLayer(name, title, LatLng, rs, None) }
-            LayerExtent(IO.pure(algebra), IO.pure(simpleLayers), Interpreter.DEFAULT)
+            LayerExtent(IO.pure(algebra), IO.pure(simpleLayers), ConcurrentInterpreter.DEFAULT)
         }
 
         // TODO: Return IO instead

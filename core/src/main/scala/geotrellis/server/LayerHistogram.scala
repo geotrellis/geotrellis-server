@@ -11,6 +11,7 @@ import geotrellis.raster._
 import geotrellis.raster.histogram._
 
 import com.typesafe.scalalogging.LazyLogging
+import cats._
 import cats.data.{NonEmptyList => NEL}
 import cats.effect._
 import cats.implicits._
@@ -28,12 +29,13 @@ object LayerHistogram extends LazyLogging {
   def apply[Param](
     getExpression: IO[Expression],
     getParams: IO[Map[String, Param]],
-    interpreter: Interpreter,
+    interpreter: Interpreter[IO],
     maxCells: Int
   )(
     implicit reify: ExtentReification[Param],
              extended: HasRasterExtents[Param],
-             contextShift: ContextShift[IO]
+             contextShift: ContextShift[IO],
+             applicativeError: ApplicativeError[IO, NEL[MamlError]]
   ): IO[Interpreted[List[Histogram[Double]]]] =
     for {
       params            <- getParams
@@ -58,24 +60,26 @@ object LayerHistogram extends LazyLogging {
   def generateExpression[Param](
     mkExpr: Map[String, Param] => Expression,
     getParams: IO[Map[String, Param]],
-    interpreter: Interpreter,
+    interpreter: Interpreter[IO],
     maxCells: Int
   )(
     implicit reify: ExtentReification[Param],
              extended: HasRasterExtents[Param],
-             contextShift: ContextShift[IO]
+             contextShift: ContextShift[IO],
+             applicativeError: ApplicativeError[IO, NEL[MamlError]]
   ) = apply[Param](getParams.map(mkExpr(_)), getParams, interpreter, maxCells)
 
 
   /** Provide an expression and expect arguments to fulfill its needs */
   def curried[Param](
     expr: Expression,
-    interpreter: Interpreter,
+    interpreter: Interpreter[IO],
     maxCells: Int
   )(
     implicit reify: ExtentReification[Param],
              extended: HasRasterExtents[Param],
-             contextShift: ContextShift[IO]
+             contextShift: ContextShift[IO],
+             applicativeError: ApplicativeError[IO, NEL[MamlError]]
   ): (Map[String, Param]) => IO[Interpreted[List[Histogram[Double]]]] =
     (paramMap: Map[String, Param]) => {
       apply[Param](IO.pure(expr), IO.pure(paramMap), interpreter, maxCells)
@@ -89,9 +93,10 @@ object LayerHistogram extends LazyLogging {
   )(
     implicit reify: ExtentReification[Param],
              extended: HasRasterExtents[Param],
-             contextShift: ContextShift[IO]
+             contextShift: ContextShift[IO],
+             applicativeError: ApplicativeError[IO, NEL[MamlError]]
   ) = {
-    val eval = curried(RasterVar("identity"), Interpreter.DEFAULT, maxCells)
+    val eval = curried(RasterVar("identity"), ConcurrentInterpreter.DEFAULT, maxCells)
     eval(Map("identity" -> param))
   }
 

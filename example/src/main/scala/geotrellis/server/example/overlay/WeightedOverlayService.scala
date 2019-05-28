@@ -11,6 +11,7 @@ import com.azavea.maml.util.Vars
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
 import com.azavea.maml.eval._
+import com.azavea.maml.error._
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.circe._
@@ -19,6 +20,7 @@ import io.circe.parser._
 import io.circe.syntax._
 import cats._
 import cats.data._, Validated._
+import cats.data.{NonEmptyList => NEL}
 import cats.implicits._
 import cats.effect._
 import com.typesafe.scalalogging.LazyLogging
@@ -35,7 +37,7 @@ import scala.concurrent.ExecutionContext
 
 
 class WeightedOverlayService(
-  interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
+  interpreter: Interpreter[IO]
 )(implicit contextShift: ContextShift[IO]) extends Http4sDsl[IO] with LazyLogging {
 
   // Unapply to handle UUIDs on path
@@ -49,6 +51,7 @@ class WeightedOverlayService(
   }
 
   implicit val expressionDecoder = jsonOf[IO, Map[String, WeightedOverlayDefinition]]
+  implicit val applicativeErrorIO: ApplicativeError[IO, NEL[MamlError]] = ???
 
   val demoStore: ConcurrentLinkedHashMap[UUID, Json] = new ConcurrentLinkedHashMap.Builder[UUID, Json]()
     .maximumWeightedCapacity(100)
@@ -78,7 +81,6 @@ class WeightedOverlayService(
   // Grab the stored eval parameters
   def getParams(id: UUID) =
     IO { Option(demoStore.get(id)).flatMap(_.as[Map[String, WeightedOverlayDefinition]].toOption).get }
-      .recoverWith({ case _: NoSuchElementException => throw MamlStore.ExpressionNotFound(id) })
 
   // Dead simple caching to share histograms across requests
   def histo(id: UUID): IO[Interpreted[Histogram[Double]]] = Option(demoHistogramStore.get(id)) match {
@@ -156,4 +158,3 @@ class WeightedOverlayService(
         }
   }
 }
-
