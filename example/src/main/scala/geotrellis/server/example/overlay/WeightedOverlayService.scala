@@ -51,7 +51,15 @@ class WeightedOverlayService(
   }
 
   implicit val expressionDecoder = jsonOf[IO, Map[String, WeightedOverlayDefinition]]
-  implicit val applicativeErrorIO: ApplicativeError[IO, NEL[MamlError]] = ???
+
+  implicit def applicativeErrorIO(implicit ioApp: Applicative[IO]): ApplicativeError[IO, NEL[MamlError]] = new ApplicativeError[IO, NEL[MamlError]] {
+    def pure[A](x: A): IO[A] = ioApp.pure(x)
+    def ap[A, B](ff: IO[A => B])(fa: IO[A]): IO[B] = ioApp.ap(ff)(fa)
+    def raiseError[A](e: cats.data.NonEmptyList[com.azavea.maml.error.MamlError]): IO[A] =
+      IO.raiseError(new Exception(e map { _.repr } reduce ))
+    def handleErrorWith[A](fa: IO[A])(f: NEL[MamlError] => IO[A]): IO[A] =
+      ???
+  }
 
   val demoStore: ConcurrentLinkedHashMap[UUID, Json] = new ConcurrentLinkedHashMap.Builder[UUID, Json]()
     .maximumWeightedCapacity(100)
