@@ -6,6 +6,7 @@ import geotrellis.raster.render._
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
 import com.azavea.maml.eval._
+import com.azavea.maml.error._
 
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
@@ -15,13 +16,16 @@ import _root_.io.circe.parser._
 import _root_.io.circe.syntax._
 import cats.data._
 import Validated._
+import cats._
+import cats.data.{NonEmptyList => NEL}
 import cats.effect._
+import cats.implicits._
 import com.typesafe.scalalogging.LazyLogging
 
 import java.net.URLDecoder
 
 class NdviService[Param](
-  interpreter: BufferingInterpreter = BufferingInterpreter.DEFAULT
+  interpreter: Interpreter[IO]
 )(implicit contextShift: ContextShift[IO],
            enc: Encoder[Param],
            dec: Decoder[Param],
@@ -53,6 +57,15 @@ class NdviService[Param](
       ))
     )
 
+  implicit def applicativeErrorIO(implicit ioApp: Applicative[IO]): ApplicativeError[IO, NEL[MamlError]] = new ApplicativeError[IO, NEL[MamlError]] {
+    def pure[A](x: A): IO[A] = ioApp.pure(x)
+    def ap[A, B](ff: IO[A => B])(fa: IO[A]): IO[B] = ioApp.ap(ff)(fa)
+    def raiseError[A](e: cats.data.NonEmptyList[com.azavea.maml.error.MamlError]): IO[A] =
+      IO.raiseError(new Exception(e map { _.repr } reduce ))
+    def handleErrorWith[A](fa: IO[A])(f: NEL[MamlError] => IO[A]): IO[A] =
+      ???
+  }
+
   final val eval = LayerTms.curried(ndvi, interpreter)
 
   // http://0.0.0.0:9000/{z}/{x}/{y}.png
@@ -74,4 +87,3 @@ class NdviService[Param](
       }
   }
 }
-

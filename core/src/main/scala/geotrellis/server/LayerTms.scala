@@ -8,8 +8,11 @@ import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
 import com.azavea.maml.eval._
 import com.typesafe.scalalogging.LazyLogging
+import cats._
 import cats.effect._
 import cats.implicits._
+import cats.data.Validated._
+import cats.data.{NonEmptyList => NEL}
 import geotrellis.raster._
 
 /** Provides methods for producing TMS tiles */
@@ -30,10 +33,11 @@ object LayerTms extends LazyLogging {
   def apply[Param](
     getExpression: IO[Expression],
     getParams: IO[Map[String, Param]],
-    interpreter: Interpreter
+    interpreter: Interpreter[IO]
   )(
     implicit reify: TmsReification[Param],
-             contextShift: ContextShift[IO]
+             contextShift: ContextShift[IO],
+             applicativeError: ApplicativeError[IO, NEL[MamlError]]
   ): (Int, Int, Int) => IO[Interpreted[MultibandTile]] = (z: Int, x: Int, y: Int) => {
     for {
       expr             <- getExpression
@@ -45,8 +49,11 @@ object LayerTms extends LazyLogging {
                             val eval = paramMap(varName).tmsReification(buffer)
                             eval(z, x, y).map(varName -> _)
                           } map { _.toMap }
-      reified          <- IO.pure { Expression.bindParams(expr, params.mapValues(RasterLit(_))) }
-    } yield reified.andThen(interpreter(_)).andThen(_.as[MultibandTile])
+      reified          <- Expression.bindParams(expr, params.mapValues(RasterLit(_))) match {
+        case Valid(expression) => interpreter(expression)
+        case Invalid(errors) => applicativeError.raiseError(errors)
+      }
+    } yield reified.andThen(_.as[MultibandTile])
   }
 
 
@@ -56,20 +63,22 @@ object LayerTms extends LazyLogging {
   def generateExpression[Param](
     mkExpr: Map[String, Param] => Expression,
     getParams: IO[Map[String, Param]],
-    interpreter: Interpreter
+    interpreter: Interpreter[IO]
   )(
     implicit reify: TmsReification[Param],
-             contextShift: ContextShift[IO]
+             contextShift: ContextShift[IO],
+             applicativeError: ApplicativeError[IO, NEL[MamlError]]
   ) = apply[Param](getParams.map(mkExpr(_)), getParams, interpreter)
 
 
   /** Provide an expression and expect arguments to fulfill its needs */
   def curried[Param](
     expr: Expression,
-    interpreter: Interpreter
+    interpreter: Interpreter[IO]
   )(
     implicit reify: TmsReification[Param],
-             contextShift: ContextShift[IO]
+             contextShift: ContextShift[IO],
+             applicativeError: ApplicativeError[IO, NEL[MamlError]]
   ): (Map[String, Param], Int, Int, Int) => IO[Interpreted[MultibandTile]] =
     (paramMap: Map[String, Param], z: Int, x: Int, y: Int) => {
       val eval = apply[Param](IO.pure(expr), IO.pure(paramMap), interpreter)
@@ -82,11 +91,11 @@ object LayerTms extends LazyLogging {
     param: Param
   )(
     implicit reify: TmsReification[Param],
-             contextShift: ContextShift[IO]
+             contextShift: ContextShift[IO],
+             applicativeError: ApplicativeError[IO, NEL[MamlError]]
   ) = (z: Int, x: Int, y: Int) => {
-    val eval = curried(RasterVar("identity"), Interpreter.DEFAULT)
+    val eval = curried(RasterVar("identity"), ConcurrentInterpreter.DEFAULT)
     eval(Map("identity" -> param), z, x, y)
   }
 
 }
-

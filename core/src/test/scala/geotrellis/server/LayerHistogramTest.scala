@@ -2,9 +2,14 @@ package geotrellis.server
 
 import geotrellis.server.extent.SampleUtils
 
+import geotrellis.server.TestImplicits._
 import geotrellis.raster._
 import geotrellis.vector._
+import com.azavea.maml.error._
+import cats._
 import cats.implicits._
+import cats.effect._
+import cats.data.{NonEmptyList => NEL}
 
 import org.scalatest._
 
