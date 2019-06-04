@@ -8,7 +8,7 @@ import shapeless._
 import java.time.Instant
 
 case class StacExtent(
-  spatial: TwoDimBbox :+: ThreeDimBbox :+: CNil,
+  spatial: Bbox,
   temporal: (Option[Instant], Option[Instant])
 )
 

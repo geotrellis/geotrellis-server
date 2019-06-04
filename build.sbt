@@ -264,6 +264,8 @@ lazy val stac = project
       geotrellisVlm,
       commonsIo,
       shapeless,
+      scalacheck,
+      scalacheckCats,
       scalatest
     )
   )

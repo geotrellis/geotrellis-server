@@ -11,7 +11,28 @@ import java.time.Instant
 
 package object stac {
   type TwoDimBbox = Double :: Double :: Double :: Double :: HNil
+
+  object TwoDimBbox {
+    def apply(xmin: Double, ymin: Double, xmax: Double, ymax: Double): TwoDimBbox =
+      xmin :: ymin :: xmax :: ymax :: HNil
+  }
+
   type ThreeDimBbox = Double :: Double :: Double :: Double :: Double :: Double :: HNil
+
+  object ThreeDimBbox {
+    def apply(xmin: Double, ymin: Double, zmin: Double, xmax: Double, ymax: Double, zmax: Double): ThreeDimBbox =
+      xmin :: ymin :: zmin :: xmax :: ymax :: zmax :: HNil
+  }
+
+  type Bbox = TwoDimBbox :+: ThreeDimBbox :+: CNil
+
+  object Bbox {
+    def apply(xmin: Double, ymin: Double, xmax: Double, ymax: Double): Bbox =
+      Coproduct[Bbox](TwoDimBbox(xmin, ymin, xmax, ymax))
+
+    def apply(xmin: Double, ymin: Double, zmin: Double, xmax: Double, ymax: Double, zmax: Double): Bbox =
+      Coproduct[Bbox](ThreeDimBbox(xmin, ymin, zmin, xmax, ymax, zmax))
+  }
 
   // Stolen straight from circe docs
   implicit val decodeInstant: Decoder[Instant] = Decoder.decodeString.emap { str =>

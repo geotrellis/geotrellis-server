@@ -46,6 +46,8 @@ object Dependencies {
   val scaffeine = "com.github.blemale" %% "scaffeine" % "2.6.0"
   val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "1.1.0"
   val scalatest = "org.scalatest" %% "scalatest" % "3.0.4" % Test
+  val scalacheck = "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
+  val scalacheckCats = "io.chrisdavenport" %% "cats-scalacheck" % "0.1.1" % Test
   val simulacrum = "com.github.mpilquist" %% "simulacrum" % "0.12.0"
   val spark = "org.apache.spark" %% "spark-core" % "2.4.0" % Provided
   val tsecCommon = "io.github.jmcardon" %% "tsec-common" % tsecVer
