@@ -251,6 +251,23 @@ lazy val ogcExample = (project in file("ogc-example"))
     )
   )
 
+lazy val stac = project
+  .dependsOn(core)
+  .settings(moduleName := "geotrellis-server-stac")
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      cats,
+      circeCore,
+      geotrellisS3,
+      geotrellisVlm,
+      commonsIo,
+      shapeless,
+      scalatest
+    )
+  )
+
 lazy val docs = project
   .enablePlugins(MicrositesPlugin)
   .enablePlugins(SiteScaladocPlugin)
