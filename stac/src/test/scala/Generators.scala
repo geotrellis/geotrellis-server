@@ -88,7 +88,7 @@ object Generators {
   private def stacLinkGen: Gen[StacLink] =
     (
       nonEmptyStringGen,
-      linkTypeGen,
+      Gen.const(Self), // self link type is required by TMS reification
       Gen.option(mediaTypeGen),
       Gen.option(nonEmptyStringGen)
     ).mapN(StacLink.apply _)
