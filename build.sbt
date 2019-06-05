@@ -42,7 +42,7 @@ lazy val commonSettings = Seq(
   addCompilerPlugin(kindProjector cross CrossVersion.binary),
   addCompilerPlugin(macrosParadise cross CrossVersion.full),
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
-  fork := true,
+  fork in run := true,
   outputStrategy := Some(StdoutOutput),
   test in assembly := {},
   sources in (Compile, doc) := (sources in (Compile, doc)).value,
