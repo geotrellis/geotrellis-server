@@ -263,6 +263,7 @@ lazy val stac = project
       geotrellisS3,
       geotrellisVlm,
       commonsIo,
+      spark,
       shapeless,
       scalacheck,
       scalacheckCats,
