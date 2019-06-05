@@ -9,7 +9,7 @@ import com.azavea.maml.error.NonEvaluableNode
 import com.azavea.maml.ast.RasterVar
 import geotrellis.contrib.vlm.RasterSource
 import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
-import geotrellis.proj4.WebMercator
+import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.{IntArrayTile, MultibandTile, ProjectedRaster}
 import geotrellis.vector.{io => _, _}
 import io.circe._
@@ -26,8 +26,10 @@ case class StacItem(
     collection: Option[String],
     properties: JsonObject
 ) {
-  val uri = links.filter(_.rel == Self).headOption map { _.href } getOrElse {
-    throw new IllegalArgumentException(s"Item $id does not have a self link")
+  println(assets)
+  val uri = assets.filter(_._2._type == Some(`image/cog`)).values.headOption map { _.href } getOrElse {
+    println("item does not have a cog asset")
+    throw new IllegalArgumentException(s"Item $id does not have a cog asset")
   }
 }
 
@@ -40,7 +42,7 @@ object StacItem extends RasterSourceUtils {
     "type",
     "geometry",
     "bbox",
-    "link",
+    "links",
     "assets",
     "collection",
     "properties"
@@ -63,7 +65,7 @@ object StacItem extends RasterSourceUtils {
     "type",
     "geometry",
     "bbox",
-    "link",
+    "links",
     "assets",
     "collection",
     "properties"
@@ -77,7 +79,10 @@ object StacItem extends RasterSourceUtils {
         val extent = tmsLevels(z).mapTransform.keyToExtent(x, y)
         val invisiTile = IntArrayTile.fill(0, 256, 256).withNoData(Some(0))
 
-        if (!extent.intersects(self.geometry)) {
+        if (!Projected(extent.toPolygon, 3857)
+              .reproject(WebMercator, LatLng)(4326)
+              .geom
+              .intersects(self.geometry)) {
           IO.pure {
             ProjectedRaster[MultibandTile](
               MultibandTile(invisiTile, invisiTile, invisiTile),
@@ -89,7 +94,7 @@ object StacItem extends RasterSourceUtils {
           IO {
             getRasterSource(self.uri)
           } map { rasterSource =>
-            rasterSource.reproject(WebMercator).read(extent) map {rast =>
+            rasterSource.reproject(WebMercator).read(extent) map { rast =>
               ProjectedRaster(rast.tile, extent, WebMercator)
             } getOrElse {
               throw new Exception(

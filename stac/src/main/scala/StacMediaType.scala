@@ -24,7 +24,7 @@ object StacMediaType {
     case "application/geopackage+sqlite3" => `application/geopackage+sqlite3`
     case "application/x-hdf5" => `application/x-hdf5`
     case "application/x-hdf" => `application/x-hdf`
-    case _ => throw new Exception(s"Cannot construct media type from string: $s")
+    case s => VendorMediaType(s)
   }
 
   implicit val encMediaType: Encoder[StacMediaType] =
@@ -50,3 +50,7 @@ case object `application/geo+json` extends StacMediaType("application/geo+json")
 case object `application/geopackage+sqlite3` extends StacMediaType("application/geopackage+sqlite3")
 case object `application/x-hdf5` extends StacMediaType("application/x-hdf5")
 case object `application/x-hdf` extends StacMediaType("application/x-hdf")
+case class VendorMediaType(underlying: String) extends StacMediaType("vendor") {
+  override def toString =
+    s"$repr-$underlying"
+}

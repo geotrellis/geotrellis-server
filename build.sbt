@@ -294,7 +294,8 @@ lazy val stacExample = (project in file("stac-example"))
       shapeless,
       scalacheck,
       scalacheckCats,
-      scalatest
+      scalatest,
+      scalaXml
     )
   )
 

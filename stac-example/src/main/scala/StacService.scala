@@ -7,9 +7,6 @@ import geotrellis.server.stac.Implicits._
 import cats.data._
 import cats.data.Validated._
 import cats.effect._
-import com.azavea.maml.ast._
-import com.azavea.maml.ast.codec.tree._
-import com.azavea.maml.eval._
 import com.softwaremill.sttp.{Response => _, _}
 import com.softwaremill.sttp.circe._
 import com.softwaremill.sttp.asynchttpclient.cats.AsyncHttpClientCatsBackend
@@ -22,13 +19,19 @@ import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.io._
 import org.http4s.circe._
 import org.http4s.circe.CirceEntityEncoder._
+import org.http4s.circe.CirceEntityDecoder._
 import org.http4s.headers._
 
 import com.typesafe.scalalogging.LazyLogging
+import scala.collection.mutable.{Map => MutableMap}
 import java.net.URLDecoder
+import java.util.UUID
 
 
-class StacService(rootUrl: String)(implicit backend: SttpBackend[IO, Nothing]) extends LazyLogging {
+class StacService(implicit backend: SttpBackend[IO, Nothing], contextShift: ContextShift[IO]) extends LazyLogging {
+
+  val cache: MutableMap[String, StacItem] = MutableMap.empty
+
   def sttpBodyAsResponse[T: Encoder](resp: Either[String, Either[DeserializationError[Error], T]]): IO[Response[IO]] =
     resp match {
       case Right(deserialized) =>
@@ -43,15 +46,46 @@ class StacService(rootUrl: String)(implicit backend: SttpBackend[IO, Nothing]) e
         BadRequest(e)
     }
 
+  object UriQueryParamDecoderMatcher extends QueryParamDecoderMatcher[String]("uri")
+
   val app: HttpApp[IO] = HttpApp[IO] {
-    case GET -> Root =>
+    case GET -> Root :? UriQueryParamDecoderMatcher(uri) =>
       sttp
-        .get(uri"$rootUrl")
+        .get(uri"$uri")
         .response(asJson[StacCatalog])
         .send()
         .flatMap { response =>
           sttpBodyAsResponse(response.body)
         }
 
+    case req @ POST -> Root / "tms" =>
+      for {
+        body <- req.as[StacItem]
+        _ <- IO { cache += ((body.id, body)) }
+        resp <- Ok(Map("url" -> s"http://localhost:8080/tms/${body.id}/{z}/{x}/{y}"))
+      } yield resp
+
+    case GET -> Root / "tms" / layerId / IntVar(z) / IntVar(x) / IntVar(y) =>
+      val respIO =(for {
+        stacItem <- OptionT.fromOption[IO](cache.get(layerId))
+        eval = LayerTms.identity(stacItem)
+        tileValidated <- OptionT.liftF(eval(z, x, y))
+        resp <- tileValidated match {
+          case Valid(tile) =>
+            OptionT.liftF(Ok(tile.subsetBands(0, 1, 2).renderPng.bytes, `Content-Type`(MediaType.image.png)))
+          case Invalid(e) =>
+            OptionT.liftF(BadRequest(s"Could not produce tile at $z/$x/$y"))
+        }
+      } yield { resp }).value flatMap {
+        case Some(response) =>
+          IO.pure { response }
+        case None =>
+          NotFound()
+      }
+
+      respIO.attempt flatMap {
+        case Right(x) => IO.pure { x }
+        case Left(e) => InternalServerError(e.getMessage)
+      }
   }
 }

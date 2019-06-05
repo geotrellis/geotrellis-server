@@ -11,7 +11,7 @@ object Server extends IOApp {
 
   implicit val backend = AsyncHttpClientCatsBackend[IO]()
 
-  val stacService = new StacService("https://stac.boundlessgeo.io/stac")
+  val stacService = new StacService()
 
   def run(args: List[String]): IO[ExitCode] =
     BlazeServerBuilder[IO]
