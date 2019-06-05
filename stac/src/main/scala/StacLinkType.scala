@@ -7,22 +7,25 @@ sealed abstract class StacLinkType(val repr: String) {
   override def toString = repr
 }
 case object Self extends StacLinkType("self")
-case object Root extends StacLinkType("root")
+case object StacRoot extends StacLinkType("root")
 case object Parent extends StacLinkType("parent")
 case object Child extends StacLinkType("child")
 case object Item extends StacLinkType("item")
 case object Items extends StacLinkType("items")
+case class Vendor(underlying: String) extends StacLinkType("vendor") {
+  override def toString = s"$repr-$underlying"
+}
 
 object StacLinkType {
 
   private def fromString(s: String): StacLinkType = s.toLowerCase match {
     case "self" => Self
-    case "root" => Root
+    case "root" => StacRoot
     case "parent" => Parent
     case "child" => Child
     case "item" => Item
     case "items" => Items
-    case _ => throw new Exception("Cannot create StacLinkType of type $s")
+    case s => Vendor(s)
   }
 
   implicit val encStacLinkType: Encoder[StacLinkType] =
