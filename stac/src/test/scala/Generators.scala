@@ -55,7 +55,8 @@ object Generators {
     Root,
     Parent,
     Child,
-    Item
+    Item,
+    Items
   )
 
   private def providerRoleGen: Gen[StacProviderRole] = Gen.oneOf(

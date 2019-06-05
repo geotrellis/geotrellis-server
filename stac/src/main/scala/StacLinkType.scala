@@ -11,6 +11,7 @@ case object Root extends StacLinkType("root")
 case object Parent extends StacLinkType("parent")
 case object Child extends StacLinkType("child")
 case object Item extends StacLinkType("item")
+case object Items extends StacLinkType("items")
 
 object StacLinkType {
 
@@ -20,6 +21,7 @@ object StacLinkType {
     case "parent" => Parent
     case "child" => Child
     case "item" => Item
+    case "items" => Items
     case _ => throw new Exception("Cannot create StacLinkType of type $s")
   }
 
