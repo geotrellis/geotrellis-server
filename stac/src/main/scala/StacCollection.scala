@@ -12,7 +12,7 @@ case class StacCollection(
     version: String,
     license: String,
     providers: List[StacProvider],
-    extent: StacExtent,
+    extent: Json,
     properties: JsonObject,
     links: List[StacLink]
 )

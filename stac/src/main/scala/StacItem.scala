@@ -1,5 +1,7 @@
 package geotrellis.server.stac
 
+import geotrellis.server.stac.Implicits._
+
 import geotrellis.vector.{io => _, _}
 import io.circe._
 import shapeless._

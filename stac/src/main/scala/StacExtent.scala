@@ -1,5 +1,7 @@
 package geotrellis.server.stac
 
+import geotrellis.server.stac.Implicits._
+
 import io.circe._
 import io.circe.shapes.CoproductInstances
 import io.circe.generic.semiauto._
@@ -12,7 +14,7 @@ case class StacExtent(
   temporal: (Option[Instant], Option[Instant])
 )
 
-object StacExtent extends CoproductInstances {
+object StacExtent {
   implicit val encStacExtent: Encoder[StacExtent] = deriveEncoder
 
   implicit val decStacExtent: Decoder[StacExtent] = deriveDecoder

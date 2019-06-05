@@ -1,22 +1,40 @@
 package geotrellis.server.stac
 
+import geotrellis.server.stac.Implicits._
+import Generators._
+
 import cats.implicits._
+import geotrellis.vector.Geometry
 import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
 import org.scalacheck.Arbitrary
 import org.scalatest.{FunSpec, Matchers}
 import org.scalatest.prop.PropertyChecks
-import Generators._
+
+import java.time.Instant
 
 class SerDeSpec extends FunSpec with Matchers with PropertyChecks {
   private def getPropTest[T: Arbitrary: Encoder: Decoder] = forAll { (x: T) =>
     {
-      decode[T](x.asJson.noSpaces).toOption.get should equal(x)
+      withClue(x.asJson.spaces2) {
+        decode[T](x.asJson.noSpaces).toOption.get shouldBe x
+      }
     }
   }
 
   describe("serialization / deserialization should succeed") {
+    it("enums should round trip") {
+      getPropTest[StacMediaType]
+      getPropTest[StacLinkType]
+      getPropTest[StacProviderRole]
+    }
+
+    it("times and geometries should round trip") {
+      getPropTest[Instant]
+      getPropTest[Geometry]
+    }
+
     it("assets should round trip") {
       getPropTest[StacAsset]
     }
@@ -26,13 +44,11 @@ class SerDeSpec extends FunSpec with Matchers with PropertyChecks {
     }
 
     it("catalogs should round trip") {
-      // getPropTest[StacCatalog]
-      true
+      getPropTest[StacCatalog]
     }
 
     it("collections should round trip") {
-      // getPropTest[StacCollection]
-      true
+      getPropTest[StacCollection]
     }
   }
 
