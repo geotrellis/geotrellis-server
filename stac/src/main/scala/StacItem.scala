@@ -89,9 +89,7 @@ object StacItem extends RasterSourceUtils {
           IO {
             getRasterSource(self.uri)
           } map { rasterSource =>
-            rasterSource.reproject(WebMercator).read(extent) map {
-              _.mapTile(_.subsetBands(0, 1, 2))
-            } map { rast =>
+            rasterSource.reproject(WebMercator).read(extent) map {rast =>
               ProjectedRaster(rast.tile, extent, WebMercator)
             } getOrElse {
               throw new Exception(

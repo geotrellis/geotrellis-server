@@ -115,7 +115,7 @@ lazy val root = project.in(file("."))
   .settings(moduleName := "root")
   .settings(commonSettings)
   .settings(noPublishSettings)
-  .aggregate(core, example, docs, ogc, ogcExample)
+  .aggregate(core, example, docs, ogc, ogcExample, stac)
 
 lazy val core = project
   .settings(moduleName := "geotrellis-server-core")
@@ -258,6 +258,33 @@ lazy val stac = project
   .settings(publishSettings)
   .settings(
     libraryDependencies ++= Seq(
+      cats,
+      circeCore,
+      geotrellisS3,
+      geotrellisVlm,
+      commonsIo,
+      spark,
+      shapeless,
+      scalacheck,
+      scalacheckCats,
+      scalatest
+    )
+  )
+
+lazy val stacExample = (project in file("stac-example"))
+  .dependsOn(stac)
+  .settings(moduleName := "geotrellis-server-stac-example")
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      http4sDsl,
+      http4sBlazeServer,
+      http4sBlazeClient,
+      http4sCirce,
+      sttp,
+      sttpCats,
+      sttpCirce,
       cats,
       circeCore,
       geotrellisS3,

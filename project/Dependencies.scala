@@ -5,12 +5,13 @@ object Dependencies {
   val circeVer = "0.11.1"
   val gtVer = "3.0.0-M3"
   val gtcVer = "3.13.0"
-  val http4sVer = "0.20.0-M6"
+  val http4sVer = "0.20.0"
   val scalaVer = "2.11.12"
   val crossScalaVer = Seq(scalaVer, "2.12.7")
   val tsecVer = "0.0.1-M11"
   val dispatchVer = "0.11.3"
   val shapelessVer = "2.3.3"
+  val sttpVer = "1.5.17"
 
   val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % "2.3.5"
   val cats = "org.typelevel" %% "cats-core" % "1.4.0"
@@ -50,6 +51,9 @@ object Dependencies {
   val scalacheckCats = "io.chrisdavenport" %% "cats-scalacheck" % "0.1.1" % Test
   val simulacrum = "com.github.mpilquist" %% "simulacrum" % "0.12.0"
   val spark = "org.apache.spark" %% "spark-core" % "2.4.0" % Provided
+  val sttp = "com.softwaremill.sttp" %% "core" % sttpVer
+  val sttpCirce = "com.softwaremill.sttp" %% "circe" % sttpVer
+  val sttpCats = "com.softwaremill.sttp" %% "async-http-client-backend-cats" % sttpVer
   val tsecCommon = "io.github.jmcardon" %% "tsec-common" % tsecVer
   val tsecHttp4s = "io.github.jmcardon" %% "tsec-http4s" % tsecVer
   val typesafeLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"
