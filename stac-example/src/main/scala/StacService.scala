@@ -83,8 +83,9 @@ class StacService(
         stacItem <- OptionT.fromOption[IO](cache.get(layerId))
         stacItemHist <- OptionT.fromOption[IO](histCache.get(s"$layerId-hist")) orElse {
           OptionT.liftF {
-            LayerHistogram.identity(stacItem, 2000) map {
+            LayerHistogram.identity(stacItem, 80000) map {
               case Valid(hists) =>
+                println("I BELIEVE I SUCCEEDED")
                 histCache += ((s"$layerId-hist", hists))
                 hists
               case Invalid(errs) =>
@@ -103,8 +104,15 @@ class StacService(
               (idx: Int, band: Tile) =>
                 band
                   .normalize(
-                    stacItemHist(idx).minValue getOrElse { band.toArray.min.toDouble },
-                    stacItemHist(idx).maxValue getOrElse { band.toArray.max.toDouble },
+                    stacItemHist(idx).minValue getOrElse {
+                      logger.warn(s"Using tile max for $z/$x/$y")
+                      println(s"Hist is: ${stacItemHist(idx).binCounts}")
+                      band.toArray.min.toDouble
+                    },
+                    stacItemHist(idx).maxValue getOrElse {
+                      logger.warn(s"Using tile min for $z/$x/$y")
+                      band.toArray.max.toDouble
+                    },
                     0,
                     255
                   )
