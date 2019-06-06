@@ -47,7 +47,6 @@ class StacService(
           case Right(catalog) =>
             Ok(catalog.asJson, `Content-Type`(MediaType.application.json))
           case Left(e) =>
-            println(e)
             BadRequest(e.original)
         }
       case Left(e) =>
@@ -85,7 +84,6 @@ class StacService(
           OptionT.liftF {
             LayerHistogram.identity(stacItem, 80000) map {
               case Valid(hists) =>
-                println("I BELIEVE I SUCCEEDED")
                 histCache += ((s"$layerId-hist", hists))
                 hists
               case Invalid(errs) =>
@@ -106,7 +104,6 @@ class StacService(
                   .normalize(
                     stacItemHist(idx).minValue getOrElse {
                       logger.warn(s"Using tile max for $z/$x/$y")
-                      println(s"Hist is: ${stacItemHist(idx).binCounts}")
                       band.toArray.min.toDouble
                     },
                     stacItemHist(idx).maxValue getOrElse {
