@@ -1,15 +1,23 @@
 package geotrellis.server.stac
 
-import geotrellis.server.TmsReification
+import geotrellis.server.{ExtentReification, HasRasterExtents, TmsReification}
 import geotrellis.server.stac.Implicits._
 import geotrellis.server.vlm.RasterSourceUtils
 
+import cats.data.{NonEmptyList => NEL}
 import cats.effect.{ContextShift, IO}
 import com.azavea.maml.error.NonEvaluableNode
 import geotrellis.contrib.vlm.RasterSource
 import geotrellis.contrib.vlm.gdal.GDALRasterSource
 import geotrellis.proj4.{LatLng, WebMercator}
-import geotrellis.raster.{IntArrayTile, MultibandTile, ProjectedRaster, Tile}
+import geotrellis.raster.{
+  CellSize,
+  IntArrayTile,
+  MultibandTile,
+  ProjectedRaster,
+  RasterExtent,
+  Tile
+}
 import geotrellis.spark.SpatialKey
 import geotrellis.vector.{io => _, _}
 import io.circe._
@@ -115,5 +123,20 @@ object StacItem extends RasterSourceUtils with LazyLogging {
           }
         }
       }
+    }
+
+  implicit val stacItemExtentReification: ExtentReification[StacItem] =
+    new ExtentReification[StacItem] {
+      def extentReification(
+          self: StacItem
+      )(implicit contextShift: ContextShift[IO]) =
+        (extent: Extent, cellSize: CellSize) => ???
+    }
+
+  implicit val stacItemHasRasterExtents: HasRasterExtents[StacItem] =
+    new HasRasterExtents[StacItem] {
+      def rasterExtents(self: StacItem)(
+          implicit contextShift: ContextShift[IO]
+      ): IO[NEL[RasterExtent]] = ???
     }
 }

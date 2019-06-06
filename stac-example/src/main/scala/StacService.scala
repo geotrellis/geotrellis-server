@@ -12,6 +12,7 @@ import com.softwaremill.sttp.{Response => _, _}
 import com.softwaremill.sttp.circe._
 import com.softwaremill.sttp.asynchttpclient.cats.AsyncHttpClientCatsBackend
 import geotrellis.raster.{io => _, _}
+import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.render._
 import io.circe._
 import io.circe.syntax._
@@ -28,11 +29,14 @@ import java.net.URLDecoder
 import java.util.UUID
 
 class StacService(
-  implicit backend: SttpBackend[IO, Nothing],
-  contextShift: ContextShift[IO]
+    implicit backend: SttpBackend[IO, Nothing],
+    contextShift: ContextShift[IO]
 ) extends LazyLogging {
 
+  // These are dummy caches -- in a real service you'd want something more robust
+  // than a fully local mutable map, but this is just an example, so :man_shrugging:
   val cache: MutableMap[String, StacItem] = MutableMap.empty
+  val histCache: MutableMap[String, List[Histogram[Double]]] = MutableMap.empty
 
   def sttpBodyAsResponse[T: Encoder](
       resp: Either[String, Either[DeserializationError[Error], T]]
@@ -77,13 +81,34 @@ class StacService(
     case GET -> Root / "tms" / layerId / IntVar(z) / IntVar(x) / IntVar(y) =>
       ((for {
         stacItem <- OptionT.fromOption[IO](cache.get(layerId))
+        stacItemHist <- OptionT.fromOption[IO](histCache.get(s"$layerId-hist")) orElse {
+          OptionT.liftF {
+            LayerHistogram.identity(stacItem, 2000) map {
+              case Valid(hists) =>
+                histCache += ((s"$layerId-hist", hists))
+                hists
+              case Invalid(errs) =>
+                throw new Exception(
+                  "Could not produce hists despite reasonable efforts"
+                )
+            }
+          }
+        }
         eval = LayerTms.identity(stacItem)
         tileValidated <- OptionT.liftF(eval(z, x, y))
         resp <- tileValidated match {
           case Valid(tile) =>
             logger.debug(s"Tile dimensions: ${tile.dimensions}")
             val rescaled = tile.mapBands(
-              (_: Int, band: Tile) => band.rescale(0, 255).toArrayTile
+              (idx: Int, band: Tile) =>
+                band
+                  .normalize(
+                    stacItemHist(idx).minValue getOrElse { band.toArray.min.toDouble },
+                    stacItemHist(idx).maxValue getOrElse { band.toArray.max.toDouble },
+                    0,
+                    255
+                  )
+                  .toArrayTile
             )
             OptionT.liftF(
               Ok(rescaled.renderPng.bytes, `Content-Type`(MediaType.image.png))
