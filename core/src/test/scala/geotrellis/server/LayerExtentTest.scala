@@ -1,7 +1,6 @@
 package geotrellis.server
 
 import geotrellis.server.extent.SampleUtils
-import geotrellis.server.TestImplicits._
 
 import geotrellis.raster._
 import geotrellis.vector._
@@ -19,7 +18,7 @@ import scala.concurrent.ExecutionContext
 
 class LayerExtentTest extends FunSuite with Matchers {
   implicit val cs = cats.effect.IO.contextShift(ExecutionContext.global)
-  
+
   test("ability to read a selected extent") {
     val rt = ResourceTile("8x8.tif")
     val eval = LayerExtent.identity(rt)

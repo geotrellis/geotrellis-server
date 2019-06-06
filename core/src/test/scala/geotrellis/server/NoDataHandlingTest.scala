@@ -1,7 +1,6 @@
 package geotrellis.server
 
 import geotrellis.server.vlm._
-import geotrellis.server.TestImplicits._
 
 import geotrellis.raster._
 import geotrellis.raster.io.geotiff.AutoHigherResolution
