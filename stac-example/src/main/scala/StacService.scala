@@ -18,7 +18,6 @@ import org.http4s.{Http4sLiteralSyntax => _, _}
 import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.io._
 import org.http4s.circe._
-import org.http4s.circe.CirceEntityEncoder._
 import org.http4s.circe.CirceEntityDecoder._
 import org.http4s.headers._
 
@@ -27,17 +26,21 @@ import scala.collection.mutable.{Map => MutableMap}
 import java.net.URLDecoder
 import java.util.UUID
 
-
-class StacService(implicit backend: SttpBackend[IO, Nothing], contextShift: ContextShift[IO]) extends LazyLogging {
+class StacService(
+    implicit backend: SttpBackend[IO, Nothing],
+    contextShift: ContextShift[IO]
+) extends LazyLogging {
 
   val cache: MutableMap[String, StacItem] = MutableMap.empty
 
-  def sttpBodyAsResponse[T: Encoder](resp: Either[String, Either[DeserializationError[Error], T]]): IO[Response[IO]] =
+  def sttpBodyAsResponse[T: Encoder](
+      resp: Either[String, Either[DeserializationError[Error], T]]
+  ): IO[Response[IO]] =
     resp match {
       case Right(deserialized) =>
         deserialized match {
           case Right(catalog) =>
-            Ok(catalog, `Content-Type`(MediaType.application.json))
+            Ok(catalog.asJson, `Content-Type`(MediaType.application.json))
           case Left(e) =>
             println(e)
             BadRequest(e.original)
@@ -46,9 +49,12 @@ class StacService(implicit backend: SttpBackend[IO, Nothing], contextShift: Cont
         BadRequest(e)
     }
 
-  object UriQueryParamDecoderMatcher extends QueryParamDecoderMatcher[String]("uri")
+  object UriQueryParamDecoderMatcher
+      extends QueryParamDecoderMatcher[String]("uri")
 
   val app: HttpApp[IO] = HttpApp[IO] {
+    // This mainly exists to show that all the json is good to go -- it's a pretty
+    // boring route
     case GET -> Root :? UriQueryParamDecoderMatcher(uri) =>
       sttp
         .get(uri"$uri")
@@ -62,17 +68,25 @@ class StacService(implicit backend: SttpBackend[IO, Nothing], contextShift: Cont
       for {
         body <- req.as[StacItem]
         _ <- IO { cache += ((body.id, body)) }
-        resp <- Ok(Map("url" -> s"http://localhost:8080/tms/${body.id}/{z}/{x}/{y}"))
+        resp <- Ok(
+          Map("url" -> s"http://localhost:8080/tms/${body.id}/{z}/{x}/{y}").asJson
+        )
       } yield resp
 
     case GET -> Root / "tms" / layerId / IntVar(z) / IntVar(x) / IntVar(y) =>
-      val respIO =(for {
+      ((for {
         stacItem <- OptionT.fromOption[IO](cache.get(layerId))
         eval = LayerTms.identity(stacItem)
         tileValidated <- OptionT.liftF(eval(z, x, y))
         resp <- tileValidated match {
           case Valid(tile) =>
-            OptionT.liftF(Ok(tile.subsetBands(0, 1, 2).renderPng.bytes, `Content-Type`(MediaType.image.png)))
+            logger.debug(s"Tile dimensions: ${tile.dimensions}")
+            val rescaled = tile.mapBands(
+              (_: Int, band: Tile) => band.rescale(0, 255).toArrayTile
+            )
+            OptionT.liftF(
+              Ok(rescaled.renderPng.bytes, `Content-Type`(MediaType.image.png))
+            )
           case Invalid(e) =>
             OptionT.liftF(BadRequest(s"Could not produce tile at $z/$x/$y"))
         }
@@ -81,11 +95,11 @@ class StacService(implicit backend: SttpBackend[IO, Nothing], contextShift: Cont
           IO.pure { response }
         case None =>
           NotFound()
-      }
-
-      respIO.attempt flatMap {
-        case Right(x) => IO.pure { x }
-        case Left(e) => InternalServerError(e.getMessage)
+      }).attempt.flatMap {
+        case Right(x) =>
+          IO.pure { x }
+        case Left(e) =>
+          InternalServerError(e.getMessage)
       }
   }
 }

@@ -6,15 +6,17 @@ import geotrellis.server.vlm.RasterSourceUtils
 
 import cats.effect.{ContextShift, IO}
 import com.azavea.maml.error.NonEvaluableNode
-import com.azavea.maml.ast.RasterVar
 import geotrellis.contrib.vlm.RasterSource
 import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
 import geotrellis.proj4.{LatLng, WebMercator}
-import geotrellis.raster.{IntArrayTile, MultibandTile, ProjectedRaster}
+import geotrellis.raster.{IntArrayTile, MultibandTile, ProjectedRaster, Tile}
+import geotrellis.spark.SpatialKey
 import geotrellis.vector.{io => _, _}
 import io.circe._
 import shapeless._
 import com.azavea.maml.error.NonEvaluableNode
+
+import com.typesafe.scalalogging.LazyLogging
 
 case class StacItem(
     id: String,
@@ -26,14 +28,15 @@ case class StacItem(
     collection: Option[String],
     properties: JsonObject
 ) {
-  println(assets)
-  val uri = assets.filter(_._2._type == Some(`image/cog`)).values.headOption map { _.href } getOrElse {
-    println("item does not have a cog asset")
+  val uri = assets
+    .filter(_._2._type == Some(`image/cog`))
+    .values
+    .headOption map { _.href } getOrElse {
     throw new IllegalArgumentException(s"Item $id does not have a cog asset")
   }
 }
 
-object StacItem extends RasterSourceUtils {
+object StacItem extends RasterSourceUtils with LazyLogging {
 
   def getRasterSource(uri: String): RasterSource = new GeoTiffRasterSource(uri)
 
@@ -77,6 +80,9 @@ object StacItem extends RasterSourceUtils {
           implicit contextShift: ContextShift[IO]
       ) = (z: Int, x: Int, y: Int) => {
         val extent = tmsLevels(z).mapTransform.keyToExtent(x, y)
+        val cs = tmsLevels(z).cellSize
+        logger.debug(s"Extent to read: $extent")
+        logger.debug(s"Cell size to read: $cs")
         val invisiTile = IntArrayTile.fill(0, 256, 256).withNoData(Some(0))
 
         if (!Projected(extent.toPolygon, 3857)
@@ -94,8 +100,13 @@ object StacItem extends RasterSourceUtils {
           IO {
             getRasterSource(self.uri)
           } map { rasterSource =>
-            rasterSource.reproject(WebMercator).read(extent) map { rast =>
-              ProjectedRaster(rast.tile, extent, WebMercator)
+            rasterSource
+              .reproject(WebMercator)
+              .tileToLayout(tmsLevels(z))
+              .read(SpatialKey(x, y)) map { rast =>
+              ProjectedRaster(rast mapBands { (_: Int, t: Tile) =>
+                t.toArrayTile
+              }, extent, WebMercator)
             } getOrElse {
               throw new Exception(
                 s"Item ${self.id} claims to have data in ${extent} but did not"
