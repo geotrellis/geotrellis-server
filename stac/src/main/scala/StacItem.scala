@@ -7,7 +7,7 @@ import geotrellis.server.vlm.RasterSourceUtils
 import cats.effect.{ContextShift, IO}
 import com.azavea.maml.error.NonEvaluableNode
 import geotrellis.contrib.vlm.RasterSource
-import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
+import geotrellis.contrib.vlm.gdal.GDALRasterSource
 import geotrellis.proj4.{LatLng, WebMercator}
 import geotrellis.raster.{IntArrayTile, MultibandTile, ProjectedRaster, Tile}
 import geotrellis.spark.SpatialKey
@@ -38,7 +38,7 @@ case class StacItem(
 
 object StacItem extends RasterSourceUtils with LazyLogging {
 
-  def getRasterSource(uri: String): RasterSource = new GeoTiffRasterSource(uri)
+  def getRasterSource(uri: String): RasterSource = new GDALRasterSource(uri)
 
   implicit val encStacItem: Encoder[StacItem] = Encoder.forProduct8(
     "id",

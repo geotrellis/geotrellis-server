@@ -36,8 +36,7 @@ object LayerTms extends LazyLogging {
     interpreter: Interpreter[IO]
   )(
     implicit reify: TmsReification[Param],
-             contextShift: ContextShift[IO],
-             applicativeError: ApplicativeError[IO, NEL[MamlError]]
+             contextShift: ContextShift[IO]
   ): (Int, Int, Int) => IO[Interpreted[MultibandTile]] = (z: Int, x: Int, y: Int) => {
     for {
       expr             <- getExpression
@@ -51,7 +50,7 @@ object LayerTms extends LazyLogging {
                           } map { _.toMap }
       reified          <- Expression.bindParams(expr, params.mapValues(RasterLit(_))) match {
         case Valid(expression) => interpreter(expression)
-        case Invalid(errors) => applicativeError.raiseError(errors)
+        case Invalid(errors) => throw new Exception(errors.map(_.repr).reduce)
       }
     } yield reified.andThen(_.as[MultibandTile])
   }
@@ -66,8 +65,7 @@ object LayerTms extends LazyLogging {
     interpreter: Interpreter[IO]
   )(
     implicit reify: TmsReification[Param],
-             contextShift: ContextShift[IO],
-             applicativeError: ApplicativeError[IO, NEL[MamlError]]
+             contextShift: ContextShift[IO]
   ) = apply[Param](getParams.map(mkExpr(_)), getParams, interpreter)
 
 
@@ -77,8 +75,7 @@ object LayerTms extends LazyLogging {
     interpreter: Interpreter[IO]
   )(
     implicit reify: TmsReification[Param],
-             contextShift: ContextShift[IO],
-             applicativeError: ApplicativeError[IO, NEL[MamlError]]
+             contextShift: ContextShift[IO]
   ): (Map[String, Param], Int, Int, Int) => IO[Interpreted[MultibandTile]] =
     (paramMap: Map[String, Param], z: Int, x: Int, y: Int) => {
       val eval = apply[Param](IO.pure(expr), IO.pure(paramMap), interpreter)
@@ -91,8 +88,7 @@ object LayerTms extends LazyLogging {
     param: Param
   )(
     implicit reify: TmsReification[Param],
-             contextShift: ContextShift[IO],
-             applicativeError: ApplicativeError[IO, NEL[MamlError]]
+             contextShift: ContextShift[IO]
   ) = (z: Int, x: Int, y: Int) => {
     val eval = curried(RasterVar("identity"), ConcurrentInterpreter.DEFAULT)
     eval(Map("identity" -> param), z, x, y)

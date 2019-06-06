@@ -1,7 +1,9 @@
 package geotrellis.server.stac.example
 
+import cats.data.NonEmptyList
 import cats.effect.{ExitCode, IO, IOApp}
 import cats.implicits._
+import com.azavea.maml.error.MamlError
 import com.softwaremill.sttp.asynchttpclient.cats.AsyncHttpClientCatsBackend
 import org.http4s.server.blaze._
 import org.http4s._
@@ -10,7 +12,6 @@ import org.http4s.server._
 object Server extends IOApp {
 
   implicit val backend = AsyncHttpClientCatsBackend[IO]()
-
   val stacService = new StacService()
 
   def run(args: List[String]): IO[ExitCode] =

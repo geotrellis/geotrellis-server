@@ -54,14 +54,14 @@ class WmtsView(wmtsModel: WmtsModel, serviceUrl: URL) extends LazyLogging {
               case sl@SimpleTiledOgcLayer(_, _, _, _, _, _) =>
                 LayerTms.identity(sl)
               case sl@MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _) =>
-                LayerTms(IO.pure(expr), IO.pure(parameters), Interpreter.DEFAULT)
+                LayerTms(IO.pure(expr), IO.pure(parameters), ConcurrentInterpreter.DEFAULT[IO])
             }
 
             val evalHisto = layer match {
               case sl@SimpleTiledOgcLayer(_, _, _, _, _, _) =>
                 LayerHistogram.identity(sl, 512)
               case sl@MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _) =>
-                LayerHistogram(IO.pure(expr), IO.pure(parameters), Interpreter.DEFAULT, 512)
+                LayerHistogram(IO.pure(expr), IO.pure(parameters), ConcurrentInterpreter.DEFAULT[IO], 512)
             }
 
             (evalWmts(0, tileCol, tileRow), evalHisto).parMapN {

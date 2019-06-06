@@ -7,6 +7,7 @@ import geotrellis.server.stac.Implicits._
 import cats.data._
 import cats.data.Validated._
 import cats.effect._
+import com.azavea.maml.error.MamlError
 import com.softwaremill.sttp.{Response => _, _}
 import com.softwaremill.sttp.circe._
 import com.softwaremill.sttp.asynchttpclient.cats.AsyncHttpClientCatsBackend
@@ -27,8 +28,8 @@ import java.net.URLDecoder
 import java.util.UUID
 
 class StacService(
-    implicit backend: SttpBackend[IO, Nothing],
-    contextShift: ContextShift[IO]
+  implicit backend: SttpBackend[IO, Nothing],
+  contextShift: ContextShift[IO]
 ) extends LazyLogging {
 
   val cache: MutableMap[String, StacItem] = MutableMap.empty

@@ -262,6 +262,7 @@ lazy val stac = project
       circeCore,
       geotrellisS3,
       geotrellisVlm,
+      geotrellisContribGDAL,
       commonsIo,
       spark,
       shapeless,
@@ -298,6 +299,12 @@ lazy val stacExample = (project in file("stac-example"))
       scalaXml
     )
   )
+  .settings(
+    dependencyOverrides ++= Seq(
+      "com.azavea.gdal" % "gdal-warp-bindings" % "33.5523882"
+    )
+  )
+
 
 lazy val docs = project
   .enablePlugins(MicrositesPlugin)
