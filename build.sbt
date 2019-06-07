@@ -252,7 +252,6 @@ lazy val ogcExample = (project in file("ogc-example"))
   )
 
 lazy val stac = project
-  .dependsOn(core)
   .settings(moduleName := "geotrellis-server-stac")
   .settings(commonSettings)
   .settings(publishSettings)
@@ -260,11 +259,11 @@ lazy val stac = project
     libraryDependencies ++= Seq(
       cats,
       circeCore,
+      circeGeneric,
+      circeParser,
+      circeShapes,
       geotrellisS3,
       geotrellisVlm,
-      geotrellisContribGDAL,
-      commonsIo,
-      spark,
       shapeless,
       scalacheck,
       scalacheckCats,
@@ -272,8 +271,25 @@ lazy val stac = project
     )
   )
 
+lazy val stacServerImplicits = (project in file("stac-server-implicits"))
+  .dependsOn(core, stac)
+  .settings(moduleName := "geotrellis-server-stac-server-implicits")
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      catsEffect,
+      commonsIo,
+      geotrellisContribGDAL,
+      geotrellisRaster,
+      geotrellisVector,
+      geotrellisSpark,
+      spark
+    )
+  )
+
 lazy val stacExample = (project in file("stac-example"))
-  .dependsOn(stac)
+  .dependsOn(stac, stacImplicits)
   .settings(moduleName := "geotrellis-server-stac-example")
   .settings(commonSettings)
   .settings(publishSettings)

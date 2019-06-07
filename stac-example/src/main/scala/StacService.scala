@@ -2,7 +2,7 @@ package geotrellis.server.stac.example
 
 import geotrellis.server._
 import geotrellis.server.stac._
-import geotrellis.server.stac.Implicits._
+import geotrellis.server.stac.ServerImplicits._
 
 import cats.data._
 import cats.data.Validated._

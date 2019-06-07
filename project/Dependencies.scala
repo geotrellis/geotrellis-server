@@ -25,6 +25,8 @@ object Dependencies {
   val commonsLang = "org.apache.commons" % "commons-lang3" % "3.7"
   val concHashMap = "com.googlecode.concurrentlinkedhashmap" % "concurrentlinkedhashmap-lru" % "1.4.2"
   val decline = "com.monovore" %% "decline" % "0.5.0"
+  val geotrellisRaster = "org.locationtech.geotrellis" %% "geotrellis-raster" % gtVer
+  val geotrellisVector = "org.locationtech.geotrellis" %% "geotrellis-vector" % gtVer
   val geotrellisS3 = "org.locationtech.geotrellis" %% "geotrellis-s3" % gtVer
   val geotrellisSpark = "org.locationtech.geotrellis" %% "geotrellis-spark" % gtVer
   val geotrellisHBase = "org.locationtech.geotrellis" %% "geotrellis-hbase" % gtVer
