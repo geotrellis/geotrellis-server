@@ -289,7 +289,7 @@ lazy val stacServerImplicits = (project in file("stac-server-implicits"))
   )
 
 lazy val stacExample = (project in file("stac-example"))
-  .dependsOn(stac, stacImplicits)
+  .dependsOn(stac, stacServerImplicits)
   .settings(moduleName := "geotrellis-server-stac-example")
   .settings(commonSettings)
   .settings(publishSettings)
