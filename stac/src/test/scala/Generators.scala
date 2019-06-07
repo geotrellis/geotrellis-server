@@ -52,7 +52,7 @@ object Generators {
 
   private def linkTypeGen: Gen[StacLinkType] = Gen.oneOf(
     Self,
-    Root,
+    StacRoot,
     Parent,
     Child,
     Item,
@@ -112,6 +112,13 @@ object Generators {
       StacAsset.apply _
     }
 
+  // Only do COGs for now, since we don't handle anything else in the example server.
+  // As more types of stac items are supported, relax this assumption
+  private def cogAssetGen: Gen[StacAsset] =
+    stacAssetGen map { asset =>
+      asset.copy(_type = Some(`image/cog`))
+    }
+
   private def stacItemGen: Gen[StacItem] =
     (
       nonEmptyStringGen,
@@ -119,7 +126,7 @@ object Generators {
       rectangleGen,
       twoDimBboxGen,
       Gen.nonEmptyListOf(stacLinkGen),
-      Gen.nonEmptyMap((nonEmptyStringGen, stacAssetGen).tupled),
+      Gen.nonEmptyMap((nonEmptyStringGen, cogAssetGen).tupled),
       Gen.option(nonEmptyStringGen),
       Gen.const(JsonObject.fromMap(Map.empty))
     ).mapN(StacItem.apply _)
