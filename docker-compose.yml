@@ -44,3 +44,12 @@ services:
     build:
       dockerfile: microsite.dockerfile
       context: .
+  ogc-example:
+    image: daunnc/openjdk-gdal:2.3.2
+    command: /bin/sh -c "AWS_PROFILE=azavea-rd java -Djava.library.path=/usr/local/lib -jar /opt/jars/geotrellis-server-ogc-services.jar --public-url http://localhost:9999"
+    ports:
+      - "9999:9000"
+    volumes:
+      - $HOME/.aws:/root/.aws
+      - ./ogc-example/target/scala-2.11:/opt/jars
+      - ./data:/opt/data

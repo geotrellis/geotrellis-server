@@ -16,10 +16,12 @@ serveNdviExample:
 serveGdalNdviExample:
 	docker-compose run --service-ports gdal-ndvi-example
 
+serveOgcExample:
+	docker-compose run --service-ports ogc-example
+
 serveDocs:
 	docker-compose run server-microsite bash -c "cd /root/geotrellis-server && sbt 'project docs' makeMicrosite"
 	docker-compose run --service-ports server-microsite
 
 test:
 	sbt test
-
