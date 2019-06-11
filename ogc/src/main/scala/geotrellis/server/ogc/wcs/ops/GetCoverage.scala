@@ -25,15 +25,17 @@ class GetCoverage(wcsModel: WcsModel) extends LazyLogging {
   /*
   QGIS appears to sample WCS service by placing low and high resolution requests at coverage center.
   These sampling requests happen for every actual WCS request, we can get really great cache hit rates.
-  */
+   */
   lazy val requestCache: Cache[GetCoverageWcsParams, Array[Byte]] =
-      Scaffeine()
-        .recordStats()
-        .expireAfterWrite(1.hour)
-        .maximumSize(32)
-        .build()
+    Scaffeine()
+      .recordStats()
+      .expireAfterWrite(1.hour)
+      .maximumSize(32)
+      .build()
 
-  def build(params: GetCoverageWcsParams)(implicit contextShift: ContextShift[IO], applicativeError: ApplicativeError[IO, NEL[MamlError]]): Array[Byte] =
+  def build(
+    params: GetCoverageWcsParams
+  )(implicit contextShift: ContextShift[IO]): Array[Byte] =
     requestCache.getIfPresent(params) match {
       case Some(bytes) =>
         logger.trace(s"GetCoverage cache HIT: $params")
@@ -45,10 +47,18 @@ class GetCoverage(wcsModel: WcsModel) extends LazyLogging {
 
         val eval = src match {
           case SimpleSource(name, title, source, styles) =>
-            LayerExtent.identity(SimpleOgcLayer(name, title, LatLng, source, None))
+            LayerExtent.identity(
+              SimpleOgcLayer(name, title, LatLng, source, None)
+            )
           case MapAlgebraSource(name, title, sources, algebra, styles) =>
-            val simpleLayers = sources.mapValues { rs => SimpleOgcLayer(name, title, LatLng, rs, None) }
-            LayerExtent(IO.pure(algebra), IO.pure(simpleLayers), ConcurrentInterpreter.DEFAULT)
+            val simpleLayers = sources.mapValues { rs =>
+              SimpleOgcLayer(name, title, LatLng, rs, None)
+            }
+            LayerExtent(
+              IO.pure(algebra),
+              IO.pure(simpleLayers),
+              ConcurrentInterpreter.DEFAULT[IO]
+            )
         }
 
         // TODO: Return IO instead

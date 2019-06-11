@@ -60,14 +60,14 @@ class WmsView(wmsModel: WmsModel, serviceUrl: URL) extends LazyLogging {
             case sl@SimpleOgcLayer(_, _, _, _, _) =>
               LayerExtent.identity(sl)
             case sl@MapAlgebraOgcLayer(_, _, _, parameters, expr, _) =>
-              LayerExtent(IO.pure(expr), IO.pure(parameters), Interpreter.DEFAULT)
+              LayerExtent(IO.pure(expr), IO.pure(parameters), ConcurrentInterpreter.DEFAULT)
           }
 
           val evalHisto = layer match {
             case sl@SimpleOgcLayer(_, _, _, _, _) =>
               LayerHistogram.identity(sl, 512)
             case sl@MapAlgebraOgcLayer(_, _, _, parameters, expr, _) =>
-              LayerHistogram(IO.pure(expr), IO.pure(parameters), Interpreter.DEFAULT, 512)
+              LayerHistogram(IO.pure(expr), IO.pure(parameters), ConcurrentInterpreter.DEFAULT, 512)
           }
 
           val histIO = for {
