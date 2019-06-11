@@ -47,28 +47,69 @@ case class MapAlgebraOgcLayer(
 
 object SimpleOgcLayer extends LazyLogging {
   implicit val simpleOgcReification = new ExtentReification[SimpleOgcLayer] {
-    def extentReification(self: SimpleOgcLayer)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
-      (extent: Extent, cs: CellSize) =>  IO {
-        val targetGrid = new GridExtent[Long](extent, cs)
-        logger.debug(s"attempting to retrieve layer $self at extent $extent with $cs ${targetGrid.cols}x${targetGrid.rows}")
-        logger.trace(s"Requested extent geojson: ${extent.toPolygon.toGeoJson}")
-        val raster: Raster[MultibandTile] = self.source
-          .reprojectToRegion(self.crs, targetGrid.toRasterExtent, NearestNeighbor, AutoHigherResolution)
-          .read(extent)
-          .getOrElse(throw new Exception(s"Unable to retrieve layer $self at extent $extent $cs"))
-        logger.debug(s"Successfully retrieved layer $self at extent $extent with f $cs ${targetGrid.cols}x${targetGrid.rows}")
+    def extentReification(self: SimpleOgcLayer)(
+      implicit contextShift: ContextShift[IO]
+    ): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
+      (extent: Extent, cs: CellSize) =>
+        IO {
+          val targetGrid = new GridExtent[Long](extent, cs)
+          logger.debug(
+            s"attempting to retrieve layer $self at extent $extent with $cs ${targetGrid.cols}x${targetGrid.rows}"
+          )
+          logger.trace(
+            s"Requested extent geojson: ${extent.toPolygon.toGeoJson}"
+          )
+          val raster: Raster[MultibandTile] = self.source
+            .reproject(self.crs)
+            .resampleToRegion(targetGrid)
+            .read(extent)
+            .getOrElse(
+              throw new Exception(
+                s"Unable to retrieve layer $self at extent $extent $cs"
+              )
+            )
 
-        ProjectedRaster(raster, self.crs)
+          val resizedRaster =
+            if (targetGrid.cols == raster.cols && targetGrid.rows == raster.rows) {
+              raster
+            } else {
+              val tiles = MultibandTile(
+                raster.tile.bands.map(
+                  PaddedTile(
+                    _,
+                    0,
+                    0,
+                    targetGrid.cols.toInt,
+                    targetGrid.rows.toInt
+                  )
+                )
+              )
+              Raster(tiles, targetGrid.extent)
+            }
+          logger.debug(
+            s"Successfully retrieved layer $self at extent $extent with f $cs ${targetGrid.cols}x${targetGrid.rows}"
+          )
+          logger.debug(s"Target Extent:  ${targetGrid.extent}")
+          logger.debug(s"Raster Extent:  ${raster.extent}")
+          logger.debug(s"Resized Extent: ${resizedRaster.extent}")
+
+          logger.debug(s"Target Dimensions:  ${targetGrid.dimensions}")
+          logger.debug(s"Raster Dimensions:  ${raster.dimensions}")
+          logger.debug(s"Resized Dimensions: ${resizedRaster.dimensions}")
+          ProjectedRaster(resizedRaster, self.crs)
       }
   }
 
-  implicit val simpleOgcHasRasterExtents: HasRasterExtents[SimpleOgcLayer] = new HasRasterExtents[SimpleOgcLayer] {
-    def rasterExtents(self: SimpleOgcLayer)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] =
-      IO {
-        val resolutions = self.source.resolutions.map { ge =>
-          ReprojectRasterExtent(ge, self.source.crs, self.crs).toRasterExtent
+  implicit val simpleOgcHasRasterExtents: HasRasterExtents[SimpleOgcLayer] =
+    new HasRasterExtents[SimpleOgcLayer] {
+      def rasterExtents(
+        self: SimpleOgcLayer
+      )(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] =
+        IO {
+          val resolutions = self.source.resolutions.map { ge =>
+            ReprojectRasterExtent(ge, self.source.crs, self.crs).toRasterExtent
+          }
+          NEL.fromList(resolutions).get
         }
-        NEL.fromList(resolutions).get
-      }
-  }
+    }
 }
