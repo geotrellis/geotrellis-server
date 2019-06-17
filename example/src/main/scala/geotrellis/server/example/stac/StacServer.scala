@@ -1,4 +1,4 @@
-package geotrellis.server.stac.example
+package geotrellis.server.example.stac
 
 import cats.data.NonEmptyList
 import cats.effect.{ExitCode, IO, IOApp}
@@ -9,7 +9,7 @@ import org.http4s.server.blaze._
 import org.http4s._
 import org.http4s.server._
 
-object Server extends IOApp {
+object StacServer extends IOApp {
 
   implicit val backend = AsyncHttpClientCatsBackend[IO]()
   val stacService = new StacService()

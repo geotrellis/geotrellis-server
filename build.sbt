@@ -145,7 +145,7 @@ lazy val core = project
 lazy val example = project
   .settings(commonSettings)
   .settings(noPublishSettings)
-  .dependsOn(core)
+  .dependsOn(core, stac)
   .settings(
     moduleName := "geotrellis-server-example",
     assemblyJarName in assembly := "geotrellis-server-example.jar",
@@ -158,15 +158,19 @@ lazy val example = project
       scalaXml,
       geotrellisS3,
       geotrellisSpark,
+      geotrellisContribGDAL,
       spark,
       decline,
       commonsIO,
       concHashMap,
       pureConfig,
       typesafeLogging,
+      sttp,
+      sttpCats,
+      sttpCirce,
       scalatest
     )
-  )
+  ).settings(dependencyOverrides += "com.azavea.gdal" % "gdal-warp-bindings" % "33.5523882")
 
 lazy val opengis = project
   .enablePlugins(ScalaxbPlugin)
@@ -270,57 +274,6 @@ lazy val stac = project
       scalatest
     )
   )
-
-lazy val stacServerImplicits = (project in file("stac-server-implicits"))
-  .dependsOn(core, stac)
-  .settings(moduleName := "geotrellis-server-stac-server-implicits")
-  .settings(commonSettings)
-  .settings(publishSettings)
-  .settings(
-    libraryDependencies ++= Seq(
-      catsEffect,
-      commonsIo,
-      geotrellisContribGDAL,
-      geotrellisRaster,
-      geotrellisVector,
-      geotrellisSpark,
-      spark
-    )
-  )
-
-lazy val stacExample = (project in file("stac-example"))
-  .dependsOn(stac, stacServerImplicits)
-  .settings(moduleName := "geotrellis-server-stac-example")
-  .settings(commonSettings)
-  .settings(publishSettings)
-  .settings(
-    libraryDependencies ++= Seq(
-      http4sDsl,
-      http4sBlazeServer,
-      http4sBlazeClient,
-      http4sCirce,
-      sttp,
-      sttpCats,
-      sttpCirce,
-      cats,
-      circeCore,
-      geotrellisS3,
-      geotrellisVlm,
-      commonsIo,
-      spark,
-      shapeless,
-      scalacheck,
-      scalacheckCats,
-      scalatest,
-      scalaXml
-    )
-  )
-  .settings(
-    dependencyOverrides ++= Seq(
-      "com.azavea.gdal" % "gdal-warp-bindings" % "33.5523882"
-    )
-  )
-
 
 lazy val docs = project
   .enablePlugins(MicrositesPlugin)

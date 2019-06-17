@@ -1,8 +1,7 @@
-package geotrellis.server.stac.example
+package geotrellis.server.example.stac
 
 import geotrellis.server._
 import geotrellis.server.stac._
-import geotrellis.server.stac.ServerImplicits._
 
 import cats.data._
 import cats.data.Validated._
@@ -34,7 +33,7 @@ class StacService(
 ) extends LazyLogging {
 
   // These are dummy caches -- in a real service you'd want something more robust
-  // than a fully local mutable map, but this is just an example, so :man_shrugging:
+  // than a fully local mutable map, but this is just an example, so ¯\_(ツ)_/¯
   val cache: MutableMap[String, StacItem] = MutableMap.empty
   val histCache: MutableMap[String, List[Histogram[Double]]] = MutableMap.empty
 
@@ -57,8 +56,7 @@ class StacService(
       extends QueryParamDecoderMatcher[String]("uri")
 
   val app: HttpApp[IO] = HttpApp[IO] {
-    // This mainly exists to show that all the json is good to go -- it's a pretty
-    // boring route
+    // This exists to show that all the json is good to go
     case GET -> Root :? UriQueryParamDecoderMatcher(uri) =>
       sttp
         .get(uri"$uri")

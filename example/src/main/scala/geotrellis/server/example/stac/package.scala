@@ -1,5 +1,6 @@
-package geotrellis.server.stac
+package geotrellis.server.example
 
+import geotrellis.server.stac._
 import geotrellis.server.vlm.RasterSourceUtils
 
 import cats.data.{NonEmptyList => NEL}
@@ -25,7 +26,7 @@ import geotrellis.vector.{io => _, _}
 
 import com.typesafe.scalalogging.LazyLogging
 
-package object ServerImplicits extends RasterSourceUtils with LazyLogging {
+package object stac extends RasterSourceUtils with LazyLogging {
 
   def getRasterSource(uri: String): RasterSource = new GDALRasterSource(uri)
 
