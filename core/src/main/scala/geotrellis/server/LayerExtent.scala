@@ -28,8 +28,7 @@ object LayerExtent extends LazyLogging {
     interpreter: Interpreter[IO]
   )(
     implicit reify: ExtentReification[Param],
-             contextShift: ContextShift[IO],
-             applicativeError: ApplicativeError[IO, NEL[MamlError]]
+             contextShift: ContextShift[IO]
   ): (Extent, CellSize) => IO[Interpreted[MultibandTile]]  = (extent: Extent, cs: CellSize) =>  {
     for {
       expr             <- getExpression
@@ -43,7 +42,7 @@ object LayerExtent extends LazyLogging {
       } map { _.toMap }
       reified          <- Expression.bindParams(expr, params.mapValues(RasterLit(_))) match {
         case Valid(expression) => interpreter(expression)
-        case Invalid(errors) => applicativeError.raiseError(errors)
+        case Invalid(errors) => throw new Exception(errors.map(_.repr).reduce)
       }
     } yield
     reified
@@ -60,8 +59,7 @@ object LayerExtent extends LazyLogging {
     interpreter: Interpreter[IO]
   )(
     implicit reify: ExtentReification[Param],
-             contextShift: ContextShift[IO],
-             applicativeError: ApplicativeError[IO, NEL[MamlError]]
+             contextShift: ContextShift[IO]
   ) = apply[Param](getParams.map(mkExpr(_)), getParams, interpreter)
 
 
@@ -71,8 +69,7 @@ object LayerExtent extends LazyLogging {
     interpreter: Interpreter[IO]
   )(
     implicit reify: ExtentReification[Param],
-             contextShift: ContextShift[IO],
-             applicativeError: ApplicativeError[IO, NEL[MamlError]]
+             contextShift: ContextShift[IO]
   ): (Map[String, Param], Extent, CellSize) => IO[Interpreted[MultibandTile]] =
     (paramMap: Map[String, Param], extent: Extent, cellsize: CellSize) => {
       val eval = apply[Param](IO.pure(expr), IO.pure(paramMap), interpreter)
@@ -85,8 +82,7 @@ object LayerExtent extends LazyLogging {
     param: Param
   )(
     implicit reify: ExtentReification[Param],
-             contextShift: ContextShift[IO],
-             applicativeError: ApplicativeError[IO, NEL[MamlError]]
+             contextShift: ContextShift[IO]
   ): (Extent, CellSize) => IO[Interpreted[MultibandTile]] =
     (extent: Extent, cellsize: CellSize) => {
       val eval = curried(RasterVar("identity"), ConcurrentInterpreter.DEFAULT)

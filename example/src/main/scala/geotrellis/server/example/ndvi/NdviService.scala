@@ -57,15 +57,6 @@ class NdviService[Param](
       ))
     )
 
-  implicit def applicativeErrorIO(implicit ioApp: Applicative[IO]): ApplicativeError[IO, NEL[MamlError]] = new ApplicativeError[IO, NEL[MamlError]] {
-    def pure[A](x: A): IO[A] = ioApp.pure(x)
-    def ap[A, B](ff: IO[A => B])(fa: IO[A]): IO[B] = ioApp.ap(ff)(fa)
-    def raiseError[A](e: cats.data.NonEmptyList[com.azavea.maml.error.MamlError]): IO[A] =
-      IO.raiseError(new Exception(e map { _.repr } reduce ))
-    def handleErrorWith[A](fa: IO[A])(f: NEL[MamlError] => IO[A]): IO[A] =
-      ???
-  }
-
   final val eval = LayerTms.curried(ndvi, interpreter)
 
   // http://0.0.0.0:9000/{z}/{x}/{y}.png

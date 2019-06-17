@@ -42,7 +42,7 @@ lazy val commonSettings = Seq(
   addCompilerPlugin(kindProjector cross CrossVersion.binary),
   addCompilerPlugin(macrosParadise cross CrossVersion.full),
   shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
-  fork := true,
+  fork in run := true,
   outputStrategy := Some(StdoutOutput),
   test in assembly := {},
   sources in (Compile, doc) := (sources in (Compile, doc)).value,
@@ -115,7 +115,7 @@ lazy val root = project.in(file("."))
   .settings(moduleName := "root")
   .settings(commonSettings)
   .settings(noPublishSettings)
-  .aggregate(core, example, docs, ogc, ogcExample)
+  .aggregate(core, example, docs, ogc, ogcExample, stac)
 
 lazy val core = project
   .settings(moduleName := "geotrellis-server-core")
@@ -145,7 +145,7 @@ lazy val core = project
 lazy val example = project
   .settings(commonSettings)
   .settings(noPublishSettings)
-  .dependsOn(core)
+  .dependsOn(core, stac)
   .settings(
     moduleName := "geotrellis-server-example",
     assemblyJarName in assembly := "geotrellis-server-example.jar",
@@ -158,15 +158,19 @@ lazy val example = project
       scalaXml,
       geotrellisS3,
       geotrellisSpark,
+      geotrellisContribGDAL,
       spark,
       decline,
       commonsIO,
       concHashMap,
       pureConfig,
       typesafeLogging,
+      sttp,
+      sttpCats,
+      sttpCirce,
       scalatest
     )
-  )
+  ).settings(dependencyOverrides += "com.azavea.gdal" % "gdal-warp-bindings" % "33.5523882")
 
 lazy val opengis = project
   .enablePlugins(ScalaxbPlugin)
@@ -248,6 +252,26 @@ lazy val ogcExample = (project in file("ogc-example"))
     excludeDependencies ++= Seq(
       // log4j brought in via uzaygezen is a pain for us
       ExclusionRule("log4j", "log4j")
+    )
+  )
+
+lazy val stac = project
+  .settings(moduleName := "geotrellis-server-stac")
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      cats,
+      circeCore,
+      circeGeneric,
+      circeParser,
+      circeShapes,
+      geotrellisS3,
+      geotrellisVlm,
+      shapeless,
+      scalacheck,
+      scalacheckCats,
+      scalatest
     )
   )
 

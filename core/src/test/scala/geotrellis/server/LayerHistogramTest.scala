@@ -2,7 +2,6 @@ package geotrellis.server
 
 import geotrellis.server.extent.SampleUtils
 
-import geotrellis.server.TestImplicits._
 import geotrellis.raster._
 import geotrellis.vector._
 import com.azavea.maml.error._

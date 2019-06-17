@@ -33,7 +33,7 @@ class GetCoverage(wcsModel: WcsModel) extends LazyLogging {
         .maximumSize(32)
         .build()
 
-  def build(params: GetCoverageWcsParams)(implicit contextShift: ContextShift[IO], applicativeError: ApplicativeError[IO, NEL[MamlError]]): Array[Byte] =
+  def build(params: GetCoverageWcsParams)(implicit contextShift: ContextShift[IO]): Array[Byte] =
     requestCache.getIfPresent(params) match {
       case Some(bytes) =>
         logger.trace(s"GetCoverage cache HIT: $params")

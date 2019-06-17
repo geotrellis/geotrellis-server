@@ -34,8 +34,7 @@ object LayerHistogram extends LazyLogging {
   )(
     implicit reify: ExtentReification[Param],
              extended: HasRasterExtents[Param],
-             contextShift: ContextShift[IO],
-             applicativeError: ApplicativeError[IO, NEL[MamlError]]
+             contextShift: ContextShift[IO]
   ): IO[Interpreted[List[Histogram[Double]]]] =
     for {
       params            <- getParams
@@ -65,8 +64,7 @@ object LayerHistogram extends LazyLogging {
   )(
     implicit reify: ExtentReification[Param],
              extended: HasRasterExtents[Param],
-             contextShift: ContextShift[IO],
-             applicativeError: ApplicativeError[IO, NEL[MamlError]]
+             contextShift: ContextShift[IO]
   ) = apply[Param](getParams.map(mkExpr(_)), getParams, interpreter, maxCells)
 
 
@@ -78,8 +76,7 @@ object LayerHistogram extends LazyLogging {
   )(
     implicit reify: ExtentReification[Param],
              extended: HasRasterExtents[Param],
-             contextShift: ContextShift[IO],
-             applicativeError: ApplicativeError[IO, NEL[MamlError]]
+             contextShift: ContextShift[IO]
   ): (Map[String, Param]) => IO[Interpreted[List[Histogram[Double]]]] =
     (paramMap: Map[String, Param]) => {
       apply[Param](IO.pure(expr), IO.pure(paramMap), interpreter, maxCells)
@@ -93,8 +90,7 @@ object LayerHistogram extends LazyLogging {
   )(
     implicit reify: ExtentReification[Param],
              extended: HasRasterExtents[Param],
-             contextShift: ContextShift[IO],
-             applicativeError: ApplicativeError[IO, NEL[MamlError]]
+             contextShift: ContextShift[IO]
   ) = {
     val eval = curried(RasterVar("identity"), ConcurrentInterpreter.DEFAULT, maxCells)
     eval(Map("identity" -> param))
