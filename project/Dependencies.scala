@@ -45,7 +45,7 @@ object Dependencies {
   val kamonPrometheus = "io.kamon" %% "kamon-prometheus" % "1.0.0"
   val kamonSysMetrics = "io.kamon" %% "kamon-system-metrics" % "1.0.0"
   val kindProjector = "org.spire-math" %% "kind-projector" % "0.9.4"
-  val mamlJvm = "com.azavea.geotrellis" % "maml-jvm_2.11" % "0.4.0"
+  val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % "0.4.0"
   val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.10.2"
   val scaffeine = "com.github.blemale" %% "scaffeine" % "2.6.0"
   val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "1.1.0"
