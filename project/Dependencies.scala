@@ -68,6 +68,6 @@ object Dependencies {
   val slf4jApi = "org.slf4j" % "slf4j-api" % "1.7.25"
   val slf4jSimple = "org.slf4j" % "slf4j-simple" % "1.7.25"
   val logback = "ch.qos.logback" % "logback-classic" % "1.1.7"
-  val ansiColors = "org.backuity" %% "ansi-interpolator" % "1.1" % Provided
+  val ansiColors = "org.backuity" %% "ansi-interpolator" % "1.1.0" % Provided
   val shapeless = "com.chuusai" %% "shapeless" % shapelessVer
 }
