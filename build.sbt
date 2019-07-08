@@ -1,6 +1,7 @@
 import Dependencies._
 import microsites._
 
+
 addCommandAlias("bintrayPublish", ";publish;bintrayRelease")
 
 scalaVersion := scalaVer
@@ -246,13 +247,18 @@ lazy val ogcExample = (project in file("ogc-example"))
       pureConfig,
       scaffeine,
       scalatest,
-      decline,
-      ansiColors
+      decline
     ),
     excludeDependencies ++= Seq(
       // log4j brought in via uzaygezen is a pain for us
       ExclusionRule("log4j", "log4j")
-    )
+    ),
+    libraryDependencies := (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, scalaMajor)) if scalaMajor >= 12 =>
+        libraryDependencies.value ++ Seq(ansiColors212)
+      case Some((2, scalaMajor)) if scalaMajor >= 11 =>
+        libraryDependencies.value ++ Seq(ansiColors211)
+    })
   )
 
 lazy val stac = project

@@ -11,15 +11,20 @@ import geotrellis.server.ogc.wmts._
 
 import cats.effect._
 import cats.implicits._
+
 import com.monovore.decline._
+
 import fs2._
+
 import org.http4s._
 import org.http4s.server._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.{CORS, CORSConfig}
 import org.http4s.syntax.kleisli._
+
 import pureconfig._
 import pureconfig.generic.auto._
+
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
 
 import scala.concurrent.duration._
