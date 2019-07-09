@@ -4,7 +4,7 @@ object Dependencies {
 
   val circeVer = "0.11.1"
   val gtVer = "3.0.0-M3"
-  val gtcVer = "3.13.0"
+  val gtcVer = "3.16.0"
   val http4sVer = "0.20.0"
   val scalaVer = "2.11.12"
   val crossScalaVer = Seq(scalaVer, "2.12.7")
