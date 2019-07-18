@@ -73,7 +73,7 @@ class WmtsView(wmtsModel: WmtsModel, serviceUrl: URL) extends LazyLogging {
                 Invalid(errs)
             }.attempt flatMap {
               case Right(Valid((mbtile, hists))) => // success
-                val rendered = Render(mbtile, layer.style, wmtsReq.format, hists)
+                val rendered = Render.singleband(mbtile, layer.style, wmtsReq.format, hists)
                 Ok(rendered)
               case Right(Invalid(errs)) => // maml-specific errors
                 logger.debug(errs.toList.toString)
