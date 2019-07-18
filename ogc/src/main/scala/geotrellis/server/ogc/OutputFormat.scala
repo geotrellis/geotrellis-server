@@ -14,7 +14,7 @@ object OutputFormat {
   object Png {
     final val PngEncodingRx = """image/png(?:;encoding=(\w+))?""".r
 
-    def encodoingToString(enc: PngColorEncoding): String = enc match {
+    def encodingToString(enc: PngColorEncoding): String = enc match {
       case RgbaPngEncoding => "rgba"
       case GreyaPngEncoding => "greya"
       case _: RgbPngEncoding => "rgb"
@@ -34,7 +34,7 @@ object OutputFormat {
 
   case class Png(encoding: Option[PngColorEncoding]) extends OutputFormat {
     override def toString = encoding match {
-      case Some(e) => s"image/png;encoding=${Png.encodoingToString(e)}"
+      case Some(e) => s"image/png;encoding=${Png.encodingToString(e)}"
       case None => "image/png"
     }
 
