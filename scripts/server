@@ -20,13 +20,13 @@ Starts an example server on port 9000.
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     if [[ "${1:-}" == "--overlay" ]]; then
-	    docker-compose up \
+        docker-compose up \
             overlay-example
     elif [[ "${1:-}" == "--persistence" ]]; then
         docker-compose up \
             persistence-example
     elif [[ "${1:-}" == "--ndvi" ]]; then
-	    docker-compose up \
+        docker-compose up \
             ndvi-example
     elif [[ "${1:-}" == "--gdal-ndvi" ]]; then
         docker-compose up \
