@@ -1,0 +1,106 @@
+aliases:
+  - &restore_sbt_cache
+    key: sbt-cache-{{ checksum "/tmp/scala_version" }}
+
+  - &save_sbt_cache
+    key: sbt-cache-{{ checksum "/tmp/scala_version" }}-{{ epoch }}
+    paths:
+      - "~/.ivy2/cache"
+      - "~/.sbt"
+      - "~/.cache/coursier"
+
+  - &run_cibuild
+    - checkout
+    - run: echo "${SCALA_VERSION}" > /tmp/scala_version
+    - restore_cache: *restore_sbt_cache
+    - run:
+        name: Executing cibuild
+        command: ./scripts/cibuild
+    - save_cache: *save_sbt_cache
+
+  - &run_cipublish
+    - checkout
+    - run: echo "${SCALA_VERSION}" > /tmp/scala_version
+    - restore_cache: *restore_sbt_cache
+    - run:
+        name: "Import signing key"
+        command: |
+          echo "${GPG_KEY}" | base64 -d > signing_key.asc && \
+          gpg --batch \
+            --passphrase "${GPG_PASSPHRASE}" \
+            --import signing_key.asc
+    - run:
+        name: Executing cipublish
+        command: ./scripts/cipublish
+
+  # Build environments
+  - &openjdk8-scala2_11_12_environment
+    docker:
+      - image: circleci/openjdk:8-jdk
+    environment:
+      SCALA_VERSION: 2.11.12
+
+  - &openjdk8-scala2_12_8_environment
+    docker:
+      - image: circleci/openjdk:8-jdk
+    environment:
+      SCALA_VERSION: 2.12.8
+
+version: 2
+workflows:
+  version: 2
+  build:
+    jobs:
+      - "openjdk8-scala2.11.12":
+          filters: # required since `openjdk8-scala2.11.12_deploy` has tag filters AND requires `openjdk8-scala2.11.12`
+            tags:
+              only:
+                - /^(.*)$/
+      - "openjdk8-scala2.12.8":
+          filters: # required since `openjdk8-scala2.12.8_deploy` has tag filters AND requires `openjdk8-scala2.12.8`
+            tags:
+              only:
+                - /^(.*)$/
+      - "openjdk8-scala2.11.12_deploy":
+          requires:
+            - "openjdk8-scala2.11.12"
+          filters:
+            tags:
+              only:
+                - /^(.*)$/
+            branches:
+              only:
+                - develop
+                - /release\/.*/
+                - /hotfix\/.*/
+                - feature/jrb/circleci
+      - "openjdk8-scala2.12.8_deploy":
+          requires:
+            - "openjdk8-scala2.12.8"
+          filters:
+            tags:
+              only:
+                - /^(.*)$/
+            branches:
+              only:
+                - develop
+                - /release\/.*/
+                - /hotfix\/.*/
+                - feature/jrb/circleci
+
+jobs:
+  "openjdk8-scala2.11.12":
+    <<: *openjdk8-scala2_11_12_environment
+    steps: *run_cibuild
+
+  "openjdk8-scala2.12.8":
+    <<: *openjdk8-scala2_12_8_environment
+    steps: *run_cibuild
+
+  "openjdk8-scala2.11.12_deploy":
+    <<: *openjdk8-scala2_11_12_environment
+    steps: *run_cipublish
+
+  "openjdk8-scala2.12.8_deploy":
+    <<: *openjdk8-scala2_12_8_environment
+    steps: *run_cipublish

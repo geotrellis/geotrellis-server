@@ -1,0 +1,37 @@
+#!/bin/bash
+
+set -e
+
+if [[ -n "${GEOTRELLIS_SERVER_DEBUG}" ]]; then
+    set -x
+fi
+
+function usage() {
+    echo -n \
+        "Usage: $(basename "$0")
+Starts an example server on port 9000.
+
+  --overlay     serve overlay example
+  --persistence serve persistence example
+  --ndvi        serve ndvi example
+  --gdal-ndvi   serve gdal ndvi example
+"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    if [[ "${1:-}" == "--overlay" ]]; then
+	    docker-compose up \
+            overlay-example
+    elif [[ "${1:-}" == "--persistence" ]]; then
+        docker-compose up \
+            persistence-example
+    elif [[ "${1:-}" == "--ndvi" ]]; then
+	    docker-compose up \
+            ndvi-example
+    elif [[ "${1:-}" == "--gdal-ndvi" ]]; then
+        docker-compose up \
+            gdal-ndvi-example
+    else
+        usage
+    fi
+fi
