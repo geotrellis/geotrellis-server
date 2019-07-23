@@ -73,7 +73,6 @@ workflows:
                 - develop
                 - /release\/.*/
                 - /hotfix\/.*/
-                - feature/jrb/circleci
       - "openjdk8-scala2.12.8_deploy":
           requires:
             - "openjdk8-scala2.12.8"
@@ -86,7 +85,6 @@ workflows:
                 - develop
                 - /release\/.*/
                 - /hotfix\/.*/
-                - feature/jrb/circleci
 
 jobs:
   "openjdk8-scala2.11.12":
