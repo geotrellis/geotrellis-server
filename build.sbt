@@ -1,16 +1,22 @@
+import xerial.sbt.Sonatype._
+
 import Dependencies._
-import microsites._
-
-
-addCommandAlias("bintrayPublish", ";publish;bintrayRelease")
 
 scalaVersion := scalaVer
 scalaVersion in ThisBuild := scalaVer
 updateOptions := updateOptions.value.withCachedResolution(true)
 
 lazy val commonSettings = Seq(
-  organization := "com.azavea",
-  licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
+  // We are overriding the default behavior of sbt-git which, by default,
+  // only appends the `-SNAPSHOT` suffix if there are uncommitted
+  // changes in the workspace.
+  version := {
+    // Avoid Cyclic reference involving error
+    if (git.gitCurrentTags.value.isEmpty || git.gitUncommittedChanges.value)
+      git.gitDescribedVersion.value.get + "-SNAPSHOT"
+    else
+      git.gitDescribedVersion.value.get
+  },
   cancelable in Global := true,
   scalaVersion := scalaVer,
   crossScalaVersions := crossScalaVer,
@@ -57,66 +63,56 @@ lazy val commonSettings = Seq(
   javaOptions ++= Seq("-Djava.library.path=/usr/local/lib")
 )
 
-lazy val publishSettings = Seq(
-  bintrayReleaseOnPublish := false,
-  publishTo := {
-    val bintrayPublishTo = publishTo.value
-    val nexus = "http://nexus.internal.azavea.com"
-
-    if (isSnapshot.value) {
-      Some("snapshots" at nexus + "/repository/azavea-snapshots")
-    } else {
-      bintrayPublishTo
-    }
-  },
-  bintrayOrganization := Some("azavea"),
-  bintrayRepository := "geotrellis",
-  bintrayVcsUrl := Some("https://github.com/geotrellis/geotrellis-server.git"),
-  publishMavenStyle := true,
-  publishArtifact in Test := false,
-  pomIncludeRepository := { _ => false },
-  homepage := Some(url("https://geotrellis.github.io/geotrellis-server"))
-)
-
 lazy val noPublishSettings = Seq(
-  skip in publish := true,
   publish := {},
   publishLocal := {},
   publishArtifact := false
 )
 
-lazy val docsMappingsAPIDir = settingKey[String]("Name of subdirectory in site target directory for api docs")
+lazy val publishSettings = Seq(
+  organization := "com.azavea.geotrellis",
+  organizationName := "GeoTrellis",
+  organizationHomepage := Some(new URL("https://geotrellis.io/")),
+  description := "GeoTrellis Server is a set of components designed to simplify viewing, processing, and serving raster data from arbitrary sources with an emphasis on doing so in a functional style.",
+  publishArtifact in Test := false
+) ++ sonatypeSettings ++ credentialSettings
 
+lazy val sonatypeSettings = Seq(
+  publishMavenStyle := true,
 
-lazy val docSettings = Seq(
-  micrositeName := "GeoTrellis Server",
-  micrositeDescription := "Expressive, modular, raster processing pipelines",
-  micrositeAuthor := "the GeoTrellis team at Azavea",
-  micrositeGitterChannel := false,
-  micrositeOrganizationHomepage := "https://www.azavea.com/",
-  micrositeGithubOwner := "geotrellis",
-  micrositeGithubRepo := "geotrellis-servern",
-  micrositeBaseUrl := "/gtserver",
-  micrositeDocumentationUrl := "/gtserver/latest/api",
-  micrositeExtraMdFiles := Map(
-    file("README.md") -> ExtraMdFileConfig(
-      "index.md",
-      "home",
-      Map("title" -> "Home", "section" -> "home", "position" -> "0")
-    )
+  sonatypeProfileName := "com.azavea",
+  sonatypeProjectHosting := Some(GitHubHosting(user="geotrellis", repository="maml", email="systems@azavea.com")),
+  developers := List(
+    Developer(id = "moradology", name = "Nathan Zimmerman", email = "nzimmerman@azavea.com", url = url("https://github.com/moradology")),
+    Developer(id = "echeipesh", name = "Eugene Cheipesh", email = "echeipesh@azavea.com", url = url("https://github.com/echeipesh")),
+    Developer(id = "pomadchin", name = "Grigory Pomadchin", email = "gpomadchin@azavea.com", url = url("https://github.com/pomadchin"))
   ),
-  micrositeFooterText := Some(
-    """
-      |<p>© 2017 <a href="https://geotrellis.io/">GeoTrellis</a></p>
-      |<p style="font-size: 80%; margin-top: 10px">Website built with <a href="https://47deg.github.io/sbt-microsites/">sbt-microsites © 2016 47 Degrees</a></p>
-      |""".stripMargin)
+  licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
+
+  publishTo := sonatypePublishTo.value
+)
+
+lazy val credentialSettings = Seq(
+  credentials += Credentials(
+    "GnuPG Key ID",
+    "gpg",
+    System.getenv().get("GPG_KEY_ID"),
+    "ignored"
+  ),
+
+  credentials += Credentials(
+    "Sonatype Nexus Repository Manager",
+    "oss.sonatype.org",
+    System.getenv().get("SONATYPE_USERNAME"),
+    System.getenv().get("SONATYPE_PASSWORD")
+  )
 )
 
 lazy val root = project.in(file("."))
   .settings(moduleName := "root")
   .settings(commonSettings)
   .settings(noPublishSettings)
-  .aggregate(core, example, docs, ogc, ogcExample, stac, opengis)
+  .aggregate(core, example, ogc, ogcExample, stac, opengis)
 
 lazy val core = project
   .settings(moduleName := "geotrellis-server-core")
@@ -177,7 +173,7 @@ lazy val opengis = project
   .enablePlugins(ScalaxbPlugin)
   .settings(moduleName := "geotrellis-server-opengis")
   .settings(commonSettings)
-  .settings(publishSettings)
+  .settings(noPublishSettings)
   .settings(
     libraryDependencies ++= Seq(
       scalaXml,
@@ -204,7 +200,7 @@ lazy val ogc = project
   .dependsOn(core, opengis)
   .settings(moduleName := "geotrellis-server-ogc")
   .settings(commonSettings)
-  .settings(publishSettings)
+  .settings(noPublishSettings)
   .settings(
     assemblyJarName in assembly := "geotrellis-server-ogc.jar",
     libraryDependencies ++= Seq(
@@ -225,8 +221,7 @@ lazy val ogcExample = (project in file("ogc-example"))
   .enablePlugins(DockerPlugin)
   .settings(moduleName := "geotrellis-server-ogc-example")
   .settings(commonSettings)
-  .settings(publishSettings)
-  .settings(publish / skip := true)
+  .settings(noPublishSettings)
   .settings(
     assemblyJarName in assembly := "geotrellis-server-ogc-services.jar",
     libraryDependencies ++= Seq(
@@ -264,7 +259,7 @@ lazy val ogcExample = (project in file("ogc-example"))
 lazy val stac = project
   .settings(moduleName := "geotrellis-server-stac")
   .settings(commonSettings)
-  .settings(publishSettings)
+  .settings(noPublishSettings)
   .settings(
     libraryDependencies ++= Seq(
       cats,
@@ -281,18 +276,7 @@ lazy val stac = project
     )
   )
 
-lazy val docs = project
-  .enablePlugins(MicrositesPlugin)
-  .enablePlugins(SiteScaladocPlugin)
-  .settings(moduleName := "geotrellis-server-docs")
-  .settings(publish / skip := true)
-  .settings(commonSettings)
-  .settings(docSettings)
-  .settings(noPublishSettings)
-  .dependsOn(core, example)
-
 lazy val bench = project
   .dependsOn(core)
-  .settings(publish / skip := true)
-  .settings(commonSettings)
+  .settings(noPublishSettings)
   .enablePlugins(JmhPlugin)

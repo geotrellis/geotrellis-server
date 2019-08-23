@@ -10,15 +10,12 @@ addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.7")
 
 addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.4.1")
 
-addSbtPlugin("com.47deg" % "sbt-microsites" % "0.7.23")
-
-addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.5.4")
-
-addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.10")
-
 addSbtPlugin("org.scalaxb" % "sbt-scalaxb" % "1.7.0")
 
 addSbtPlugin("se.marcuslonnberg" % "sbt-docker" % "1.5.0")
 
-addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "2.4")
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "2.5")
 
+addSbtPlugin("io.crashbox" % "sbt-gpg" % "0.2.0")
+
+addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "1.0.0")

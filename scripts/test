@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -e
+
+if [[ -n "${GEOTRELLIS_SERVER_DEBUG}" ]]; then
+    set -x
+fi
+
+function usage() {
+    echo -n \
+        "Usage: $(basename "$0")
+Update Scala dependencies and execute tests.
+"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    if [[ "${1:-}" == "--help" ]]; then
+        usage
+    else
+        echo "Executing Scala test suite"
+        ./sbt "++${SCALA_VERSION:-2.11.12}" test
+    fi
+fi

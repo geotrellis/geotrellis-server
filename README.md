@@ -151,16 +151,15 @@ libraries.
 1. A server and simple UI that evaluates weighted overlays between
 arbitrary COGs. This demo includes a simple UI, available at http://localhost:9000/ for a
 ```bash
-make serveOverlayExample
+./scripts/server --overlay
 ```
 
 2. Integrates GTServer components with application-specific persistence needs.
 ```bash
-make servePersistenceExample
+./scripts/server --persistence
 ```
 
 3. Illustrates GTServer evaluating a remote-sensing classic, the NDVI.
 ```bash
-make serveNdviExample
+./scripts/server --ndvi
 ```
-
