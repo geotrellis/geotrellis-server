@@ -17,12 +17,11 @@ case class StacItem(
     collection: Option[String],
     properties: JsonObject
 ) {
-  val uri = assets
+
+  val cogUri: Option[String] = assets
     .filter(_._2._type == Some(`image/cog`))
     .values
-    .headOption map { _.href } getOrElse {
-    throw new IllegalArgumentException(s"Item $id does not have a cog asset")
-  }
+    .headOption map { _.href }
 }
 
 object StacItem {

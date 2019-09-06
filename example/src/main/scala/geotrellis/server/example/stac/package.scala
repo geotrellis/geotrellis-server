@@ -54,21 +54,31 @@ package object stac extends RasterSourceUtils with LazyLogging {
             )
           }
         } else {
-          IO {
-            getRasterSource(self.uri)
-          } map { rasterSource =>
-            rasterSource
-              .reproject(WebMercator)
-              .tileToLayout(tmsLevels(z))
-              .read(SpatialKey(x, y)) map { rast =>
-              ProjectedRaster(rast mapBands { (_: Int, t: Tile) =>
-                t.toArrayTile
-              }, extent, WebMercator)
-            } getOrElse {
-              throw new Exception(
-                s"Item ${self.id} claims to have data in ${extent} but did not"
-              )
+          self.cogUri traverse { cogUri =>
+            IO {
+              getRasterSource(cogUri)
+            } map { rasterSource =>
+              rasterSource
+                .reproject(WebMercator)
+                .tileToLayout(tmsLevels(z))
+                .read(SpatialKey(x, y)) map { rast =>
+                ProjectedRaster(rast mapBands { (_: Int, t: Tile) =>
+                  t.toArrayTile
+                }, extent, WebMercator)
+              }
+            } flatMap {
+              case Some(t) => IO.pure(t)
+              case None =>
+                IO.raiseError(
+                  new Exception(
+                    s"STAC Item at $cogUri claims to have data in $extent, but it does not"
+                  )
+                )
             }
+          } flatMap {
+            case Some(t) => IO.pure(t)
+            case None =>
+              IO.raiseError(new Exception("STAC item did not have a uri"))
           }
         }
       }
@@ -80,33 +90,45 @@ package object stac extends RasterSourceUtils with LazyLogging {
           self: StacItem
       )(implicit contextShift: ContextShift[IO]) =
         (extent: Extent, cellSize: CellSize) => {
-          IO {
-            getRasterSource(self.uri)
-          } map { rasterSource =>
-            val intersects = extent.intersects(rasterSource.reproject(WebMercator).extent)
-            if (intersects) {
-              val rasterExtent = RasterExtent(extent, cellSize)
-              rasterSource
-                .reproject(WebMercator, NearestNeighbor)
-                .resampleToGrid(
-                  GridExtent[Long](rasterExtent.extent, rasterExtent.cellSize),
-                  NearestNeighbor
-                )
-                .read(extent, List(0, 1, 2))
-                .map(rast => ProjectedRaster[MultibandTile](rast, WebMercator))
-                .getOrElse {
-                  throw new Exception(
-                    s"Item ${self.id} claims to have data in ${extent} but did not"
+          self.cogUri traverse { cogUri =>
+            IO {
+              getRasterSource(cogUri)
+            } map { rasterSource =>
+              val intersects =
+                extent.intersects(rasterSource.reproject(WebMercator).extent)
+              if (intersects) {
+                val rasterExtent = RasterExtent(extent, cellSize)
+                rasterSource
+                  .reproject(WebMercator, NearestNeighbor)
+                  .resampleToGrid(
+                    GridExtent[Long](
+                      rasterExtent.extent,
+                      rasterExtent.cellSize
+                    ),
+                    NearestNeighbor
                   )
-                }
-            } else {
-              println(s"Requested extent did not intersect geometry: $extent")
-              ProjectedRaster[MultibandTile](
-                MultibandTile(invisiTile, invisiTile, invisiTile),
-                extent,
-                WebMercator
-              )
+                  .read(extent, List(0, 1, 2))
+                  .map(
+                    rast => ProjectedRaster[MultibandTile](rast, WebMercator)
+                  )
+                  .getOrElse {
+                    throw new Exception(
+                      s"Item ${self.id} claims to have data in ${extent} but did not"
+                    )
+                  }
+              } else {
+                println(s"Requested extent did not intersect geometry: $extent")
+                ProjectedRaster[MultibandTile](
+                  MultibandTile(invisiTile, invisiTile, invisiTile),
+                  extent,
+                  WebMercator
+                )
+              }
             }
+          } flatMap {
+            case Some(t) => IO.pure(t)
+            case None =>
+              IO.raiseError(new Exception("STAC item did not have a uri"))
           }
         }
     }
@@ -116,21 +138,34 @@ package object stac extends RasterSourceUtils with LazyLogging {
       def rasterExtents(self: StacItem)(
           implicit contextShift: ContextShift[IO]
       ): IO[NEL[RasterExtent]] =
-        IO {
-          getRasterSource(self.uri)
-        } map { rasterSource =>
-          (rasterSource.resolutions map { res =>
-            ReprojectRasterExtent(RasterExtent(res.extent,
-              res.cellwidth,
-              res.cellheight,
-              res.cols.toInt,
-              res.rows.toInt),
-              rasterSource.crs,
-              WebMercator)
-          }).toNel match {
-            case Some(extents) => extents
-            case None => throw new Exception(s"No extents available for ${self.id}")
+        self.cogUri traverse { cogUri =>
+          IO {
+            getRasterSource(cogUri)
+          } map { rasterSource =>
+            (rasterSource.resolutions map { res =>
+              ReprojectRasterExtent(
+                RasterExtent(
+                  res.extent,
+                  res.cellwidth,
+                  res.cellheight,
+                  res.cols.toInt,
+                  res.rows.toInt
+                ),
+                rasterSource.crs,
+                WebMercator
+              )
+            }).toNel
+          } flatMap {
+            case Some(extents) => IO.pure(extents)
+            case None =>
+              IO.raiseError(
+                new Exception(s"No extents available for ${self.id}")
+              )
           }
+        } flatMap {
+          case Some(extents) => IO.pure(extents)
+          case None =>
+            IO.raiseError(new Exception("STAC item did not have a uri"))
         }
     }
 }
