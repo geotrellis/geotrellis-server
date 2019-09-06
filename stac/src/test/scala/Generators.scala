@@ -123,6 +123,8 @@ object Generators {
   private def stacItemGen: Gen[StacItem] =
     (
       nonEmptyStringGen,
+      Gen.const("0.8.0-rc1"),
+      Gen.const(List.empty[String]),
       Gen.const("Feature"),
       rectangleGen,
       twoDimBboxGen,
@@ -157,11 +159,22 @@ object Generators {
       Gen.listOf(stacLinkGen)
     ).mapN(StacCollection.apply _)
 
-  implicit val arbMediaType: Arbitrary[StacMediaType] = Arbitrary { mediaTypeGen }
+  private def itemCollectionGen: Gen[ItemCollection] =
+    (
+      Gen.const("FeatureCollection"),
+      Gen.listOf[StacItem](stacItemGen),
+      Gen.listOf[StacLink](stacLinkGen)
+    ).mapN(ItemCollection.apply _)
+
+  implicit val arbMediaType: Arbitrary[StacMediaType] = Arbitrary {
+    mediaTypeGen
+  }
 
   implicit val arbLinkType: Arbitrary[StacLinkType] = Arbitrary { linkTypeGen }
 
-  implicit val arbProviderRole: Arbitrary[StacProviderRole] = Arbitrary { providerRoleGen }
+  implicit val arbProviderRole: Arbitrary[StacProviderRole] = Arbitrary {
+    providerRoleGen
+  }
 
   implicit val arbInstant: Arbitrary[Instant] = Arbitrary { instantGen }
 
@@ -175,5 +188,9 @@ object Generators {
 
   implicit val arbCollection: Arbitrary[StacCollection] = Arbitrary {
     stacCollectionGen
+  }
+
+  implicit val arbItemCollection: Arbitrary[ItemCollection] = Arbitrary {
+    itemCollectionGen
   }
 }
