@@ -43,6 +43,10 @@ class SerDeSpec extends FunSpec with Matchers with PropertyChecks {
       getPropTest[StacItem]
     }
 
+    it("item collections should round trip") {
+      getPropTest[ItemCollection]
+    }
+
     it("catalogs should round trip") {
       getPropTest[StacCatalog]
     }
