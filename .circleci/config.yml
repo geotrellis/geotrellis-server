@@ -73,6 +73,7 @@ workflows:
                 - develop
                 - /release\/.*/
                 - /hotfix\/.*/
+                - feature/hmc/fix-artifact-publishing
       - "openjdk8-scala2.12.8_deploy":
           requires:
             - "openjdk8-scala2.12.8"
@@ -85,6 +86,7 @@ workflows:
                 - develop
                 - /release\/.*/
                 - /hotfix\/.*/
+                - feature/hmc/fix-artifact-publishing
 
 jobs:
   "openjdk8-scala2.11.12":
