@@ -173,7 +173,7 @@ lazy val opengis = project
   .enablePlugins(ScalaxbPlugin)
   .settings(moduleName := "geotrellis-server-opengis")
   .settings(commonSettings)
-  .settings(noPublishSettings)
+  .settings(publishSettings)
   .settings(
     libraryDependencies ++= Seq(
       scalaXml,
@@ -200,7 +200,7 @@ lazy val ogc = project
   .dependsOn(core, opengis)
   .settings(moduleName := "geotrellis-server-ogc")
   .settings(commonSettings)
-  .settings(noPublishSettings)
+  .settings(publishSettings)
   .settings(
     assemblyJarName in assembly := "geotrellis-server-ogc.jar",
     libraryDependencies ++= Seq(
@@ -259,7 +259,7 @@ lazy val ogcExample = (project in file("ogc-example"))
 lazy val stac = project
   .settings(moduleName := "geotrellis-server-stac")
   .settings(commonSettings)
-  .settings(noPublishSettings)
+  .settings(publishSettings)
   .settings(
     libraryDependencies ++= Seq(
       cats,
