@@ -112,7 +112,7 @@ lazy val root = project.in(file("."))
   .settings(moduleName := "root")
   .settings(commonSettings)
   .settings(noPublishSettings)
-  .aggregate(core, example, ogc, ogcExample, stac)
+  .aggregate(core, example, ogc, ogcExample, opengis, stac)
 
 lazy val core = project
   .settings(moduleName := "geotrellis-server-core")
