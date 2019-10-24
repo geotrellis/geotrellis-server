@@ -6,7 +6,7 @@ import io.circe._
 
 case class StacLink(
     href: String,
-    rel: StacLinkType,
+    rel: String,
     _type: Option[StacMediaType],
     title: Option[String],
     labelExtAssets: List[String]
@@ -25,7 +25,7 @@ object StacLink {
     final def apply(c: HCursor) =
       (
         c.downField("href").as[String],
-        c.downField("rel").as[StacLinkType],
+        c.downField("rel").as[String],
         c.get[Option[StacMediaType]]("type"),
         c.get[Option[String]]("title"),
         c.get[List[String]]("label:assets")
