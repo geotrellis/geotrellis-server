@@ -50,16 +50,6 @@ object Generators {
     `application/x-hdf`
   )
 
-  private def linkTypeGen: Gen[StacLinkType] = Gen.oneOf(
-    Self,
-    StacRoot,
-    Parent,
-    Child,
-    Item,
-    Items,
-    Source
-  )
-
   private def providerRoleGen: Gen[StacProviderRole] = Gen.oneOf(
     Licensor,
     Producer,
@@ -89,7 +79,7 @@ object Generators {
   private def stacLinkGen: Gen[StacLink] =
     (
       nonEmptyStringGen,
-      Gen.const(Self), // self link type is required by TMS reification
+      Gen.const("self"), // self link type is required by TMS reification
       Gen.option(mediaTypeGen),
       Gen.option(nonEmptyStringGen),
       Gen.nonEmptyListOf[String](arbitrary[String])
@@ -170,8 +160,6 @@ object Generators {
   implicit val arbMediaType: Arbitrary[StacMediaType] = Arbitrary {
     mediaTypeGen
   }
-
-  implicit val arbLinkType: Arbitrary[StacLinkType] = Arbitrary { linkTypeGen }
 
   implicit val arbProviderRole: Arbitrary[StacProviderRole] = Arbitrary {
     providerRoleGen

@@ -26,7 +26,6 @@ class SerDeSpec extends FunSpec with Matchers with PropertyChecks {
   describe("serialization / deserialization should succeed") {
     it("enums should round trip") {
       getPropTest[StacMediaType]
-      getPropTest[StacLinkType]
       getPropTest[StacProviderRole]
     }
 
