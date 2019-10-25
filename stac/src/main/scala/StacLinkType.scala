@@ -13,6 +13,7 @@ case object Child extends StacLinkType("child")
 case object Item extends StacLinkType("item")
 case object Items extends StacLinkType("items")
 case object Source extends StacLinkType("source")
+case object Collection extends StacLinkType("collection")
 case class VendorLinkType(underlying: String) extends StacLinkType("vendor") {
   override def toString = s"$repr-$underlying"
 }
@@ -20,14 +21,15 @@ case class VendorLinkType(underlying: String) extends StacLinkType("vendor") {
 object StacLinkType {
 
   private def fromString(s: String): StacLinkType = s.toLowerCase match {
-    case "self" => Self
-    case "root" => StacRoot
-    case "parent" => Parent
-    case "child" => Child
-    case "item" => Item
-    case "items" => Items
-    case "source" => Source
-    case s => VendorLinkType(s)
+    case "self"       => Self
+    case "root"       => StacRoot
+    case "parent"     => Parent
+    case "child"      => Child
+    case "item"       => Item
+    case "items"      => Items
+    case "source"     => Source
+    case "collection" => Collection
+    case s            => VendorLinkType(s)
   }
 
   implicit val encStacLinkType: Encoder[StacLinkType] =
