@@ -266,13 +266,16 @@ lazy val stac = project
       circeCore,
       circeGeneric,
       circeParser,
+      circeRefined,
       circeShapes,
       geotrellisS3,
       geotrellisVlm,
+      refined,
       shapeless,
       scalacheck,
       scalacheckCats,
-      scalatest
+      scalatest,
+      spdxChecker
     )
   )
 

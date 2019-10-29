@@ -57,7 +57,9 @@ object Generators {
     Child,
     Item,
     Items,
-    Source
+    Source,
+    Collection,
+    License
   )
 
   private def providerRoleGen: Gen[StacProviderRole] = Gen.oneOf(
@@ -152,13 +154,13 @@ object Generators {
       nonEmptyStringGen,
       Gen.listOf(nonEmptyStringGen),
       nonEmptyStringGen,
-      nonEmptyStringGen,
+      Gen.const(SPDX(SpdxId.unsafeFrom("Apache-2.0"))),
       Gen.listOf(stacProviderGen),
       // stacExtentGen,
       Gen.const(().asJson),
       Gen.const(JsonObject.fromMap(Map.empty)),
       Gen.listOf(stacLinkGen)
-    ).mapN(StacCollection.apply _)
+    ).mapN(PublicStacCollection.apply _)
 
   private def itemCollectionGen: Gen[ItemCollection] =
     (
