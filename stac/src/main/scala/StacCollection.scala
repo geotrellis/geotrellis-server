@@ -14,7 +14,7 @@ sealed trait StacCollection {
   val version: String
   val license: StacLicense
   val providers: List[StacProvider]
-  val extent: Json
+  val extent: StacExtent
   val properties: JsonObject
   val links: List[StacLink]
 }
@@ -28,7 +28,7 @@ case class PublicStacCollection(
     version: String,
     license: SPDX,
     providers: List[StacProvider],
-    extent: Json,
+    extent: StacExtent,
     properties: JsonObject,
     links: List[StacLink]
 ) extends StacCollection
@@ -42,7 +42,7 @@ case class ProprietaryStacCollection(
     version: String,
     license: Proprietary,
     providers: List[StacProvider],
-    extent: Json,
+    extent: StacExtent,
     properties: JsonObject,
     linksWithLicenseLink: StacLinksWithLicense
 ) extends StacCollection {
