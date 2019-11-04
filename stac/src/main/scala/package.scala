@@ -31,7 +31,23 @@ package object stac {
 
   type StacLinksWithLicense = List[StacLink] Refined Exists[LicenseLink]
   object StacLinksWithLicense
-      extends RefinedTypeOps[StacLinksWithLicense, List[StacLink]]
+      extends RefinedTypeOps[StacLinksWithLicense, List[StacLink]] {
+    def fromStacLinkWithLicense(
+        links: List[StacLink],
+        href: String,
+        stacMediaType: Option[StacMediaType],
+        title: Option[String]
+    ): StacLinksWithLicense = {
+      val licenseLink = StacLink(
+        href,
+        License,
+        stacMediaType,
+        title,
+        List.empty[String]
+      )
+      StacLinksWithLicense.unsafeFrom(licenseLink :: links)
+    }
+  }
 
   type SpdxId = String Refined ValidSpdxId
   object SpdxId extends RefinedTypeOps[SpdxId, String]
