@@ -2,6 +2,7 @@ package geotrellis.server.stac
 
 import cats.implicits._
 import io.circe._
+import io.circe.syntax._
 
 sealed trait StacLicense {
   val name: String
@@ -16,8 +17,17 @@ final case class SPDX(spdxId: SpdxId) extends StacLicense {
 }
 
 object StacLicense {
-  implicit val encoderStacLicense: Encoder[StacLicense] =
-    Encoder.encodeString.contramap[StacLicense](_.name)
+
+  implicit val encoderSpdxLicense: Encoder[SPDX] =
+    Encoder.encodeString.contramap(_.name)
+
+  implicit val encoderProprietary: Encoder[Proprietary] =
+    Encoder.encodeString.contramap(_.name)
+
+  implicit val encoderStacLicense: Encoder[StacLicense] = Encoder.instance {
+    case spdx: SPDX               => spdx.asJson
+    case proprietary: Proprietary => proprietary.asJson
+  }
 
   implicit val decodeSpdx: Decoder[SPDX] = Decoder.decodeString.emap { s =>
     SpdxId.from(s) match {

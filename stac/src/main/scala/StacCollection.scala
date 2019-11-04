@@ -3,6 +3,7 @@ package geotrellis.server.stac
 import cats.implicits._
 import geotrellis.vector.{io => _}
 import io.circe._
+import io.circe.syntax._
 import io.circe.refined._
 
 sealed trait StacCollection {
@@ -50,7 +51,8 @@ case class ProprietaryStacCollection(
 }
 
 object StacCollection {
-  implicit val encStacCollection: Encoder[StacCollection] =
+
+  implicit val encoderPublicCollection: Encoder[PublicStacCollection] =
     Encoder.forProduct11(
       "stac_version",
       "id",
@@ -79,6 +81,45 @@ object StacCollection {
           collection.links
         )
     )
+
+  implicit val encoderProprietaryCollection
+      : Encoder[ProprietaryStacCollection] =
+    Encoder.forProduct11(
+      "stac_version",
+      "id",
+      "title",
+      "description",
+      "keywords",
+      "version",
+      "license",
+      "providers",
+      "extent",
+      "properties",
+      "links"
+    )(
+      collection =>
+        (
+          collection.stacVersion,
+          collection.id,
+          collection.title,
+          collection.description,
+          collection.keywords,
+          collection.version,
+          collection.license,
+          collection.providers,
+          collection.extent,
+          collection.properties,
+          collection.links
+        )
+    )
+
+  implicit val encodeStacCollection: Encoder[StacCollection] =
+    Encoder.instance {
+      case public: PublicStacCollection =>
+        public.asJson
+      case proprietary: ProprietaryStacCollection =>
+        proprietary.asJson
+    }
 
   implicit val decoderPublicStacCollection: Decoder[PublicStacCollection] =
     Decoder.forProduct11(
