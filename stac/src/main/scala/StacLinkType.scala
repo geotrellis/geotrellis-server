@@ -38,7 +38,7 @@ object StacLinkType {
     case "items"        => Items
     case "alternate"    => Alternate
     case "collection"   => Collection
-    case "describedBy"  => DescribedBy
+    case "describedby"  => DescribedBy
     case "next"         => Next
     case "license"      => License
     case "prev"         => Prev
@@ -46,6 +46,7 @@ object StacLinkType {
     case "service-doc"  => ServiceDoc
     case "conformance"  => Conformance
     case "data"         => Data
+    case "source"       => Source
     case s              => VendorLinkType(s)
   }
 
