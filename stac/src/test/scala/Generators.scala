@@ -60,7 +60,13 @@ object Generators {
     Items,
     Source,
     Collection,
-    License
+    License,
+    Alternate,
+    DescribedBy,
+    Next,
+    Prev,
+    ServiceDesc,
+    ServiceDoc
   )
 
   private def providerRoleGen: Gen[StacProviderRole] = Gen.oneOf(
