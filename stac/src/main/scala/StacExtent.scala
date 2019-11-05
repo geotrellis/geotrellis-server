@@ -11,7 +11,7 @@ import java.time.Instant
 
 case class StacExtent(
   spatial: Bbox,
-  temporal: (Option[Instant], Option[Instant])
+  temporal: TemporalExtent
 )
 
 object StacExtent {

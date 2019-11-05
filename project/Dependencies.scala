@@ -2,16 +2,19 @@ import sbt._
 
 object Dependencies {
 
+  val scalaVer = "2.11.12"
+  val crossScalaVer = Seq(scalaVer, "2.12.7")
+
   val circeVer = "0.11.1"
+  val dispatchVer = "0.11.3"
   val gtVer = "3.0.0-M3"
   val gtcVer = "3.16.0"
   val http4sVer = "0.20.0"
-  val scalaVer = "2.11.12"
-  val crossScalaVer = Seq(scalaVer, "2.12.7")
-  val tsecVer = "0.0.1-M11"
-  val dispatchVer = "0.11.3"
+  val refinedVer = "0.9.9"
   val shapelessVer = "2.3.3"
+  val spdxCheckerVer = "1.0.0"
   val sttpVer = "1.5.17"
+  val tsecVer = "0.0.1-M11"
 
   val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % "2.3.5"
   val cats = "org.typelevel" %% "cats-core" % "1.4.0"
@@ -21,6 +24,7 @@ object Dependencies {
   val circeGeneric = "io.circe" %% "circe-generic" % circeVer
   val circeOptics = "io.circe" %% "circe-optics" % "0.11.0"
   val circeParser = "io.circe" %% "circe-parser" % circeVer
+  val circeRefined = "io.circe" %% "circe-refined" % circeVer
   val commonsIO = "commons-io" % "commons-io" % "2.6"
   val commonsLang = "org.apache.commons" % "commons-lang3" % "3.7"
   val concHashMap = "com.googlecode.concurrentlinkedhashmap" % "concurrentlinkedhashmap-lru" % "1.4.2"
@@ -47,6 +51,7 @@ object Dependencies {
   val kindProjector = "org.spire-math" %% "kind-projector" % "0.9.4"
   val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % "0.4.0"
   val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.10.2"
+  val refined = "eu.timepit" %% "refined" % refinedVer
   val scaffeine = "com.github.blemale" %% "scaffeine" % "2.6.0"
   val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "1.1.0"
   val scalatest = "org.scalatest" %% "scalatest" % "3.0.4" % Test
@@ -54,6 +59,7 @@ object Dependencies {
   val scalacheckCats = "io.chrisdavenport" %% "cats-scalacheck" % "0.1.1" % Test
   val simulacrum = "com.github.mpilquist" %% "simulacrum" % "0.12.0"
   val spark = "org.apache.spark" %% "spark-core" % "2.4.0" % Provided
+  val spdxChecker = "com.github.tbouron" % "spdx-license-checker" % spdxCheckerVer
   val sttp = "com.softwaremill.sttp" %% "core" % sttpVer
   val sttpCirce = "com.softwaremill.sttp" %% "circe" % sttpVer
   val sttpCats = "com.softwaremill.sttp" %% "async-http-client-backend-cats" % sttpVer
