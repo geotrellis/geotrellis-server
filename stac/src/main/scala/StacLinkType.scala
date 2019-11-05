@@ -21,6 +21,8 @@ case object Next extends StacLinkType("next")
 case object Prev extends StacLinkType("prev")
 case object ServiceDesc extends StacLinkType("service-desc")
 case object ServiceDoc extends StacLinkType("service-doc")
+case object Conformance extends StacLinkType("conformance")
+case object Data extends StacLinkType("data")
 case class VendorLinkType(underlying: String) extends StacLinkType("vendor") {
   override def toString = s"$repr-$underlying"
 }
@@ -42,6 +44,8 @@ object StacLinkType {
     case "prev"         => Prev
     case "service-desc" => ServiceDesc
     case "service-doc"  => ServiceDoc
+    case "conformance"  => Conformance
+    case "data"         => Data
     case s              => VendorLinkType(s)
   }
 
