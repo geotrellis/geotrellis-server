@@ -4,12 +4,15 @@ import java.time.Instant
 
 import cats.implicits._
 import com.github.tbouron.SpdxLicense
-import eu.timepit.refined.api.{Refined, RefinedTypeOps, Validate}
-import eu.timepit.refined.collection.Exists
+import eu.timepit.refined._
+import eu.timepit.refined.api.{RefType, Refined, RefinedTypeOps, Validate}
+import eu.timepit.refined.boolean._
+import eu.timepit.refined.collection.{Exists, MinSize, _}
 import geotrellis.vector.{io => _, _}
 import io.circe._
 import io.circe.parser.{decode, parse}
 import io.circe.shapes.CoproductInstances
+import io.circe.syntax._
 import shapeless._
 
 package object stac {
@@ -63,6 +66,49 @@ package object stac {
       )
   }
 
+  case class HasInstant()
+
+  object HasInstant {
+    implicit def hasInstant: Validate.Plain[Option[Instant], HasInstant] =
+      Validate.fromPredicate(
+        {
+          case None => false
+          case _    => true
+        },
+        t => s"Value Is None: $t",
+        HasInstant()
+      )
+  }
+
+  type TemporalExtent =
+    List[Option[Instant]] Refined And[
+      And[MinSize[W.`2`.T], MaxSize[W.`2`.T]],
+      Exists[HasInstant]
+    ]
+
+  object TemporalExtent
+      extends RefinedTypeOps[TemporalExtent, List[Option[Instant]]] {
+    def apply(start: Instant, end: Option[Instant]): TemporalExtent =
+      TemporalExtent.unsafeFrom(List(Some(start), end))
+    def apply(start: Option[Instant], end: Instant): TemporalExtent =
+      TemporalExtent.unsafeFrom(List(start, Some(end)))
+    def apply(start: Instant, end: Instant): TemporalExtent =
+      TemporalExtent.unsafeFrom(List(Some(start), Some(end)))
+
+  }
+
+  implicit val encoderTemporalExtent: Encoder[TemporalExtent] =
+    new Encoder[TemporalExtent] {
+      final def apply(t: TemporalExtent): Json = {
+        t.value.map(x => x.asJson).asJson
+      }
+    }
+  implicit val decoder: Decoder[TemporalExtent] =
+    Decoder.decodeList[Option[Instant]].emap {
+      case l =>
+        RefType.applyRef[TemporalExtent](l)
+    }
+
   type TwoDimBbox = Double :: Double :: Double :: Double :: HNil
 
   object TwoDimBbox {
@@ -98,7 +144,7 @@ package object stac {
     implicit val decodeInstant: Decoder[Instant] = Decoder.decodeString.emap {
       str =>
         Either
-          .catchNonFatal(Instant.parse(str.stripMargin('"')))
+          .catchNonFatal(Instant.parse(str))
           .leftMap(t => "Instant")
     }
 

@@ -153,8 +153,5 @@ object StacCollection {
     )(ProprietaryStacCollection.apply _)
 
   implicit val decoderStacCollection: Decoder[StacCollection] =
-    List[Decoder[StacCollection]](
-      Decoder[PublicStacCollection].widen,
-      Decoder[ProprietaryStacCollection].widen
-    ).reduceLeft(_ or _)
+    Decoder[PublicStacCollection].widen or Decoder[ProprietaryStacCollection].widen
 }

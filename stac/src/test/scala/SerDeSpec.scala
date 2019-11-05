@@ -2,23 +2,27 @@ package geotrellis.server.stac
 
 import geotrellis.server.stac.Implicits._
 import Generators._
-
-import cats.implicits._
 import geotrellis.vector.Geometry
 import io.circe._
 import io.circe.syntax._
 import io.circe.parser._
 import org.scalacheck.Arbitrary
+
 import org.scalatest.{FunSpec, Matchers}
 import org.scalatest.prop.PropertyChecks
-
 import java.time.Instant
 
-class SerDeSpec extends FunSpec with Matchers with PropertyChecks {
+import com.typesafe.scalalogging.LazyLogging
+
+class SerDeSpec
+    extends FunSpec
+    with Matchers
+    with PropertyChecks
+    with LazyLogging {
   private def getPropTest[T: Arbitrary: Encoder: Decoder] = forAll { (x: T) =>
     {
       withClue(x.asJson.spaces2) {
-        decode[T](x.asJson.noSpaces).toOption.get shouldBe x
+        decode[T](x.asJson.noSpaces) shouldBe Right(x)
       }
     }
   }
@@ -39,6 +43,10 @@ class SerDeSpec extends FunSpec with Matchers with PropertyChecks {
       getPropTest[StacAsset]
     }
 
+    it("SPDX should round trip") {
+      getPropTest[SPDX]
+    }
+
     it("items should round trip") {
       getPropTest[StacItem]
     }
@@ -49,6 +57,20 @@ class SerDeSpec extends FunSpec with Matchers with PropertyChecks {
 
     it("catalogs should round trip") {
       getPropTest[StacCatalog]
+    }
+
+    it("two dimensional bbox should round trip") {
+      getPropTest[TwoDimBbox]
+    }
+
+    it("three dimensional bbox should round trip") {
+      getPropTest[ThreeDimBbox]
+    }
+
+    it("stac extents should round trip") {
+      getPropTest[TemporalExtent]
+      getPropTest[Bbox]
+      getPropTest[StacExtent]
     }
 
     it("collections should round trip") {

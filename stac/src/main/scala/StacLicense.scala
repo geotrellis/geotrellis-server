@@ -1,6 +1,7 @@
 package geotrellis.server.stac
 
 import cats.implicits._
+import eu.timepit.refined.api.RefType
 import io.circe._
 import io.circe.syntax._
 
@@ -29,23 +30,18 @@ object StacLicense {
     case proprietary: Proprietary => proprietary.asJson
   }
 
-  implicit val decodeSpdx: Decoder[SPDX] = Decoder.decodeString.emap { s =>
-    SpdxId.from(s) match {
-      case Left(error) => Either.left(error)
-      case Right(spdx) => Either.right(SPDX(spdx))
+  implicit val decodeSpdx: Decoder[SPDX] =
+    Decoder.decodeString.emap {
+      case s => RefType.applyRef[SpdxId](s) map (id => SPDX(id))
     }
-  }
 
   implicit val decodeProprietary: Decoder[Proprietary] =
     Decoder.decodeString.emap {
       case "proprietary" => Either.right(Proprietary())
-      case s             => Either.left(s"Unknown License: $s")
+      case s             => Either.left(s"Unknown Proprietary License: $s")
     }
 
   implicit val decodeStacLicense: Decoder[StacLicense] =
-    List[Decoder[StacLicense]](
-      Decoder[Proprietary].widen,
-      Decoder[SPDX].widen
-    ).reduceLeft(_ or _)
+    Decoder[SPDX].widen or Decoder[Proprietary].widen
 
 }
