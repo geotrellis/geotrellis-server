@@ -134,7 +134,34 @@ object StacCollection {
       "extent",
       "properties",
       "links"
-    )(PublicStacCollection.apply _)
+    )(
+      (
+          stacVersion: String,
+          id: String,
+          title: Option[String],
+          description: String,
+          keywords: Option[List[String]],
+          version: String,
+          license: SPDX,
+          providers: List[StacProvider],
+          extent: StacExtent,
+          properties: JsonObject,
+          links: List[StacLink]
+      ) =>
+        PublicStacCollection(
+          stacVersion,
+          id,
+          title,
+          description,
+          keywords getOrElse List.empty,
+          version,
+          license,
+          providers,
+          extent,
+          properties,
+          links
+        )
+    )
 
   implicit val decoderProprietaryStacCollection
       : Decoder[ProprietaryStacCollection] =
@@ -150,7 +177,34 @@ object StacCollection {
       "extent",
       "properties",
       "links"
-    )(ProprietaryStacCollection.apply _)
+    )(
+      (
+          stacVersion: String,
+          id: String,
+          title: Option[String],
+          description: String,
+          keywords: Option[List[String]],
+          version: String,
+          license: Proprietary,
+          providers: List[StacProvider],
+          extent: StacExtent,
+          properties: JsonObject,
+          linksWithLicenseLink: StacLinksWithLicense
+      ) =>
+        ProprietaryStacCollection(
+          stacVersion,
+          id,
+          title,
+          description,
+          keywords getOrElse List.empty,
+          version,
+          license,
+          providers,
+          extent,
+          properties,
+          linksWithLicenseLink
+        )
+    )
 
   implicit val decoderStacCollection: Decoder[StacCollection] =
     Decoder[PublicStacCollection].widen or Decoder[ProprietaryStacCollection].widen
