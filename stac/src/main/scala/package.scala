@@ -97,13 +97,13 @@ package object stac {
 
   }
 
-  implicit val encoderTemporalExtent: Encoder[TemporalExtent] =
+  implicit val encodeTemporalExtent: Encoder[TemporalExtent] =
     new Encoder[TemporalExtent] {
       final def apply(t: TemporalExtent): Json = {
         t.value.map(x => x.asJson).asJson
       }
     }
-  implicit val decoder: Decoder[TemporalExtent] =
+  implicit val decodeTemporalExtent: Decoder[TemporalExtent] =
     Decoder.decodeList[Option[Instant]].emap {
       case l =>
         RefType.applyRef[TemporalExtent](l)
