@@ -28,7 +28,15 @@ object StacLink {
         c.downField("rel").as[StacLinkType],
         c.get[Option[StacMediaType]]("type"),
         c.get[Option[String]]("title"),
-        c.get[List[String]]("label:assets")
-      ).mapN(StacLink.apply _)
+        c.get[Option[List[String]]]("label:assets")
+      ).mapN(
+        (
+            href: String,
+            rel: StacLinkType,
+            _type: Option[StacMediaType],
+            title: Option[String],
+            assets: Option[List[String]]
+        ) => StacLink(href, rel, _type, title, assets getOrElse List.empty)
+      )
   }
 }
