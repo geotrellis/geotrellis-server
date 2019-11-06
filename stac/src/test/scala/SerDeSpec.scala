@@ -82,5 +82,4 @@ class SerDeSpec
     val link = decode[StacLink]("""{"href":"s3://foo/item.json","rel":"item"}""")
     link map { _.labelExtAssets } shouldBe Right(List.empty[String])
   }
-
 }
