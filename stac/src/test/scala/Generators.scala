@@ -128,7 +128,10 @@ object Generators {
     (
       bboxGen,
       temporalExtentGen
-    ).mapN((bbox: Bbox, interval: TemporalExtent) => StacExtent(SpatialExtent(bbox), Interval(interval)))
+    ).mapN(
+      (bbox: Bbox, interval: TemporalExtent) =>
+        StacExtent(SpatialExtent(List(bbox)), Interval(List(interval)))
+    )
 
   private def stacProviderGen: Gen[StacProvider] =
     (

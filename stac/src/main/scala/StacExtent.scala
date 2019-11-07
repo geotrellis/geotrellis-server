@@ -16,7 +16,7 @@ object SpatialExtent {
   implicit val decSpatialExtent: Decoder[SpatialExtent] = deriveDecoder
 }
 
-case class Interval(interval: TemporalExtent)
+case class Interval(interval: List[TemporalExtent])
 object Interval {
   implicit val encInterval: Encoder[Interval] = deriveEncoder
   implicit val decInterval: Decoder[Interval] = deriveDecoder
