@@ -145,7 +145,7 @@ object StacCollection {
           license: SPDX,
           providers: Option[List[StacProvider]],
           extent: StacExtent,
-          properties: JsonObject,
+          properties: Option[JsonObject],
           links: List[StacLink]
       ) =>
         PublicStacCollection(
@@ -158,7 +158,7 @@ object StacCollection {
           license,
           providers getOrElse List.empty,
           extent,
-          properties,
+          properties getOrElse JsonObject.fromMap(Map.empty),
           links
         )
     )
@@ -188,7 +188,7 @@ object StacCollection {
           license: Proprietary,
           providers: Option[List[StacProvider]],
           extent: StacExtent,
-          properties: JsonObject,
+          properties: Option[JsonObject],
           linksWithLicenseLink: StacLinksWithLicense
       ) =>
         ProprietaryStacCollection(
@@ -201,7 +201,7 @@ object StacCollection {
           license,
           providers getOrElse List.empty,
           extent,
-          properties,
+          properties getOrElse JsonObject.fromMap(Map.empty),
           linksWithLicenseLink
         )
     )
