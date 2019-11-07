@@ -5,28 +5,29 @@ import geotrellis.server.stac.Implicits._
 import io.circe._
 import io.circe.shapes.CoproductInstances
 import io.circe.generic.semiauto._
+import io.circe.syntax._
 import shapeless._
 
 import java.time.Instant
 
+case class SpatialExtent(bbox: Bbox)
+object SpatialExtent {
+  implicit val encSpatialExtent: Encoder[SpatialExtent] = deriveEncoder
+  implicit val decSpatialExtent: Decoder[SpatialExtent] = deriveDecoder
+}
+
+case class Interval(interval: TemporalExtent)
+object Interval {
+  implicit val encInterval: Encoder[Interval] = deriveEncoder
+  implicit val decInterval: Decoder[Interval] = deriveDecoder
+}
+
 case class StacExtent(
-    spatial: Bbox,
-    temporal: TemporalExtent
+    spatial: SpatialExtent,
+    temporal: Interval
 )
 
 object StacExtent {
-  implicit val encStacExtent: Encoder[StacExtent] = Encoder.forProduct2(
-    "spatial",
-    "temporal"
-  )(
-    extent =>
-      (
-        JsonObject.fromMap(Map("bbox" -> extent.spatial.asJson)),
-        JsonObject.fromMap(Map("interval" -> extent.temporal.asJson))
-      )
-  )
-
-  // TODO: this should go into the spatial field to pluck the bbox key
-  // and the temporal field to pluck the interval key
+  implicit val encStacExtent: Encoder[StacExtent] = deriveEncoder
   implicit val decStacExtent: Decoder[StacExtent] = deriveDecoder
 }
