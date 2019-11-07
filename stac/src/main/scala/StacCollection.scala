@@ -134,7 +134,34 @@ object StacCollection {
       "extent",
       "properties",
       "links"
-    )(PublicStacCollection.apply _)
+    )(
+      (
+          stacVersion: String,
+          id: String,
+          title: Option[String],
+          description: String,
+          keywords: Option[List[String]],
+          version: Option[String],
+          license: SPDX,
+          providers: Option[List[StacProvider]],
+          extent: StacExtent,
+          properties: Option[JsonObject],
+          links: List[StacLink]
+      ) =>
+        PublicStacCollection(
+          stacVersion,
+          id,
+          title,
+          description,
+          keywords getOrElse List.empty,
+          version getOrElse "0.0.0-alpha",
+          license,
+          providers getOrElse List.empty,
+          extent,
+          properties getOrElse JsonObject.fromMap(Map.empty),
+          links
+        )
+    )
 
   implicit val decoderProprietaryStacCollection
       : Decoder[ProprietaryStacCollection] =
@@ -150,8 +177,35 @@ object StacCollection {
       "extent",
       "properties",
       "links"
-    )(ProprietaryStacCollection.apply _)
+    )(
+      (
+          stacVersion: String,
+          id: String,
+          title: Option[String],
+          description: String,
+          keywords: Option[List[String]],
+          version: Option[String],
+          license: Proprietary,
+          providers: Option[List[StacProvider]],
+          extent: StacExtent,
+          properties: Option[JsonObject],
+          linksWithLicenseLink: StacLinksWithLicense
+      ) =>
+        ProprietaryStacCollection(
+          stacVersion,
+          id,
+          title,
+          description,
+          keywords getOrElse List.empty,
+          version getOrElse "0.0.0-alpha",
+          license,
+          providers getOrElse List.empty,
+          extent,
+          properties getOrElse JsonObject.fromMap(Map.empty),
+          linksWithLicenseLink
+        )
+    )
 
   implicit val decoderStacCollection: Decoder[StacCollection] =
-    Decoder[PublicStacCollection].widen or Decoder[ProprietaryStacCollection].widen
+    Decoder[ProprietaryStacCollection].widen or Decoder[PublicStacCollection].widen
 }
