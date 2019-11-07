@@ -66,6 +66,32 @@ object StacItem {
     "assets",
     "collection",
     "properties"
-  )(StacItem.apply _)
+  )(
+    (
+        id: String,
+        stacVersion: String,
+        stacExtensions: Option[List[String]],
+        _type: String,
+        geometry: Geometry,
+        bbox: TwoDimBbox,
+        links: List[StacLink],
+        assets: Map[String, StacAsset],
+        collection: Option[String],
+        properties: JsonObject
+    ) => {
+      StacItem(
+        id,
+        stacVersion,
+        stacExtensions,
+        _type,
+        geometry,
+        bbox,
+        links,
+        assets,
+        collection,
+        properties
+      )
+    }
+  )
 
 }
