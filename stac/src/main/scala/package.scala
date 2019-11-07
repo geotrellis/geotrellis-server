@@ -99,24 +99,15 @@ package object stac {
 
   implicit val encodeTemporalExtent: Encoder[TemporalExtent] =
     new Encoder[TemporalExtent] {
-      final def apply(t: TemporalExtent): Json =
-        Map(
-          "interval" -> t.value.map(x => x.asJson).asJson
-        ).asJson
+      final def apply(t: TemporalExtent): Json = {
+        t.value.map(x => x.asJson).asJson
+      }
     }
   implicit val decodeTemporalExtent: Decoder[TemporalExtent] =
-    Decoder.forProduct1("interval")((opts: List[Option[Instant]]) =>
-      opts match {
-        case None +: None +: Nil =>
-          throw new Exception("lol")
-        case Some(s) +: Some(e) +: Nil =>
-          TemporalExtent.unsafeFrom(List(Some(s), Some(e)))
-        case Some(s) +: None +: Nil =>
-          TemporalExtent.unsafeFrom(List(Some(s), None))
-        case None +: Some(e) +: Nil =>
-          TemporalExtent.unsafeFrom(List(None, Some(e)))
-      }
-    )
+    Decoder.decodeList[Option[Instant]].emap {
+      case l =>
+        RefType.applyRef[TemporalExtent](l)
+    }
 
   type TwoDimBbox = Double :: Double :: Double :: Double :: HNil
 
@@ -174,51 +165,41 @@ package object stac {
     }
 
     implicit val enc2DBbox: Encoder[TwoDimBbox] = new Encoder[TwoDimBbox] {
-      def apply(box: TwoDimBbox) =
-        Map("bbox" -> Encoder[List[Double]].apply(box.toList)).asJson
+      def apply(box: TwoDimBbox) = Encoder[List[Double]].apply(box.toList)
     }
 
     implicit val enc3DBbox: Encoder[ThreeDimBbox] = new Encoder[ThreeDimBbox] {
-      def apply(box: ThreeDimBbox) =
-        Map("bbox" -> Encoder[List[Double]].apply(box.toList)).asJson
+      def apply(box: ThreeDimBbox) = Encoder[List[Double]].apply(box.toList)
     }
 
     // These `new Exception(message)` underlying exceptions aren't super helpful, but the wrapping
     // ParsingFailure should be sufficient to match on for any client that needs to do so
-    implicit val dec2DBbox: Decoder[TwoDimBbox] = Decoder.forProduct1("bbox")(
-      (nums: List[Double]) =>
-        nums match {
-          case ns if nums.length == 4 =>
-            nums(0) :: nums(1) :: nums(2) :: nums(3) :: HNil
-          case ns if nums.length > 4 =>
-            val message = s"Too many values for 2D bbox: $nums"
-            throw new ParsingFailure(message, new Exception(message))
-          case ns if nums.length < 3 =>
-            val message = s"Too few values for 2D bbox: $nums"
-            throw new ParsingFailure(message, new Exception(message))
-        }
-    )
+    implicit val dec2DBbox: Decoder[TwoDimBbox] = Decoder[List[Double]] map {
+      case nums if nums.length == 4 =>
+        nums(0) :: nums(1) :: nums(2) :: nums(3) :: HNil
+      case nums if nums.length > 4 =>
+        val message = s"Too many values for 2D bbox: $nums"
+        throw new ParsingFailure(message, new Exception(message))
+      case nums if nums.length < 3 =>
+        val message = s"Too few values for 2D bbox: $nums"
+        throw new ParsingFailure(message, new Exception(message))
+    }
 
-    implicit val dec3DBbox: Decoder[ThreeDimBbox] = Decoder.forProduct1("bbox")(
-      (nums: List[Double]) =>
-        nums match {
-          case ns if nums.length == 6 =>
-            nums(0) :: nums(1) :: nums(2) :: nums(3) :: nums(4) :: nums(5) :: HNil
-          case ns if nums.length > 6 =>
-            val message = s"Too many values for 3D bbox: $nums"
-            throw new ParsingFailure(message, new Exception(message))
-          case ns if nums.length < 6 =>
-            val message = s"Too few values for 3D bbox: $nums"
-            throw new ParsingFailure(message, new Exception(message))
-        }
-    )
+    implicit val dec3DBbox: Decoder[ThreeDimBbox] = Decoder[List[Double]] map {
+      case nums if nums.length == 6 =>
+        nums(0) :: nums(1) :: nums(2) :: nums(3) :: nums(4) :: nums(5) :: HNil
+      case nums if nums.length > 6 =>
+        val message = s"Too many values for 3D bbox: $nums"
+        throw new ParsingFailure(message, new Exception(message))
+      case nums if nums.length < 6 =>
+        val message = s"Too few values for 3D bbox: $nums"
+        throw new ParsingFailure(message, new Exception(message))
+    }
 
-    implicit val decTimeRange: Decoder[(Option[Instant], Option[Instant])] =
-      Decoder.forProduct1("interval")((intervalStr: String) => {
-        val components = intervalStr
-          .replace("[", "")
-          .replace("]", "")
-          .split(",") map {
+    implicit val decTimeRange
+        : Decoder[(Option[Instant], Option[Instant])] = Decoder[String] map {
+      str =>
+        val components = str.replace("[", "").replace("]", "").split(",") map {
           _.trim
         }
         components match {
@@ -233,6 +214,6 @@ package object stac {
             val message = "Too few elements for temporal extent: $parts"
             throw new ParsingFailure(message, new Exception(message))
         }
-      })
+    }
   }
 }
