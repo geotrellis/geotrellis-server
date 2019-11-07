@@ -82,7 +82,7 @@ object StacItem {
       StacItem(
         id,
         stacVersion,
-        stacExtensions,
+        stacExtensions getOrElse List.empty,
         _type,
         geometry,
         bbox,
