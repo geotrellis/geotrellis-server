@@ -10,7 +10,7 @@ import shapeless._
 
 import java.time.Instant
 
-case class SpatialExtent(bbox: Bbox)
+case class SpatialExtent(bbox: List[Bbox])
 object SpatialExtent {
   implicit val encSpatialExtent: Encoder[SpatialExtent] = deriveEncoder
   implicit val decSpatialExtent: Decoder[SpatialExtent] = deriveDecoder
