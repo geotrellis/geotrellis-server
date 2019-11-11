@@ -85,6 +85,10 @@ object Generators {
   private def spdxGen: Gen[SPDX] =
     arbitrary[SpdxLicense] map (license => SPDX(SpdxId.unsafeFrom(license.id)))
 
+  private def proprietaryGen: Gen[Proprietary] = Gen.const(Proprietary())
+
+  private def stacLicenseGen: Gen[StacLicense] = Gen.oneOf(spdxGen, proprietaryGen)
+
   private def threeDimBboxGen: Gen[ThreeDimBbox] =
     (
       arbitrary[Double],
@@ -175,12 +179,12 @@ object Generators {
       nonEmptyStringGen,
       Gen.listOf(nonEmptyStringGen),
       nonEmptyStringGen,
-      spdxGen,
+      stacLicenseGen,
       Gen.listOf(stacProviderGen),
       stacExtentGen,
       Gen.const(JsonObject.fromMap(Map.empty)),
       Gen.listOf(stacLinkGen)
-    ).mapN(PublicStacCollection.apply _)
+    ).mapN(StacCollection.apply _)
 
   private def itemCollectionGen: Gen[ItemCollection] =
     (

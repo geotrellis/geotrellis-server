@@ -17,41 +17,6 @@ import shapeless._
 
 package object stac {
 
-  case class LicenseLink()
-
-  object LicenseLink {
-    implicit def validateLicenseLink: Validate.Plain[StacLink, LicenseLink] =
-      Validate.fromPredicate(
-        l =>
-          l.rel match {
-            case License => true
-            case _       => false
-          },
-        t => s"Not a License Link: ${t.rel}",
-        LicenseLink()
-      )
-  }
-
-  type StacLinksWithLicense = List[StacLink] Refined Exists[LicenseLink]
-  object StacLinksWithLicense
-      extends RefinedTypeOps[StacLinksWithLicense, List[StacLink]] {
-    def fromStacLinkWithLicense(
-        links: List[StacLink],
-        href: String,
-        stacMediaType: Option[StacMediaType],
-        title: Option[String]
-    ): StacLinksWithLicense = {
-      val licenseLink = StacLink(
-        href,
-        License,
-        stacMediaType,
-        title,
-        List.empty[String]
-      )
-      StacLinksWithLicense.unsafeFrom(licenseLink :: links)
-    }
-  }
-
   type SpdxId = String Refined ValidSpdxId
   object SpdxId extends RefinedTypeOps[SpdxId, String]
 
@@ -98,7 +63,6 @@ package object stac {
   }
 
   object Implicits {
-
 
     // Stolen straight from circe docs
     implicit val decodeInstant: Decoder[Instant] = Decoder.decodeString.emap {

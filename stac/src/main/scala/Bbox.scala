@@ -3,23 +3,26 @@ package geotrellis.server.stac
 import io.circe._
 import io.circe.syntax._
 import cats.implicits._
+import geotrellis.vector.Extent
 
 sealed trait Bbox {
   val toList: List[Double]
+  val toExtent: Extent
 }
 case class TwoDimBbox(xmin: Double, ymin: Double, xmax: Double, ymax: Double)
   extends Bbox {
   val toList = List(xmin, ymin, xmax, ymax)
+  val toExtent = Extent(xmin, ymin, xmax, ymax)
 }
 case class ThreeDimBbox(
-                         xmin: Double,
-                         ymin: Double,
-                         zmin: Double,
-                         xmax: Double,
-                         ymax: Double,
-                         zmax: Double
-                       ) extends Bbox {
+    xmin: Double,
+    ymin: Double,
+    zmin: Double,
+    xmax: Double,
+    ymax: Double,
+    zmax: Double) extends Bbox {
   val toList = List(xmin, ymin, zmin, xmax, ymax, zmax)
+  val toExtent = Extent(xmin, ymin, xmax, ymax)
 }
 
 object TwoDimBbox {    implicit val decoderTwoDBox: Decoder[TwoDimBbox] =
