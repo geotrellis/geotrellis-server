@@ -95,17 +95,8 @@ object Generators {
       arbitrary[Double]
     ).mapN(ThreeDimBbox.apply _)
 
-//  This breaks test, the decoder can't handle it - commenting out for now
-//  The problem is that we're throwing an exception in the first decoder we're trying
-//  to accumulate possibilities from, so we can't try the later decoders. Not sure how
-//  to fix.
-//  private def bboxGen: Gen[Bbox] =
-//    Gen.oneOf(twoDimBboxGen map { Coproduct[Bbox](_) }, threeDimBboxGen map {
-//      Coproduct[Bbox](_)
-//    })
-//
-
-  private def bboxGen: Gen[Bbox] = twoDimBboxGen map { Coproduct[Bbox](_) }
+  private def bboxGen: Gen[Bbox] =
+    Gen.oneOf(twoDimBboxGen.widen, threeDimBboxGen.widen)
 
   private def stacLinkGen: Gen[StacLink] =
     (
