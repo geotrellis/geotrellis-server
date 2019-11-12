@@ -47,7 +47,7 @@ object StacItem {
         item.stacExtensions,
         item._type,
         item.geometry,
-        item.bbox.toList,
+        item.bbox,
         item.links,
         item.assets,
         item.collection,

@@ -11,6 +11,8 @@ import org.scalacheck.Arbitrary
 import org.scalatest.{FunSpec, Matchers}
 import org.scalatest.prop.PropertyChecks
 import java.time.Instant
+import cats.syntax._
+import cats.implicits._
 
 import com.typesafe.scalalogging.LazyLogging
 
@@ -79,7 +81,8 @@ class SerDeSpec
   }
 
   it("should ignore optional fields") {
-    val link = decode[StacLink]("""{"href":"s3://foo/item.json","rel":"item"}""")
+    val link =
+      decode[StacLink]("""{"href":"s3://foo/item.json","rel":"item"}""")
     link map { _.labelExtAssets } shouldBe Right(List.empty[String])
   }
 }

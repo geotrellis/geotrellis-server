@@ -85,6 +85,10 @@ object Generators {
   private def spdxGen: Gen[SPDX] =
     arbitrary[SpdxLicense] map (license => SPDX(SpdxId.unsafeFrom(license.id)))
 
+  private def proprietaryGen: Gen[Proprietary] = Gen.const(Proprietary())
+
+  private def stacLicenseGen: Gen[StacLicense] = Gen.oneOf(spdxGen, proprietaryGen)
+
   private def threeDimBboxGen: Gen[ThreeDimBbox] =
     (
       arbitrary[Double],
@@ -95,17 +99,8 @@ object Generators {
       arbitrary[Double]
     ).mapN(ThreeDimBbox.apply _)
 
-//  This breaks test, the decoder can't handle it - commenting out for now
-//  The problem is that we're throwing an exception in the first decoder we're trying
-//  to accumulate possibilities from, so we can't try the later decoders. Not sure how
-//  to fix.
-//  private def bboxGen: Gen[Bbox] =
-//    Gen.oneOf(twoDimBboxGen map { Coproduct[Bbox](_) }, threeDimBboxGen map {
-//      Coproduct[Bbox](_)
-//    })
-//
-
-  private def bboxGen: Gen[Bbox] = twoDimBboxGen map { Coproduct[Bbox](_) }
+  private def bboxGen: Gen[Bbox] =
+    Gen.oneOf(twoDimBboxGen.widen, threeDimBboxGen.widen)
 
   private def stacLinkGen: Gen[StacLink] =
     (
@@ -184,12 +179,12 @@ object Generators {
       nonEmptyStringGen,
       Gen.listOf(nonEmptyStringGen),
       nonEmptyStringGen,
-      spdxGen,
+      stacLicenseGen,
       Gen.listOf(stacProviderGen),
       stacExtentGen,
       Gen.const(JsonObject.fromMap(Map.empty)),
       Gen.listOf(stacLinkGen)
-    ).mapN(PublicStacCollection.apply _)
+    ).mapN(StacCollection.apply _)
 
   private def itemCollectionGen: Gen[ItemCollection] =
     (
