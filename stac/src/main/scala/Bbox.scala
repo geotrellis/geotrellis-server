@@ -5,36 +5,47 @@ import io.circe.syntax._
 import cats.implicits._
 import geotrellis.vector.Extent
 
+import scala.util.Try
+
 sealed trait Bbox {
+  val xmin: Double
+  val ymin: Double
+  val xmax: Double
+  val ymax: Double
   val toList: List[Double]
-  val toExtent: Extent
+  val toExtent: Either[Throwable, Extent] = try {
+    Either.right(Extent(xmin, ymin, xmax, ymax))
+  } catch {
+    case e: Throwable => Either.left(e)
+  }
 }
+
 case class TwoDimBbox(xmin: Double, ymin: Double, xmax: Double, ymax: Double)
-  extends Bbox {
+    extends Bbox {
   val toList = List(xmin, ymin, xmax, ymax)
-  val toExtent = Extent(xmin, ymin, xmax, ymax)
 }
+
 case class ThreeDimBbox(
     xmin: Double,
     ymin: Double,
     zmin: Double,
     xmax: Double,
     ymax: Double,
-    zmax: Double) extends Bbox {
+    zmax: Double
+) extends Bbox {
   val toList = List(xmin, ymin, zmin, xmax, ymax, zmax)
-  val toExtent = Extent(xmin, ymin, xmax, ymax)
 }
 
-object TwoDimBbox {    implicit val decoderTwoDBox: Decoder[TwoDimBbox] =
-  Decoder.decodeList[Double].emap {
-    case twodim if twodim.length == 4 =>
-      Either.right(TwoDimBbox(twodim(0), twodim(1), twodim(2), twodim(3)))
-    case other =>
-      Either.left(
-        s"Incorrect number of values for 2d box - found ${other.length}, expected 4"
-      )
-  }
-
+object TwoDimBbox {
+  implicit val decoderTwoDBox: Decoder[TwoDimBbox] =
+    Decoder.decodeList[Double].emap {
+      case twodim if twodim.length == 4 =>
+        Either.right(TwoDimBbox(twodim(0), twodim(1), twodim(2), twodim(3)))
+      case other =>
+        Either.left(
+          s"Incorrect number of values for 2d box - found ${other.length}, expected 4"
+        )
+    }
 
   implicit val encoderTwoDimBbox: Encoder[TwoDimBbox] =
     new Encoder[TwoDimBbox] {
@@ -79,7 +90,6 @@ object Bbox {
   }
 
   implicit val decoderBbox
-  : Decoder[Bbox] = Decoder[TwoDimBbox].widen or Decoder[ThreeDimBbox].widen
-
+      : Decoder[Bbox] = Decoder[TwoDimBbox].widen or Decoder[ThreeDimBbox].widen
 
 }
