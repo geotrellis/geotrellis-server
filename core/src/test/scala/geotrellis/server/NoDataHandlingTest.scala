@@ -6,7 +6,6 @@ import geotrellis.raster._
 import geotrellis.raster.io.geotiff.AutoHigherResolution
 import geotrellis.proj4._
 import geotrellis.spark.tiling._
-import geotrellis.contrib.vlm.TargetRegion
 import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.vector.Extent
 

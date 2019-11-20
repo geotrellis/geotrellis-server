@@ -3,9 +3,11 @@ package geotrellis.server.stac
 import geotrellis.server.stac.Implicits._
 
 import cats.implicits._
-import geotrellis.contrib.vlm.RasterSource
-import geotrellis.vector.{io => _, _}
-import io.circe._
+import geotrellis.raster._
+import geotrellis.vector._
+import geotrellis.vector.io.json.GeometryFormats
+
+import _root_.io.circe._
 
 case class StacItem(
     id: String,
@@ -26,7 +28,7 @@ case class StacItem(
     .headOption map { _.href }
 }
 
-object StacItem {
+object StacItem extends GeometryFormats {
 
   implicit val encStacItem: Encoder[StacItem] = Encoder.forProduct10(
     "id",

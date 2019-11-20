@@ -2,13 +2,13 @@ package geotrellis.server.vlm.geotiff.util
 
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.util.{FileRangeReader, RangeReader}
-import geotrellis.spark.io.s3.util.S3RangeReader
-import geotrellis.spark.io.s3.{AmazonS3Client => GTAmazonS3Client}
-import geotrellis.spark.io.http.util.HttpRangeReader
+import geotrellis.store.s3.util.S3RangeReader
+import geotrellis.spark.store.http.util.HttpRangeReader
+//import geotrellis.spark.io.s3.util.S3RangeReader
+//import geotrellis.spark.io.s3.{AmazonS3Client => GTAmazonS3Client}
+//import geotrellis.spark.io.http.util.HttpRangeReader
 
 import cats.effect.IO
-import com.amazonaws.services.s3.{AmazonS3URI, AmazonS3ClientBuilder}
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import org.apache.http.client.utils.URLEncodedUtils
 
 import java.nio.file.Paths
@@ -44,10 +44,14 @@ object RangeReaderUtils extends LazyLogging {
         new HttpRangeReader(new URL(uri), false)
 
       case "s3" =>
+      /*
         val s3Uri = new AmazonS3URI(java.net.URLDecoder.decode(uri, "UTF-8"))
         val awsS3Client = AmazonS3ClientBuilder.standard().withCredentials(new DefaultAWSCredentialsProviderChain).build()
         val s3Client = new GTAmazonS3Client(awsS3Client)
         S3RangeReader(s3Uri.getBucket, s3Uri.getKey, s3Client)
+        */ 
+        // TODO: FIX THIS
+        ???
 
       case scheme =>
         throw new java.lang.IllegalArgumentException(s"Unrecognized scheme found for range reader: $scheme")

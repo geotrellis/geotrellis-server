@@ -7,8 +7,7 @@ object Dependencies {
 
   val circeVer = "0.11.1"
   val dispatchVer = "0.11.3"
-  val gtVer = "3.0.0-M3"
-  val gtcVer = "3.16.0"
+  val gtVer = "3.1.0"
   val http4sVer = "0.20.0"
   val refinedVer = "0.9.9"
   val shapelessVer = "2.3.3"
@@ -36,8 +35,7 @@ object Dependencies {
   val geotrellisHBase = "org.locationtech.geotrellis" %% "geotrellis-hbase" % gtVer
   val geotrellisAccumulo = "org.locationtech.geotrellis" %% "geotrellis-accumulo" % gtVer
   val geotrellisCassandra = "org.locationtech.geotrellis" %% "geotrellis-cassandra" % gtVer
-  val geotrellisVlm = "com.azavea.geotrellis" %% "geotrellis-contrib-vlm" % gtcVer
-  val geotrellisContribGDAL = "com.azavea.geotrellis" %% "geotrellis-contrib-gdal" % gtcVer
+  val geotrellisGdal = "org.locationtech.geotrellis" %% "geotrellis-gdal" % gtVer
   val hadoop = "org.apache.hadoop" % "hadoop-client" % "2.8.0" % Provided
   val http4sBlazeClient = "org.http4s" %% "http4s-blaze-client" % http4sVer
   val http4sBlazeServer = "org.http4s" %% "http4s-blaze-server" % http4sVer

@@ -1,8 +1,8 @@
 package geotrellis.server.ogc
 
 import geotrellis.proj4.LatLng
-import geotrellis.raster.TileLayout
-import geotrellis.spark.tiling.LayoutDefinition
+import geotrellis.raster._
+import geotrellis.layer._
 import geotrellis.vector.Extent
 import geotrellis.server.ogc.conf._
 import geotrellis.server.ogc.wms._

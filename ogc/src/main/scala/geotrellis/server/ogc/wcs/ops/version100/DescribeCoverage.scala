@@ -6,6 +6,7 @@ import geotrellis.server.ogc.wcs.ops.{DescribeCoverage => DescribeCoverageBase}
 import geotrellis.server.ogc.wcs.params.DescribeCoverageWcsParams
 
 import geotrellis.proj4._
+import geotrellis.raster.Dimensions
 import geotrellis.raster.reproject.ReprojectRasterExtent
 import com.typesafe.scalalogging.LazyLogging
 
@@ -20,7 +21,7 @@ object DescribeCoverage extends DescribeCoverageBase with LazyLogging {
     val nativeExtent = src.nativeExtent
     val llre = ReprojectRasterExtent(src.nativeRE, nativeCrs, LatLng)
     val llex = llre.extent
-    val (w, h) = llre.dimensions
+    val Dimensions(w, h) = llre.dimensions
 
     <CoverageOffering>
       <name>{ identifier }</name>

@@ -33,7 +33,7 @@ object DescribeCoverage extends DescribeCoverageBase with LazyLogging {
         })
     }
     val llex = llre.extent
-    val (w, h) = llre.dimensions
+    val Dimensions(w, h) = llre.dimensions
 
     <CoverageDescription>
       <Identifier>{ identifier }</Identifier>
