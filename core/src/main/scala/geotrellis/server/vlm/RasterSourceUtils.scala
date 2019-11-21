@@ -1,15 +1,13 @@
 package geotrellis.server.vlm
 
-import geotrellis.contrib.vlm.RasterSource
 import geotrellis.proj4.{CRS, WebMercator}
-import geotrellis.raster.{CellType, MultibandTile, Raster, RasterExtent}
+import geotrellis.raster._
 import geotrellis.raster.resample.{NearestNeighbor, ResampleMethod}
-import geotrellis.spark.SpatialKey
-import geotrellis.spark.tiling.{LayoutDefinition, ZoomedLayoutScheme}
+import geotrellis.layer._
 
 import cats.effect.IO
 import cats.data.{NonEmptyList => NEL}
-import io.circe.{Decoder, Encoder}
+import _root_.io.circe.{Decoder, Encoder}
 
 import java.net.URI
 
@@ -30,11 +28,13 @@ trait RasterSourceUtils {
     for (zoom <- 0 to 64) yield scheme.levelForZoom(zoom).layout
   }.toArray
 
-  def fetchTile(uri: String, zoom: Int, x: Int, y: Int, crs: CRS = WebMercator, method: ResampleMethod = NearestNeighbor): IO[Raster[MultibandTile]] =
+  def fetchTile(uri: String, zoom: Int, x: Int, y: Int, crs: CRS = WebMercator, method: ResampleMethod = NearestNeighbor, target: ResampleTarget = DefaultTarget): IO[Raster[MultibandTile]] =
     IO {
       val key = SpatialKey(x, y)
       val ld = tmsLevels(zoom)
-      val rs = getRasterSource(uri).reproject(crs, method).tileToLayout(ld, method)
+      val rs = getRasterSource(uri)
+        .reproject(crs, target)
+        .tileToLayout(ld, method)
 
       rs.read(key).map(Raster(_, ld.mapTransform(key)))
     } flatMap {
@@ -47,6 +47,8 @@ trait RasterSourceUtils {
   def getCRS(uri: String): IO[CRS] = IO { getRasterSource(uri).crs }
   def getRasterExtents(uri: String): IO[NEL[RasterExtent]] = IO {
     val rs = getRasterSource(uri)
-    NEL.fromList(rs.resolutions.map(_.toRasterExtent)).getOrElse(NEL(rs.gridExtent.toRasterExtent, Nil))
+    NEL.fromList(rs.resolutions.map { cs =>
+      RasterExtent(rs.extent, cs)
+    }).getOrElse(NEL(rs.gridExtent.toRasterExtent, Nil))
   }
 }

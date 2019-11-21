@@ -14,13 +14,10 @@ import java.time.Instant
 import cats.syntax._
 import cats.implicits._
 
-import com.typesafe.scalalogging.LazyLogging
-
 class SerDeSpec
     extends FunSpec
     with Matchers
-    with PropertyChecks
-    with LazyLogging {
+    with PropertyChecks {
   private def getPropTest[T: Arbitrary: Encoder: Decoder] = forAll { (x: T) =>
     {
       withClue(x.asJson.spaces2) {
