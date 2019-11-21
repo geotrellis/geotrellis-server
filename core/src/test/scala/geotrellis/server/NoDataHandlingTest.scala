@@ -33,7 +33,6 @@ class NoDataHandlingTest extends FunSuite with Matchers with TileAsSourceImplici
     val paramMap = Map("t1" -> t1, "t2" -> t2)
     // We'll sample such that the bottom row (from 56 to 64) are excised from the result
     val res = eval(paramMap, 0, 0, 0).unsafeRunSync
-    println("results", res)
     val tileRes = res.toOption.get.band(0)
     assert(tileRes.toArrayDouble.head.isNaN, s"Expected Double.NaN, got ${tileRes.toArrayDouble.head}")
   }

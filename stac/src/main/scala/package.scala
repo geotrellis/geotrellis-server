@@ -9,13 +9,14 @@ import eu.timepit.refined.api.{RefType, Refined, RefinedTypeOps, Validate}
 import eu.timepit.refined.boolean._
 import eu.timepit.refined.collection.{Exists, MinSize, _}
 import geotrellis.vector.{io => _, _}
+import geotrellis.vector.io.json.GeometryFormats
 import io.circe._
 import io.circe.parser.{decode, parse}
 import io.circe.shapes.CoproductInstances
 import io.circe.syntax._
 import shapeless._
 
-package object stac {
+package object stac extends GeometryFormats {
 
   type SpdxId = String Refined ValidSpdxId
   object SpdxId extends RefinedTypeOps[SpdxId, String]
@@ -86,19 +87,6 @@ package object stac {
         case l =>
           RefType.applyRef[TemporalExtent](l)
       }
-
-    implicit val geometryDecoder: Decoder[Geometry] = Decoder[Json] map { js =>
-      js.spaces4.parseGeoJson[Geometry]
-    }
-
-    implicit val geometryEncoder: Encoder[Geometry] = new Encoder[Geometry] {
-      def apply(geom: Geometry) = {
-        parse(geom.toGeoJson) match {
-          case Right(js) => js
-          case Left(e)   => throw e
-        }
-      }
-    }
 
     implicit val decTimeRange
         : Decoder[(Option[Instant], Option[Instant])] = Decoder[String] map {
