@@ -1,6 +1,7 @@
 package geotrellis.server.vlm.geotiff.util
 
 import geotrellis.vector._
+import geotrellis.layer._
 import geotrellis.raster._
 import geotrellis.raster.crop._
 import geotrellis.raster.reproject._

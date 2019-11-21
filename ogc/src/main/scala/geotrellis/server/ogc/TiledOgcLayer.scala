@@ -1,12 +1,10 @@
 package geotrellis.server.ogc
 
 import geotrellis.server._
-import geotrellis.contrib.vlm._
+import geotrellis.layer._
 import geotrellis.raster._
 import geotrellis.raster.reproject.ReprojectRasterExtent
 import geotrellis.raster.resample.NearestNeighbor
-import geotrellis.spark.SpatialKey
-import geotrellis.spark.tiling.LayoutDefinition
 import geotrellis.vector.Extent
 import geotrellis.proj4.CRS
 import com.azavea.maml.ast._
@@ -65,7 +63,7 @@ object SimpleTiledOgcLayer {
       (z: Int, x: Int, y: Int) => IO {
         // NOTE: z comes from layout
         val tile = self.source
-          .reproject(self.crs, NearestNeighbor)
+          .reproject(self.crs, DefaultTarget)
           .tileToLayout(self.layout, NearestNeighbor)
           .read(SpatialKey(x, y))
           .getOrElse(throw new Exception(s"Unable to retrieve layer $self at XY of ($x, $y)"))
@@ -78,11 +76,12 @@ object SimpleTiledOgcLayer {
   implicit val simpleTiledRasterExtents: HasRasterExtents[SimpleTiledOgcLayer] = new HasRasterExtents[SimpleTiledOgcLayer] {
     def rasterExtents(self: SimpleTiledOgcLayer)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] =
       IO {
-        val resolutions = self.source.resolutions.map { ge =>
-          ReprojectRasterExtent(ge.toRasterExtent, self.source.crs, self.crs)
+        val rasterExtents = self.source.resolutions.map { cs =>
+          val re = RasterExtent(self.source.extent ,cs)
+          ReprojectRasterExtent(re, self.source.crs, self.crs)
         }
 
-        NEL.fromList(resolutions.map(_.toRasterExtent))
+        NEL.fromList(rasterExtents)
           .getOrElse(NEL(self.source.gridExtent.reproject(self.source.crs, self.crs).toRasterExtent, Nil))
       }
   }

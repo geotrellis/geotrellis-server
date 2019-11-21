@@ -2,7 +2,7 @@ package geotrellis.server.example.ndvi
 
 import geotrellis.server._
 import geotrellis.raster._
-import geotrellis.raster.render._
+
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
 import com.azavea.maml.eval._

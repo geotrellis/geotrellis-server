@@ -3,9 +3,6 @@ package geotrellis.server.ogc
 import geotrellis.raster._
 import geotrellis.raster.render._
 import geotrellis.raster.render.png._
-import geotrellis.raster.render.png._
-import geotrellis.raster.render._
-import geotrellis.raster.histogram._
 
 import scala.collection.mutable
 import scala.util.Try

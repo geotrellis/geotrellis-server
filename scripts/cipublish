@@ -1,0 +1,27 @@
+#!/bin/bash
+
+set -e
+
+if [[ -n "${GEOTRELLIS_SERVER_DEBUG}" ]]; then
+    set -x
+fi
+
+function usage() {
+    echo -n \
+        "Usage: $(basename "$0")
+Publish artifacts to Sonatype.
+"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    if [[ "${1:-}" == "--help" ]]; then
+        usage
+    else
+        echo "Publishing artifacts to Sonatype"
+        if [[ -n "${CIRCLE_TAG}" ]]; then
+            ./sbt ";++${SCALA_VERSION:-2.11.12};sonatypeOpen ${CIRCLE_BUILD_NUM};publish;sonatypeRelease"
+        else
+            ./sbt "++${SCALA_VERSION:-2.11.12}" publish
+        fi
+    fi
+fi

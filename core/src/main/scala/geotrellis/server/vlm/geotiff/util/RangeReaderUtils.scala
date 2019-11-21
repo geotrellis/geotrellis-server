@@ -2,13 +2,12 @@ package geotrellis.server.vlm.geotiff.util
 
 import com.typesafe.scalalogging.LazyLogging
 import geotrellis.util.{FileRangeReader, RangeReader}
-import geotrellis.spark.io.s3.util.S3RangeReader
-import geotrellis.spark.io.s3.{AmazonS3Client => GTAmazonS3Client}
-import geotrellis.spark.io.http.util.HttpRangeReader
+import geotrellis.store.s3.util.S3RangeReader
+import geotrellis.spark.store.http.util.HttpRangeReader
+import geotrellis.store.s3.AmazonS3URI
+import geotrellis.store.s3.S3ClientProducer
 
 import cats.effect.IO
-import com.amazonaws.services.s3.{AmazonS3URI, AmazonS3ClientBuilder}
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain
 import org.apache.http.client.utils.URLEncodedUtils
 
 import java.nio.file.Paths
@@ -45,8 +44,7 @@ object RangeReaderUtils extends LazyLogging {
 
       case "s3" =>
         val s3Uri = new AmazonS3URI(java.net.URLDecoder.decode(uri, "UTF-8"))
-        val awsS3Client = AmazonS3ClientBuilder.standard().withCredentials(new DefaultAWSCredentialsProviderChain).build()
-        val s3Client = new GTAmazonS3Client(awsS3Client)
+        val s3Client = S3ClientProducer.get()
         S3RangeReader(s3Uri.getBucket, s3Uri.getKey, s3Client)
 
       case scheme =>
