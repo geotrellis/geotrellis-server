@@ -111,6 +111,7 @@ lazy val credentialSettings = Seq(
 lazy val root = project.in(file("."))
   .settings(moduleName := "root")
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(noPublishSettings)
   .aggregate(core, example, ogc, ogcExample, opengis, stac)
 
