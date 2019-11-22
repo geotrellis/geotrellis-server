@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.1] - 2019-11-22
+
+### Changed
+- Make publishSettings accessible to aggregate modules 
+
 ## [4.0.0]- 2019-11-21
 
 ### Added
@@ -32,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Update geotrellis-contrib [#135](https://github.com/geotrellis/geotrellis-server/pull/135)
 
-[Unreleased]: https://github.com/geotrellis/geotrellis-server/compare/3.4.0...HEAD
+[Unreleased]: https://github.com/geotrellis/geotrellis-server/compare/4.0.1...HEAD
+[4.0.1]: https://github.com/geotrellis/geotrellis-server/compare/4.0.0...4.0.1
+[4.0.0]: https://github.com/geotrellis/geotrellis-server/compare/3.4.0...4.0.0
 [3.4.0]: https://github.com/geotrellis/geotrellis-server/compare/3.3.8...3.4.0
 [3.3.8]: https://github.com/geotrellis/geotrellis-server/compare/3.3.7...3.3.8
