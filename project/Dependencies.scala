@@ -11,13 +11,6 @@ object Dependencies {
     }
   }
 
-  def monocle(module: String) = Def.setting {
-    "com.github.julien-truffaut" %% s"monocle-$module" % ver(
-      "1.5.1-cats",
-      "2.0.0"
-    ).value
-  }
-
   def catsVersion(module: String) = Def.setting {
     module match {
       case "core" =>
