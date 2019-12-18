@@ -74,7 +74,6 @@ object Dependencies {
   val http4sCirce = "org.http4s" %% "http4s-circe" % http4sVer
   val http4sDsl = "org.http4s" %% "http4s-dsl" % http4sVer
   val http4sXml = "org.http4s" %% "http4s-scala-xml" % http4sVer
-
   val jaxbApi = "javax.xml.bind" % "jaxb-api" % jaxbApiVer
   val kamonCore = "io.kamon" %% "kamon-core" % "1.1.3"
   val kamonHttp4s = "io.kamon" %% "kamon-http4s" % "1.0.7"
