@@ -122,16 +122,16 @@ lazy val core = project
   .settings(
     assemblyJarName in assembly := "geotrellis-server-core.jar",
     libraryDependencies ++= Seq(
-      circeCore,
-      circeGeneric,
-      circeParser,
-      circeOptics,
-      circeShapes,
+      circeCore.value,
+      circeGeneric.value,
+      circeParser.value,
+      circeOptics.value,
+      circeShapes.value,
       geotrellisS3,
       geotrellisSpark,
       spark,
-      cats,
-      catsEffect,
+      cats.value,
+      catsEffect.value,
       mamlJvm,
       simulacrum,
       typesafeLogging,
@@ -165,7 +165,8 @@ lazy val example = project
       sttp,
       sttpCats,
       sttpCirce,
-      scalatest
+      scalatest,
+      jaxbApi
     )
   ).settings(dependencyOverrides += "com.azavea.gdal" % "gdal-warp-bindings" % "33.5523882")
 
@@ -177,7 +178,8 @@ lazy val opengis = project
   .settings(
     libraryDependencies ++= Seq(
       scalaXml,
-      scalaParser
+      scalaParser,
+      jaxbApi
     )
   )
   .settings(
@@ -211,7 +213,8 @@ lazy val ogc = project
       commonsIo, // to make GeoTiffRasterSources work
       slf4jApi, // enable logging
       scaffeine,
-      scalatest
+      scalatest,
+      jaxbApi
     )
   )
 
@@ -247,7 +250,8 @@ lazy val ogcExample = (project in file("ogc-example"))
       // log4j brought in via uzaygezen is a pain for us
       ExclusionRule("log4j", "log4j")
     ),
-    libraryDependencies := (CrossVersion.partialVersion(scalaVersion.value) match {
+    libraryDependencies := (CrossVersion
+      .partialVersion(scalaVersion.value) match {
       case Some((2, scalaMajor)) if scalaMajor >= 12 =>
         libraryDependencies.value ++ Seq(ansiColors212)
       case Some((2, scalaMajor)) if scalaMajor >= 11 =>
@@ -261,12 +265,12 @@ lazy val stac = project
   .settings(publishSettings)
   .settings(
     libraryDependencies ++= Seq(
-      cats,
-      circeCore,
-      circeGeneric,
-      circeParser,
-      circeRefined,
-      circeShapes,
+      cats.value,
+      circeCore.value,
+      circeGeneric.value,
+      circeParser.value,
+      circeRefined.value,
+      circeShapes.value,
       geotrellisS3,
       refined,
       shapeless,
