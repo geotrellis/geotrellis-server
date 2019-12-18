@@ -1,14 +1,40 @@
 import sbt._
+import sbt.Keys._
 
 object Dependencies {
 
+  private def ver(for211: String, for212: String) = Def.setting {
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 11)) => for211
+      case Some((2, 12)) => for212
+      case _             => sys.error("not good")
+    }
+  }
+
+  def catsVersion(module: String) = Def.setting {
+    module match {
+      case "core" =>
+        "org.typelevel" %% s"cats-$module" % ver("1.6.1", "2.0.0").value
+      case "effect" =>
+        "org.typelevel" %% s"cats-$module" % ver("1.4.0", "2.0.0").value
+    }
+  }
+
+  def circeVersion(module: String) = Def.setting {
+    "io.circe" %% s"circe-$module" % ver("0.11.1", "0.12.2").value
+  }
+
+  def http4sVer(module: String) = Def.setting {
+    "org.http4s" %% s"http4s-$module" % ver("0.20.15", "0.21.0-M6").value
+  }
+
   val scalaVer = "2.11.12"
-  val crossScalaVer = Seq(scalaVer, "2.12.7")
+  val crossScalaVer = Seq(scalaVer, "2.12.10")
 
   val circeVer = "0.11.1"
   val dispatchVer = "0.11.3"
-  val gtVer = "3.1.0"
-  val http4sVer = "0.20.0"
+  val gtVer = "3.2.0"
+  val jaxbApiVer = "2.3.1"
   val refinedVer = "0.9.9"
   val shapelessVer = "2.3.3"
   val spdxCheckerVer = "1.0.0"
@@ -16,14 +42,16 @@ object Dependencies {
   val tsecVer = "0.0.1-M11"
 
   val caffeine = "com.github.ben-manes.caffeine" % "caffeine" % "2.3.5"
-  val cats = "org.typelevel" %% "cats-core" % "1.4.0"
-  val catsEffect = "org.typelevel" %% "cats-effect" % "1.0.0"
-  val circeCore = "io.circe" %% "circe-core" % circeVer
-  val circeShapes = "io.circe" %% "circe-shapes" % circeVer
-  val circeGeneric = "io.circe" %% "circe-generic" % circeVer
-  val circeOptics = "io.circe" %% "circe-optics" % "0.11.0"
-  val circeParser = "io.circe" %% "circe-parser" % circeVer
-  val circeRefined = "io.circe" %% "circe-refined" % circeVer
+  val cats = catsVersion("core")
+  val catsEffect = catsVersion("effect")
+  val circeCore = circeVersion("core")
+  val circeShapes = circeVersion("shapes")
+  val circeGeneric = circeVersion("generic")
+  val circeOptics = Def.setting {
+    "io.circe" %% "circe-optics" % ver("0.11.0", "0.12.0").value
+  }
+  val circeParser = circeVersion("parser")
+  val circeRefined = circeVersion("refined")
   val commonsIO = "commons-io" % "commons-io" % "2.6"
   val commonsLang = "org.apache.commons" % "commons-lang3" % "3.7"
   val concHashMap = "com.googlecode.concurrentlinkedhashmap" % "concurrentlinkedhashmap-lru" % "1.4.2"
@@ -37,17 +65,18 @@ object Dependencies {
   val geotrellisCassandra = "org.locationtech.geotrellis" %% "geotrellis-cassandra" % gtVer
   val geotrellisGdal = "org.locationtech.geotrellis" %% "geotrellis-gdal" % gtVer
   val hadoop = "org.apache.hadoop" % "hadoop-client" % "2.8.0" % Provided
-  val http4sBlazeClient = "org.http4s" %% "http4s-blaze-client" % http4sVer
-  val http4sBlazeServer = "org.http4s" %% "http4s-blaze-server" % http4sVer
-  val http4sCirce = "org.http4s" %% "http4s-circe" % http4sVer
-  val http4sDsl = "org.http4s" %% "http4s-dsl" % http4sVer
-  val http4sXml = "org.http4s" %% "http4s-scala-xml" % http4sVer
+  val http4sBlazeClient = http4sVer("blaze-client")
+  val http4sBlazeServer = http4sVer("blaze-server")
+  val http4sCirce = http4sVer("circe")
+  val http4sDsl = http4sVer("dsl")
+  val http4sXml = http4sVer("scala-xml")
+  val jaxbApi = "javax.xml.bind" % "jaxb-api" % jaxbApiVer
   val kamonCore = "io.kamon" %% "kamon-core" % "1.1.3"
   val kamonHttp4s = "io.kamon" %% "kamon-http4s" % "1.0.7"
   val kamonPrometheus = "io.kamon" %% "kamon-prometheus" % "1.0.0"
   val kamonSysMetrics = "io.kamon" %% "kamon-system-metrics" % "1.0.0"
   val kindProjector = "org.spire-math" %% "kind-projector" % "0.9.4"
-  val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % "0.5.1"
+  val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % "0.5.1-2-g0baee67-SNAPSHOT"
   val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.10.2"
   val refined = "eu.timepit" %% "refined" % refinedVer
   val scaffeine = "com.github.blemale" %% "scaffeine" % "2.6.0"

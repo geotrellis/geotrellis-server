@@ -6,10 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Included split dependencies a la GeoTrellis 3.2 for cats ecosystem libraries[\#184](https://github.com/geotrellis/geotrellis-server/pull/184)
+
 ## [4.0.1] - 2019-11-22
 
 ### Changed
-- Make publishSettings accessible to aggregate modules 
+- Make publishSettings accessible to aggregate modules
 
 ## [4.0.0]- 2019-11-21
 
