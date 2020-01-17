@@ -137,6 +137,7 @@ lazy val root = project
   .in(file("."))
   .settings(moduleName := "root")
   .settings(commonSettings)
+  .settings(publishSettings)
   .settings(noPublishSettings)
   .aggregate(core, example, ogc, ogcExample, opengis, stac)
 
@@ -147,17 +148,16 @@ lazy val core = project
   .settings(
     assemblyJarName in assembly := "geotrellis-server-core.jar",
     libraryDependencies ++= Seq(
-      circeCore,
-      circeGeneric,
-      circeParser,
-      circeOptics,
-      circeShapes,
+      circeCore.value,
+      circeGeneric.value,
+      circeParser.value,
+      circeOptics.value,
+      circeShapes.value,
       geotrellisS3,
       geotrellisSpark,
       spark,
-      geotrellisVlm,
-      cats,
-      catsEffect,
+      cats.value,
+      catsEffect.value,
       mamlJvm,
       simulacrum,
       typesafeLogging,
@@ -173,15 +173,15 @@ lazy val example = project
     moduleName := "geotrellis-server-example",
     assemblyJarName in assembly := "geotrellis-server-example.jar",
     libraryDependencies ++= Seq(
-      http4sDsl,
-      http4sBlazeServer,
-      http4sBlazeClient,
-      http4sCirce,
-      http4sXml,
+      http4sDsl.value,
+      http4sBlazeServer.value,
+      http4sBlazeClient.value,
+      http4sCirce.value,
+      http4sXml.value,
       scalaXml,
       geotrellisS3,
       geotrellisSpark,
-      geotrellisContribGDAL,
+      geotrellisGdal,
       spark,
       decline,
       commonsIO,
@@ -191,7 +191,8 @@ lazy val example = project
       sttp,
       sttpCats,
       sttpCirce,
-      scalatest
+      scalatest,
+      jaxbApi
     )
   )
   .settings(
@@ -206,7 +207,8 @@ lazy val opengis = project
   .settings(
     libraryDependencies ++= Seq(
       scalaXml,
-      scalaParser
+      scalaParser,
+      jaxbApi
     )
   )
   .settings(
@@ -241,12 +243,12 @@ lazy val ogc = project
       spark,
       geotrellisS3,
       geotrellisSpark,
-      geotrellisVlm,
       typesafeLogging,
       commonsIo, // to make GeoTiffRasterSources work
       slf4jApi, // enable logging
       scaffeine,
-      scalatest
+      scalatest,
+      jaxbApi
     )
   )
 
@@ -265,12 +267,12 @@ lazy val ogcExample = (project in file("ogc-example"))
       geotrellisCassandra,
       geotrellisHBase,
       geotrellisAccumulo,
-      geotrellisVlm,
-      http4sDsl,
-      http4sBlazeServer,
-      http4sBlazeClient,
-      http4sCirce,
-      http4sXml,
+      geotrellisGdal,
+      http4sDsl.value,
+      http4sBlazeServer.value,
+      http4sBlazeClient.value,
+      http4sCirce.value,
+      http4sXml.value,
       logback,
       typesafeLogging,
       pureConfig,
@@ -297,14 +299,13 @@ lazy val stac = project
   .settings(publishSettings)
   .settings(
     libraryDependencies ++= Seq(
-      cats,
-      circeCore,
-      circeGeneric,
-      circeParser,
-      circeRefined,
-      circeShapes,
+      cats.value,
+      circeCore.value,
+      circeGeneric.value,
+      circeParser.value,
+      circeRefined.value,
+      circeShapes.value,
       geotrellisS3,
-      geotrellisVlm,
       refined,
       shapeless,
       scalacheck,

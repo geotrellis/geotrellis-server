@@ -9,11 +9,11 @@ import cats.implicits._
 import com.azavea.maml.eval.tile._
 import io.circe._
 import io.circe.generic.semiauto._
+
+import geotrellis.store._
+import geotrellis.layer._
 import geotrellis.proj4._
 import geotrellis.raster._
-import geotrellis.spark._
-import geotrellis.spark.io._
-import geotrellis.spark.stitch._
 import geotrellis.vector._
 
 import java.net.URI

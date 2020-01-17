@@ -2,7 +2,7 @@ package geotrellis.server.ogc.wmts
 
 import geotrellis.proj4.{CRS, WebMercator, LatLng}
 import geotrellis.raster.TileLayout
-import geotrellis.spark.tiling.LayoutDefinition
+import geotrellis.layer._
 import geotrellis.vector.Extent
 
 import opengis.ows._

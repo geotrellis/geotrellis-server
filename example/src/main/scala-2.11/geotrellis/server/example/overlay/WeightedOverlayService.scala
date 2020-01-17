@@ -12,6 +12,7 @@ import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
 import com.azavea.maml.eval._
 import com.azavea.maml.error._
+
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.circe._
@@ -24,9 +25,9 @@ import cats.data.{NonEmptyList => NEL}
 import cats.implicits._
 import cats.effect._
 import com.typesafe.scalalogging.LazyLogging
+
 import geotrellis.raster._
-import geotrellis.raster.histogram._
-import geotrellis.raster.render._
+import geotrellis.raster.render.RGBA
 
 import scala.math._
 import java.net.URI

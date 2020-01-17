@@ -1,7 +1,7 @@
 package geotrellis.server.ogc.wmts
 
 import geotrellis.server.ogc._
-import geotrellis.spark.tiling._
+import geotrellis.layer._
 import geotrellis.proj4._
 
 /** This class holds all the information necessary to construct a response to a WMTS request */

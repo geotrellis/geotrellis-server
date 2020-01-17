@@ -1,9 +1,9 @@
 package geotrellis.server.ogc.conf
 
-import geotrellis.contrib.vlm.RasterSource
-import geotrellis.contrib.vlm.avro.{GeotrellisRasterSource, GeoTrellisDataPath}
-import geotrellis.contrib.vlm.geotiff.GeoTiffRasterSource
-import geotrellis.spark.LayerId
+import geotrellis.raster._
+import geotrellis.raster.geotiff.GeoTiffRasterSource
+import geotrellis.store.{GeoTrellisPath, GeoTrellisRasterSource}
+import geotrellis.layer._
 
 /**
  * Encodes an expectation that implementing classes be able to realize
@@ -21,7 +21,7 @@ case class GeoTrellis(
   bandCount: Int
 ) extends RasterSourceConf {
   def toRasterSource =
-    new GeotrellisRasterSource(GeoTrellisDataPath(catalogUri, layer, Some(zoom), Some(bandCount)))
+    new GeoTrellisRasterSource(GeoTrellisPath(catalogUri, layer, Some(zoom), Some(bandCount)))
 }
 
 /** A geotiff (COG) raster source */

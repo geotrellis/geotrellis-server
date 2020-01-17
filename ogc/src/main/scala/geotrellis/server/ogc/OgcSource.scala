@@ -2,10 +2,11 @@ package geotrellis.server.ogc
 
 import geotrellis.server.extent.SampleUtils
 import geotrellis.server.ogc.wms._
-import geotrellis.contrib.vlm._
-import geotrellis.raster.GridExtent
+
+import geotrellis.raster._
 import geotrellis.vector.Extent
 import geotrellis.proj4.CRS
+
 import com.azavea.maml.ast._
 
 import cats.data.{NonEmptyList => NEL}

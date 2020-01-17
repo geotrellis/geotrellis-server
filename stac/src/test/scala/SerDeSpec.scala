@@ -11,14 +11,13 @@ import org.scalacheck.Arbitrary
 import org.scalatest.{FunSpec, Matchers}
 import org.scalatest.prop.PropertyChecks
 import java.time.Instant
-
-import com.typesafe.scalalogging.LazyLogging
+import cats.syntax._
+import cats.implicits._
 
 class SerDeSpec
     extends FunSpec
     with Matchers
-    with PropertyChecks
-    with LazyLogging {
+    with PropertyChecks {
   private def getPropTest[T: Arbitrary: Encoder: Decoder] = forAll { (x: T) =>
     {
       withClue(x.asJson.spaces2) {
@@ -79,8 +78,8 @@ class SerDeSpec
   }
 
   it("should ignore optional fields") {
-    val link = decode[StacLink]("""{"href":"s3://foo/item.json","rel":"item"}""")
+    val link =
+      decode[StacLink]("""{"href":"s3://foo/item.json","rel":"item"}""")
     link map { _.labelExtAssets } shouldBe Right(List.empty[String])
   }
-
 }

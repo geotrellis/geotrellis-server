@@ -8,7 +8,6 @@ import com.azavea.maml.ast._
 import com.azavea.maml.eval._
 import geotrellis.vector.Extent
 import geotrellis.raster._
-import geotrellis.raster.histogram._
 
 import com.typesafe.scalalogging.LazyLogging
 import cats._

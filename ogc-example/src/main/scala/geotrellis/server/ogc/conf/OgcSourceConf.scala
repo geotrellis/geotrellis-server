@@ -2,7 +2,7 @@ package geotrellis.server.ogc.conf
 
 import geotrellis.server.ogc._
 
-import geotrellis.contrib.vlm.RasterSource
+import geotrellis.raster.RasterSource
 import com.azavea.maml.ast._
 import cats._
 import cats.implicits._

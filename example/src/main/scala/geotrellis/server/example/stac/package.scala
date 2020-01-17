@@ -6,23 +6,15 @@ import geotrellis.server.vlm.RasterSourceUtils
 import cats.data.{NonEmptyList => NEL}
 import cats.effect.{IO, ContextShift}
 import cats.implicits._
-import geotrellis.contrib.vlm.RasterSource
-import geotrellis.contrib.vlm.gdal.GDALRasterSource
-import geotrellis.raster.{
-  CellSize,
-  GridExtent,
-  IntArrayTile,
-  MultibandTile,
-  ProjectedRaster,
-  RasterExtent,
-  Tile
-}
+
+import geotrellis.raster.gdal.GDALRasterSource
+import geotrellis.raster._
+import geotrellis.layer._
 import geotrellis.proj4.{WebMercator, LatLng}
 import geotrellis.raster.reproject.ReprojectRasterExtent
 import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.server.{ExtentReification, HasRasterExtents, TmsReification}
-import geotrellis.spark.SpatialKey
-import geotrellis.vector.{io => _, _}
+import geotrellis.vector._
 
 import com.typesafe.scalalogging.LazyLogging
 
@@ -99,7 +91,7 @@ package object stac extends RasterSourceUtils with LazyLogging {
               if (intersects) {
                 val rasterExtent = RasterExtent(extent, cellSize)
                 rasterSource
-                  .reproject(WebMercator, NearestNeighbor)
+                  .reproject(WebMercator, DefaultTarget)
                   .resampleToGrid(
                     GridExtent[Long](
                       rasterExtent.extent,
@@ -142,14 +134,15 @@ package object stac extends RasterSourceUtils with LazyLogging {
           IO {
             getRasterSource(cogUri)
           } map { rasterSource =>
-            (rasterSource.resolutions map { res =>
+            (rasterSource.resolutions map { cs =>
+              val re = RasterExtent(rasterSource.extent, cs)
               ReprojectRasterExtent(
                 RasterExtent(
-                  res.extent,
-                  res.cellwidth,
-                  res.cellheight,
-                  res.cols.toInt,
-                  res.rows.toInt
+                  re.extent,
+                  re.cellwidth,
+                  re.cellheight,
+                  re.cols.toInt,
+                  re.rows.toInt
                 ),
                 rasterSource.crs,
                 WebMercator

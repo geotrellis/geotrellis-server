@@ -85,6 +85,10 @@ object Generators {
   private def spdxGen: Gen[SPDX] =
     arbitrary[SpdxLicense] map (license => SPDX(SpdxId.unsafeFrom(license.id)))
 
+  private def proprietaryGen: Gen[Proprietary] = Gen.const(Proprietary())
+
+  private def stacLicenseGen: Gen[StacLicense] = Gen.oneOf(spdxGen, proprietaryGen)
+
   private def threeDimBboxGen: Gen[ThreeDimBbox] =
     (
       arbitrary[Double],
@@ -95,14 +99,8 @@ object Generators {
       arbitrary[Double]
     ).mapN(ThreeDimBbox.apply _)
 
-//  This breaks test, the decoder can't handle it - commenting out for now
-//  private def bboxGen: Gen[Bbox] =
-//    Gen.oneOf(twoDimBboxGen map { Coproduct[Bbox](_) }, threeDimBboxGen map {
-//      Coproduct[Bbox](_)
-//    })
-//
-
-  private def bboxGen: Gen[Bbox] = twoDimBboxGen map { Coproduct[Bbox](_) }
+  private def bboxGen: Gen[Bbox] =
+    Gen.oneOf(twoDimBboxGen.widen, threeDimBboxGen.widen)
 
   private def stacLinkGen: Gen[StacLink] =
     (
@@ -125,7 +123,10 @@ object Generators {
     (
       bboxGen,
       temporalExtentGen
-    ).mapN(StacExtent.apply _)
+    ).mapN(
+      (bbox: Bbox, interval: TemporalExtent) =>
+        StacExtent(SpatialExtent(List(bbox)), Interval(List(interval)))
+    )
 
   private def stacProviderGen: Gen[StacProvider] =
     (
@@ -178,12 +179,12 @@ object Generators {
       nonEmptyStringGen,
       Gen.listOf(nonEmptyStringGen),
       nonEmptyStringGen,
-      spdxGen,
+      stacLicenseGen,
       Gen.listOf(stacProviderGen),
       stacExtentGen,
       Gen.const(JsonObject.fromMap(Map.empty)),
       Gen.listOf(stacLinkGen)
-    ).mapN(PublicStacCollection.apply _)
+    ).mapN(StacCollection.apply _)
 
   private def itemCollectionGen: Gen[ItemCollection] =
     (
