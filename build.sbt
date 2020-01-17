@@ -32,11 +32,13 @@ lazy val commonSettings = Seq(
     "-language:experimental.macros",
     "-feature",
     "-Ypartial-unification",
-    "-Ypatmat-exhaust-depth", "100",
+    "-Ypatmat-exhaust-depth",
+    "100",
     "-Xmacro-settings:materialize-derivations"
   ),
   resolvers ++= Seq(
-    Resolver.bintrayRepo("bkirwi", "maven"), // Required for `decline` dependency
+    Resolver
+      .bintrayRepo("bkirwi", "maven"), // Required for `decline` dependency
     Resolver.bintrayRepo("azavea", "maven"),
     Resolver.bintrayRepo("azavea", "geotrellis"),
     Resolver.sonatypeRepo("releases"),
@@ -48,17 +50,20 @@ lazy val commonSettings = Seq(
   updateOptions := updateOptions.value.withCachedResolution(true),
   addCompilerPlugin(kindProjector cross CrossVersion.binary),
   addCompilerPlugin(macrosParadise cross CrossVersion.full),
-  shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
+  shellPrompt := { s =>
+    Project.extract(s).currentProject.id + " > "
+  },
   fork in run := true,
   outputStrategy := Some(StdoutOutput),
   test in assembly := {},
   sources in (Compile, doc) := (sources in (Compile, doc)).value,
   assemblyMergeStrategy in assembly := {
-    case "reference.conf" => MergeStrategy.concat
+    case "reference.conf"   => MergeStrategy.concat
     case "application.conf" => MergeStrategy.concat
-    case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") => MergeStrategy.discard
+    case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") =>
+      MergeStrategy.discard
     case "META-INF/MANIFEST.MF" => MergeStrategy.discard
-    case _ => MergeStrategy.first
+    case _                      => MergeStrategy.first
   },
   javaOptions ++= Seq("-Djava.library.path=/usr/local/lib")
 )
@@ -79,16 +84,37 @@ lazy val publishSettings = Seq(
 
 lazy val sonatypeSettings = Seq(
   publishMavenStyle := true,
-
   sonatypeProfileName := "com.azavea",
-  sonatypeProjectHosting := Some(GitHubHosting(user="geotrellis", repository="maml", email="systems@azavea.com")),
-  developers := List(
-    Developer(id = "moradology", name = "Nathan Zimmerman", email = "nzimmerman@azavea.com", url = url("https://github.com/moradology")),
-    Developer(id = "echeipesh", name = "Eugene Cheipesh", email = "echeipesh@azavea.com", url = url("https://github.com/echeipesh")),
-    Developer(id = "pomadchin", name = "Grigory Pomadchin", email = "gpomadchin@azavea.com", url = url("https://github.com/pomadchin"))
+  sonatypeProjectHosting := Some(
+    GitHubHosting(
+      user = "geotrellis",
+      repository = "maml",
+      email = "systems@azavea.com"
+    )
   ),
-  licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
-
+  developers := List(
+    Developer(
+      id = "moradology",
+      name = "Nathan Zimmerman",
+      email = "nzimmerman@azavea.com",
+      url = url("https://github.com/moradology")
+    ),
+    Developer(
+      id = "echeipesh",
+      name = "Eugene Cheipesh",
+      email = "echeipesh@azavea.com",
+      url = url("https://github.com/echeipesh")
+    ),
+    Developer(
+      id = "pomadchin",
+      name = "Grigory Pomadchin",
+      email = "gpomadchin@azavea.com",
+      url = url("https://github.com/pomadchin")
+    )
+  ),
+  licenses := Seq(
+    "Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")
+  ),
   publishTo := sonatypePublishTo.value
 )
 
@@ -99,7 +125,6 @@ lazy val credentialSettings = Seq(
     System.getenv().get("GPG_KEY_ID"),
     "ignored"
   ),
-
   credentials += Credentials(
     "Sonatype Nexus Repository Manager",
     "oss.sonatype.org",
@@ -108,7 +133,8 @@ lazy val credentialSettings = Seq(
   )
 )
 
-lazy val root = project.in(file("."))
+lazy val root = project
+  .in(file("."))
   .settings(moduleName := "root")
   .settings(commonSettings)
   .settings(publishSettings)
@@ -168,7 +194,10 @@ lazy val example = project
       scalatest,
       jaxbApi
     )
-  ).settings(dependencyOverrides += "com.azavea.gdal" % "gdal-warp-bindings" % "33.5523882")
+  )
+  .settings(
+    dependencyOverrides += "com.azavea.gdal" % "gdal-warp-bindings" % "33.5523882"
+  )
 
 lazy val opengis = project
   .enablePlugins(ScalaxbPlugin)
@@ -183,17 +212,22 @@ lazy val opengis = project
     )
   )
   .settings(
-    scalaxbDispatchVersion in (Compile, scalaxb)     := dispatchVer,
-    scalaxbPackageName in (Compile, scalaxb)         := "generated",
+    scalaxbDispatchVersion in (Compile, scalaxb) := dispatchVer,
+    scalaxbPackageName in (Compile, scalaxb) := "generated",
     scalaxbProtocolPackageName in scalaxb in Compile := Some("opengis"),
     scalaxbPackageNames in scalaxb in Compile := Map(
-      uri("http://www.w3.org/1999/xlink")           -> "xlink",
-      uri("http://www.opengis.net/wms")             -> "opengis.wms",
-      uri("http://www.opengis.net/ogc")             -> "opengis.ogc",
-      uri("http://www.opengis.net/wmts/1.0")        -> "opengis.wmts",
-      uri("http://www.opengis.net/ows/1.1")         -> "opengis.ows",
-      uri("http://www.opengis.net/gml")             -> "opengis.gml",
-      uri("http://www.w3.org/2001/SMIL20/")         -> "opengis.gml.smil",
+      uri("http://www.w3.org/1999/xlink") -> "xlink",
+      uri("http://www.opengis.net/wms") -> "opengis.wms",
+      uri("http://www.opengis.net/ogc") -> "opengis.ogc",
+      uri("http://www.opengis.net/wmts/1.0") -> "opengis.wmts",
+      uri("http://www.opengis.net/ows/1.1") -> "opengis.ows",
+      uri("http://www.opengis.net/ows/1.0") -> "opengis.sld.ows",
+      uri("http://www.opengis.net/gml") -> "opengis.gml",
+      uri("http://www.opengis.net/filter") -> "opengis.filter",
+      uri("http://www.opengis.net/se") -> "opengis.se",
+      uri("http://www.opengis.net/sld") -> "opengis.sld",
+      uri("http://www.opengis.net/wfs") -> "opengis.wfs",
+      uri("http://www.w3.org/2001/SMIL20/") -> "opengis.gml.smil",
       uri("http://www.w3.org/2001/SMIL20/Language") -> "opengis.gml.smil"
     )
   )
