@@ -154,11 +154,11 @@ object GetCoverageWcsParams {
               // If the CRS wasn't in the boundingbox parameter, pull it out of the CRS field.
               crsOption match {
                 case Some(crsDesc) =>
-                  CrsUtils.ogcToCRS(crsDesc).map { crs => (id, bbox, crs) }
+                  CRSUtils.ogcToCRS(crsDesc).map { crs => (id, bbox, crs) }
                 case None =>
                   params.validatedParam("crs")
                     .andThen { crsDesc =>
-                      CrsUtils.ogcToCRS(crsDesc).map { crs => (id, bbox, crs) }
+                      CRSUtils.ogcToCRS(crsDesc).map { crs => (id, bbox, crs) }
                     }
               }
             }

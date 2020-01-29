@@ -35,7 +35,7 @@ case class MapAlgebraSourceConf(
       case v: Variable =>
         List(v.name)
       case _ =>
-        subExpr.children.flatMap(eval(_))
+        subExpr.children.flatMap(eval)
     }
     eval(expr)
   }
@@ -52,7 +52,7 @@ case class MapAlgebraSourceConf(
         throw new Exception(
           s"MAML Layer expected but was unable to find the simple layer '$name', make sure all required layers are in the server configuration and are correctly spelled there and in all provided MAML")
       }
-      (name -> layerSrc.source)
+      name -> layerSrc.source
     }
     MapAlgebraSource(name, title, sourceList.toMap, algebra, styles.map(_.toStyle))
   }

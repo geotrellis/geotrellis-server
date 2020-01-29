@@ -1,31 +1,27 @@
-package geotrellis.server.ogc.wcs.ops
+package geotrellis.server.ogc.wcs
 
-import geotrellis.server._
-import geotrellis.server.ogc._
-import geotrellis.server.ogc.wcs._
-import geotrellis.server.ogc.wcs.params.GetCoverageWcsParams
-
-import com.azavea.maml.eval._
-import com.azavea.maml.error._
 import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.raster.io.geotiff._
-import com.typesafe.scalalogging.LazyLogging
+import geotrellis.server._
+import geotrellis.server.ogc._
+import geotrellis.server.ogc.wcs.params.GetCoverageWcsParams
 
-import com.github.blemale.scaffeine.{Cache, Scaffeine}
-import cats._
-import cats.effect._
+import com.azavea.maml.error._
+import com.azavea.maml.eval._
 import cats.data.Validated._
-import cats.data.{NonEmptyList => NEL}
+import cats.effect._
+import com.github.blemale.scaffeine.{Cache, Scaffeine}
+import com.typesafe.scalalogging.LazyLogging
 
 import scala.concurrent.duration._
 
 class GetCoverage(wcsModel: WcsModel) extends LazyLogging {
 
-  /*
-  QGIS appears to sample WCS service by placing low and high resolution requests at coverage center.
-  These sampling requests happen for every actual WCS request, we can get really great cache hit rates.
-  */
+  /**
+   * QGIS appears to sample WCS service by placing low and high resolution requests at coverage center.
+   * These sampling requests happen for every actual WCS request, we can get really great cache hit rates.
+   */
   lazy val requestCache: Cache[GetCoverageWcsParams, Array[Byte]] =
       Scaffeine()
         .recordStats()

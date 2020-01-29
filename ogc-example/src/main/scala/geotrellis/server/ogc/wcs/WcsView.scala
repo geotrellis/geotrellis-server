@@ -1,25 +1,15 @@
 package geotrellis.server.ogc.wcs
 
 import geotrellis.server.ogc.wcs.params._
-import geotrellis.server.ogc.wcs.ops._
-import geotrellis.server.ogc._
-
-import geotrellis.raster.histogram.Histogram
-import geotrellis.layer._
-import geotrellis.proj4._
-import geotrellis.raster.render.{ColorMap, ColorRamp, Png}
-import geotrellis.raster._
 
 import com.typesafe.scalalogging.LazyLogging
-import scalaxb.CanWriteXML
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
 import org.http4s.scalaxml._
-import org.http4s._, org.http4s.dsl.io._, org.http4s.implicits._
-import cats._, cats.implicits._
+import org.http4s._
+import org.http4s.dsl.io._
 import cats.effect._
 import cats.data.Validated
 
-import java.io.File
 import java.net._
 
 class WcsView(wcsModel: WcsModel, serviceUrl: URL) extends LazyLogging {
@@ -45,23 +35,15 @@ class WcsView(wcsModel: WcsModel, serviceUrl: URL) extends LazyLogging {
       case Validated.Valid(wcsParams) =>
         wcsParams match {
           case p: GetCapabilitiesWcsParams =>
-            logger.debug(ansi"%bold{GetCapabilities: $serviceUrl}")
-            val result = Operations.getCapabilities(serviceUrl.toString, wcsModel, p)
-            logger.debug(result.toString)
-            Ok(result)
+            println(ansi"%bold{GetCapabilities: $serviceUrl}")
+            Ok(new CapabilitiesView(wcsModel, serviceUrl).toXML)
 
           case p: DescribeCoverageWcsParams =>
-            logger.debug(ansi"%bold{DescribeCoverage: ${req.uri}}")
-            for {
-              describeCoverage <- IO { Operations.describeCoverage(wcsModel, p) }.attempt
-              result <- handleError(describeCoverage)
-            } yield {
-              logger.debug("describecoverage result", result)
-              result
-            }
+            println(ansi"%bold{DescribeCoverage: ${req.uri}}")
+            Ok(CoverageView(wcsModel, serviceUrl, p).toXML)
 
           case p: GetCoverageWcsParams =>
-            logger.debug(ansi"%bold{GetCoverage: ${req.uri}}")
+            println(ansi"%bold{GetCoverage: ${req.uri}}")
             for {
               getCoverage <- IO { getCoverage.build(p) }.attempt
               result <- handleError(getCoverage)

@@ -17,7 +17,6 @@ import scala.xml.{Elem, NodeSeq}
   *
   * @param model Model of layers we can report
   * @param serviceUrl URL where this service can be reached with addition of `?request=` query parameter
-  * @param defaultCrs Common CRS, all layers must be available in at least this CRS
   */
 class CapabilitiesView(
   model: WmsModel,

@@ -8,7 +8,7 @@ import geotrellis.proj4._
 
 import scala.util.Try
 
-object CrsUtils {
+object CRSUtils {
   /** Converts an OGC URN string representing a CRS into a [[geotrellis.proj4.CRS]] instance.
     * TODO: Move this into geotrellis.proj4 (or future geotrellis.crs)
     */

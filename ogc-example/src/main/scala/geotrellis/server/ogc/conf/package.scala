@@ -1,25 +1,32 @@
 package geotrellis.server.ogc
 
 import geotrellis.server.ogc.wms.wmsScope
-
 import geotrellis.proj4.CRS
 import geotrellis.vector.Extent
 import geotrellis.raster.TileLayout
 import geotrellis.raster.render.{ColorMap, ColorRamp}
+
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
-import com.typesafe.config.{ConfigValue, ConfigRenderOptions}
-
+import com.typesafe.config.{ConfigRenderOptions, ConfigValue}
 import io.circe._
 import io.circe.parser._
 import pureconfig._
 import pureconfig.error.CannotConvert
+import pureconfig.generic.FieldCoproductHint
 import pureconfig.generic.auto._
 
 import scala.util.Try
 
 /** A grab bag of [[ConfigReader]] instances necessary to read the configuration */
 package object conf {
+  /** Starting 0.11.0 https://github.com/pureconfig/pureconfig/blob/bfc74ce436297b2a9da091e04d362be61108a3cf/CHANGELOG.md#0110-may-9-2019
+   * The default transformation in FieldCoproductHint changed
+   * from converting class names to lower case to converting them to kebab case.
+   */
+  implicit def coproductHint[T] = new FieldCoproductHint[T]("type") {
+    override def fieldValue(name: String): String = name.toLowerCase
+  }
 
   implicit def circeJsonReader: ConfigReader[Json] =
     ConfigReader[ConfigValue].emap { cv =>

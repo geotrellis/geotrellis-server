@@ -196,7 +196,7 @@ lazy val example = project
     )
   )
   .settings(
-    dependencyOverrides += "com.azavea.gdal" % "gdal-warp-bindings" % "33.5523882"
+    dependencyOverrides += "com.azavea.gdal" % "gdal-warp-bindings" % "33.60a6918"
   )
 
 lazy val opengis = project
@@ -222,6 +222,7 @@ lazy val opengis = project
       uri("http://www.opengis.net/wmts/1.0") -> "opengis.wmts",
       uri("http://www.opengis.net/ows/1.1") -> "opengis.ows",
       uri("http://www.opengis.net/ows/1.0") -> "opengis.sld.ows",
+      uri("http://www.opengis.net/wcs/1.1.1") -> "opengis.wcs",
       uri("http://www.opengis.net/gml") -> "opengis.gml",
       uri("http://www.opengis.net/filter") -> "opengis.filter",
       uri("http://www.opengis.net/se") -> "opengis.se",
@@ -317,5 +318,6 @@ lazy val stac = project
 
 lazy val bench = project
   .dependsOn(core)
+  .settings(commonSettings)
   .settings(noPublishSettings)
   .enablePlugins(JmhPlugin)
