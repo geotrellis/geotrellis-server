@@ -61,8 +61,8 @@ class WcsView(wcsModel: WcsModel, serviceUrl: URL) extends LazyLogging {
           case p: GetCoverageWcsParams =>
             logger.debug(ansi"%bold{GetCoverage: ${req.uri}}")
             for {
-              getCoverage <- IO { getCoverage.build(p) }.attempt
-              result <- handleError(getCoverage)
+              getCoverage <- getCoverage.build(p).attempt
+              result      <- handleError(getCoverage)
             } yield {
               logger.debug("getcoverage result", result)
               result

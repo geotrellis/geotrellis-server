@@ -4,10 +4,12 @@ import geotrellis.raster._
 import geotrellis.raster.io.geotiff._
 import geotrellis.server._
 import geotrellis.server.ogc._
+
 import com.azavea.maml.error._
 import com.azavea.maml.eval._
 import cats.data.Validated._
 import cats.effect._
+import cats.syntax.flatMap._
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
 import com.typesafe.scalalogging.LazyLogging
 
@@ -26,12 +28,13 @@ class GetCoverage(wcsModel: WcsModel) extends LazyLogging {
         .maximumSize(32)
         .build()
 
-  def build(params: GetCoverageWcsParams)(implicit contextShift: ContextShift[IO]): Array[Byte] =
-    requestCache.getIfPresent(params) match {
+  def build(params: GetCoverageWcsParams)(implicit cs: ContextShift[IO]): IO[Array[Byte]] = {
+    IO { requestCache.getIfPresent(params) } >>= {
       case Some(bytes) =>
         logger.trace(s"GetCoverage cache HIT: $params")
-        bytes
-      case None =>
+        IO.pure(bytes)
+
+      case _ =>
         logger.trace(s"GetCoverage cache MISS: $params")
         val src = wcsModel.sourceLookup(params.identifier)
         val re = params.gridExtent
@@ -43,8 +46,7 @@ class GetCoverage(wcsModel: WcsModel) extends LazyLogging {
             LayerExtent(IO.pure(algebra), IO.pure(simpleLayers), ConcurrentInterpreter.DEFAULT)
         }
 
-        // TODO: Return IO instead
-        eval(re.extent, re.cellSize).unsafeRunSync match {
+        eval(re.extent, re.cellSize) map {
           case Valid(mbtile) =>
             val bytes = GeoTiff(Raster(mbtile, re.extent), params.crs).toByteArray
             requestCache.put(params, bytes)
@@ -52,4 +54,5 @@ class GetCoverage(wcsModel: WcsModel) extends LazyLogging {
           case Invalid(errs) => throw MamlException(errs)
         }
     }
+  }
 }
