@@ -2,7 +2,7 @@ package geotrellis.server.ogc.conf
 
 import geotrellis.raster._
 import geotrellis.raster.geotiff.GeoTiffRasterSource
-import geotrellis.store.{GeoTrellisPath, GeoTrellisRasterSource}
+import geotrellis.store.{GeoTrellisPath, GeoTrellisRasterSourceLegacy}
 
 /**
  * Encodes an expectation that implementing classes be able to realize
@@ -19,7 +19,7 @@ case class GeoTrellis(
   zoom: Int,
   bandCount: Int
 ) extends RasterSourceConf {
-  def toRasterSource = new GeoTrellisRasterSource(GeoTrellisPath(catalogUri, layer, Some(zoom), Some(bandCount)))
+  def toRasterSource = new GeoTrellisRasterSourceLegacy(GeoTrellisPath(catalogUri, layer, Some(zoom), Some(bandCount)))
 }
 
 /** A geotiff (COG) raster source */

@@ -123,7 +123,7 @@ object DescribeCoverageWcsParams {
 object GetCoverageWcsParams {
   private def getBboxAndCrsOption(params: ParamMap, field: String): ValidatedNel[WcsParamsError, (Vector[Double], Option[String])] =
     params.validatedParam[(Vector[Double], Option[String])](field, { bboxStr =>
-      // Usually the CRS is a 5th element in the bbox param.
+      // Usually the CRS is the 5th element in the bbox param.
       try {
         val v = bboxStr.split(",").toVector
         if(v.length == 4) Some((v.map(_.toDouble), None))
@@ -141,7 +141,7 @@ object GetCoverageWcsParams {
     versionParam
       .andThen { version: String =>
         // Collected the bbox, id, and possibly the CRS in one shot.
-        // This is beause the boundingbox param could contain the CRS as a 5th element.
+        // This is because the boundingbox param could contain the CRS as the 5th element.
         val idAndBboxAndCrsOption = {
           val identifier =
             params.validatedParam("identifier")
