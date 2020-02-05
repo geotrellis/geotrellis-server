@@ -35,14 +35,14 @@ class CapabilitiesView(
         ServiceTypeVersion = "1.0.0" :: Nil
       )
 
-    val contact = wmtsModel.serviceMetadata.provider.contact.map({ contact: ResponsiblePartySubset =>
+    val contact = wmtsModel.serviceMetadata.provider.contact.map { contact: ResponsiblePartySubset =>
       ResponsiblePartySubsetType(
         IndividualName = contact.name,
         PositionName = contact.position,
         ContactInfo = None,
         Role = contact.role.map(CodeType(_, Map()))
       )
-    }).getOrElse(ResponsiblePartySubsetType())
+    }.getOrElse(ResponsiblePartySubsetType())
 
     val serviceProvider =
       ServiceProvider(

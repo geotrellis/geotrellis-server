@@ -1,6 +1,5 @@
 package geotrellis.server.ogc.wcs
 
-import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.raster.io.geotiff._
 import geotrellis.server._
@@ -37,24 +36,22 @@ class GetCoverage(wcsModel: WcsModel) extends LazyLogging {
       case None =>
         logger.trace(s"GetCoverage cache MISS: $params")
         val src = wcsModel.sourceLookup(params.identifier)
-        val re = RasterExtent(params.boundingBox, params.width, params.height)
-
+        val re = params.gridExtent
         val eval = src match {
           case SimpleSource(name, title, source, styles) =>
-            LayerExtent.identity(SimpleOgcLayer(name, title, LatLng, source, None))
+            LayerExtent.identity(SimpleOgcLayer(name, title, params.crs, source, None))
           case MapAlgebraSource(name, title, sources, algebra, styles) =>
-            val simpleLayers = sources.mapValues { rs => SimpleOgcLayer(name, title, LatLng, rs, None) }
+            val simpleLayers = sources.mapValues { rs => SimpleOgcLayer(name, title, params.crs, rs, None) }
             LayerExtent(IO.pure(algebra), IO.pure(simpleLayers), ConcurrentInterpreter.DEFAULT)
         }
 
         // TODO: Return IO instead
         eval(re.extent, re.cellSize).unsafeRunSync match {
           case Valid(mbtile) =>
-            val bytes = GeoTiff(Raster(mbtile, re.extent), LatLng).toByteArray
+            val bytes = GeoTiff(Raster(mbtile, re.extent), params.crs).toByteArray
             requestCache.put(params, bytes)
             bytes
-          case Invalid(errs) =>
-            throw new MamlException(errs)
+          case Invalid(errs) => throw MamlException(errs)
         }
     }
 }

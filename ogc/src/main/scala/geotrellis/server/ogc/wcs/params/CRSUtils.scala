@@ -1,10 +1,8 @@
 package geotrellis.server.ogc.wcs.params
 
-import cats._
-import cats.implicits._
-import cats.data.{NonEmptyList, Validated, ValidatedNel}
-import Validated._
 import geotrellis.proj4._
+import cats.data.{Validated, ValidatedNel}
+import Validated._
 
 import scala.util.Try
 
@@ -16,7 +14,7 @@ object CRSUtils {
     val code = crsDesc.trim.toLowerCase
     if(code == "wgs84(dd)") {
       Valid(LatLng).toValidatedNel
-    } else if(code.startsWith("urn:ogc:def:crs:EPSG::")) {
+    } else if(code.startsWith("urn:ogc:def:crs:epsg::")) {
       Try(
         CRS.fromEpsgCode(code.split("::")(1).toInt)
       ).toOption match {

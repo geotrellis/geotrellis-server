@@ -1,5 +1,6 @@
 package geotrellis.server.ogc
 
+import geotrellis.vector.Extent
 import scala.xml.NamespaceBinding
 
 package object wcs {
@@ -19,4 +20,13 @@ package object wcs {
     Some("xlink") -> "http://www.w3.org/1999/xlink",
     Some("xsi") -> "http://www.w3.org/2001/XMLSchema-instance"
   )
+
+  implicit class ExtentOps(self: Extent) {
+    def swapXY: Extent = Extent(
+      xmin = self.ymin,
+      ymin = self.xmin,
+      xmax = self.ymax,
+      ymax = self.xmax
+    )
+  }
 }

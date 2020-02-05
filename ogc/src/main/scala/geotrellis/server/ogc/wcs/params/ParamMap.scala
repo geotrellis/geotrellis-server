@@ -1,6 +1,5 @@
 package geotrellis.server.ogc.wcs.params
 
-import cats._
 import cats.implicits._
 import cats.data.{Validated, ValidatedNel}
 import Validated._
