@@ -2,3 +2,5 @@
 -J-Xms1G
 -J-Xss2M
 -Djava.awt.headless=true
+-Dsbt.color=always
+-Dsbt.supershell=false
