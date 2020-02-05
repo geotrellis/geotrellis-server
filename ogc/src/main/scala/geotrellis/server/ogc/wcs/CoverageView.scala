@@ -1,11 +1,9 @@
 package geotrellis.server.ogc.wcs
 
-import geotrellis.server.ogc.wcs.params.DescribeCoverageWcsParams
 import geotrellis.proj4.LatLng
 import geotrellis.raster.reproject.ReprojectRasterExtent
 import geotrellis.raster.{Dimensions, GridExtent}
 import geotrellis.server.ogc.{MapAlgebraSource, OgcSource, SimpleSource, URN}
-
 import cats.syntax.option._
 import opengis.ows._
 import opengis.wcs._
@@ -136,7 +134,7 @@ object CoverageView {
         new URI(URN.unsafeFromCrs(nativeCrs)) ::
         new URI(URN.unsafeFromCrs(LatLng)) ::
         new URI("urn:ogc:def:crs:OGC::imageCRS") :: Nil,
-      SupportedFormat = "image/GeoTIFF" :: "image/JPEG" :: "image/PNG" :: Nil
+      SupportedFormat = "image/geotiff" :: "image/jpeg" :: "image/png" :: Nil
     )
   }
 

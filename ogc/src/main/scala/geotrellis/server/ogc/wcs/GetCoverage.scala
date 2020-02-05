@@ -4,8 +4,6 @@ import geotrellis.raster._
 import geotrellis.raster.io.geotiff._
 import geotrellis.server._
 import geotrellis.server.ogc._
-import geotrellis.server.ogc.wcs.params.GetCoverageWcsParams
-
 import com.azavea.maml.error._
 import com.azavea.maml.eval._
 import cats.data.Validated._

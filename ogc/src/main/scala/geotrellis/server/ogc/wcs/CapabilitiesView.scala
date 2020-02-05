@@ -229,7 +229,7 @@ object CapabilitiesView {
           new URI(URN.unsafeFromCrs(crs)) ::
           new URI(URN.unsafeFromCrs(LatLng)) ::
           new URI("urn:ogc:def:crs:OGC::imageCRS") :: Nil,
-        SupportedFormat = "image/GeoTIFF" :: "image/JPEG" :: "image/PNG" :: Nil,
+        SupportedFormat = "image/geotiff" :: "image/jpeg" :: "image/png" :: Nil,
         coveragesummarytypeoption = DataRecord(None, "Identifier".some, identifier)
       )
     }.toList

@@ -1,14 +1,16 @@
-package geotrellis.server.ogc.wcs.params
+package geotrellis.server.ogc.wcs
 
-import geotrellis.server.ogc.wcs._
-import geotrellis.server.ogc.OutputFormat
-import geotrellis.raster.{CellSize, GridExtent}
 import geotrellis.proj4.CRS
+import geotrellis.raster.{CellSize, GridExtent}
+import geotrellis.server.ogc.OutputFormat
+import geotrellis.server.ogc.params.ParamError.UnsupportedFormatError
+import geotrellis.server.ogc.params._
 import geotrellis.vector.Extent
 
-import cats.syntax.apply._
-import cats.data.{NonEmptyList, Validated, ValidatedNel}
 import cats.data.Validated._
+import cats.data.{NonEmptyList, Validated, ValidatedNel}
+import cats.syntax.apply._
+import cats.syntax.option._
 
 import scala.util.Try
 import java.net.URI
@@ -75,7 +77,7 @@ case class GetCoverageWcsParams(
 
 object WcsParams {
   /** Defines valid request types, and the WcsParams to build from them. */
-  private val requestMap: Map[String, ParamMap => ValidatedNel[WcsParamsError, WcsParams]] =
+  private val requestMap: Map[String, ParamMap => ValidatedNel[ParamError, WcsParams]] =
     Map(
       "getcapabilities"  -> GetCapabilitiesWcsParams.build,
       "describecoverage" -> DescribeCoverageWcsParams.build,
@@ -84,11 +86,11 @@ object WcsParams {
 
   private val validRequests = requestMap.keys.toSet
 
-  def apply(queryParams: Map[String, Seq[String]]): ValidatedNel[WcsParamsError, WcsParams] = {
+  def apply(queryParams: Map[String, Seq[String]]): ValidatedNel[ParamError, WcsParams] = {
     val params = ParamMap(queryParams)
 
-    val serviceParam = params.validatedParam("service", validValues=Set("wcs"))
-    val requestParam = params.validatedParam("request", validValues=validRequests)
+    val serviceParam = params.validatedParam("service", validValues = Set("wcs"))
+    val requestParam = params.validatedParam("request", validValues = validRequests)
     val firstStageValidation = (serviceParam, requestParam).mapN { case (_, b) => b }
 
     firstStageValidation
@@ -98,16 +100,15 @@ object WcsParams {
 }
 
 object GetCapabilitiesWcsParams {
-  def build(params: ParamMap): ValidatedNel[WcsParamsError, WcsParams] = {
-    val versionParam = params.validatedVersion
+  def build(params: ParamMap): ValidatedNel[ParamError, WcsParams] = {
+    val versionParam = params.validatedVersion("1.1.1")
     versionParam.map { version: String => GetCapabilitiesWcsParams(version) }
   }
 }
 
 object DescribeCoverageWcsParams {
-  def build(params: ParamMap): ValidatedNel[WcsParamsError, WcsParams] = {
-    val versionParam =
-      params.validatedVersion
+  def build(params: ParamMap): ValidatedNel[ParamError, WcsParams] = {
+    val versionParam = params.validatedVersion("1.1.1")
 
     versionParam
       .andThen { version: String =>
@@ -121,22 +122,21 @@ object DescribeCoverageWcsParams {
 }
 
 object GetCoverageWcsParams {
-  private def getBboxAndCrsOption(params: ParamMap, field: String): ValidatedNel[WcsParamsError, (Vector[Double], Option[String])] =
+  private def getBboxAndCrsOption(params: ParamMap, field: String): ValidatedNel[ParamError, (Vector[Double], Option[String])] =
     params.validatedParam[(Vector[Double], Option[String])](field, { bboxStr =>
       // Usually the CRS is the 5th element in the bbox param.
       try {
         val v = bboxStr.split(",").toVector
-        if(v.length == 4) Some((v.map(_.toDouble), None))
-        else if(v.length == 5) Some((v.take(4).map(_.toDouble), Some(v.last)))
+        if(v.length == 4) (v.map(_.toDouble), None).some
+        else if(v.length == 5) (v.take(4).map(_.toDouble), v.last.some).some
         else None
       } catch {
         case _: Throwable => None
       }
     })
 
-  private[params] def build(params: ParamMap): ValidatedNel[WcsParamsError, WcsParams] = {
-    val versionParam =
-      params.validatedVersion
+  def build(params: ParamMap): ValidatedNel[ParamError, WcsParams] = {
+    val versionParam = params.validatedVersion("1.1.1")
 
     versionParam
       .andThen { version: String =>
@@ -157,7 +157,7 @@ object GetCoverageWcsParams {
         val gridBaseCRS = params.validatedParam("gridbasecrs").andThen(CRSUtils.ogcToCRS)
 
         // Transform the OGC urn CRS code into a CRS.
-        val idAndBboxAndCrs: Validated[NonEmptyList[WcsParamsError], (String, Vector[Double], CRS)] =
+        val idAndBboxAndCrs: Validated[NonEmptyList[ParamError], (String, Vector[Double], CRS)] =
           idAndBboxAndCrsOption
             .andThen { case (id, bbox, crsOption) =>
               // If the CRS wasn't in the boundingbox parameter, pull it out of the CRS field.
