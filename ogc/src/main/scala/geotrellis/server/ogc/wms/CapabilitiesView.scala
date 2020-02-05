@@ -6,6 +6,7 @@ import geotrellis.proj4.{CRS, LatLng}
 import geotrellis.raster.CellSize
 import geotrellis.vector.Extent
 
+import cats.syntax.option._
 import opengis.wms._
 import opengis._
 import scalaxb._
@@ -22,51 +23,48 @@ class CapabilitiesView(
   model: WmsModel,
   serviceUrl: URL
 ) {
+  import CapabilitiesView._
 
   def toXML: Elem = {
-    import CapabilitiesView._
-
     val capability = {
       val getCapabilities = OperationType(
         Format = List("text/xml"),
         DCPType = List(DCPType(
           HTTP(Get = Get(OnlineResource(Map(
-            "@{http://www.w3.org/1999/xlink}href" -> scalaxb.DataRecord(serviceUrl.toURI),
-            "@{http://www.w3.org/1999/xlink}type" -> scalaxb.DataRecord(xlink.Simple: xlink.TypeType)))))
+            "@{http://www.w3.org/1999/xlink}href" -> DataRecord(serviceUrl.toURI),
+            "@{http://www.w3.org/1999/xlink}type" -> DataRecord(xlink.Simple: xlink.TypeType)))))
         )))
 
       val getMap = OperationType(
         Format = List("image/png", "image/jpeg"),
         DCPType = List(DCPType(
           HTTP(Get = Get(OnlineResource(Map(
-            "@{http://www.w3.org/1999/xlink}href" -> scalaxb.DataRecord(serviceUrl.toURI),
-            "@{http://www.w3.org/1999/xlink}type" -> scalaxb.DataRecord(xlink.Simple: xlink.TypeType)))))
+            "@{http://www.w3.org/1999/xlink}href" -> DataRecord(serviceUrl.toURI),
+            "@{http://www.w3.org/1999/xlink}type" -> DataRecord(xlink.Simple: xlink.TypeType)))))
         )))
 
       Capability(
         Request = Request(GetCapabilities = getCapabilities, GetMap = getMap, GetFeatureInfo = None),
         Exception = Exception(List("XML", "INIMAGE", "BLANK")),
-        Layer = Some(modelAsLayer(model.parentLayerMeta, model))
+        Layer = modelAsLayer(model.parentLayerMeta, model).some
       )
     }
 
-    val ret: NodeSeq = scalaxb.toXML[opengis.wms.WMS_Capabilities](
-      obj = WMS_Capabilities(model.serviceMeta, capability, Map("@version" -> scalaxb.DataRecord("1.3.0"))),
+    scalaxb.toXML[opengis.wms.WMS_Capabilities](
+      obj = WMS_Capabilities(model.serviceMeta, capability, Map("@version" -> DataRecord("1.3.0"))),
       namespace = None,
-      elementLabel = Some("WMS_Capabilities"),
+      elementLabel = "WMS_Capabilities".some,
       scope = constrainedWMSScope,
       typeAttribute = false
-    )
-
-    ret.asInstanceOf[scala.xml.Elem]
+    ).asInstanceOf[scala.xml.Elem]
   }
 }
 
 object CapabilitiesView {
-  implicit def toRecord[T: CanWriteXML](t: T): scalaxb.DataRecord[T] = scalaxb.DataRecord(t)
+  implicit def toRecord[T: CanWriteXML](t: T): DataRecord[T] = DataRecord(t)
 
-  def boundingBox(crs: CRS, extent: Extent, cellSize: CellSize): BoundingBox = {
-    if (crs == LatLng) {
+  def boundingBox(crs: CRS, extent: Extent, cellSize: CellSize): BoundingBox =
+    if (crs == LatLng)
       BoundingBox(Map(
         "@CRS" -> s"EPSG:${crs.epsgCode.get}",
         "@minx" -> extent.ymin,
@@ -76,7 +74,7 @@ object CapabilitiesView {
         "@resx" -> cellSize.width,
         "@resy" -> cellSize.height
       ))
-    } else {
+    else
       BoundingBox(Map(
         "@CRS" -> s"EPSG:${crs.epsgCode.get}",
         "@minx" -> extent.xmin,
@@ -86,8 +84,6 @@ object CapabilitiesView {
         "@resx" -> cellSize.width,
         "@resy" -> cellSize.height
       ))
-    }
-  }
 
   implicit class StyleMethods(val style: OgcStyle) {
     def render(): Style =
@@ -127,16 +123,16 @@ object CapabilitiesView {
         MinScaleDenominator = None,
         MaxScaleDenominator = None,
         Layer = Nil,
-        attributes = Map("@queryable" -> scalaxb.DataRecord(false))
+        attributes = Map("@queryable" -> DataRecord(false))
       )
     }
   }
 
   def modelAsLayer(parentLayerMeta: WmsParentLayerMeta, model: WmsModel): Layer = {
     Layer(
-      Name = parentLayerMeta.name,
-      Title = parentLayerMeta.title,
-      Abstract = parentLayerMeta.description,
+      Name        = parentLayerMeta.name,
+      Title       = parentLayerMeta.title,
+      Abstract    = parentLayerMeta.description,
       KeywordList = None,
       // All layers are avail at least at this CRS
       // All sublayers would have metadata in this CRS + its own
@@ -155,19 +151,19 @@ object CapabilitiesView {
         Some(EX_GeographicBoundingBox(llExtent.xmin, llExtent.xmax, llExtent.ymin, llExtent.ymax))
       },
       // TODO: bounding box for global layer
-      BoundingBox = Nil,
-      Dimension = Nil,
-      Attribution = None,
-      AuthorityURL = Nil,
-      Identifier = Nil,
-      MetadataURL = Nil,
-      DataURL = Nil,
-      FeatureListURL = Nil,
-      Style = Nil,
+      BoundingBox         = Nil,
+      Dimension           = Nil,
+      Attribution         = None,
+      AuthorityURL        = Nil,
+      Identifier          = Nil,
+      MetadataURL         = Nil,
+      DataURL             = Nil,
+      FeatureListURL      = Nil,
+      Style               = Nil,
       MinScaleDenominator = None,
       MaxScaleDenominator = None,
       Layer = model.sourceLookup.map { case (name, src) => src.toLayer(name, parentLayerMeta.supportedProjections) }.toSeq,
-      attributes = Map("@queryable" -> scalaxb.DataRecord(false))
+      attributes = Map("@queryable" -> DataRecord(false))
     )
   }
 }

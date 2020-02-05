@@ -6,8 +6,14 @@ import geotrellis.vector.Extent
 import geotrellis.raster.reproject._
 import geotrellis.proj4.LatLng
 
+import cats.syntax.option._
+import opengis.ows._
+import opengis.wmts._
+import opengis._
+import scalaxb._
+
 import java.net.{URI, URL}
-import scala.xml.{Elem, NodeSeq}
+import scala.xml.Elem
 
 /**
   *
@@ -18,99 +24,94 @@ class CapabilitiesView(
   wmtsModel: WmtsModel,
   serviceUrl: URL
 ) {
-  import opengis.ows._
-  import opengis.wmts._
-  import opengis._
-  import scalaxb._
+  import CapabilitiesView._
 
   def toXML: Elem = {
-    import CapabilitiesView._
-
     val serviceIdentification =
       ServiceIdentification(
-        Title = LanguageStringType(wmtsModel.serviceMetadata.identification.title) :: Nil,
-        Abstract = LanguageStringType(wmtsModel.serviceMetadata.identification.description) :: Nil,
-        Keywords = KeywordsType(wmtsModel.serviceMetadata.identification.keywords.map(LanguageStringType(_)), None) :: Nil,
-        ServiceType = CodeType("OGC WMTS"),
+        Title              = LanguageStringType(wmtsModel.serviceMetadata.identification.title) :: Nil,
+        Abstract           = LanguageStringType(wmtsModel.serviceMetadata.identification.description) :: Nil,
+        Keywords           = KeywordsType(wmtsModel.serviceMetadata.identification.keywords.map(LanguageStringType(_)), None) :: Nil,
+        ServiceType        = CodeType("OGC WMTS"),
         ServiceTypeVersion = "1.0.0" :: Nil
       )
 
     val contact = wmtsModel.serviceMetadata.provider.contact.map { contact: ResponsiblePartySubset =>
       ResponsiblePartySubsetType(
         IndividualName = contact.name,
-        PositionName = contact.position,
-        ContactInfo = None,
-        Role = contact.role.map(CodeType(_, Map()))
+        PositionName   = contact.position,
+        ContactInfo    = None,
+        Role           = contact.role.map(CodeType(_, Map()))
       )
     }.getOrElse(ResponsiblePartySubsetType())
 
     val serviceProvider =
       ServiceProvider(
-        ProviderName = wmtsModel.serviceMetadata.provider.name,
+        ProviderName   = wmtsModel.serviceMetadata.provider.name,
         ServiceContact = contact
       )
 
     val operationsMetadata = {
       val getCapabilities = Operation(
         DCP = DCP(
-          scalaxb.DataRecord(
-            Some("ows"),
-            Some("ows:HTTP"),
-            HTTP(scalaxb.DataRecord(
-              Some("ows"),
-              Some("ows:Get"),
+          DataRecord(
+            "ows".some,
+            "ows:HTTP".some,
+            HTTP(DataRecord(
+              "ows".some,
+              "ows:Get".some,
               RequestMethodType(
                 Constraint = DomainType(
-                  possibleValuesOption1 = scalaxb.DataRecord(
-                    Some("ows"),
-                    Some("ows:AllowedValues"),
+                  possibleValuesOption1 = DataRecord(
+                    "ows".some,
+                    "ows:AllowedValues".some,
                     AllowedValues(
-                      scalaxb.DataRecord(
-                        Some("ows"),
-                        Some("ows:Value"),
+                      DataRecord(
+                        "ows".some,
+                        "ows:Value".some,
                         ValueType("KVP")
                       ) :: Nil
                     )
                   ),
-                  attributes = Map("@name" -> scalaxb.DataRecord("GetEncoding"))
+                  attributes = Map("@name" -> DataRecord("GetEncoding"))
                 ) :: Nil,
-                attributes = Map("@{http://www.w3.org/1999/xlink}href" -> scalaxb.DataRecord(serviceUrl.toURI))
+                attributes = Map("@{http://www.w3.org/1999/xlink}href" -> DataRecord(serviceUrl.toURI))
               )) :: Nil)
           )
         ) :: Nil,
-        attributes = Map("@name" -> scalaxb.DataRecord("GetCapabilities"))
+        attributes = Map("@name" -> DataRecord("GetCapabilities"))
       )
 
       val getTile = Operation(
         DCP = DCP(
-          scalaxb.DataRecord(
-            Some("ows"),
-            Some("ows:HTTP"),
-            HTTP(scalaxb.DataRecord(
-              Some("ows"),
-              Some("ows:Get"),
+          DataRecord(
+            "ows".some,
+            "ows:HTTP".some,
+            HTTP(DataRecord(
+              "ows".some,
+              "ows:Get".some,
               RequestMethodType(
-                attributes = Map("@{http://www.w3.org/1999/xlink}href" -> scalaxb.DataRecord(serviceUrl.toURI))
+                attributes = Map("@{http://www.w3.org/1999/xlink}href" -> DataRecord(serviceUrl.toURI))
               )) :: Nil)
           )
         ) :: Nil,
-        attributes = Map("@name" -> scalaxb.DataRecord("GetTile"))
+        attributes = Map("@name" -> DataRecord("GetTile"))
       )
 
       val getFeatureInfo = Operation(
         DCP = DCP(
-          scalaxb.DataRecord(
-            Some("ows"),
-            Some("ows:HTTP"),
-            HTTP(scalaxb.DataRecord(
-              Some("ows"),
-              Some("ows:Get"),
+          DataRecord(
+            "ows".some,
+            "ows:HTTP".some,
+            HTTP(DataRecord(
+              "ows".some,
+              "ows:Get".some,
               RequestMethodType(
-                attributes = Map("@{http://www.w3.org/1999/xlink}href" -> scalaxb.DataRecord(serviceUrl.toURI))
+                attributes = Map("@{http://www.w3.org/1999/xlink}href" -> DataRecord(serviceUrl.toURI))
               )) :: Nil)
           )
         ) :: Nil,
-        attributes = Map("@name" -> scalaxb.DataRecord("GetFeatureInfo"))
+        attributes = Map("@name" -> DataRecord("GetFeatureInfo"))
       )
 
       OperationsMetadata(
@@ -127,37 +128,30 @@ class CapabilitiesView(
       TileMatrixSet = tileMatrixSets
     )
 
-    val ret: NodeSeq = scalaxb.toXML[opengis.wmts.Capabilities](
+    scalaxb.toXML[opengis.wmts.Capabilities](
       obj = Capabilities(
-        ServiceIdentification = Some(serviceIdentification),
-        ServiceProvider       = Some(serviceProvider),
-        OperationsMetadata    = Some(operationsMetadata),
-        Contents              = Some(contents),
-        attributes            = Map("@version" -> scalaxb.DataRecord("1.0.0"))
+        ServiceIdentification = serviceIdentification.some,
+        ServiceProvider       = serviceProvider.some,
+        OperationsMetadata    = operationsMetadata.some,
+        Contents              = contents.some,
+        attributes            = Map("@version" -> DataRecord("1.0.0"))
       ),
-      namespace = None,
-      elementLabel = Some("Capabilities"),
-      scope = constrainedWMTSScope,
+      namespace     = None,
+      elementLabel  = "Capabilities".some,
+      scope         = constrainedWMTSScope,
       typeAttribute = false
-    )
-
-    ret.asInstanceOf[scala.xml.Elem]
+    ).asInstanceOf[scala.xml.Elem]
   }
 }
 
 object CapabilitiesView {
-  import opengis._
-  import opengis.ows._
-  import opengis.wmts._
-  import scalaxb._
-
-  implicit def toRecord[T: CanWriteXML](t: T): scalaxb.DataRecord[T] = scalaxb.DataRecord(t)
+  implicit def toRecord[T: CanWriteXML](t: T): DataRecord[T] = DataRecord(t)
 
   def boundingBox(extent: Extent): WGS84BoundingBoxType =
     WGS84BoundingBoxType(
       LowerCorner = Seq(extent.xmin, extent.ymin),
       UpperCorner = Seq(extent.xmax, extent.ymax),
-      attributes = Map("@crs" -> scalaxb.DataRecord(new URI("urn:ogc:def:crs:OGC:2:84")))
+      attributes  = Map("@crs" -> DataRecord(new URI("urn:ogc:def:crs:OGC:2:84")))
     )
 
   implicit class OgcSourceMethods(val self: OgcSource) {
@@ -186,11 +180,11 @@ object CapabilitiesView {
         Metadata = Nil,
         DatasetDescriptionSummary = Nil,
         Style = List(Style(
-          Title = List(LanguageStringType("Style")),
-          Abstract = List(LanguageStringType("AbstractStyle")),
+          Title      = List(LanguageStringType("Style")),
+          Abstract   = List(LanguageStringType("AbstractStyle")),
           Identifier = CodeType("StyleID"),
-          Keywords = Nil,
-          LegendURL = Nil
+          Keywords   = Nil,
+          LegendURL  = Nil
         )),
         Format = List("image/png", "image/jpeg"),
         InfoFormat = List("text/xml"),
@@ -198,8 +192,8 @@ object CapabilitiesView {
         // NOTE: This "ID" MUST correspond to the TileMatrixSet ID for the layers to show up in QGIS
         TileMatrixSetLink = List(
           TileMatrixSetLink(
-            TileMatrixSet = "GoogleMapsCompatible",
-            TileMatrixSetLimits = Some(TileMatrixSetLimits(tileMatrixLimits))
+            TileMatrixSet       = "GoogleMapsCompatible",
+            TileMatrixSetLimits = TileMatrixSetLimits(tileMatrixLimits).some
           )
         ),
         ResourceURL = Nil
@@ -207,9 +201,9 @@ object CapabilitiesView {
     }
   }
 
-  def modelAsLayers(wmtsModel: WmtsModel): List[scalaxb.DataRecord[LayerType]] =
+  def modelAsLayers(wmtsModel: WmtsModel): List[DataRecord[LayerType]] =
     wmtsModel
       .sourceLookup
-      .map { case (key, value) => scalaxb.DataRecord(Some("wms"), Some("Layer"), value.toLayerType(key, wmtsModel.matrices)) }
+      .map { case (key, value) => DataRecord("wms".some, "Layer".some, value.toLayerType(key, wmtsModel.matrices)) }
       .toList
 }
