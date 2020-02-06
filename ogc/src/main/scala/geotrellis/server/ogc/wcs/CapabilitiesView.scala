@@ -49,9 +49,8 @@ class CapabilitiesView(
       val getCapabilities = Operation(
         DCP = DCP(
           OwsDataRecord(
-            HTTP(DataRecord(
-              "ows".some,
-              "ows:Get".some,
+            HTTP(OwsDataRecord(
+              "Get",
               RequestMethodType(
                 attributes = Map("@{http://www.w3.org/1999/xlink}href" -> DataRecord(serviceUrl.toURI))
               )) :: Nil)
@@ -80,9 +79,8 @@ class CapabilitiesView(
       val describeCoverage = Operation(
         DCP = DCP(
           OwsDataRecord(
-            HTTP(DataRecord(
-              "ows".some,
-              "ows:Get".some,
+            HTTP(OwsDataRecord(
+              "Get",
               RequestMethodType(
                 attributes = Map("@{http://www.w3.org/1999/xlink}href" -> DataRecord(serviceUrl.toURI))
               )) :: Nil)
@@ -111,9 +109,8 @@ class CapabilitiesView(
       val getCoverage = Operation(
         DCP = DCP(
           OwsDataRecord(
-            HTTP(DataRecord(
-              "ows".some,
-              "ows:Get".some,
+            HTTP(OwsDataRecord(
+              "Get",
               RequestMethodType(
                 attributes = Map("@{http://www.w3.org/1999/xlink}href" -> DataRecord(serviceUrl.toURI))
               )) :: Nil)

@@ -55,9 +55,8 @@ class CapabilitiesView(
       val getCapabilities = Operation(
         DCP = DCP(
           OwsDataRecord(
-            HTTP(DataRecord(
-              "ows".some,
-              "ows:Get".some,
+            HTTP(OwsDataRecord(
+              "Get",
               RequestMethodType(
                 Constraint = DomainType(
                   possibleValuesOption1 = OwsDataRecord(
@@ -79,9 +78,8 @@ class CapabilitiesView(
       val getTile = Operation(
         DCP = DCP(
           OwsDataRecord(
-            HTTP(DataRecord(
-              "ows".some,
-              "ows:Get".some,
+            HTTP(OwsDataRecord(
+              "Get",
               RequestMethodType(
                 attributes = Map("@{http://www.w3.org/1999/xlink}href" -> DataRecord(serviceUrl.toURI))
               )) :: Nil)
@@ -93,9 +91,8 @@ class CapabilitiesView(
       val getFeatureInfo = Operation(
         DCP = DCP(
           OwsDataRecord(
-            HTTP(DataRecord(
-              "ows".some,
-              "ows:Get".some,
+            HTTP(OwsDataRecord(
+              "Get",
               RequestMethodType(
                 attributes = Map("@{http://www.w3.org/1999/xlink}href" -> DataRecord(serviceUrl.toURI))
               )) :: Nil)
