@@ -1,9 +1,11 @@
 package geotrellis.server.ogc.wcs
 
+import geotrellis.server.ogc.ows.OwsDataRecord
 import geotrellis.proj4.LatLng
 import geotrellis.raster.reproject.ReprojectRasterExtent
 import geotrellis.raster.{Dimensions, GridExtent}
 import geotrellis.server.ogc.{MapAlgebraSource, OgcSource, SimpleSource, URN}
+
 import cats.syntax.option._
 import opengis.ows._
 import opengis.wcs._
@@ -60,9 +62,7 @@ object CoverageView {
       Metadata   = Nil,
       Domain     = CoverageDomainType(
         SpatialDomain = SpatialDomainType(
-          BoundingBox = DataRecord(
-            "ows".some,
-            "ows:BoundingBox".some,
+          BoundingBox = OwsDataRecord(
             BoundingBoxType(
               LowerCorner = 0D :: 0D :: Nil,
               UpperCorner = w.toDouble :: h.toDouble :: Nil,
@@ -71,9 +71,7 @@ object CoverageView {
                 "@dimensions" -> DataRecord(BigInt(2))
               )
             )
-          ) :: DataRecord(
-            "ows".some,
-            "ows:BoundingBox".some,
+          ) :: OwsDataRecord(
             BoundingBoxType(
               LowerCorner = ex.xmin :: ex.ymin :: Nil,
               UpperCorner = ex.xmax :: ex.ymax :: Nil,
@@ -82,9 +80,7 @@ object CoverageView {
                 "@dimensions" -> DataRecord(BigInt(2))
               )
             )
-          ) :: DataRecord(
-            "ows".some,
-            "ows:BoundingBox".some,
+          ) :: OwsDataRecord(
             BoundingBoxType(
               LowerCorner = llex.ymin :: llex.xmin :: Nil,
               UpperCorner = llex.ymax :: llex.xmax :: Nil,
@@ -93,9 +89,7 @@ object CoverageView {
                 "@dimensions" -> DataRecord(BigInt(2))
               )
             )
-          ) :: DataRecord(
-            "ows".some,
-            "ows:WGS84BoundingBox".some,
+          ) :: OwsDataRecord(
             WGS84BoundingBoxType(
               LowerCorner = llex.ymin :: llex.xmin :: Nil,
               UpperCorner = llex.ymax :: llex.xmax :: Nil,
@@ -116,11 +110,7 @@ object CoverageView {
       RangeValue = wcs.RangeType(
         Field = FieldType(
           Identifier = "contents",
-          Definition = UnNamedDomainType(possibleValuesOption1 = DataRecord(
-            "ows".some,
-            "ows:AnyValue".some,
-            AnyValue()
-          )),
+          Definition = UnNamedDomainType(possibleValuesOption1 = OwsDataRecord(AnyValue())),
           InterpolationMethods  = InterpolationMethods(
             InterpolationMethod =
               InterpolationMethodType("nearest neighbor") ::

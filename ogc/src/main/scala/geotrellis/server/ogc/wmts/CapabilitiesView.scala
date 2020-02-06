@@ -1,6 +1,6 @@
 package geotrellis.server.ogc.wmts
 
-import geotrellis.server.ogc.ows.ResponsiblePartySubset
+import geotrellis.server.ogc.ows.OwsDataRecord
 import geotrellis.server.ogc._
 import geotrellis.vector.Extent
 import geotrellis.raster.reproject._
@@ -36,7 +36,7 @@ class CapabilitiesView(
         ServiceTypeVersion = "1.0.0" :: Nil
       )
 
-    val contact = wmtsModel.serviceMetadata.provider.contact.map { contact: ResponsiblePartySubset =>
+    val contact = wmtsModel.serviceMetadata.provider.contact.map { contact =>
       ResponsiblePartySubsetType(
         IndividualName = contact.name,
         PositionName   = contact.position,
@@ -54,21 +54,15 @@ class CapabilitiesView(
     val operationsMetadata = {
       val getCapabilities = Operation(
         DCP = DCP(
-          DataRecord(
-            "ows".some,
-            "ows:HTTP".some,
+          OwsDataRecord(
             HTTP(DataRecord(
               "ows".some,
               "ows:Get".some,
               RequestMethodType(
                 Constraint = DomainType(
-                  possibleValuesOption1 = DataRecord(
-                    "ows".some,
-                    "ows:AllowedValues".some,
+                  possibleValuesOption1 = OwsDataRecord(
                     AllowedValues(
-                      DataRecord(
-                        "ows".some,
-                        "ows:Value".some,
+                      OwsDataRecord(
                         ValueType("KVP")
                       ) :: Nil
                     )
@@ -84,9 +78,7 @@ class CapabilitiesView(
 
       val getTile = Operation(
         DCP = DCP(
-          DataRecord(
-            "ows".some,
-            "ows:HTTP".some,
+          OwsDataRecord(
             HTTP(DataRecord(
               "ows".some,
               "ows:Get".some,
@@ -100,9 +92,7 @@ class CapabilitiesView(
 
       val getFeatureInfo = Operation(
         DCP = DCP(
-          DataRecord(
-            "ows".some,
-            "ows:HTTP".some,
+          OwsDataRecord(
             HTTP(DataRecord(
               "ows".some,
               "ows:Get".some,

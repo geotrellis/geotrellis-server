@@ -12,7 +12,7 @@ import opengis._
 import scalaxb._
 
 import java.net.URL
-import scala.xml.{Elem, NodeSeq}
+import scala.xml.Elem
 
 /**
   *

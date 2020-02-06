@@ -10,10 +10,10 @@ case class WmsModel(
   sources: Seq[OgcSource]
 ) {
 
-  val sourceLookup: Map[String, OgcSource] = sources.map({layer => layer.name -> layer}).toMap
+  val sourceLookup: Map[String, OgcSource] = sources.map { layer => layer.name -> layer } toMap
 
   /** Take a specific request for a map and combine it with the relevant [[OgcSource]]
-   *  to produce a [[Layer]]
+   *  to produce an [[OgcLayer]]
    */
   def getLayer(crs: CRS, maybeLayerName: Option[String], maybeStyleName: Option[String]): Option[OgcLayer] = {
     for {

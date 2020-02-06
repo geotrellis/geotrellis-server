@@ -1,6 +1,6 @@
 package geotrellis.server.ogc.wcs
 
-import geotrellis.server.ogc.ows.ResponsiblePartySubset
+import geotrellis.server.ogc.ows.OwsDataRecord
 import geotrellis.server.ogc.URN
 import geotrellis.proj4.LatLng
 import geotrellis.raster.reproject.ReprojectRasterExtent
@@ -30,7 +30,7 @@ class CapabilitiesView(
       AccessConstraints  = "NONE" :: Nil
     )
 
-    val contact = wcsModel.serviceMetadata.provider.contact.map { contact: ResponsiblePartySubset =>
+    val contact = wcsModel.serviceMetadata.provider.contact.map { contact =>
       ResponsiblePartySubsetType(
         IndividualName = contact.name,
         PositionName   = contact.position,
@@ -48,9 +48,7 @@ class CapabilitiesView(
     val operationsMetadata = {
       val getCapabilities = Operation(
         DCP = DCP(
-          DataRecord(
-            "ows".some,
-            "ows:HTTP".some,
+          OwsDataRecord(
             HTTP(DataRecord(
               "ows".some,
               "ows:Get".some,
@@ -60,25 +58,17 @@ class CapabilitiesView(
           )
         ) :: Nil,
         Parameter = DomainType(
-          possibleValuesOption1 = DataRecord(
-            "ows".some,
-            "ows:AllowedValues".some,
+          possibleValuesOption1 = OwsDataRecord(
             AllowedValues(
-              DataRecord(
-                "ows".some,
-                "ows:Value".some,
+              OwsDataRecord(
                 ValueType("WCS")
               ) :: Nil)
           ),
           attributes = Map("@name" -> DataRecord("service"))
         ) :: DomainType(
-          possibleValuesOption1 = DataRecord(
-            "ows".some,
-            "ows:AllowedValues".some,
+          possibleValuesOption1 = OwsDataRecord(
             AllowedValues(
-              DataRecord(
-                "ows".some,
-                "ows:Value".some,
+              OwsDataRecord(
                 ValueType("1.1.1")
               ) :: Nil)
           ),
@@ -89,9 +79,7 @@ class CapabilitiesView(
 
       val describeCoverage = Operation(
         DCP = DCP(
-          DataRecord(
-            "ows".some,
-            "ows:HTTP".some,
+          OwsDataRecord(
             HTTP(DataRecord(
               "ows".some,
               "ows:Get".some,
@@ -101,25 +89,17 @@ class CapabilitiesView(
           )
         ) :: Nil,
         Parameter = DomainType(
-          possibleValuesOption1 = DataRecord(
-            "ows".some,
-            "ows:AllowedValues".some,
+          possibleValuesOption1 = OwsDataRecord(
             AllowedValues(
-              DataRecord(
-                "ows".some,
-                "ows:Value".some,
+              OwsDataRecord(
                 ValueType("WCS")
               ) :: Nil)
           ),
           attributes = Map("@name" -> DataRecord("service"))
         ) :: DomainType(
-          possibleValuesOption1 = DataRecord(
-            "ows".some,
-            "ows:AllowedValues".some,
+          possibleValuesOption1 = OwsDataRecord(
             AllowedValues(
-              DataRecord(
-                "ows".some,
-                "ows:Value".some,
+              OwsDataRecord(
                 ValueType("1.1.1")
               ) :: Nil)
           ),
@@ -130,9 +110,7 @@ class CapabilitiesView(
 
       val getCoverage = Operation(
         DCP = DCP(
-          DataRecord(
-            "ows".some,
-            "ows:HTTP".some,
+          OwsDataRecord(
             HTTP(DataRecord(
               "ows".some,
               "ows:Get".some,
@@ -142,45 +120,29 @@ class CapabilitiesView(
           )
         ) :: Nil,
         Parameter = DomainType(
-          possibleValuesOption1 = DataRecord(
-            "ows".some,
-            "ows:AllowedValues".some,
+          possibleValuesOption1 = OwsDataRecord(
             AllowedValues(
-              DataRecord(
-                "ows".some,
-                "ows:Value".some,
+              OwsDataRecord(
                 ValueType("WCS")
               ) :: Nil)
           ),
           attributes = Map("@name" -> DataRecord("service"))
         ) :: DomainType(
-          possibleValuesOption1 = DataRecord(
-            "ows".some,
-            "ows:AllowedValues".some,
+          possibleValuesOption1 = OwsDataRecord(
             AllowedValues(
-              DataRecord(
-                "ows".some,
-                "ows:Value".some,
+              OwsDataRecord(
                 ValueType("1.1.1")
               ) :: Nil)
           ),
           attributes = Map("@name" -> DataRecord("AcceptVersions"))
         ) :: DomainType(
-          possibleValuesOption1 = DataRecord(
-            "ows".some,
-            "ows:AllowedValues".some,
+          possibleValuesOption1 = OwsDataRecord(
             AllowedValues(
-              DataRecord(
-                "ows".some,
-                "ows:Value".some,
+              OwsDataRecord(
                 ValueType("nearest neighbor")
-              ) :: DataRecord(
-                "ows".some,
-                "ows:Value".some,
+              ) :: OwsDataRecord(
                 ValueType("bilinear")
-              ) :: DataRecord(
-                "ows".some,
-                "ows:Value".some,
+              ) :: OwsDataRecord(
                 ValueType("bicubic")
               ) :: Nil)
           ),
