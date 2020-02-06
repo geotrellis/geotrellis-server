@@ -136,13 +136,13 @@ object CapabilitiesView {
 
   def boundingBox(extent: Extent): WGS84BoundingBoxType =
     WGS84BoundingBoxType(
-      LowerCorner = Seq(extent.xmin, extent.ymin),
-      UpperCorner = Seq(extent.xmax, extent.ymax),
+      LowerCorner = extent.xmin ::extent.ymin :: Nil,
+      UpperCorner = extent.xmax :: extent.ymax :: Nil,
       attributes  = Map("@crs" -> DataRecord(new URI("urn:ogc:def:crs:OGC:2:84")))
     )
 
   implicit class OgcSourceMethods(val self: OgcSource) {
-    def toLayerType(layerName: String, tileMatrixSet: List[GeotrellisTileMatrixSet]): LayerType = {
+    def toLayerType(tileMatrixSet: List[GeotrellisTileMatrixSet]): LayerType = {
       val wgs84extent: Extent = ReprojectRasterExtent(self.nativeRE, self.nativeCrs.head, LatLng).extent
       val tileMatrixLimits: List[TileMatrixLimits] = tileMatrixSet.flatMap { tms =>
         tms.tileMatrix.map { tm =>
@@ -158,31 +158,31 @@ object CapabilitiesView {
       }
 
       LayerType(
-        Title = LanguageStringType(layerName) :: Nil,
-        Abstract = Nil,
-        Keywords = Nil,
-        WGS84BoundingBox = List(boundingBox(wgs84extent)),
-        Identifier = CodeType(layerName),
-        BoundingBox = Nil,
-        Metadata = Nil,
+        Title            = LanguageStringType(self.title) :: Nil,
+        Abstract         = Nil,
+        Keywords         = Nil,
+        WGS84BoundingBox = boundingBox(wgs84extent) :: Nil,
+        Identifier       = CodeType(self.name),
+        BoundingBox      = Nil,
+        Metadata         = Nil,
         DatasetDescriptionSummary = Nil,
-        Style = List(Style(
-          Title      = List(LanguageStringType("Style")),
-          Abstract   = List(LanguageStringType("AbstractStyle")),
+        Style = Style(
+          Title      = LanguageStringType("Style") :: Nil,
+          Abstract   = LanguageStringType("AbstractStyle") :: Nil,
           Identifier = CodeType("StyleID"),
           Keywords   = Nil,
           LegendURL  = Nil
-        )),
-        Format = List("image/png", "image/jpeg"),
-        InfoFormat = List("text/xml"),
-        Dimension = Nil,
+        ) :: Nil,
+        Format     = "image/png" :: "image/jpeg" :: Nil,
+        InfoFormat = "text/xml" :: Nil,
+        Dimension  = Nil,
         // NOTE: This "ID" MUST correspond to the TileMatrixSet ID for the layers to show up in QGIS
-        TileMatrixSetLink = List(
+        TileMatrixSetLink =
           TileMatrixSetLink(
             TileMatrixSet       = "GoogleMapsCompatible",
             TileMatrixSetLimits = TileMatrixSetLimits(tileMatrixLimits).some
           )
-        ),
+         :: Nil,
         ResourceURL = Nil
       )
     }
@@ -190,7 +190,7 @@ object CapabilitiesView {
 
   def modelAsLayers(wmtsModel: WmtsModel): List[DataRecord[LayerType]] =
     wmtsModel
-      .sourceLookup
-      .map { case (key, value) => DataRecord("wms".some, "Layer".some, value.toLayerType(key, wmtsModel.matrices)) }
+      .sources
+      .map { src => DataRecord("wms".some, "Layer".some, src.toLayerType(wmtsModel.matrices)) }
       .toList
 }

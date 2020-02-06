@@ -28,33 +28,35 @@ class CapabilitiesView(
   def toXML: Elem = {
     val capability = {
       val getCapabilities = OperationType(
-        Format = List("text/xml"),
-        DCPType = List(DCPType(
+        Format = "text/xml" :: Nil,
+        DCPType = DCPType(
           HTTP(Get = Get(OnlineResource(Map(
             "@{http://www.w3.org/1999/xlink}href" -> DataRecord(serviceUrl.toURI),
             "@{http://www.w3.org/1999/xlink}type" -> DataRecord(xlink.Simple: xlink.TypeType)))))
-        )))
+        ) :: Nil
+      )
 
       val getMap = OperationType(
-        Format = List("image/png", "image/jpeg"),
-        DCPType = List(DCPType(
+        Format = "image/png" :: "image/jpeg" :: Nil,
+        DCPType = DCPType(
           HTTP(Get = Get(OnlineResource(Map(
             "@{http://www.w3.org/1999/xlink}href" -> DataRecord(serviceUrl.toURI),
             "@{http://www.w3.org/1999/xlink}type" -> DataRecord(xlink.Simple: xlink.TypeType)))))
-        )))
+        ) :: Nil
+      )
 
       Capability(
         Request = Request(GetCapabilities = getCapabilities, GetMap = getMap, GetFeatureInfo = None),
-        Exception = Exception(List("XML", "INIMAGE", "BLANK")),
+        Exception = Exception("XML" :: "INIMAGE" :: "BLANK" :: Nil),
         Layer = modelAsLayer(model.parentLayerMeta, model).some
       )
     }
 
     scalaxb.toXML[opengis.wms.WMS_Capabilities](
-      obj = WMS_Capabilities(model.serviceMeta, capability, Map("@version" -> DataRecord("1.3.0"))),
-      namespace = None,
-      elementLabel = "WMS_Capabilities".some,
-      scope = constrainedWMSScope,
+      obj           = WMS_Capabilities(model.serviceMeta, capability, Map("@version" -> DataRecord("1.3.0"))),
+      namespace     = None,
+      elementLabel  = "WMS_Capabilities".some,
+      scope         = constrainedWMSScope,
       typeAttribute = false
     ).asInstanceOf[scala.xml.Elem]
   }
@@ -64,7 +66,7 @@ object CapabilitiesView {
   implicit def toRecord[T: CanWriteXML](t: T): DataRecord[T] = DataRecord(t)
 
   def boundingBox(crs: CRS, extent: Extent, cellSize: CellSize): BoundingBox =
-    if (crs == LatLng)
+    if (crs.isGeographic)
       BoundingBox(Map(
         "@CRS" -> s"EPSG:${crs.epsgCode.get}",
         "@minx" -> extent.ymin,
@@ -86,20 +88,20 @@ object CapabilitiesView {
       ))
 
   implicit class StyleMethods(val style: OgcStyle) {
-    def render(): Style =
+    def render: Style =
       Style(
-        Name = style.name,
-        Title = style.title,
+        Name      = style.name,
+        Title     = style.title,
         LegendURL = style.legends.map(_.toLegendURL)
       )
   }
 
   implicit class RasterSourceMethods(val source: OgcSource) {
-    def toLayer(layerName: String, parentProjections: List[CRS]): Layer = {
+    def toLayer(parentProjections: List[CRS]): Layer = {
       Layer(
-        Name = Some(layerName),
-        Title = layerName,
-        Abstract = Some(layerName),
+        Name        = source.name.some,
+        Title       = source.title,
+        Abstract    = None,
         KeywordList = None,
         // extra CRS that is supported by this layer
         CRS = (parentProjections ++ source.nativeCrs).distinct.map { crs =>
@@ -109,21 +111,21 @@ object CapabilitiesView {
         },
         EX_GeographicBoundingBox = {
           val llExtent = source.extentIn(LatLng)
-          Some(EX_GeographicBoundingBox(llExtent.xmin, llExtent.xmax, llExtent.ymin, llExtent.ymax))
+          EX_GeographicBoundingBox(llExtent.xmin, llExtent.xmax, llExtent.ymin, llExtent.ymax).some
         },
-        BoundingBox = Nil,
-        Dimension = Nil,
-        Attribution = None,
-        AuthorityURL = Nil,
-        Identifier = Nil,
-        MetadataURL = Nil,
-        DataURL = Nil,
-        FeatureListURL = Nil,
-        Style = source.styles.map(_.render),
+        BoundingBox         = Nil,
+        Dimension           = Nil,
+        Attribution         = None,
+        AuthorityURL        = Nil,
+        Identifier          = Nil,
+        MetadataURL         = Nil,
+        DataURL             = Nil,
+        FeatureListURL      = Nil,
+        Style               = source.styles.map(_.render),
         MinScaleDenominator = None,
         MaxScaleDenominator = None,
-        Layer = Nil,
-        attributes = Map("@queryable" -> DataRecord(false))
+        Layer               = Nil,
+        attributes          = Map("@queryable" -> DataRecord(false))
       )
     }
   }
@@ -144,11 +146,9 @@ object CapabilitiesView {
       // Extent of all layers in default CRS
       // Should it be world extent? To simplify tests and QGIS work it's all RasterSources extent
       EX_GeographicBoundingBox = {
-        val llExtents = model.sourceLookup.map { case (_, src) =>
-          src.extentIn(LatLng)
-        }
+        val llExtents = model.sourceLookup.map { case (_, src) => src.extentIn(LatLng) }
         val llExtent = llExtents.tail.fold(llExtents.head)(_ combine _)
-        Some(EX_GeographicBoundingBox(llExtent.xmin, llExtent.xmax, llExtent.ymin, llExtent.ymax))
+        EX_GeographicBoundingBox(llExtent.xmin, llExtent.xmax, llExtent.ymin, llExtent.ymax).some
       },
       // TODO: bounding box for global layer
       BoundingBox         = Nil,
@@ -162,8 +162,8 @@ object CapabilitiesView {
       Style               = Nil,
       MinScaleDenominator = None,
       MaxScaleDenominator = None,
-      Layer = model.sourceLookup.map { case (name, src) => src.toLayer(name, parentLayerMeta.supportedProjections) }.toSeq,
-      attributes = Map("@queryable" -> DataRecord(false))
+      Layer               = model.sources.map { _.toLayer(parentLayerMeta.supportedProjections) },
+      attributes          = Map("@queryable" -> DataRecord(false))
     )
   }
 }

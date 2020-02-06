@@ -34,8 +34,6 @@ class CoverageView(
 
 object CoverageView {
   def sourceDescription(source: OgcSource): CoverageDescriptionType = {
-    val identifier = source.name
-
     val nativeCrs = source.nativeCrs.head
     val re = source.nativeRE
     val llre = source match {
@@ -58,7 +56,7 @@ object CoverageView {
       Title      = LanguageStringType(source.title) :: Nil,
       Abstract   = Nil,
       Keywords   = Nil,
-      Identifier = identifier,
+      Identifier = source.name,
       Metadata   = Nil,
       Domain     = CoverageDomainType(
         SpatialDomain = SpatialDomainType(
