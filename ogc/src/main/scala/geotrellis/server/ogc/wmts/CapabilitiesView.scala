@@ -142,7 +142,7 @@ object CapabilitiesView {
     )
 
   implicit class OgcSourceMethods(val self: OgcSource) {
-    def toLayerType(layerName: String, tileMatrixSet: List[GeotrellisTileMatrixSet]): LayerType = {
+    def toLayerType(tileMatrixSet: List[GeotrellisTileMatrixSet]): LayerType = {
       val wgs84extent: Extent = ReprojectRasterExtent(self.nativeRE, self.nativeCrs.head, LatLng).extent
       val tileMatrixLimits: List[TileMatrixLimits] = tileMatrixSet.flatMap { tms =>
         tms.tileMatrix.map { tm =>
@@ -158,24 +158,24 @@ object CapabilitiesView {
       }
 
       LayerType(
-        Title = LanguageStringType(layerName) :: Nil,
-        Abstract = Nil,
-        Keywords = Nil,
-        WGS84BoundingBox = List(boundingBox(wgs84extent)),
-        Identifier = CodeType(layerName),
-        BoundingBox = Nil,
-        Metadata = Nil,
+        Title            = LanguageStringType(self.title) :: Nil,
+        Abstract         = Nil,
+        Keywords         = Nil,
+        WGS84BoundingBox = boundingBox(wgs84extent) :: Nil,
+        Identifier       = CodeType(self.name),
+        BoundingBox      = Nil,
+        Metadata         = Nil,
         DatasetDescriptionSummary = Nil,
         Style = List(Style(
-          Title      = List(LanguageStringType("Style")),
-          Abstract   = List(LanguageStringType("AbstractStyle")),
+          Title      = LanguageStringType("Style") :: Nil,
+          Abstract   = LanguageStringType("AbstractStyle") :: Nil,
           Identifier = CodeType("StyleID"),
           Keywords   = Nil,
           LegendURL  = Nil
         )),
-        Format = List("image/png", "image/jpeg"),
+        Format     = List("image/png", "image/jpeg"),
         InfoFormat = List("text/xml"),
-        Dimension = Nil,
+        Dimension  = Nil,
         // NOTE: This "ID" MUST correspond to the TileMatrixSet ID for the layers to show up in QGIS
         TileMatrixSetLink = List(
           TileMatrixSetLink(
@@ -190,7 +190,7 @@ object CapabilitiesView {
 
   def modelAsLayers(wmtsModel: WmtsModel): List[DataRecord[LayerType]] =
     wmtsModel
-      .sourceLookup
-      .map { case (key, value) => DataRecord("wms".some, "Layer".some, value.toLayerType(key, wmtsModel.matrices)) }
+      .sources
+      .map { src => DataRecord("wms".some, "Layer".some, src.toLayerType(wmtsModel.matrices)) }
       .toList
 }
