@@ -6,7 +6,6 @@ import geotrellis.raster.resample._
 import geotrellis.raster.io.geotiff._
 import geotrellis.raster.reproject.ReprojectRasterExtent
 import geotrellis.vector.Extent
-import geotrellis.vector.io._
 import geotrellis.proj4.CRS
 import com.azavea.maml.ast._
 

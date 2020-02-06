@@ -1,20 +1,7 @@
 package geotrellis.server.ogc.wcs
 
 import geotrellis.server.ogc._
-
-import geotrellis.raster.histogram.Histogram
-import geotrellis.spark.tiling._
-import geotrellis.spark._
 import geotrellis.proj4._
-import geotrellis.raster.render.{ColorMap, ColorRamp, Png}
-import geotrellis.raster._
-import geotrellis.vector.Extent
-
-import opengis.wms._
-import scalaxb.CanWriteXML
-
-import java.io.File
-import java.net._
 
 /** This class holds all the information necessary to construct a response to a WCS request */
 case class WcsModel(
@@ -22,15 +9,15 @@ case class WcsModel(
   sources: Seq[OgcSource]
 ) {
 
-  val sourceLookup: Map[String, OgcSource] = sources.map({layer => layer.name -> layer}).toMap
+  val sourceLookup: Map[String, OgcSource] = sources.map { layer => layer.name -> layer }.toMap
 
   /** Take a specific request for a map and combine it with the relevant [[OgcSource]]
-   *  to produce a [[Layer]]
+   *  to produce an [[OgcLayer]]
    */
   def getLayer(crs: CRS, maybeLayerName: Option[String], maybeStyleName: Option[String]): Option[OgcLayer] = {
     for {
-      layerName  <- maybeLayerName
-      source <- sourceLookup.get(layerName)
+      layerName <- maybeLayerName
+      source    <- sourceLookup.get(layerName)
     } yield {
       val styleName: Option[String] = maybeStyleName.orElse(source.styles.headOption.map(_.name))
       val style: Option[OgcStyle] = styleName.flatMap { name => source.styles.find(_.name == name) }

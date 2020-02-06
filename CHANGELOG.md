@@ -6,8 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Generate WCS 1.1.1 protocol using XSD data model [#188](https://github.com/geotrellis/geotrellis-server/issues/188)
+- WCS 1.1.1 GetCoverage Support [#192](https://github.com/geotrellis/geotrellis-server/issues/192)
+
 ### Changed
-- Included split dependencies a la GeoTrellis 3.2 for cats ecosystem libraries[\#184](https://github.com/geotrellis/geotrellis-server/pull/184)
+- Included split dependencies a la GeoTrellis 3.2 for cats ecosystem libraries [\#184](https://github.com/geotrellis/geotrellis-server/pull/184)
+- Dropped WCS 1.0.0 support
+
+### Fixed
+- Missing `<ows:Title>` and `<ows:Abstract>` elements in WCS GetCapabilities response [#114](https://github.com/geotrellis/geotrellis-server/issues/114) 
+- Layer definition elements unused in WMS GetCapabilities response [#115](https://github.com/geotrellis/geotrellis-server/issues/115)
+- Bad assembly strategy [#142](https://github.com/geotrellis/geotrellis-server/issues/142)
 
 ## [4.0.1] - 2019-11-22
 

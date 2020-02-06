@@ -3,8 +3,6 @@ package geotrellis.server.ogc.wms
 import geotrellis.server.ogc._
 import geotrellis.proj4._
 
-import opengis.wms._
-
 /** This class holds all the information necessary to construct a response to a WMS request */
 case class WmsModel(
   serviceMeta: opengis.wms.Service,
@@ -12,10 +10,10 @@ case class WmsModel(
   sources: Seq[OgcSource]
 ) {
 
-  val sourceLookup: Map[String, OgcSource] = sources.map({layer => layer.name -> layer}).toMap
+  val sourceLookup: Map[String, OgcSource] = sources.map { layer => layer.name -> layer } toMap
 
   /** Take a specific request for a map and combine it with the relevant [[OgcSource]]
-   *  to produce a [[Layer]]
+   *  to produce an [[OgcLayer]]
    */
   def getLayer(crs: CRS, maybeLayerName: Option[String], maybeStyleName: Option[String]): Option[OgcLayer] = {
     for {

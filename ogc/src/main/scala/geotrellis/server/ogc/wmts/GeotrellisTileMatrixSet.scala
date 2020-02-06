@@ -1,5 +1,6 @@
 package geotrellis.server.ogc.wmts
 
+import geotrellis.server.ogc.URN
 import geotrellis.proj4.CRS
 import geotrellis.vector.Extent
 
@@ -18,14 +19,14 @@ case class GeotrellisTileMatrixSet(
   wellKnownScaleSet: Option[String] = None,
   tileMatrix: List[GeotrellisTileMatrix]
 ) {
-  def toXml = {
-    val ret =  TileMatrixSet(
-      Title = title.map(LanguageStringType(_)).toList,
-      Abstract = `abstract`.map(LanguageStringType(_)).toList,
-      Keywords = Nil,
-      Identifier = CodeType(identifier),
-      TileMatrix = tileMatrix.map(_.toXml(supportedCrs)),
-      SupportedCRS = new URI(s"urn:ogc:def:crs:EPSG:9.2:${supportedCrs.epsgCode.get}")
+  def toXml: TileMatrixSet = {
+    val ret        =  TileMatrixSet(
+      Title        = title.map(LanguageStringType(_)).toList,
+      Abstract     = `abstract`.map(LanguageStringType(_)).toList,
+      Keywords     = Nil,
+      Identifier   = CodeType(identifier),
+      TileMatrix   = tileMatrix.map(_.toXml(supportedCrs)),
+      SupportedCRS = new URI(URN.unsafeFromCrs(supportedCrs))
     )
 
     if (wellKnownScaleSet.isDefined) {

@@ -6,9 +6,7 @@ import geotrellis.layer._
 import geotrellis.vector.Extent
 
 import opengis.ows._
-import opengis.wmts._
-import opengis.wmts.{TileMatrix, TileMatrixSet}
-import java.net.{InetAddress, URI}
+import opengis.wmts.TileMatrix
 
 /** Relates Geotrellis Extent and TileLayout to a corresponding OGC Tile Matrix */
 case class GeotrellisTileMatrix(
