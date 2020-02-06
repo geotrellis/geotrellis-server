@@ -136,8 +136,8 @@ object CapabilitiesView {
 
   def boundingBox(extent: Extent): WGS84BoundingBoxType =
     WGS84BoundingBoxType(
-      LowerCorner = Seq(extent.xmin, extent.ymin),
-      UpperCorner = Seq(extent.xmax, extent.ymax),
+      LowerCorner = extent.xmin ::extent.ymin :: Nil,
+      UpperCorner = extent.xmax :: extent.ymax :: Nil,
       attributes  = Map("@crs" -> DataRecord(new URI("urn:ogc:def:crs:OGC:2:84")))
     )
 
@@ -166,23 +166,23 @@ object CapabilitiesView {
         BoundingBox      = Nil,
         Metadata         = Nil,
         DatasetDescriptionSummary = Nil,
-        Style = List(Style(
+        Style = Style(
           Title      = LanguageStringType("Style") :: Nil,
           Abstract   = LanguageStringType("AbstractStyle") :: Nil,
           Identifier = CodeType("StyleID"),
           Keywords   = Nil,
           LegendURL  = Nil
-        )),
-        Format     = List("image/png", "image/jpeg"),
-        InfoFormat = List("text/xml"),
+        ) :: Nil,
+        Format     = "image/png" :: "image/jpeg" :: Nil,
+        InfoFormat = "text/xml" :: Nil,
         Dimension  = Nil,
         // NOTE: This "ID" MUST correspond to the TileMatrixSet ID for the layers to show up in QGIS
-        TileMatrixSetLink = List(
+        TileMatrixSetLink =
           TileMatrixSetLink(
             TileMatrixSet       = "GoogleMapsCompatible",
             TileMatrixSetLimits = TileMatrixSetLimits(tileMatrixLimits).some
           )
-        ),
+         :: Nil,
         ResourceURL = Nil
       )
     }

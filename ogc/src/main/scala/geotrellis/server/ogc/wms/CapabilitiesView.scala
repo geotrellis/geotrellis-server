@@ -28,33 +28,35 @@ class CapabilitiesView(
   def toXML: Elem = {
     val capability = {
       val getCapabilities = OperationType(
-        Format = List("text/xml"),
-        DCPType = List(DCPType(
+        Format = "text/xml" :: Nil,
+        DCPType = DCPType(
           HTTP(Get = Get(OnlineResource(Map(
             "@{http://www.w3.org/1999/xlink}href" -> DataRecord(serviceUrl.toURI),
             "@{http://www.w3.org/1999/xlink}type" -> DataRecord(xlink.Simple: xlink.TypeType)))))
-        )))
+        ) :: Nil
+      )
 
       val getMap = OperationType(
-        Format = List("image/png", "image/jpeg"),
-        DCPType = List(DCPType(
+        Format = "image/png" :: "image/jpeg" :: Nil,
+        DCPType = DCPType(
           HTTP(Get = Get(OnlineResource(Map(
             "@{http://www.w3.org/1999/xlink}href" -> DataRecord(serviceUrl.toURI),
             "@{http://www.w3.org/1999/xlink}type" -> DataRecord(xlink.Simple: xlink.TypeType)))))
-        )))
+        ) :: Nil
+      )
 
       Capability(
         Request = Request(GetCapabilities = getCapabilities, GetMap = getMap, GetFeatureInfo = None),
-        Exception = Exception(List("XML", "INIMAGE", "BLANK")),
+        Exception = Exception("XML" :: "INIMAGE" :: "BLANK" :: Nil),
         Layer = modelAsLayer(model.parentLayerMeta, model).some
       )
     }
 
     scalaxb.toXML[opengis.wms.WMS_Capabilities](
-      obj = WMS_Capabilities(model.serviceMeta, capability, Map("@version" -> DataRecord("1.3.0"))),
-      namespace = None,
-      elementLabel = "WMS_Capabilities".some,
-      scope = constrainedWMSScope,
+      obj           = WMS_Capabilities(model.serviceMeta, capability, Map("@version" -> DataRecord("1.3.0"))),
+      namespace     = None,
+      elementLabel  = "WMS_Capabilities".some,
+      scope         = constrainedWMSScope,
       typeAttribute = false
     ).asInstanceOf[scala.xml.Elem]
   }

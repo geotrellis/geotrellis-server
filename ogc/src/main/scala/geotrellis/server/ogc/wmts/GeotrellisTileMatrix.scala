@@ -21,7 +21,7 @@ case class GeotrellisTileMatrix(
   require(layout.cellSize.width == layout.cellSize.height,
     s"Layout definition cell size width must be same as height: ${layout.cellSize}")
 
-  val projectionMetersPerUnit = Map[CRS, Double](
+  val projectionMetersPerUnit: Map[CRS, Double] = Map(
     // meters per unit on equator
     LatLng -> 6378137.0 * 2.0 * math.Pi / 360.0,
     WebMercator -> 1
@@ -32,16 +32,16 @@ case class GeotrellisTileMatrix(
       case Some(metersPerUnit) =>
         val scaleDenominator = layout.cellSize.width / 0.00028 * metersPerUnit
         TileMatrix(
-          Title = title.map(LanguageStringType(_)).toList,
-          Abstract = `abstract`.map(LanguageStringType(_)).toList,
-          Keywords = Nil,
-          Identifier = CodeType(identifier),
+          Title            = title.map(LanguageStringType(_)).toList,
+          Abstract         = `abstract`.map(LanguageStringType(_)).toList,
+          Keywords         = Nil,
+          Identifier       = CodeType(identifier),
           ScaleDenominator = scaleDenominator,
-          TopLeftCorner = List(layout.extent.xmin, layout.extent.ymax),
-          TileWidth = layout.tileLayout.tileCols,
-          TileHeight = layout.tileLayout.tileRows,
-          MatrixWidth = layout.tileLayout.layoutCols,
-          MatrixHeight = layout.tileLayout.layoutRows)
+          TopLeftCorner    = layout.extent.xmin :: layout.extent.ymax :: Nil,
+          TileWidth        = layout.tileLayout.tileCols,
+          TileHeight       = layout.tileLayout.tileRows,
+          MatrixWidth      = layout.tileLayout.layoutCols,
+          MatrixHeight     = layout.tileLayout.layoutRows)
 
       case None =>
         throw new Exception(s"Invalid CRS: ${crs}")
