@@ -1,10 +1,14 @@
+import sbt.Keys._
 import xerial.sbt.Sonatype._
+import de.heikoseeberger.sbtheader._
 
 import Dependencies._
 
 scalaVersion := scalaVer
 ThisBuild / scalaVersion := scalaVer
 updateOptions := updateOptions.value.withCachedResolution(true)
+
+val currentYear = java.time.Year.now.getValue.toString
 
 lazy val commonSettings = Seq(
   // We are overriding the default behavior of sbt-git which, by default,
@@ -31,8 +35,7 @@ lazy val commonSettings = Seq(
     "-language:experimental.macros",
     "-feature",
     "-Ypartial-unification",
-    "-Ypatmat-exhaust-depth",
-    "100",
+    "-Ypatmat-exhaust-depth", "100",
     "-Xmacro-settings:materialize-derivations"
   ),
   resolvers ++= Seq(
@@ -73,6 +76,23 @@ lazy val commonSettings = Seq(
       }
     case _ => MergeStrategy.first
   },
+  headerLicense := Some(HeaderLicense.ALv2(currentYear, "Azavea")),
+  headerMappings := Map(
+  FileType.scala -> CommentStyle.cStyleBlockComment.copy(commentCreator = new CommentCreator() {
+    val Pattern = "(?s).*?(\\d{4}(-\\d{4})?).*".r
+    def findYear(header: String): Option[String] = header match {
+      case Pattern(years, _) => Some(years)
+      case _                 => None
+    }
+    override def apply(text: String, existingText: Option[String]): String = {
+      // preserve year of old headers
+      val newText = CommentStyle.cStyleBlockComment.commentCreator.apply(text, existingText)
+      existingText.flatMap { text =>
+        if (text.contains("Azavea")) findYear(text).map(year => newText.replace(currentYear, year))
+        else existingText.map(_.trim)
+      }.getOrElse(newText)
+    }})
+  ),
   Global / cancelable := true,
   useCoursier := false,
   javaOptions ++= Seq("-Djava.library.path=/usr/local/lib")
