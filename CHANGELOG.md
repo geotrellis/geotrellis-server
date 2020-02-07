@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Included split dependencies a la GeoTrellis 3.2 for cats ecosystem libraries [\#184](https://github.com/geotrellis/geotrellis-server/pull/184)
 - Dropped WCS 1.0.0 support
+- Updated MAML up to 0.6.0 [#199](https://github.com/geotrellis/geotrellis-server/pull/199)
 
 ### Fixed
 - Missing `<ows:Title>` and `<ows:Abstract>` elements in WCS GetCapabilities response [#114](https://github.com/geotrellis/geotrellis-server/issues/114) 
