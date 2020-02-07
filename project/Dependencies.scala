@@ -28,8 +28,8 @@ object Dependencies {
     "org.http4s" %% s"http4s-$module" % ver("0.20.15", "0.21.0-M6").value
   }
 
-  val scalaVer = "2.11.12"
-  val crossScalaVer = Seq(scalaVer, "2.12.10")
+  val crossScalaVer = List("2.12.10", "2.11.12")
+  val scalaVer = crossScalaVer.head
 
   val circeVer = "0.11.1"
   val dispatchVer = "0.11.3"
