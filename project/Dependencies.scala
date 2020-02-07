@@ -76,7 +76,7 @@ object Dependencies {
   val kamonPrometheus = "io.kamon" %% "kamon-prometheus" % "1.0.0"
   val kamonSysMetrics = "io.kamon" %% "kamon-system-metrics" % "1.0.0"
   val kindProjector = "org.typelevel" %% "kind-projector" % "0.11.0"
-  val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % "0.5.1-2-g0baee67-SNAPSHOT"
+  val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % "0.6.0"
   val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.10.2"
   val refined = "eu.timepit" %% "refined" % refinedVer
   val scaffeine = "com.github.blemale" %% "scaffeine" % "2.6.0"
