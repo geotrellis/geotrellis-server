@@ -1,4 +1,4 @@
-package geotrellis.store
+package geotrellis.store.dsl
 
 import geotrellis.vector.Extent
 
@@ -26,8 +26,8 @@ object SimpleExpr {
         FilterParams({
           (ext, other.ext) match {
             case (Some(l), Some(r)) => l.intersection(r)
-            case (l, _) => l
-            case (_, r) => r
+            case (Some(l), _) => Some(l)
+            case (_, Some(r)) => Some(r)
             case _ => None
           }
         }, time <+> other.time)

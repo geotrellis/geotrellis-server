@@ -99,6 +99,7 @@ object Dependencies {
   val commonsIo = "commons-io" % "commons-io" % "2.6"
   val shapeless = "com.chuusai" %% "shapeless" % shapelessVer
   val logback = "ch.qos.logback" % "logback-classic" % "1.2.3" % Runtime
+  val droste = "io.higherkindness" %% "droste-core" % "0.8.0"
 
   // This dependency differs between scala 2.11 and 2.12
   val ansiColors211 = "org.backuity" %% "ansi-interpolator" % "1.1" % Provided

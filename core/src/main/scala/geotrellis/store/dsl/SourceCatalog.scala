@@ -1,4 +1,5 @@
-package geotrellis.store
+/*
+package geotrellis.store.dsl
 
 import geotrellis.raster.RasterSource
 import geotrellis.vector.{Extent, Geometry}
@@ -55,10 +56,12 @@ object QueryF {
 }
 
 trait SourceCatalog {
+  type Query = Fix[QueryF]
   val list: List[RasterSource]
 
-  def find[A](query: QueryF[A]): List[RasterSource]
+  def find(query: Query): List[RasterSource]
 }
+
 
 object Main {
   def main(arg: Array[String]): Unit = {
@@ -78,4 +81,4 @@ object Main {
 
     println(res)
   }
-}
+}*/

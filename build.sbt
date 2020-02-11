@@ -186,7 +186,8 @@ lazy val core = project
       catsEffect.value,
       mamlJvm,
       simulacrum,
-      scalatest
+      scalatest,
+      droste
     )
   )
 

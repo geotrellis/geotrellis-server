@@ -1,4 +1,4 @@
-package geotrellis.store
+package geotrellis.store.dsl
 
 import geotrellis.vector.Extent
 
