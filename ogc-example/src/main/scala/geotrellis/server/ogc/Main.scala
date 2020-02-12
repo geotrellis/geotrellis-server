@@ -118,7 +118,7 @@ object Main extends CommandApp(
             )
             wcsModel = WcsModel(
               conf.wcs.serviceMetadata,
-              conf.wcs.layerSources(simpleSources)
+              OgcSourceCollection(conf.wcs.layerSources(simpleSources))
             )
             ogcService = new OgcService(wmsModel, wcsModel, wmtsModel, new URL(publicUrl))
             exitCode   <- BlazeServerBuilder[IO]

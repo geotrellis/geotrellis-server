@@ -2,8 +2,6 @@ package geotrellis.store.query
 
 import geotrellis.raster.RasterSource
 
-trait SourceCollection {
-  val list: List[RasterSource]
-
+case class RasterSourceCollection(list: List[RasterSource]) extends QueryCollection[RasterSource] {
   def find(query: Query): List[RasterSource] = QueryF.eval(query)(list)
 }

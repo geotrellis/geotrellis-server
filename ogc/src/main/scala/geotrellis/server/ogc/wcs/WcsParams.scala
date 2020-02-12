@@ -22,7 +22,6 @@ import geotrellis.server.ogc.OutputFormat
 import geotrellis.server.ogc.params.ParamError.UnsupportedFormatError
 import geotrellis.server.ogc.params._
 import geotrellis.vector.Extent
-
 import cats.data.Validated._
 import cats.data.{NonEmptyList, Validated, ValidatedNel}
 import cats.syntax.apply._
@@ -30,6 +29,9 @@ import cats.syntax.option._
 
 import scala.util.Try
 import java.net.URI
+
+import geotrellis.store.query.{Query, QueryF}
+import higherkindness.droste.Coalgebra
 
 abstract sealed class WcsParams {
   val version: String
@@ -65,6 +67,12 @@ case class GetCoverageWcsParams(
   gridOffsets: (Double, Double),
   crs: CRS
 ) extends WcsParams {
+  import geotrellis.store.query._
+
+  def toQuery: Query = withName(identifier) // and intersects(boundingBox.toPolygon())
+  def toQueryF[A]: QueryF[A] = QueryF.WithName[A](identifier) // and intersects(boundingBox.toPolygon())
+  val colagebra: Coalgebra[QueryF, GetCoverageWcsParams] = Coalgebra(_.toQueryF)
+
   val changeXY: Boolean = crs.isGeographic
 
   def cellSize: CellSize =

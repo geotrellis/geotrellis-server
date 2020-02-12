@@ -16,17 +16,17 @@
 
 package geotrellis.store
 
-import java.time.ZonedDateTime
-
 import geotrellis.proj4._
 import geotrellis.raster.io.geotiff.{AutoHigherResolution, OverviewStrategy}
 import geotrellis.raster.resample.{NearestNeighbor, ResampleMethod}
 import geotrellis.raster._
 import geotrellis.layer._
+import geotrellis.layer.filter._
 import geotrellis.vector._
-import _root_.io.circe.Decoder
 
-case class LayerLegacy[K](id: LayerId, metadata: TileLayerMetadata[K], bandCount: Int) {
+import java.time.ZonedDateTime
+
+case class LayerLegacy(id: LayerId, metadata: TileLayerMetadata[_], bandCount: Int) {
   /** GridExtent of the data pixels in the layer */
   def gridExtent: GridExtent[Long] = metadata.layout.createAlignedGridExtent(metadata.extent)
 }
@@ -39,23 +39,25 @@ case class LayerLegacy[K](id: LayerId, metadata: TileLayerMetadata[K], bandCount
  * @param attributeStore GeoTrellis attribute store
  * @param dataPath       GeoTrellis catalog DataPath
  * @param sourceLayers   List of source layers
+ * @param time           time slice, in case we're trying to read temporal layer slices
  * @param targetCellType The target cellType
-
- * @tparam K Key type, SpatialKey or SpaceTimeKey depending on the
  */
-class GeoTrellisRasterSourceLegacy[K: SpatialComponent: Decoder](
+class GeoTrellisRasterSourceLegacy(
   val attributeStore: AttributeStore,
   val dataPath: GeoTrellisPath,
-  val sourceLayers: Stream[LayerLegacy[K]],
+  val sourceLayers: Stream[LayerLegacy],
+  val time: Option[ZonedDateTime],
   val targetCellType: Option[TargetCellType]
 ) extends RasterSource {
+  import GeoTrellisRasterSourceLegacy._
   def name: GeoTrellisPath = dataPath
 
   def this(attributeStore: AttributeStore, dataPath: GeoTrellisPath) =
     this(
       attributeStore,
       dataPath,
-      GeoTrellisRasterSourceLegacy.getSourceLayersByName[K](attributeStore, dataPath.layerName, dataPath.bandCount.getOrElse(1)),
+      GeoTrellisRasterSourceLegacy.getSourceLayersByName(attributeStore, dataPath.layerName, dataPath.bandCount.getOrElse(1)),
+      None,
       None
     )
 
@@ -66,7 +68,7 @@ class GeoTrellisRasterSourceLegacy[K: SpatialComponent: Decoder](
   lazy val reader = CollectionLayerReader(attributeStore, dataPath.value)
 
   // read metadata directly instead of searching sourceLayers to avoid unneeded reads
-  lazy val layerMetadata = reader.attributeStore.readMetadata[TileLayerMetadata[K]](layerId)
+  lazy val layerMetadata: TileLayerMetadata[_] = reader.attributeStore.readMetadataErased(layerId)
 
   lazy val gridExtent: GridExtent[Long] = layerMetadata.layout.createAlignedGridExtent(layerMetadata.extent)
 
@@ -81,7 +83,8 @@ class GeoTrellisRasterSourceLegacy[K: SpatialComponent: Decoder](
     "layerName"  -> layerId.name,
     "zoomLevel"  -> layerId.zoom.toString,
     "bandCount"  -> bandCount.toString
-  )
+  ) ++ time.map(t => ("time", t.toString)).toMap
+
   /** GeoTrellis metadata doesn't allow to query a per band metadata by default. */
   def attributesForBand(band: Int): Map[String, String] = Map.empty
 
@@ -109,7 +112,7 @@ class GeoTrellisRasterSourceLegacy[K: SpatialComponent: Decoder](
     if (targetCRS != this.crs) {
       val reprojectOptions = ResampleTarget.toReprojectOptions(this.gridExtent, resampleTarget, method)
       val (closestLayerId, targetGridExtent) = GeoTrellisReprojectRasterSourceLegacy.getClosestSourceLayer(targetCRS, sourceLayers, reprojectOptions, strategy)
-      new GeoTrellisReprojectRasterSourceLegacy(attributeStore, dataPath, closestLayerId, sourceLayers, targetGridExtent, targetCRS, resampleTarget, targetCellType = targetCellType)
+      new GeoTrellisReprojectRasterSourceLegacy(attributeStore, dataPath, closestLayerId, sourceLayers, targetGridExtent, targetCRS, resampleTarget, time = time, targetCellType = targetCellType)
     } else {
       // TODO: add unit tests for this in particular, the behavior feels murky
       resampleTarget match {
@@ -119,7 +122,7 @@ class GeoTrellisRasterSourceLegacy[K: SpatialComponent: Decoder](
         case resampleTarget =>
           val resampledGridExtent = resampleTarget(this.gridExtent)
           val closestLayerId = GeoTrellisRasterSource.getClosestResolution(sourceLayers.toList, resampledGridExtent.cellSize, strategy)(_.metadata.layout.cellSize).get.id
-          new GeoTrellisResampleRasterSourceLegacy(attributeStore, dataPath, closestLayerId, sourceLayers, resampledGridExtent, method, targetCellType)
+          new GeoTrellisResampleRasterSourceLegacy(attributeStore, dataPath, closestLayerId, sourceLayers, resampledGridExtent, method, time, targetCellType)
       }
     }
   }
@@ -127,11 +130,11 @@ class GeoTrellisRasterSourceLegacy[K: SpatialComponent: Decoder](
   override def resample(resampleTarget: ResampleTarget, method: ResampleMethod, strategy: OverviewStrategy): RasterSource = {
     val resampledGridExtent = resampleTarget(this.gridExtent)
     val closestLayerId = GeoTrellisRasterSource.getClosestResolution(sourceLayers.toList, resampledGridExtent.cellSize, strategy)(_.metadata.layout.cellSize).get.id
-    new GeoTrellisResampleRasterSourceLegacy(attributeStore, dataPath, closestLayerId, sourceLayers, resampledGridExtent, method, targetCellType)
+    new GeoTrellisResampleRasterSourceLegacy(attributeStore, dataPath, closestLayerId, sourceLayers, resampledGridExtent, method, time, targetCellType)
   }
 
   override def convert(targetCellType: TargetCellType): RasterSource =
-    new GeoTrellisRasterSourceLegacy(attributeStore, dataPath, sourceLayers, Some(targetCellType))
+    new GeoTrellisRasterSourceLegacy(attributeStore, dataPath, sourceLayers, time, Some(targetCellType))
 
   override def toString: String =
     s"GeoTrellisRasterSourceLegacy($dataPath, $layerId)"
@@ -141,67 +144,86 @@ class GeoTrellisRasterSourceLegacy[K: SpatialComponent: Decoder](
 object GeoTrellisRasterSourceLegacy {
   import GeoTrellisRasterSource._
 
+  implicit class AttributeStoreOps(attributeStore: AttributeStore) {
+    def readMetadataErased(layerId: LayerId): TileLayerMetadata[_] = {
+      val header = attributeStore.readHeader[LayerHeader](layerId)
+      if(header.keyClass.contains("SpatialKey")) attributeStore.readMetadata[TileLayerMetadata[SpatialKey]](layerId)
+      else attributeStore.readMetadata[TileLayerMetadata[SpaceTimeKey]](layerId)
+    }
+  }
+
   // stable identifiers to match in a readTiles function
   private val SpatialKeyClass    = classOf[SpatialKey]
+  private val SpaceTimeKeyClass  = classOf[SpatialKey]
   private val TileClass          = classOf[Tile]
   private val MultibandTileClass = classOf[MultibandTile]
 
   /** Read metadata for all layers that share a name and sort them by their resolution */
-  def getSourceLayersByName[K: SpatialComponent: Decoder](attributeStore: AttributeStore, layerName: String, bandCount: Int): Stream[LayerLegacy[K]] = {
+  def getSourceLayersByName(attributeStore: AttributeStore, layerName: String, bandCount: Int): Stream[LayerLegacy] = {
     attributeStore.
       layerIds.
       filter(_.name == layerName).
       sortWith(_.zoom > _.zoom).
       toStream. // We will be lazy about fetching higher zoom levels
       map { id =>
-        val metadata = attributeStore.readMetadata[TileLayerMetadata[K]](id)
+        val metadata = attributeStore.readMetadataErased(id)
         LayerLegacy(id, metadata, bandCount)
       }
   }
 
-  def readTiles(reader: CollectionLayerReader[LayerId], layerId: LayerId, extent: Extent, bands: Seq[Int]): Seq[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = {
+  def readTiles(
+    reader: CollectionLayerReader[LayerId],
+    layerId: LayerId,
+    extent: Extent,
+    bands: Seq[Int],
+    time: Option[ZonedDateTime] = None
+  ): Seq[(SpatialKey, MultibandTile)] with Metadata[TileLayerMetadata[SpatialKey]] = {
     def spatialTileRead =
       reader.query[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](layerId)
         .where(Intersects(extent))
         .result
-        .withContext(tiles =>
-          // Convert single band tiles to multiband
-          tiles.map { case (key, tile) => (key, MultibandTile(tile)) }
-        )
+        .withContext { _.map { case (key, tile) => (key, MultibandTile(tile)) } }
 
     def spatialMultibandTileRead =
       reader.query[SpatialKey, MultibandTile, TileLayerMetadata[SpatialKey]](layerId)
         .where(Intersects(extent))
         .result
-        .withContext(tiles =>
-          tiles.map { case (key, tile) => (key, tile.subsetBands(bands)) }
-        )
+        .withContext { _.map { case (key, tile) => (key, tile.subsetBands(bands)) } }
 
-    def spaceTimeTileRead =
-      reader.query[SpaceTimeKey, Tile, TileLayerMetadata[SpaceTimeKey]](layerId)
-        .where(Intersects(extent))
-        .where(At(ZonedDateTime.now()))
-        .result
-        .withContext(tiles =>
-          // Convert single band tiles to multiband
-          tiles.map { case (key, tile) => (key, MultibandTile(tile)) }
-        )
+    def spaceTimeTileRead = {
+      val query =
+        reader
+          .query[SpaceTimeKey, Tile, TileLayerMetadata[SpaceTimeKey]](layerId)
+          .where(Intersects(extent))
 
-    def spaceTimeMultibandTileRead =
-      reader.query[SpaceTimeKey, MultibandTile, TileLayerMetadata[SpaceTimeKey]](layerId)
-        .where(Intersects(extent))
-        .where(At(ZonedDateTime.now()))
+      time
+        .fold(query)(t => query.where(At(t)))
         .result
-        .withContext(tiles =>
-          tiles.map { case (key, tile) => (key, tile.subsetBands(bands)) }
-        )
+        .withContext { _.map { case (key, tile) => (key, MultibandTile(tile)) } }
+        .toSpatial
+    }
+
+    def spaceTimeMultibandTileRead = {
+      val query =
+        reader
+          .query[SpaceTimeKey, MultibandTile, TileLayerMetadata[SpaceTimeKey]](layerId)
+          .where(Intersects(extent))
+
+      time
+        .fold(query)(t => query.where(At(t)))
+        .result
+        .withContext { _.map { case (key, tile) => (key, tile.subsetBands(bands)) } }
+        .toSpatial
+    }
 
     val header = reader.attributeStore.readHeader[LayerHeader](layerId)
 
     if (!header.keyClass.contains("spark")) {
       (Class.forName(header.keyClass), Class.forName(header.valueClass)) match {
-        case (SpatialKeyClass, TileClass) => spatialTileRead
-        case (SpatialKeyClass, MultibandTileClass) => spatialMultibandTileRead
+        case (SpatialKeyClass, TileClass)            => spatialTileRead
+        case (SpatialKeyClass, MultibandTileClass)   => spatialMultibandTileRead
+        case (SpaceTimeKeyClass, TileClass)          => spaceTimeTileRead
+        case (SpaceTimeKeyClass, MultibandTileClass) => spaceTimeMultibandTileRead
         case _ =>
           throw new Exception(s"Unable to read single or multiband tiles from file: ${(header.keyClass, header.valueClass)}")
       }
@@ -211,8 +233,10 @@ object GeoTrellisRasterSourceLegacy {
         * TODO: remove in GT 4.0
         */
       (header.keyClass, header.valueClass) match {
-        case ("geotrellis.spark.SpatialKey", "geotrellis.raster.Tile") => spatialTileRead
-        case ("geotrellis.spark.SpatialKey", "geotrellis.raster.MultibandTile") => spatialMultibandTileRead
+        case ("geotrellis.spark.SpatialKey", "geotrellis.raster.Tile")            => spatialTileRead
+        case ("geotrellis.spark.SpatialKey", "geotrellis.raster.MultibandTile")   => spatialMultibandTileRead
+        case ("geotrellis.spark.SpaceTimeKey", "geotrellis.raster.Tile")          => spaceTimeTileRead
+        case ("geotrellis.spark.SpaceTimeKey", "geotrellis.raster.MultibandTile") => spaceTimeMultibandTileRead
         case _ =>
           throw new Exception(s"Unable to read single or multiband tiles from file: ${(header.keyClass, header.valueClass)}")
       }

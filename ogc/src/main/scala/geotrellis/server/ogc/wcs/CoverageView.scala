@@ -16,6 +16,7 @@
 
 package geotrellis.server.ogc.wcs
 
+import geotrellis.store.query._
 import geotrellis.server.ogc.ows.OwsDataRecord
 import geotrellis.proj4.LatLng
 import geotrellis.raster.reproject.ReprojectRasterExtent
@@ -37,9 +38,9 @@ class CoverageView(
   identifiers: Seq[String]
 ) {
   def toXML: Elem = {
-    val sources = if(identifiers == Nil) wcsModel.sources else wcsModel.sourceLookup.filterKeys(identifiers.contains).values
+    val sources = if(identifiers == Nil) wcsModel.sources.list else wcsModel.sources.find(withNames(identifiers.toSet))
     scalaxb.toXML[CoverageDescriptions](
-      obj           = CoverageDescriptions(sources.toList.map(CoverageView.sourceDescription)),
+      obj           = CoverageDescriptions(sources.map(CoverageView.sourceDescription)),
       namespace     = None,
       elementLabel  = "CoverageDescriptions".some,
       scope         = constrainedWCSScope,

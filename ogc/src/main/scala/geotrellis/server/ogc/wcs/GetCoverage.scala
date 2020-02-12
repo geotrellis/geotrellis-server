@@ -52,15 +52,13 @@ class GetCoverage(wcsModel: WcsModel) {
 
       case _ =>
         logger.trace(s"GetCoverage cache MISS: $params")
-        val src = wcsModel.sourceLookup(params.identifier)
         val re = params.gridExtent
-        val eval = src match {
-          case SimpleSource(name, title, source, styles) =>
-            LayerExtent.identity(SimpleOgcLayer(name, title, params.crs, source, None))
-          case MapAlgebraSource(name, title, sources, algebra, styles) =>
-            val simpleLayers = sources.mapValues { rs => SimpleOgcLayer(name, title, params.crs, rs, None) }
+
+        val eval = wcsModel.getLayers(params).headOption.map {
+          case so @ SimpleOgcLayer(_, _, _, _, _) => LayerExtent.identity(so)
+          case MapAlgebraOgcLayer(_, _, _, simpleLayers, algebra, _) =>
             LayerExtent(IO.pure(algebra), IO.pure(simpleLayers), ConcurrentInterpreter.DEFAULT)
-        }
+        }.getOrElse(throw new Exception("bad interpreter"))
 
         eval(re.extent, re.cellSize) map {
           case Valid(mbtile) =>
