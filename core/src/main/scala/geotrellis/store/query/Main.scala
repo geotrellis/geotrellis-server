@@ -26,7 +26,7 @@ object Main {
     println(queryF)
     println(queryF2)
 
-    val res = scheme.cata(QueryF.rasterSourcesListAlg(list))
+    val res = scheme.cata(RasterSourceCollection.algebraList(list))
 
     println(res(queryF2))
 

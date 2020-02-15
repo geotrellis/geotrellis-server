@@ -1,6 +1,10 @@
 package geotrellis.store.query
 
-trait QueryCollection[T] {
-  val list: List[T]
-  def find(query: Query): List[T]
+import higherkindness.droste.Algebra
+
+trait QueryCollection[T, G[_]] {
+  val list: G[T]
+  def find(query: Query): G[T]
+
+  def algebra: Algebra[QueryF, G[T]]
 }

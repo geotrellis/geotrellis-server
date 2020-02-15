@@ -9,7 +9,7 @@ package object query {
   type Query = Fix[QueryF]
 
   implicit class QueryOps(self: Query) {
-    def or(r: Query): Query = QueryF.or(self, r)
+    def or(r: Query): Query  = QueryF.or(self, r)
     def and(r: Query): Query = QueryF.and(self, r)
   }
 

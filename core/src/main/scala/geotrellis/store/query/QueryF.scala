@@ -1,11 +1,9 @@
 package geotrellis.store.query
 
-import geotrellis.raster.{RasterSource, StringName}
 import geotrellis.vector.Geometry
+
 import cats.Functor
-import higherkindness.droste.data.Fix
-import higherkindness.droste.{Algebra, scheme}
-import jp.ne.opt.chronoscala.Imports._
+import higherkindness.droste.syntax.fix._
 import java.time.ZonedDateTime
 
 trait QueryF[A]
@@ -23,15 +21,15 @@ object QueryF {
   case class WithNames[A](names: Set[String]) extends QueryF[A]
 
   /** Build Tree syntax */
-  def or(l: Query, r: Query): Query        = Fix(Or(l, r))
-  def and(l: Query, r: Query): Query       = Fix(And(l, r))
-  def withName(name: String): Query        = Fix[QueryF](WithName(name))
-  def withNames(names: Set[String]): Query = Fix[QueryF](WithNames(names))
-  def intersects(g: Geometry): Query       = Fix[QueryF](Intersects(g))
-  def contains(g: Geometry): Query         = Fix[QueryF](Contains(g))
-  def covers(g: Geometry): Query           = Fix[QueryF](Covers(g))
-  def at(t: ZonedDateTime, fieldName: Symbol = 'time): Query                          = Fix[QueryF](At(t, fieldName))
-  def between(t1: ZonedDateTime, t2: ZonedDateTime, fieldName: Symbol = 'time): Query = Fix[QueryF](Between(t1, t2, fieldName))
+  def or(l: Query, r: Query): Query        = Or(l, r).fix
+  def and(l: Query, r: Query): Query       = And(l, r).fix
+  def withName(name: String): Query        = WithName(name).fix
+  def withNames(names: Set[String]): Query = WithNames(names).fix
+  def intersects(g: Geometry): Query       = Intersects(g).fix
+  def contains(g: Geometry): Query         = Contains(g).fix
+  def covers(g: Geometry): Query           = Covers(g).fix
+  def at(t: ZonedDateTime, fieldName: Symbol = 'time): Query                          = At(t, fieldName).fix
+  def between(t1: ZonedDateTime, t2: ZonedDateTime, fieldName: Symbol = 'time): Query = Between(t1, t2, fieldName).fix
 
   /** Pattern functor for QueryF */
   implicit val queryFFunctor: Functor[QueryF] = new Functor[QueryF] {
@@ -47,33 +45,4 @@ object QueryF {
       case WithNames(v)        => WithNames[B](v)
     }
   }
-
-  /** Algebra that can work with List[T] */
-  def rasterSourcesListAlg[T <: RasterSource](list: List[T]): Algebra[QueryF, List[T]] = Algebra {
-    case WithName(name) => list.filter {
-      _.name match {
-        case StringName(v) => v == name
-        case _             => false
-      }
-    }
-    case WithNames(names) => list.filter {
-      _.name match {
-        case StringName(v) => names.contains(v)
-        case _             => false
-      }
-    }
-    case At(t, fn)           => list.filter(_.metadata.attributes.get(fn.name).map(ZonedDateTime.parse).fold(false)(_ == t))
-    case Between(t1, t2, fn) => list.filter {
-      _.metadata.attributes.get(fn.name).map(ZonedDateTime.parse).fold(false) { current => t1 >= current && t2 < current }
-    }
-    case Intersects(e) => list.filter(_.extent.intersects(e))
-    case Covers(e)     => list.filter(_.extent.covers(e))
-    case Contains(e)   => list.filter(_.extent.covers(e))
-    case And(e1, e2)   => e1 diff e2
-    case Or(e1, e2)    => e1 ++ e2
-  }
-
-  /** An alias for [[scheme.cata]] since it can confuse people */
-  def eval[T <: RasterSource](query: Query)(list: List[T]): List[T] =
-    scheme.cata(rasterSourcesListAlg(list)).apply(query)
 }
