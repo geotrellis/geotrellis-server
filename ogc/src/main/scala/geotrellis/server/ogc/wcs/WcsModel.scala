@@ -26,11 +26,14 @@ case class WcsModel(
 ) {
 
   def getLayers(p: GetCoverageWcsParams): List[OgcLayer] = {
-    scheme
-      // .cata(sources.toAlgebra)
-      // .apply(p.toQuery)
-      .hylo(sources.algebra, p.colagebra)
-      .apply(p)
+    /*scheme
+      .cata(OgcSourceCollection.algebgra)
+      .apply(p.toQuery)(sources.list)*/
+      // unfold JSON directly and fold it into the QueryF
+      // .hylo(OgcSourceCollection.algebgra, p.colagebra)
+      // .apply(p)(sources.list)
+    sources
+      .find(p.toQuery)
       .map {
         case SimpleSource(name, title, source, styles) =>
           SimpleOgcLayer(name, title, p.crs, source, None)

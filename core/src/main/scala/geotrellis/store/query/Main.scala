@@ -26,9 +26,9 @@ object Main {
     println(queryF)
     println(queryF2)
 
-    val res = scheme.cata(RasterSourceCollection.algebraList(list))
+    val res = scheme.cata(RasterSourceCollection.algebra[RasterSource]).apply(queryF)
 
-    println(res(queryF2))
+    println(res(list))
 
     // val res = QueryF.cata(queryF)(QueryF.listAlg(list))
 

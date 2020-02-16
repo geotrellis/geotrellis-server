@@ -12,6 +12,7 @@ object QueryF {
   /** Tree leaves */
   case class Or[A](l: A, r: A) extends QueryF[A]
   case class And[A](l: A, r: A) extends QueryF[A]
+  // should be projected geometry here
   case class Intersects[A](g: Geometry) extends QueryF[A]
   case class Contains[A](g: Geometry) extends QueryF[A]
   case class Covers[A](g: Geometry) extends QueryF[A]

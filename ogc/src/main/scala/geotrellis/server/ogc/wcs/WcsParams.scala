@@ -32,6 +32,8 @@ import java.net.URI
 
 import geotrellis.store.query.{Query, QueryF}
 import higherkindness.droste.Coalgebra
+import higherkindness.droste.syntax.FixSyntax._
+import higherkindness.droste.data.Fix
 
 abstract sealed class WcsParams {
   val version: String
@@ -69,8 +71,8 @@ case class GetCoverageWcsParams(
 ) extends WcsParams {
   import geotrellis.store.query._
 
-  def toQuery: Query = withName(identifier) // and intersects(boundingBox.toPolygon())
-  def toQueryF[A]: QueryF[A] = QueryF.WithName[A](identifier) // and intersects(boundingBox.toPolygon())
+  def toQuery: Query = withName(identifier) and intersects(boundingBox.toPolygon())
+  def toQueryF[A]: QueryF[A] = QueryF.WithName(identifier)
   val colagebra: Coalgebra[QueryF, GetCoverageWcsParams] = Coalgebra(_.toQueryF)
 
   val changeXY: Boolean = crs.isGeographic
