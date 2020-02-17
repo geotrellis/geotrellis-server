@@ -109,16 +109,16 @@ object Main extends CommandApp(
             wmsModel = WmsModel(
               conf.wms.serviceMetadata,
               conf.wms.parentLayerMeta,
-              OgcSourceCollection(conf.wms.layerSources(simpleSources))
+              conf.wms.layerSources(simpleSources)
             )
             wmtsModel = WmtsModel(
               conf.wmts.serviceMetadata,
               conf.wmts.tileMatrixSets,
-              OgcSourceCollection(conf.wmts.layerSources(simpleSources))
+              conf.wmts.layerSources(simpleSources)
             )
             wcsModel = WcsModel(
               conf.wcs.serviceMetadata,
-              OgcSourceCollection(conf.wcs.layerSources(simpleSources))
+              conf.wcs.layerSources(simpleSources)
             )
             ogcService = new OgcService(wmsModel, wcsModel, wmtsModel, new URL(publicUrl))
             exitCode   <- BlazeServerBuilder[IO]
