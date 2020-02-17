@@ -2,14 +2,18 @@ package geotrellis.store.query
 
 import java.time.ZonedDateTime
 
+import geotrellis.proj4.LatLng
 import geotrellis.raster.RasterSource
-import geotrellis.vector.Extent
+import geotrellis.vector.{Extent, ProjectedExtent}
 import higherkindness.droste.data.Fix
 import higherkindness.droste.scheme
 import higherkindness.droste.syntax.fix._
 
 object Main {
   def main(arg: Array[String]): Unit = {
+    implicit def extentToProjectedExtent(extent: Extent): ProjectedExtent =
+      ProjectedExtent(extent, LatLng)
+
     val list: List[RasterSource] = Nil
 
     val queryF: Fix[QueryF] =

@@ -17,7 +17,6 @@
 package geotrellis.server.ogc.wcs
 
 import geotrellis.server.ogc._
-import higherkindness.droste.scheme
 
 /** This class holds all the information necessary to construct a response to a WCS request */
 case class WcsModel(
@@ -25,13 +24,7 @@ case class WcsModel(
   sources: OgcSourceCollection
 ) {
 
-  def getLayers(p: GetCoverageWcsParams): List[OgcLayer] = {
-    /*scheme
-      .cata(OgcSourceCollection.algebgra)
-      .apply(p.toQuery)(sources.list)*/
-      // unfold JSON directly and fold it into the QueryF
-      // .hylo(OgcSourceCollection.algebgra, p.colagebra)
-      // .apply(p)(sources.list)
+  def getLayers(p: GetCoverageWcsParams): List[OgcLayer] =
     sources
       .find(p.toQuery)
       .map {
@@ -41,5 +34,4 @@ case class WcsModel(
           val simpleLayers = sources.mapValues { rs => SimpleOgcLayer(name, title, p.crs, rs, None) }
           MapAlgebraOgcLayer(name, title, p.crs, simpleLayers, algebra, None)
       }
-  }
 }

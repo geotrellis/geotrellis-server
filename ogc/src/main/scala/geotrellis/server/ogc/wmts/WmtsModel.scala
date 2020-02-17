@@ -19,27 +19,28 @@ package geotrellis.server.ogc.wmts
 import geotrellis.server.ogc._
 import geotrellis.layer._
 import geotrellis.proj4._
+import geotrellis.server.ogc.wmts.WmtsParams.GetTile
 
 /** This class holds all the information necessary to construct a response to a WMTS request */
 case class WmtsModel(
   serviceMetadata: ows.ServiceMetadata,
   matrices: List[GeotrellisTileMatrixSet],
-  sources: Seq[OgcSource]
+  sources: OgcSourceCollection
 ) {
 
-  val sourceLookup: Map[String, OgcSource] = sources.map({layer => layer.name -> layer}).toMap
-
   val matrixSetLookup: Map[String, GeotrellisTileMatrixSet] =
-    matrices.map({tileMatrixSet => tileMatrixSet.identifier -> tileMatrixSet}).toMap
+    matrices.map { tileMatrixSet => tileMatrixSet.identifier -> tileMatrixSet }.toMap
 
   /** Take a specific request for a map and combine it with the relevant [[OgcSource]]
    *  to produce a [[TiledOgcLayer]]
    */
-  def getLayer(crs: CRS, layerName: String, layout: LayoutDefinition, styleName: String): Option[TiledOgcLayer] = {
+  def getLayer(p: GetTile): List[TiledOgcLayer] = {
     for {
-      source <- sourceLookup.get(layerName)
+      crs    <- getMatrixCrs(p.tileMatrixSet).toList
+      layout <- getMatrixLayoutDefinition(p.tileMatrixSet, p.tileMatrix).toList
+      source <- sources.find(p.toQuery)
     } yield {
-      val style: Option[OgcStyle] = source.styles.find(_.name == styleName)
+      val style: Option[OgcStyle] = source.styles.find(_.name == p.style)
       source match {
         case MapAlgebraSource(name, title, rasterSources, algebra, styles) =>
           val simpleLayers = rasterSources.mapValues { rs =>
@@ -59,7 +60,5 @@ case class WmtsModel(
     } yield matrix.layout
 
   def getMatrixCrs(tileMatrixSetId: String): Option[CRS] =
-    for {
-      matrixSet <- matrixSetLookup.get(tileMatrixSetId)
-    } yield matrixSet.supportedCrs
+    matrixSetLookup.get(tileMatrixSetId).map(_.supportedCrs)
 }

@@ -18,11 +18,9 @@ package geotrellis.server.ogc
 
 import geotrellis.server.extent.SampleUtils
 import geotrellis.server.ogc.wms._
-
 import geotrellis.raster._
-import geotrellis.vector.Extent
+import geotrellis.vector.{Extent, ProjectedExtent}
 import geotrellis.proj4.CRS
-
 import com.azavea.maml.ast._
 
 import cats.data.{NonEmptyList => NEL}
@@ -47,6 +45,8 @@ trait OgcSource {
   def nativeCrs: Set[CRS]
   def metadata: RasterMetadata
   def attributes: Map[String, String]
+
+  def nativeProjectedExtent: ProjectedExtent = ProjectedExtent(nativeExtent, nativeCrs.head)
 }
 
 /**

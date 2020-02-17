@@ -55,24 +55,19 @@ class WmtsView(wmtsModel: WmtsModel, serviceUrl: URL) {
         case Valid(wmtsReq: GetTile) =>
           val tileCol = wmtsReq.tileCol
           val tileRow = wmtsReq.tileRow
-          val style = wmtsReq.style
           val layerName = wmtsReq.layer
-          (for {
-            crs <- wmtsModel.getMatrixCrs(wmtsReq.tileMatrixSet)
-            layoutDefinition <- wmtsModel.getMatrixLayoutDefinition(wmtsReq.tileMatrixSet, wmtsReq.tileMatrix)
-            layer <- wmtsModel.getLayer(crs, layerName, layoutDefinition, style)
-          } yield {
+          wmtsModel.getLayer(wmtsReq).map { layer =>
             val evalWmts = layer match {
-              case sl@SimpleTiledOgcLayer(_, _, _, _, _, _) =>
+              case sl @ SimpleTiledOgcLayer(_, _, _, _, _, _) =>
                 LayerTms.identity(sl)
-              case sl@MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _) =>
+              case MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _) =>
                 LayerTms(IO.pure(expr), IO.pure(parameters), ConcurrentInterpreter.DEFAULT[IO])
             }
 
             val evalHisto = layer match {
               case sl@SimpleTiledOgcLayer(_, _, _, _, _, _) =>
                 LayerHistogram.identity(sl, 512)
-              case sl@MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _) =>
+              case MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _) =>
                 LayerHistogram(IO.pure(expr), IO.pure(parameters), ConcurrentInterpreter.DEFAULT[IO], 512)
             }
 
@@ -94,7 +89,7 @@ class WmtsView(wmtsModel: WmtsModel, serviceUrl: URL) {
                 logger.error(err.toString)
                 InternalServerError(err.toString)
             }
-          }).getOrElse(BadRequest(s"Layer (${layerName}) not found"))
+          }.headOption.getOrElse(BadRequest(s"Layer ($layerName) not found"))
       }
   }
 }

@@ -109,12 +109,12 @@ object Main extends CommandApp(
             wmsModel = WmsModel(
               conf.wms.serviceMetadata,
               conf.wms.parentLayerMeta,
-              conf.wms.layerSources(simpleSources)
+              OgcSourceCollection(conf.wms.layerSources(simpleSources))
             )
             wmtsModel = WmtsModel(
               conf.wmts.serviceMetadata,
               conf.wmts.tileMatrixSets,
-              conf.wmts.layerSources(simpleSources)
+              OgcSourceCollection(conf.wmts.layerSources(simpleSources))
             )
             wcsModel = WcsModel(
               conf.wcs.serviceMetadata,
