@@ -51,7 +51,6 @@ class WmsView(wmsModel: WmsModel, serviceUrl: URL) {
       .maximumSize(500)
       .build[OgcLayer, Interpreted[List[Histogram[Double]]]]()
 
-
   def responseFor(req: Request[IO])(implicit cs: ContextShift[IO]): IO[Response[IO]] = {
     WmsParams(req.multiParams) match {
       case Invalid(errors) =>
