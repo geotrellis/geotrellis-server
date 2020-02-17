@@ -24,7 +24,7 @@ import geotrellis.raster.render.{ColorMap, ColorRamp}
 
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
-import com.typesafe.config.{ConfigRenderOptions, ConfigValue}
+import com.typesafe.config._
 import io.circe._
 import io.circe.parser._
 import pureconfig._
@@ -33,6 +33,8 @@ import pureconfig.generic.FieldCoproductHint
 import pureconfig.generic.auto._
 
 import scala.util.Try
+import scala.collection.JavaConverters._
+
 
 /** A grab bag of [[ConfigReader]] instances necessary to read the configuration */
 package object conf {
@@ -67,9 +69,31 @@ package object conf {
       ColorRamp(colors.map(java.lang.Long.decode(_).toInt))
     }
 
+  /**
+   * HOCON doesn't naturally handle unquoted strings which contain decimals ('.') very well.
+   *  As a result, some special configuration handling is required here to allow unquoted
+   *  strings specifically when we know we're trying to decode a ColorMap.
+   */
   implicit def colormapReader: ConfigReader[ColorMap] =
-    ConfigReader[Map[String, String]].map { cmap =>
-      ColorMap(cmap.map { case (k, v) => (k.toDouble -> java.lang.Long.decode(v).toInt) }.toMap)
+    ConfigReader[Map[String, ConfigValue]].map { cmap =>
+      val numericMap = cmap.map({ case (k, v) =>
+        v.valueType match {
+          case ConfigValueType.OBJECT =>
+            val confmap = v.asInstanceOf[ConfigObject].asScala
+            val fixedKey: String = k + "." + confmap.keys.head
+            val fixedValue: String = confmap.values.head.unwrapped.asInstanceOf[String]
+            fixedKey -> fixedValue
+          case ConfigValueType.STRING => 
+            k -> v.unwrapped.asInstanceOf[String]
+          case _ =>
+            k -> v.toString
+        }
+      }).map({ case (k, v) =>
+        val key = k.toDouble
+        val value = java.lang.Long.decode(v).toInt
+        key -> value 
+      }).toMap
+      ColorMap(numericMap)
     }
 
   implicit def keywordConfigReader: ConfigReader[opengis.wms.Keyword] =
