@@ -21,7 +21,7 @@ import geotrellis.server.ogc._
 /** This class holds all the information necessary to construct a response to a WCS request */
 case class WcsModel(
   serviceMetadata: ows.ServiceMetadata,
-  sources: OgcSourceCollection
+  sources: OgcSourceRepository
 ) {
 
   def getLayers(p: GetCoverageWcsParams): List[OgcLayer] =

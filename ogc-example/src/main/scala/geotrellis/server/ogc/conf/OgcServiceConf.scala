@@ -16,7 +16,7 @@
 
 package geotrellis.server.ogc.conf
 
-import geotrellis.server.ogc.{OgcSourceCollection, SimpleSource, ows}
+import geotrellis.server.ogc.{OgcSourceRepository, SimpleSource, ows}
 import geotrellis.server.ogc.wms.WmsParentLayerMeta
 import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
 
@@ -27,12 +27,12 @@ import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
  */
 sealed trait OgcServiceConf {
   def layerDefinitions: List[OgcSourceConf]
-  def layerSources(simpleSources: List[SimpleSource]): OgcSourceCollection = {
+  def layerSources(simpleSources: List[SimpleSource]): OgcSourceRepository = {
     val simpleLayers =
       layerDefinitions.collect { case ssc@SimpleSourceConf(_, _, _, _) => ssc.model }
     val mapAlgebraLayers =
       layerDefinitions.collect { case masc@MapAlgebraSourceConf(_, _, _, _) => masc.model(simpleSources) }
-    OgcSourceCollection(simpleLayers ++ mapAlgebraLayers)
+    OgcSourceRepository(simpleLayers ++ mapAlgebraLayers)
   }
 }
 

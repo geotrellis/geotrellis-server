@@ -14,38 +14,49 @@
  * limitations under the License.
  */
 
-package geotrellis.server.ogc
+package geotrellis.store.query
 
-import geotrellis.store.query._
+import geotrellis.raster.{RasterSource, StringName}
 import higherkindness.droste.{Algebra, scheme}
 import jp.ne.opt.chronoscala.Imports._
+
 import java.time.ZonedDateTime
 
-case class OgcSourceCollection(list: List[OgcSource]) extends QueryCollection[OgcSource, List] {
-  def find(query: Query): List[OgcSource] = OgcSourceCollection.eval(query)(list)
+case class RasterSourceRepository[T <: RasterSource](store: List[T]) extends Repository[T, List] {
+  def find(query: Query): List[T] = RasterSourceRepository.eval(query)(store)
 }
 
-object OgcSourceCollection {
+object RasterSourceRepository {
   import geotrellis.store.query.QueryF._
 
-  def algebgra: Algebra[QueryF, List[OgcSource] => List[OgcSource]] = Algebra {
-    case Nothing()           => _ => Nil
-    case All()               => identity
-    case WithName(name)      => _.filter(_.name == name)
-    case WithNames(names)    => _.filter(rs => names.contains(rs.name))
+  /** Algebra that can work with List[T] */
+  def algebra[T <: RasterSource]: Algebra[QueryF, List[T] => List[T]] = Algebra {
+    case Nothing() => _ => Nil
+    case All()     => identity
+    case WithName(name) => _.filter {
+      _.name match {
+        case StringName(v) => v == name
+        case _             => false
+      }
+    }
+    case WithNames(names) => _.filter {
+      _.name match {
+        case StringName(v) => names.contains(v)
+        case _             => false
+      }
+    }
     case At(t, fn)           => _.filter(_.metadata.attributes.get(fn.name).map(ZonedDateTime.parse).fold(false)(_ == t))
     case Between(t1, t2, fn) => _.filter {
       _.metadata.attributes.get(fn.name).map(ZonedDateTime.parse).fold(false) { current => t1 >= current && t2 < current }
     }
-    case Intersects(e) => _.filter(_.nativeProjectedExtent.intersects(e))
-    case Covers(e)     => _.filter(_.nativeProjectedExtent.covers(e))
-    case Contains(e)   => _.filter(_.nativeProjectedExtent.covers(e))
+    case Intersects(e) => _.filter(_.projectedExtent.intersects(e))
+    case Covers(e)     => _.filter(_.projectedExtent.covers(e))
+    case Contains(e)   => _.filter(_.projectedExtent.covers(e))
     case And(e1, e2)   => list => val left = e1(list); left intersect e2(left)
     case Or(e1, e2)    => list => e1(list) ++ e2(list)
   }
 
   /** An alias for [[scheme.cata]] since it can confuse people */
-  def eval(query: Query)(list: List[OgcSource]): List[OgcSource] =
-    scheme.cata(algebgra).apply(query)(list)
-
+  def eval[T <: RasterSource](query: Query)(list: List[T]): List[T] =
+    scheme.cata(algebra[T]).apply(query)(list)
 }

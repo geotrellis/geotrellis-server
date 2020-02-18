@@ -25,7 +25,7 @@ import geotrellis.server.ogc.wmts.WmtsParams.GetTile
 case class WmtsModel(
   serviceMetadata: ows.ServiceMetadata,
   matrices: List[GeotrellisTileMatrixSet],
-  sources: OgcSourceCollection
+  sources: OgcSourceRepository
 ) {
 
   val matrixSetLookup: Map[String, GeotrellisTileMatrixSet] =

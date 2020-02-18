@@ -23,7 +23,7 @@ import geotrellis.server.ogc.wms.WmsParams.GetMap
 case class WmsModel(
   serviceMeta: opengis.wms.Service,
   parentLayerMeta: WmsParentLayerMeta,
-  sources: OgcSourceCollection
+  sources: OgcSourceRepository
 ) {
 
   /** Take a specific request for a map and combine it with the relevant [[OgcSource]]

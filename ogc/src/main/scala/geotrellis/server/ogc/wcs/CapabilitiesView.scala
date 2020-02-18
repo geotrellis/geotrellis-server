@@ -188,7 +188,7 @@ class CapabilitiesView(
 
 object CapabilitiesView {
   def coverageSummaries(wcsModel: WcsModel): List[CoverageSummaryType] =
-    wcsModel.sources.list.map { src =>
+    wcsModel.sources.store.map { src =>
       val crs = src.nativeCrs.head
       val wgs84extent = ReprojectRasterExtent(src.nativeRE, crs, LatLng).extent
 

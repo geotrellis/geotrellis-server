@@ -38,7 +38,7 @@ class CoverageView(
   identifiers: Seq[String]
 ) {
   def toXML: Elem = {
-    val sources = if(identifiers == Nil) wcsModel.sources.list else wcsModel.sources.find(withNames(identifiers.toSet))
+    val sources = if(identifiers == Nil) wcsModel.sources.store else wcsModel.sources.find(withNames(identifiers.toSet))
     scalaxb.toXML[CoverageDescriptions](
       obj           = CoverageDescriptions(sources.map(CoverageView.sourceDescription)),
       namespace     = None,
