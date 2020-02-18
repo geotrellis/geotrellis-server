@@ -19,20 +19,15 @@ package geotrellis.server
 import ExtentReification.ops._
 
 import geotrellis.vector.Extent
+import geotrellis.raster._
 import com.azavea.maml.util.Vars
 import com.azavea.maml.error._
 import com.azavea.maml.ast._
-import com.azavea.maml.ast.codec.tree._
 import com.azavea.maml.eval._
-import io.circe._
-import io.circe.syntax._
-import cats._
+
 import cats.data.Validated._
-import cats.data.{NonEmptyList => NEL}
 import cats.effect._
 import cats.implicits._
-import geotrellis.raster._
-
 
 object LayerExtent {
   val logger = org.log4s.getLogger
