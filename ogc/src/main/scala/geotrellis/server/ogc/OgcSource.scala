@@ -59,14 +59,14 @@ case class SimpleSource(
   styles: List[OgcStyle]
 ) extends OgcSource {
 
-  lazy val nativeRE = source.gridExtent
+  lazy val nativeRE: GridExtent[Long] = source.gridExtent
 
   def extentIn(crs: CRS): Extent = {
     val reprojected = source.reproject(crs)
     reprojected.extent
   }
 
-  def bboxIn(crs: CRS) = {
+  def bboxIn(crs: CRS): BoundingBox = {
     val reprojected = source.reproject(crs)
     CapabilitiesView.boundingBox(crs, reprojected.extent, reprojected.cellSize)
   }
@@ -86,7 +86,7 @@ case class MapAlgebraSourceMetadata(
   resolutions: List[CellSize],
   sources: Map[String, RasterMetadata]
 ) extends RasterMetadata {
-  /** Mosaic metadata usually doesn't contain a metadata that is common for all RasterSources */
+  /** MapAlgebra metadata usually doesn't contain a metadata that is common for all RasterSources */
   def attributes: Map[String, String] = Map.empty
   def attributesForBand(band: Int): Map[String, String] = Map.empty
 }
@@ -103,19 +103,20 @@ case class MapAlgebraSource(
   styles: List[OgcStyle]
 ) extends OgcSource {
 
-  lazy val metadata = MapAlgebraSourceMetadata(
-    StringName(name),
-    nativeCrs.head,
-    minBandCount,
-    cellTypes.head,
-    nativeRE,
-    resolutions,
-    sources.mapValues(_.metadata)
-  )
+  lazy val metadata: MapAlgebraSourceMetadata =
+    MapAlgebraSourceMetadata(
+      StringName(name),
+      nativeCrs.head,
+      minBandCount,
+      cellTypes.head,
+      nativeRE,
+      resolutions,
+      sources.mapValues(_.metadata)
+    )
 
   lazy val attributes: Map[String, String] = Map.empty
 
-  lazy val nativeExtent = {
+  lazy val nativeExtent: Extent = {
     val reprojectedSources: NEL[RasterSource] =
       NEL.fromListUnsafe(sources.values.map(_.reproject(nativeCrs.head)).toList)
     val extents =
@@ -131,7 +132,7 @@ case class MapAlgebraSource(
     }
   }
 
-  lazy val nativeRE = {
+  lazy val nativeRE: GridExtent[Long] = {
     val reprojectedSources: NEL[RasterSource] =
       NEL.fromListUnsafe(sources.values.map(_.reproject(nativeCrs.head)).toList)
     val cellSize =
@@ -151,7 +152,7 @@ case class MapAlgebraSource(
     }
   }
 
-  def bboxIn(crs: CRS) = {
+  def bboxIn(crs: CRS): BoundingBox = {
     val reprojectedSources: NEL[RasterSource] =
       NEL.fromListUnsafe(sources.values.map(_.reproject(crs)).toList)
     val extents =

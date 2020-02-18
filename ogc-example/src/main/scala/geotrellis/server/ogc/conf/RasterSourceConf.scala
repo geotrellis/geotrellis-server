@@ -25,7 +25,7 @@ import geotrellis.store.{GeoTrellisPath, GeoTrellisRasterSourceLegacy}
  *  a geotrellis-contrib [[RasterSource]].
  */
 sealed trait RasterSourceConf {
-  def toRasterSource: RasterSource
+  def toRasterSources: List[RasterSource]
 }
 
 /** An avro-backed (geotrellis) raster source */
@@ -35,10 +35,11 @@ case class GeoTrellis(
   zoom: Int,
   bandCount: Int
 ) extends RasterSourceConf {
-  def toRasterSource = new GeoTrellisRasterSourceLegacy(GeoTrellisPath(catalogUri, layer, Some(zoom), Some(bandCount)))
+  def toRasterSources: List[RasterSource] =
+    GeoTrellisRasterSourceLegacy.build(GeoTrellisPath(catalogUri, layer, Some(zoom), Some(bandCount)))
 }
 
 /** A geotiff (COG) raster source */
 case class GeoTiff(uri: String) extends RasterSourceConf {
-  def toRasterSource = GeoTiffRasterSource(uri)
+  def toRasterSources: List[GeoTiffRasterSource] = GeoTiffRasterSource(uri) :: Nil
 }

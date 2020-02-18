@@ -22,9 +22,11 @@ import geotrellis.raster.resample.{NearestNeighbor, ResampleMethod}
 import geotrellis.raster._
 import geotrellis.layer._
 import geotrellis.layer.filter._
+import geotrellis.store.index.hilbert.HilbertSpaceTimeKeyIndex
+import geotrellis.store.index.zcurve.ZSpaceTimeKeyIndex
 import geotrellis.vector._
 
-import java.time.ZonedDateTime
+import java.time.{ZoneOffset, ZonedDateTime}
 
 case class LayerLegacy(id: LayerId, metadata: TileLayerMetadata[_], bandCount: Int) {
   /** GridExtent of the data pixels in the layer */
@@ -254,4 +256,54 @@ object GeoTrellisRasterSourceLegacy {
       sparseStitch(tiles, intersectionExtent).map(_.crop(intersectionExtent))
     }
   }
+
+  /**
+   * Build function that can build a list of RasterSources
+   * slicing them by time (in case of a temporal raster source).
+   *
+   * @param attributeStore GeoTrellis attribute store
+   * @param dataPath       GeoTrellis catalog DataPath
+   * @param sourceLayers   List of source layers
+   * @param tResolution    Layer temporal resolution, if not provided the function will try to derive it.
+   * @param targetCellType The target cellType
+   */
+  def build(
+    attributeStore: AttributeStore,
+    dataPath: GeoTrellisPath,
+    sourceLayers: Stream[LayerLegacy],
+    tResolution: Option[Long],
+    targetCellType: Option[TargetCellType]
+  ): List[GeoTrellisRasterSourceLegacy] = {
+    val layerId = dataPath.layerId
+    val header = attributeStore.readHeader[LayerHeader](layerId)
+
+    if(header.keyClass.contains("SpatialKey"))
+      new GeoTrellisRasterSourceLegacy(attributeStore, dataPath, sourceLayers, None, targetCellType) :: Nil
+    else {
+      val md = attributeStore.readMetadata[TileLayerMetadata[SpaceTimeKey]](layerId)
+      val keyIndex = attributeStore.readKeyIndex[SpaceTimeKey](layerId)
+      val temporalResolution = tResolution.getOrElse(keyIndex match {
+        case ki if ki.isInstanceOf[ZSpaceTimeKeyIndex]       => ki.asInstanceOf[ZSpaceTimeKeyIndex].temporalResolution
+        case ki if ki.isInstanceOf[HilbertSpaceTimeKeyIndex] => ki.asInstanceOf[ZSpaceTimeKeyIndex].temporalResolution
+        case ki => throw new UnsupportedOperationException(s"Can't derive layer temporal resolution for ${ki.getClass}, try to pass a tResolution parameter explicitly.")
+      })
+
+      md.bounds match {
+        case KeyBounds(minKey, maxKey) =>
+          (minKey.time.toInstant.toEpochMilli to maxKey.time.toInstant.toEpochMilli by temporalResolution).toList.map { time =>
+            new GeoTrellisRasterSourceLegacy(attributeStore, dataPath, sourceLayers, Some(ZonedDateTime.ofInstant(time, ZoneOffset.UTC)), targetCellType)
+          }
+        case _ => Nil
+      }
+    }
+  }
+
+  def build(attributeStore: AttributeStore, dataPath: GeoTrellisPath): List[GeoTrellisRasterSourceLegacy] =
+    build(
+      attributeStore, dataPath,
+      GeoTrellisRasterSourceLegacy.getSourceLayersByName(attributeStore, dataPath.layerName, dataPath.bandCount.getOrElse(1)),
+      None, None
+    )
+
+  def build(dataPath: GeoTrellisPath): List[GeoTrellisRasterSourceLegacy] = build(AttributeStore(dataPath.value), dataPath)
 }
