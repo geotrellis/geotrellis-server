@@ -25,7 +25,6 @@ import com.azavea.maml.eval._
 import geotrellis.vector.Extent
 import geotrellis.raster._
 
-import com.typesafe.scalalogging.LazyLogging
 import cats._
 import cats.data.{NonEmptyList => NEL}
 import cats.effect._
@@ -35,7 +34,8 @@ import cats.syntax.either._
 import scala.collection.mutable
 
 
-object LayerHistogram extends LazyLogging {
+object LayerHistogram {
+  val logger = org.log4s.getLogger
 
   case class NoSuitableHistogramResolution(cells: Int) extends Throwable
   case class RequireIntersectingSources() extends Throwable

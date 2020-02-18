@@ -29,7 +29,6 @@ import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
 import cats.effect._
-import com.typesafe.scalalogging.LazyLogging
 
 import java.util.UUID
 import scala.util.Try
@@ -40,7 +39,8 @@ class PersistenceService[Store, Param](
 )(implicit contextShift: ContextShift[IO],
            ms: MamlStore[Store],
            pd: Decoder[Param],
-           mr: TmsReification[Param]) extends Http4sDsl[IO] with LazyLogging {
+           mr: TmsReification[Param]) extends Http4sDsl[IO] {
+  val logger = org.log4s.getLogger
 
   // Unapply to handle UUIDs on path
   object IdVar {
@@ -76,7 +76,7 @@ class PersistenceService[Store, Param](
             BadRequest(s"""Unable to parse ${reqBody.mkString("")} as a MAML expression""")
           }
         case Left(err) =>
-          logger.debug(err.toString, err)
+          logger.debug(err.toString)
           InternalServerError(err.toString)
       }
 

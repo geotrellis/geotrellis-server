@@ -27,11 +27,11 @@ import cats.data.Validated._
 import cats.effect._
 import cats.syntax.flatMap._
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
-import com.typesafe.scalalogging.LazyLogging
 
 import scala.concurrent.duration._
 
-class GetCoverage(wcsModel: WcsModel) extends LazyLogging {
+class GetCoverage(wcsModel: WcsModel) {
+  val logger = org.log4s.getLogger
 
   /**
    * QGIS appears to sample WCS service by placing low and high resolution requests at coverage center.

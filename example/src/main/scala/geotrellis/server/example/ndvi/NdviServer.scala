@@ -28,12 +28,12 @@ import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.{CORS, CORSConfig}
 import org.http4s.syntax.kleisli._
 import pureconfig.generic.auto._
-import com.typesafe.scalalogging.LazyLogging
 import com.azavea.maml.eval._
 
 import scala.concurrent.duration._
 
-object NdviServer extends LazyLogging with IOApp {
+object NdviServer extends IOApp {
+  val logger = org.log4s.getLogger
 
   private val corsConfig = CORSConfig(
     anyOrigin = true,

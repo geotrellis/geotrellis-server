@@ -33,7 +33,7 @@ import org.http4s.syntax.kleisli._
 import pureconfig._
 import pureconfig.generic.auto._
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
-import com.typesafe.scalalogging.Logger
+import org.log4s._
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
@@ -70,8 +70,8 @@ object Main extends CommandApp(
     
     (publicUrlReq, interfaceOpt, portOpt, configPathOpt).mapN {
       (publicUrl, interface, port, configPath) => {
+        val logger = getLogger
 
-        val logger = Logger("Main")
         logger.info(ansi"%green{Locally binding services to ${interface}:${port}}")
         logger.info(ansi"%green{Advertising services at ${publicUrl}}")
         configPath match {

@@ -186,7 +186,6 @@ lazy val core = project
       catsEffect.value,
       mamlJvm,
       simulacrum,
-      scalaLogging,
       scalatest
     )
   )
@@ -213,7 +212,6 @@ lazy val example = project
       commonsIO,
       concHashMap,
       pureConfig,
-      scalaLogging,
       sttp,
       sttpCats,
       sttpCirce,
@@ -270,7 +268,6 @@ lazy val ogc = project
       spark,
       geotrellisS3,
       geotrellisSpark,
-      scalaLogging,
       commonsIo, // to make GeoTiffRasterSources work
       scaffeine,
       scalatest,
@@ -299,7 +296,6 @@ lazy val ogcExample = (project in file("ogc-example"))
       http4sBlazeClient.value,
       http4sCirce.value,
       http4sXml.value,
-      scalaLogging,
       logback,
       pureConfig,
       scaffeine,

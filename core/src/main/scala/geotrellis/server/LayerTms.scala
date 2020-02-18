@@ -23,7 +23,6 @@ import com.azavea.maml.error._
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
 import com.azavea.maml.eval._
-import com.typesafe.scalalogging.LazyLogging
 import cats._
 import cats.effect._
 import cats.implicits._
@@ -32,7 +31,8 @@ import cats.data.{NonEmptyList => NEL}
 import geotrellis.raster._
 
 /** Provides methods for producing TMS tiles */
-object LayerTms extends LazyLogging {
+object LayerTms {
+  val logger = org.log4s.getLogger
 
   /**
    * Given an [[Expression]], a parameter map, and an interpreter, create a function

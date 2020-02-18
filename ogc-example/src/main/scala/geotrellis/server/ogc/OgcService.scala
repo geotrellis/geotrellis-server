@@ -24,16 +24,17 @@ import org.http4s._
 import org.http4s.dsl.Http4sDsl
 import cats.implicits._
 import cats.effect._
-import com.typesafe.scalalogging.LazyLogging
 
 import java.net.URL
+
 
 class OgcService(
   wmsModel: WmsModel,
   wcsModel: WcsModel,
   wmtsModel: WmtsModel,
   serviceUrl: URL
-)(implicit contextShift: ContextShift[IO]) extends Http4sDsl[IO] with LazyLogging {
+)(implicit contextShift: ContextShift[IO]) extends Http4sDsl[IO] {
+  val logger = org.log4s.getLogger
 
   val wcsView = new WcsView(wcsModel, serviceUrl)
   val wmsView = new WmsView(wmsModel, serviceUrl)
