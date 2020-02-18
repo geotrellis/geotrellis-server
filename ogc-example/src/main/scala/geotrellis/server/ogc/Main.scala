@@ -33,6 +33,7 @@ import org.http4s.syntax.kleisli._
 import pureconfig._
 import pureconfig.generic.auto._
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
+import com.typesafe.scalalogging.Logger
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
@@ -66,17 +67,18 @@ object Main extends CommandApp(
                    short = "c",
                    help = "Full path to a HOCON configuration file (https://github.com/lightbend/config/blob/master/HOCON.md)")
       .orNone
-
+    
     (publicUrlReq, interfaceOpt, portOpt, configPathOpt).mapN {
       (publicUrl, interface, port, configPath) => {
 
-        println(ansi"%green{Locally binding services to ${interface}:${port}}")
-        println(ansi"%green{Advertising services at ${publicUrl}}")
+        val logger = Logger("Main")
+        logger.info(ansi"%green{Locally binding services to ${interface}:${port}}")
+        logger.info(ansi"%green{Advertising services at ${publicUrl}}")
         configPath match {
           case Some(path) =>
-            println(ansi"%green{Layer and style configurations loaded from ${path}.}")
+            logger.info(ansi"%green{Layer and style configurations loaded from ${path}.}")
           case None =>
-            println(ansi"%red{Warning}: No configuration path provided. Loading defaults.")
+            logger.info(ansi"%red{Warning}: No configuration path provided. Loading defaults.")
         }
 
 

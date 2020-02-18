@@ -92,16 +92,14 @@ object Dependencies {
   val sttpCats = "com.softwaremill.sttp" %% "async-http-client-backend-cats" % sttpVer
   val tsecCommon = "io.github.jmcardon" %% "tsec-common" % tsecVer
   val tsecHttp4s = "io.github.jmcardon" %% "tsec-http4s" % tsecVer
-  val typesafeLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0"
   val macrosParadise = "org.scalamacros" % "paradise" % "2.1.0"
   val scalaParser = "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.1"
   val dispatch = "net.databinder.dispatch" %% "dispatch-core" % dispatchVer
   val apacheMath = "org.apache.commons" % "commons-math3" % "3.6.1"
   val commonsIo = "commons-io" % "commons-io" % "2.6"
-  val slf4jApi = "org.slf4j" % "slf4j-api" % "1.7.25"
-  val slf4jSimple = "org.slf4j" % "slf4j-simple" % "1.7.25"
-  val logback = "ch.qos.logback" % "logback-classic" % "1.1.7"
   val shapeless = "com.chuusai" %% "shapeless" % shapelessVer
+  val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.2"
+  val logback = "ch.qos.logback" % "logback-classic" % "1.2.3" % Runtime
 
   // This dependency differs between scala 2.11 and 2.12
   val ansiColors211 = "org.backuity" %% "ansi-interpolator" % "1.1" % Provided

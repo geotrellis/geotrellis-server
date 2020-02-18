@@ -7,6 +7,7 @@
 
   <logger name="geotrellis.server.ogc" level="${GT_OGC_LOG_LEVEL:-INFO}"/>
   <logger name="org.http4s.blaze.channel.nio1" level="WARN"/>
+  <logger name="software.amazon.awssdk" level="WARN"/>
 
   <root level="ALL">
     <appender-ref ref="STDOUT" />

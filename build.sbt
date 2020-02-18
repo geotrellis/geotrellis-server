@@ -6,7 +6,6 @@ import Dependencies._
 
 scalaVersion := scalaVer
 ThisBuild / scalaVersion := scalaVer
-updateOptions := updateOptions.value.withCachedResolution(true)
 
 val currentYear = java.time.Year.now.getValue.toString
 
@@ -48,7 +47,6 @@ lazy val commonSettings = Seq(
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
     "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots"
   ),
-  updateOptions := updateOptions.value.withCachedResolution(true),
   addCompilerPlugin(kindProjector cross CrossVersion.full),
   addCompilerPlugin(macrosParadise cross CrossVersion.full),
   shellPrompt := { s =>
@@ -188,7 +186,7 @@ lazy val core = project
       catsEffect.value,
       mamlJvm,
       simulacrum,
-      typesafeLogging,
+      scalaLogging,
       scalatest
     )
   )
@@ -215,7 +213,7 @@ lazy val example = project
       commonsIO,
       concHashMap,
       pureConfig,
-      typesafeLogging,
+      scalaLogging,
       sttp,
       sttpCats,
       sttpCirce,
@@ -272,9 +270,8 @@ lazy val ogc = project
       spark,
       geotrellisS3,
       geotrellisSpark,
-      typesafeLogging,
+      scalaLogging,
       commonsIo, // to make GeoTiffRasterSources work
-      slf4jApi, // enable logging
       scaffeine,
       scalatest,
       jaxbApi
@@ -302,8 +299,8 @@ lazy val ogcExample = (project in file("ogc-example"))
       http4sBlazeClient.value,
       http4sCirce.value,
       http4sXml.value,
+      scalaLogging,
       logback,
-      typesafeLogging,
       pureConfig,
       scaffeine,
       scalatest,
@@ -311,7 +308,9 @@ lazy val ogcExample = (project in file("ogc-example"))
     ),
     excludeDependencies ++= Seq(
       // log4j brought in via uzaygezen is a pain for us
-      ExclusionRule("log4j", "log4j")
+      ExclusionRule("log4j", "log4j"),
+      ExclusionRule("org.slf4j", "slf4j-log4j12"),
+      ExclusionRule("org.slf4j", "slf4j-nop")
     ),
     libraryDependencies := (CrossVersion
       .partialVersion(scalaVersion.value) match {
