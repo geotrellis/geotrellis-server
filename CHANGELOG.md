@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated MAML up to 0.6.0 [#199](https://github.com/geotrellis/geotrellis-server/pull/199)
 
 ### Fixed
+- Fixed color interpolation bug related to constructing a range when the step is 0 [#111](https://github.com/geotrellis/geotrellis-server/issues/111)
 - Non-integer (floating point) ColorMap keys now work with or without being quoted [#187](https://github.com/geotrellis/geotrellis-server/issues/187)
 - Missing `<ows:Title>` and `<ows:Abstract>` elements in WCS GetCapabilities response [#114](https://github.com/geotrellis/geotrellis-server/issues/114) 
 - Layer definition elements unused in WMS GetCapabilities response [#115](https://github.com/geotrellis/geotrellis-server/issues/115)
