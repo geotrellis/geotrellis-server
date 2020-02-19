@@ -18,13 +18,14 @@ package geotrellis.store.query
 
 import geotrellis.proj4.LatLng
 import geotrellis.vector.{Extent, ProjectedExtent}
+
 import cats.syntax.either._
 import cats.syntax.option._
 import _root_.io.circe.parser._
 import _root_.io.circe.syntax._
+
 import java.time.{ZoneOffset, ZonedDateTime}
 
-import higherkindness.droste.scheme
 import org.scalatest._
 
 class QueryFSpec extends FunSpec with Matchers {
@@ -154,12 +155,14 @@ class QueryFSpec extends FunSpec with Matchers {
         EmptyRasterSource("fourth", ex4, dt3.some) :: Nil
 
       val query = (intersects(ex2) and intersects(ex3)) and at (dt2)
-      val result = scheme.cata(RasterSourceRepository.algebra[EmptyRasterSource]).apply(query)(store)
+      // scheme.cata(RasterSourceRepository.algebra[EmptyRasterSource]).apply(query)(store)
+      val result = RasterSourceRepository.eval(query)(store)
 
       result shouldBe EmptyRasterSource("second", ex2, dt2.some) :: EmptyRasterSource("third", ex3, dt2.some) :: Nil
 
       val jsonQuery = query.asJson
-      val hresult = scheme.hylo(RasterSourceRepository.algebra[EmptyRasterSource], QueryF.coalgebraJson).apply(jsonQuery)(store)
+      // scheme.hylo(RasterSourceRepository.algebra[EmptyRasterSource], QueryF.coalgebraJson).apply(jsonQuery)(store)
+      val hresult = RasterSourceRepository.eval(jsonQuery)(store)
 
       hresult shouldBe result
     }

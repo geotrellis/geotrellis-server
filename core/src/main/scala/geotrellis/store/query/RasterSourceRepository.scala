@@ -17,6 +17,8 @@
 package geotrellis.store.query
 
 import geotrellis.raster.{RasterSource, StringName}
+
+import io.circe.Json
 import higherkindness.droste.{Algebra, scheme}
 import jp.ne.opt.chronoscala.Imports._
 
@@ -59,4 +61,8 @@ object RasterSourceRepository {
   /** An alias for [[scheme.cata]] since it can confuse people */
   def eval[T <: RasterSource](query: Query)(list: List[T]): List[T] =
     scheme.cata(algebra[T]).apply(query)(list)
+
+  /** An alias for [[scheme.hylo]] since it can confuse people */
+  def eval[T <: RasterSource](json: Json)(list: List[T]): List[T] =
+    scheme.hylo(algebra[T], QueryF.coalgebraJson).apply(json)(list)
 }

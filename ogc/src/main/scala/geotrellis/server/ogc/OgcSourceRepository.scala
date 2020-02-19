@@ -17,8 +17,11 @@
 package geotrellis.server.ogc
 
 import geotrellis.store.query._
+
+import io.circe.Json
 import higherkindness.droste.{Algebra, scheme}
 import jp.ne.opt.chronoscala.Imports._
+
 import java.time.ZonedDateTime
 
 case class OgcSourceRepository(store: List[OgcSource]) extends Repository[OgcSource, List] {
@@ -47,5 +50,9 @@ object OgcSourceRepository {
   /** An alias for [[scheme.cata]] since it can confuse people */
   def eval(query: Query)(list: List[OgcSource]): List[OgcSource] =
     scheme.cata(algebgra).apply(query)(list)
+
+  /** An alias for [[scheme.hylo]] since it can confuse people */
+  def eval(json: Json)(list: List[OgcSource]): List[OgcSource] =
+    scheme.hylo(algebgra, QueryF.coalgebraJson).apply(json)(list)
 
 }
