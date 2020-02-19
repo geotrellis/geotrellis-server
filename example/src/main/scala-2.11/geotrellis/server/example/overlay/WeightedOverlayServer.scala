@@ -7,7 +7,6 @@ import cats.data._
 import cats.effect._
 import cats.implicits._
 import fs2._
-import com.typesafe.scalalogging.LazyLogging
 import org.http4s._
 import org.http4s.server._
 import org.http4s.server.blaze.BlazeServerBuilder
@@ -21,7 +20,8 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 
 
-object WeightedOverlayServer extends LazyLogging with IOApp {
+object WeightedOverlayServer extends IOApp {
+  val logger = org.log4s.getLogger
 
   private val corsConfig = CORSConfig(
     anyOrigin = true,

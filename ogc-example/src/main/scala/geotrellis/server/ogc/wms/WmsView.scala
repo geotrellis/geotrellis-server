@@ -29,7 +29,6 @@ import geotrellis.proj4._
 import com.azavea.maml.error._
 import com.azavea.maml.eval._
 
-import com.typesafe.scalalogging.LazyLogging
 import scalaxb.CanWriteXML
 import org.http4s.scalaxml._
 import org.http4s.circe._
@@ -43,7 +42,8 @@ import com.github.blemale.scaffeine.{Cache, Scaffeine}
 import java.net.URL
 import scala.concurrent.duration._
 
-class WmsView(wmsModel: WmsModel, serviceUrl: URL) extends LazyLogging {
+class WmsView(wmsModel: WmsModel, serviceUrl: URL) {
+  val logger = org.log4s.getLogger
 
   private val histoCache: Cache[OgcLayer, Interpreted[List[Histogram[Double]]]] =
     Scaffeine()
@@ -104,7 +104,7 @@ class WmsView(wmsModel: WmsModel, serviceUrl: URL) extends LazyLogging {
               logger.debug(errs.toList.toString)
               BadRequest(errs.asJson)
             case Left(err) =>            // exceptions
-              logger.error(err.toString, err)
+              logger.error(err.toString)
               InternalServerError(err.toString)
           }
         }.getOrElse(wmsReq.layers.headOption match {

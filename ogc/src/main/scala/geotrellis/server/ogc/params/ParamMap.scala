@@ -19,9 +19,8 @@ package geotrellis.server.ogc.params
 import cats.implicits._
 import cats.data.{Validated, ValidatedNel}
 import Validated._
-import com.typesafe.scalalogging.LazyLogging
 
-case class ParamMap(params: Map[String, Seq[String]]) extends LazyLogging {
+case class ParamMap(params: Map[String, Seq[String]]) {
   private val _params: Map[String, Seq[String]] = params.map { case (k, v) => (k.toLowerCase, v) }
 
   def getParams(field: String): Option[List[String]] =

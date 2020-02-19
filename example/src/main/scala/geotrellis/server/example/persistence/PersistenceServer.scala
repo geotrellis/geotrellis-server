@@ -26,7 +26,6 @@ import cats.data._
 import cats.effect._
 import cats.implicits._
 import fs2._
-import com.typesafe.scalalogging.LazyLogging
 import org.http4s._
 import org.http4s.server._
 import org.http4s.server.blaze.BlazeServerBuilder
@@ -37,7 +36,8 @@ import pureconfig.generic.auto._
 import java.util.UUID
 import scala.concurrent.duration._
 
-object PersistenceServer extends LazyLogging with IOApp {
+object PersistenceServer extends IOApp {
+  val logger = org.log4s.getLogger
 
   private val corsConfig = CORSConfig(
     anyOrigin = true,

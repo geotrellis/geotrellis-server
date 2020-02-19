@@ -26,7 +26,6 @@ import geotrellis.layer._
 import geotrellis.proj4._
 import geotrellis.raster.render.{ColorMap, ColorRamp, Png}
 import geotrellis.raster._
-import com.typesafe.scalalogging.LazyLogging
 import scalaxb.CanWriteXML
 import org.http4s.scalaxml._
 import org.http4s._, org.http4s.dsl.io._, org.http4s.implicits._
@@ -39,7 +38,9 @@ import cats.data.Validated._
 import java.io.File
 import java.net._
 
-class WmtsView(wmtsModel: WmtsModel, serviceUrl: URL) extends LazyLogging {
+
+class WmtsView(wmtsModel: WmtsModel, serviceUrl: URL) {
+  val logger = org.log4s.getLogger
 
   def responseFor(req: Request[IO])(implicit cs: ContextShift[IO]): IO[Response[IO]] = {
       WmtsParams(req.multiParams) match {
@@ -90,7 +91,7 @@ class WmtsView(wmtsModel: WmtsModel, serviceUrl: URL) extends LazyLogging {
                 logger.debug(errs.toList.toString)
                 BadRequest(errs.asJson)
               case Left(err) =>            // exceptions
-                logger.error(err.toString, err)
+                logger.error(err.toString)
                 InternalServerError(err.toString)
             }
           }).getOrElse(BadRequest(s"Layer (${layerName}) not found"))

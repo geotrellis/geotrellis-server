@@ -24,7 +24,6 @@ import com.azavea.maml.error._
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
 import com.azavea.maml.eval._
-import com.typesafe.scalalogging.LazyLogging
 import io.circe._
 import io.circe.syntax._
 import cats._
@@ -35,7 +34,8 @@ import cats.implicits._
 import geotrellis.raster._
 
 
-object LayerExtent extends LazyLogging {
+object LayerExtent {
+  val logger = org.log4s.getLogger
 
   // Provide IOs for both expression and params, get back a tile
   def apply[Param](

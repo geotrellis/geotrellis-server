@@ -19,14 +19,14 @@ package geotrellis.server.extent
 import geotrellis.vector.Extent
 import geotrellis.raster._
 
-import com.typesafe.scalalogging.LazyLogging
 import cats.data.{NonEmptyList => NEL}
 import cats.effect._
 import cats.implicits._
 import cats.syntax.either._
 
 
-object SampleUtils extends LazyLogging {
+object SampleUtils {
+  val logger = org.log4s.getLogger
 
   /** Sample imagery within the provided extent */
   final def sampleRasterExtent(uberExtent: Extent, cs: CellSize, maxCells: Int): (Extent, Extent, Extent, Extent) = {

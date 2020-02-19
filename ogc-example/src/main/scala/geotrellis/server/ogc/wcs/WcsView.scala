@@ -18,7 +18,6 @@ package geotrellis.server.ogc.wcs
 
 import geotrellis.server.ogc.params.ParamError
 
-import com.typesafe.scalalogging.LazyLogging
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
 import org.http4s.scalaxml._
 import org.http4s._
@@ -28,14 +27,15 @@ import cats.data.Validated
 
 import java.net._
 
-class WcsView(wcsModel: WcsModel, serviceUrl: URL) extends LazyLogging {
+class WcsView(wcsModel: WcsModel, serviceUrl: URL) {
+  val logger = org.log4s.getLogger
 
   private def handleError[Result](result: Either[Throwable, Result])(implicit ee: EntityEncoder[IO, Result]) = result match {
     case Right(res) =>
-      logger.info("response", res.toString)
+      logger.info(s"response ${res.toString}")
       Ok(res)
     case Left(err) =>
-      logger.error(s"error: $err", err)
+      logger.error(s"error: $err")
       InternalServerError(err.toString)
   }
 
@@ -64,7 +64,7 @@ class WcsView(wcsModel: WcsModel, serviceUrl: URL) extends LazyLogging {
               getCoverage <- getCoverage.build(p).attempt
               result      <- handleError(getCoverage)
             } yield {
-              logger.debug("getcoverage result", result)
+              logger.debug(s"getcoverage result: $result")
               result
             }
         }

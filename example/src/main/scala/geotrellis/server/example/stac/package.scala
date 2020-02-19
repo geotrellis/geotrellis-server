@@ -32,9 +32,9 @@ import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.server.{ExtentReification, HasRasterExtents, TmsReification}
 import geotrellis.vector._
 
-import com.typesafe.scalalogging.LazyLogging
 
-package object stac extends RasterSourceUtils with LazyLogging {
+package object stac extends RasterSourceUtils {
+  val logger = org.log4s.getLogger
 
   def getRasterSource(uri: String): RasterSource = new GDALRasterSource(uri)
 

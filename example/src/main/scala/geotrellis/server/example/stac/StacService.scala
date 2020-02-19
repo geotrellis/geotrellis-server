@@ -38,7 +38,6 @@ import org.http4s.circe._
 import org.http4s.circe.CirceEntityDecoder._
 import org.http4s.headers._
 
-import com.typesafe.scalalogging.LazyLogging
 import scala.collection.mutable.{Map => MutableMap}
 import java.net.URLDecoder
 import java.util.UUID
@@ -46,7 +45,8 @@ import java.util.UUID
 class StacService(
     implicit backend: SttpBackend[IO, Nothing],
     contextShift: ContextShift[IO]
-) extends LazyLogging {
+) {
+  val logger = org.log4s.getLogger
 
   // These are dummy caches -- in a real service you'd want something more robust
   // than a fully local mutable map, but this is just an example, so ¯\_(ツ)_/¯

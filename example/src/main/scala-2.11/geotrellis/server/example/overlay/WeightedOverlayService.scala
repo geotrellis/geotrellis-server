@@ -24,7 +24,6 @@ import cats.data._, Validated._
 import cats.data.{NonEmptyList => NEL}
 import cats.implicits._
 import cats.effect._
-import com.typesafe.scalalogging.LazyLogging
 
 import geotrellis.raster._
 import geotrellis.raster.render.RGBA
@@ -39,7 +38,8 @@ import scala.concurrent.ExecutionContext
 
 class WeightedOverlayService(
   interpreter: Interpreter[IO]
-)(implicit contextShift: ContextShift[IO]) extends Http4sDsl[IO] with LazyLogging {
+)(implicit contextShift: ContextShift[IO]) extends Http4sDsl[IO] {
+  val logger = org.log4s.getLogger
 
   // Unapply to handle UUIDs on path
   object IdVar {
@@ -121,7 +121,7 @@ class WeightedOverlayService(
             BadRequest(s"""Unable to parse ${reqBody.mkString("")} as a MAML expression""")
           }
         case Left(err) =>
-          logger.debug(err.toString, err)
+          logger.debug(err.toString)
           InternalServerError(err.toString)
       }
 
@@ -153,7 +153,7 @@ class WeightedOverlayService(
             logger.info(err.toString)
             NotFound()
           case Left(err) =>
-            logger.debug(err.toString, err)
+            logger.debug(err.toString)
             InternalServerError(err.toString)
         }
   }

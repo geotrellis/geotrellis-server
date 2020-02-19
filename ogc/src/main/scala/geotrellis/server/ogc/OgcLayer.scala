@@ -25,7 +25,6 @@ import geotrellis.vector.Extent
 import geotrellis.proj4.CRS
 import com.azavea.maml.ast._
 
-import com.typesafe.scalalogging.LazyLogging
 import cats.effect._
 import cats.data.{NonEmptyList => NEL}
 
@@ -59,7 +58,8 @@ case class MapAlgebraOgcLayer(
   style: Option[OgcStyle]
 ) extends OgcLayer
 
-object SimpleOgcLayer extends LazyLogging {
+object SimpleOgcLayer {
+  val logger = org.log4s.getLogger
   implicit val simpleOgcReification = new ExtentReification[SimpleOgcLayer] {
     def extentReification(self: SimpleOgcLayer)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
       (extent: Extent, cs: CellSize) =>  IO {

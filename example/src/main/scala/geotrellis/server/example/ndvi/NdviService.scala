@@ -36,7 +36,6 @@ import cats._
 import cats.data.{NonEmptyList => NEL}
 import cats.effect._
 import cats.implicits._
-import com.typesafe.scalalogging.LazyLogging
 
 import java.net.URLDecoder
 
@@ -45,7 +44,8 @@ class NdviService[Param](
 )(implicit contextShift: ContextShift[IO],
            enc: Encoder[Param],
            dec: Decoder[Param],
-           mr: TmsReification[Param]) extends Http4sDsl[IO] with LazyLogging {
+           mr: TmsReification[Param]) extends Http4sDsl[IO] {
+  val logger = org.log4s.getLogger
 
   object ParamBindings {
     def unapply(str: String): Option[Map[String, Param]] =
@@ -89,7 +89,7 @@ class NdviService[Param](
           logger.debug(errs.toList.toString)
           BadRequest(errs.asJson)
         case Left(err) =>
-          logger.debug(err.toString, err)
+          logger.debug(err.toString)
           InternalServerError(err.toString)
       }
   }
