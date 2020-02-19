@@ -33,7 +33,7 @@ import java.time.ZonedDateTime
 
 object QueryF {
   // contains java8.time codecs for scala 2.11
-  import geotrellis.store.query.CirceCompact._
+  import CirceCompact._
 
   /** Tree leaves */
   @JsonCodec case class Or[A](left: A, right: A) extends QueryF[A]

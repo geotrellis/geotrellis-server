@@ -30,13 +30,13 @@ import org.scalatest._
 
 class QueryFSpec extends FunSpec with Matchers {
   describe("QueryF evaluation specs") {
-    def dtFromMonth(month: Int): ZonedDateTime = ZonedDateTime.of(2020, month, 1, 0, 0, 0, 0, ZoneOffset.UTC)
+    def dtFromMonth(month: Int): ZonedDateTime = ZonedDateTime.of(2020, month, 1, 0, 0, 1, 0, ZoneOffset.UTC)
 
     val extent  = ProjectedExtent(Extent(0, 0, 2, 2), LatLng)
     val extent2 = ProjectedExtent(Extent(1, 1, 4, 4), LatLng)
     val dt      = dtFromMonth(1)
 
-    it("should convert AST it into json") {
+    it("should convert AST into json") {
       val query = (intersects(extent) and intersects(extent2)) and at (dt)
       val actual = query.asJson
 
@@ -76,7 +76,7 @@ class QueryFSpec extends FunSpec with Matchers {
           |        },
           |        "right" : {
           |            "At" : {
-          |                "time" : "2020-01-01T00:00Z",
+          |                "time" : "2020-01-01T00:00:01Z",
           |                "fieldName" : "time"
           |            }
           |        }
@@ -124,7 +124,7 @@ class QueryFSpec extends FunSpec with Matchers {
                 |        },
                 |        "right" : {
                 |            "At" : {
-                |                "time" : "2020-01-01T00:00Z",
+                |                "time" : "2020-01-01T00:00:01Z",
                 |                "fieldName" : "time"
                 |            }
                 |        }
@@ -139,7 +139,7 @@ class QueryFSpec extends FunSpec with Matchers {
     }
     
     it("should filter raster sources catalog both using JSON and direct AST query representations") {
-      def dtFromMonth(month: Int): ZonedDateTime = ZonedDateTime.of(2020, month, 1, 0, 0, 0, 0, ZoneOffset.UTC)
+      def dtFromMonth(month: Int): ZonedDateTime = ZonedDateTime.of(2020, month, 1, 0, 0, 1, 0, ZoneOffset.UTC)
       val dt1 = dtFromMonth(1)
       val dt2 = dtFromMonth(2)
       val dt3 = dtFromMonth(3)
@@ -166,9 +166,5 @@ class QueryFSpec extends FunSpec with Matchers {
 
       hresult shouldBe result
     }
-
   }
 }
-
-
-

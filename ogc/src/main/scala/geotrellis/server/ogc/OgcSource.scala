@@ -21,8 +21,8 @@ import geotrellis.server.ogc.wms._
 import geotrellis.raster._
 import geotrellis.vector.{Extent, ProjectedExtent}
 import geotrellis.proj4.CRS
-import com.azavea.maml.ast._
 
+import com.azavea.maml.ast._
 import cats.data.{NonEmptyList => NEL}
 import opengis.wms.BoundingBox
 
@@ -58,9 +58,6 @@ case class SimpleSource(
   source: RasterSource,
   styles: List[OgcStyle]
 ) extends OgcSource {
-
-  lazy val nativeRE: GridExtent[Long] = source.gridExtent
-
   def extentIn(crs: CRS): Extent = {
     val reprojected = source.reproject(crs)
     reprojected.extent
@@ -71,9 +68,10 @@ case class SimpleSource(
     CapabilitiesView.boundingBox(crs, reprojected.extent, reprojected.cellSize)
   }
 
-  lazy val nativeCrs: Set[CRS] = Set(source.crs)
-  lazy val nativeExtent: Extent = source.extent
-  lazy val metadata: RasterMetadata = source.metadata
+  lazy val nativeRE: GridExtent[Long]      = source.gridExtent
+  lazy val nativeCrs: Set[CRS]             = Set(source.crs)
+  lazy val nativeExtent: Extent            = source.extent
+  lazy val metadata: RasterMetadata        = source.metadata
   lazy val attributes: Map[String, String] = metadata.attributes
 }
 
@@ -102,45 +100,6 @@ case class MapAlgebraSource(
   algebra: Expression,
   styles: List[OgcStyle]
 ) extends OgcSource {
-
-  lazy val metadata: MapAlgebraSourceMetadata =
-    MapAlgebraSourceMetadata(
-      StringName(name),
-      nativeCrs.head,
-      minBandCount,
-      cellTypes.head,
-      nativeRE,
-      resolutions,
-      sources.mapValues(_.metadata)
-    )
-
-  lazy val attributes: Map[String, String] = Map.empty
-
-  lazy val nativeExtent: Extent = {
-    val reprojectedSources: NEL[RasterSource] =
-      NEL.fromListUnsafe(sources.values.map(_.reproject(nativeCrs.head)).toList)
-    val extents =
-      reprojectedSources.map(_.extent)
-    val extentIntersection =
-      SampleUtils.intersectExtents(extents)
-
-    extentIntersection match {
-      case Some(extent) =>
-        extent
-      case None =>
-        throw new Exception("no intersection found among map algebra sources")
-    }
-  }
-
-  lazy val nativeRE: GridExtent[Long] = {
-    val reprojectedSources: NEL[RasterSource] =
-      NEL.fromListUnsafe(sources.values.map(_.reproject(nativeCrs.head)).toList)
-    val cellSize =
-      SampleUtils.chooseSmallestCellSize(reprojectedSources.map(_.cellSize))
-
-    new GridExtent[Long](nativeExtent, cellSize)
-  }
-
   def extentIn(crs: CRS): Extent = {
     val reprojectedSources: NEL[RasterSource] =
       NEL.fromListUnsafe(sources.values.map(_.reproject(crs)).toList)
@@ -170,9 +129,45 @@ case class MapAlgebraSource(
     }
   }
 
-  lazy val nativeCrs: Set[CRS]         = sources.values.map(_.crs).toSet
-  lazy val minBandCount: Int           = sources.values.map(_.bandCount).min
-  lazy val cellTypes: Set[CellType]    = sources.values.map(_.cellType).toSet
-  lazy val resolutions: List[CellSize] = sources.values.flatMap(_.resolutions).toList.distinct
+  lazy val metadata: MapAlgebraSourceMetadata =
+    MapAlgebraSourceMetadata(
+      StringName(name),
+      nativeCrs.head,
+      minBandCount,
+      cellTypes.head,
+      nativeRE,
+      resolutions,
+      sources.mapValues(_.metadata)
+    )
 
+  lazy val nativeExtent: Extent = {
+    val reprojectedSources: NEL[RasterSource] =
+      NEL.fromListUnsafe(sources.values.map(_.reproject(nativeCrs.head)).toList)
+    val extents =
+      reprojectedSources.map(_.extent)
+    val extentIntersection =
+      SampleUtils.intersectExtents(extents)
+
+    extentIntersection match {
+      case Some(extent) =>
+        extent
+      case None =>
+        throw new Exception("no intersection found among map algebra sources")
+    }
+  }
+
+  lazy val nativeRE: GridExtent[Long] = {
+    val reprojectedSources: NEL[RasterSource] =
+      NEL.fromListUnsafe(sources.values.map(_.reproject(nativeCrs.head)).toList)
+    val cellSize =
+      SampleUtils.chooseSmallestCellSize(reprojectedSources.map(_.cellSize))
+
+    new GridExtent[Long](nativeExtent, cellSize)
+  }
+
+  lazy val attributes: Map[String, String] = Map.empty
+  lazy val nativeCrs: Set[CRS]             = sources.values.map(_.crs).toSet
+  lazy val minBandCount: Int               = sources.values.map(_.bandCount).min
+  lazy val cellTypes: Set[CellType]        = sources.values.map(_.cellType).toSet
+  lazy val resolutions: List[CellSize]     = sources.values.flatMap(_.resolutions).toList.distinct
 }
