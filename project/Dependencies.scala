@@ -52,6 +52,7 @@ object Dependencies {
   }
   val circeParser = circeVersion("parser")
   val circeRefined = circeVersion("refined")
+  val circeJava8 = circeVersion("java8")
   val commonsIO = "commons-io" % "commons-io" % "2.6"
   val commonsLang = "org.apache.commons" % "commons-lang3" % "3.7"
   val concHashMap = "com.googlecode.concurrentlinkedhashmap" % "concurrentlinkedhashmap-lru" % "1.4.2"

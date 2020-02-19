@@ -22,6 +22,7 @@ import io.circe._
 import io.circe.syntax._
 import io.circe.generic.JsonCodec
 import cats.Functor
+import cats.syntax.either._ // scala 2.11 compact
 import higherkindness.droste.scheme
 import higherkindness.droste.{Algebra, Coalgebra}
 import higherkindness.droste.syntax.fix._
@@ -31,6 +32,9 @@ import java.time.ZonedDateTime
 @JsonCodec sealed trait QueryF[A]
 
 object QueryF {
+  // contains java8.time codecs for scala 2.11
+  import geotrellis.store.query.CirceCompact._
+
   /** Tree leaves */
   @JsonCodec case class Or[A](left: A, right: A) extends QueryF[A]
   @JsonCodec case class And[A](left: A, right: A) extends QueryF[A]

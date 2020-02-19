@@ -190,6 +190,15 @@ lazy val core = project
       droste
     )
   )
+  .settings(
+    libraryDependencies ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, scalaMajor)) if scalaMajor == 11 =>
+          Seq(circeJava8.value)
+        case _ => Seq()
+      }
+    }
+  )
 
 lazy val example = project
   .settings(commonSettings)
