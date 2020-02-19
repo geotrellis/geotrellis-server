@@ -17,12 +17,18 @@
 package geotrellis.store
 
 import geotrellis.raster.RasterSource
-import geotrellis.vector.{Extent, ProjectedExtent}
+import geotrellis.vector.ProjectedExtent
+
+import io.circe.{Decoder, Encoder}
 import higherkindness.droste.data.Fix
+
 import java.time.ZonedDateTime
 
 package object query {
   type Query = Fix[QueryF]
+
+  implicit val queryEncoder: Encoder[Query] = Encoder.encodeJson.contramap(QueryF.asJson)
+  implicit val querDecoder: Decoder[Query] = Decoder.decodeJson.map(QueryF.fromJson)
 
   implicit class QueryOps(self: Query) {
     def or(right: Query): Query  = QueryF.or(self, right)

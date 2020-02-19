@@ -21,6 +21,7 @@ import geotrellis.vector.{Extent, ProjectedExtent}
 import cats.syntax.either._
 import cats.syntax.option._
 import _root_.io.circe.parser._
+import _root_.io.circe.syntax._
 import java.time.{ZoneOffset, ZonedDateTime}
 
 import higherkindness.droste.scheme
@@ -36,7 +37,7 @@ class QueryFSpec extends FunSpec with Matchers {
 
     it("should convert AST it into json") {
       val query = (intersects(extent) and intersects(extent2)) and at (dt)
-      val actual = QueryF.asJson(query)
+      val actual = query.asJson
 
       val expected =
         parse("""
@@ -131,7 +132,7 @@ class QueryFSpec extends FunSpec with Matchers {
                 |""".stripMargin).valueOr(throw _)
 
       val expected = (intersects(extent) and intersects(extent2)) and at (dt)
-      val actual = QueryF.fromJson(json)
+      val actual = json.as[Query].valueOr(throw _)
 
       actual shouldBe expected
     }
@@ -157,7 +158,7 @@ class QueryFSpec extends FunSpec with Matchers {
 
       result shouldBe EmptyRasterSource("second", ex2, dt2.some) :: EmptyRasterSource("third", ex3, dt2.some) :: Nil
 
-      val jsonQuery = QueryF.asJson(query)
+      val jsonQuery = query.asJson
       val hresult = scheme.hylo(RasterSourceRepository.algebra[EmptyRasterSource], QueryF.coalgebraJson).apply(jsonQuery)(store)
 
       hresult shouldBe result
