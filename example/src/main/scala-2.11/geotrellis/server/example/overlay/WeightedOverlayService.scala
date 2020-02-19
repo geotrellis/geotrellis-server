@@ -121,7 +121,7 @@ class WeightedOverlayService(
             BadRequest(s"""Unable to parse ${reqBody.mkString("")} as a MAML expression""")
           }
         case Left(err) =>
-          logger.debug(err.toString, err)
+          logger.debug(err.toString)
           InternalServerError(err.toString)
       }
 
@@ -153,7 +153,7 @@ class WeightedOverlayService(
             logger.info(err.toString)
             NotFound()
           case Left(err) =>
-            logger.debug(err.toString, err)
+            logger.debug(err.toString)
             InternalServerError(err.toString)
         }
   }
