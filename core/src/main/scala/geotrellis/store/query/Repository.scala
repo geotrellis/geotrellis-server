@@ -16,7 +16,7 @@
 
 package geotrellis.store.query
 
-trait Repository[T, G[_]] {
-  def store: G[T]
-  def find(query: Query): G[T]
+trait Repository[G[_]] {
+  def store: G[_]
+  def find(query: Query): G[_]
 }

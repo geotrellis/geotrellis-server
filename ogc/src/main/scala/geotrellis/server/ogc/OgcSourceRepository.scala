@@ -24,7 +24,7 @@ import jp.ne.opt.chronoscala.Imports._
 
 import java.time.ZonedDateTime
 
-case class OgcSourceRepository(store: List[OgcSource]) extends Repository[OgcSource, List] {
+case class OgcSourceRepository(store: List[OgcSource]) extends Repository[List] {
   def find(query: Query): List[OgcSource] = OgcSourceRepository.eval(query)(store)
 }
 
