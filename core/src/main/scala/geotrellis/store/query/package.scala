@@ -28,7 +28,7 @@ package object query {
   type Query = Fix[QueryF]
 
   implicit val queryEncoder: Encoder[Query] = Encoder.encodeJson.contramap(QueryF.asJson)
-  implicit val querDecoder: Decoder[Query] = Decoder.decodeJson.map(QueryF.fromJson)
+  implicit val querDecoder: Decoder[Query]  = Decoder.decodeJson.map(QueryF.fromJson)
 
   implicit class QueryOps(self: Query) {
     def or(right: Query): Query  = QueryF.or(self, right)

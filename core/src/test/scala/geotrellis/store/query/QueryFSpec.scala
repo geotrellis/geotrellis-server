@@ -160,6 +160,11 @@ class QueryFSpec extends FunSpec with Matchers {
 
       result shouldBe EmptyRasterSource("second", ex2, dt2.some) :: EmptyRasterSource("third", ex3, dt2.some) :: Nil
 
+      val repository = RasterSourceRepository(store)
+      val rresult = repository.find(query)
+
+      rresult shouldBe result
+
       val jsonQuery = query.asJson
       // scheme.hylo(RasterSourceRepository.algebra[EmptyRasterSource], QueryF.coalgebraJson).apply(jsonQuery)(store)
       val hresult = RasterSourceRepository.eval(jsonQuery)(store)
