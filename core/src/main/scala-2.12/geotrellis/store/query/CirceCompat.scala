@@ -1,3 +1,3 @@
 package geotrellis.store.query
 
-object CirceCompact
+object CirceCompat

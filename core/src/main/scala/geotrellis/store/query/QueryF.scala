@@ -33,7 +33,7 @@ import java.time.ZonedDateTime
 
 object QueryF {
   // contains java8.time codecs for scala 2.11
-  import CirceCompact._
+  import CirceCompat._
 
   /** Tree leaves */
   @JsonCodec case class Or[A](left: A, right: A) extends QueryF[A]
