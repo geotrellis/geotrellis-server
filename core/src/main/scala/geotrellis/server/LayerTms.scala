@@ -56,9 +56,9 @@ object LayerTms {
   ): (Int, Int, Int) => IO[Interpreted[MultibandTile]] = (z: Int, x: Int, y: Int) => {
     for {
       expr             <- getExpression
-      _                <- IO { logger.info(s"Retrieved MAML AST at TMS ($z, $x, $y): ${expr.toString}") }
+      _                <- IO { logger.trace(s"Retrieved MAML AST at TMS ($z, $x, $y): ${expr.toString}") }
       paramMap         <- getParams
-      _                <- IO { logger.info(s"Retrieved parameters for TMS ($z, $x, $y): ${paramMap.toString}") }
+      _                <- IO { logger.trace(s"Retrieved parameters for TMS ($z, $x, $y): ${paramMap.toString}") }
       vars             <- IO { Vars.varsWithBuffer(expr) }
       params           <- vars.toList.parTraverse { case (varName, (_, buffer)) =>
                             val eval = paramMap(varName).tmsReification(buffer)
