@@ -107,20 +107,26 @@ object Main extends CommandApp(
               .collect { case ssc @ SimpleSourceConf(_, _, _, _) => ssc.models }
               .toList
               .flatten
-            wmsModel = WmsModel(
-              conf.wms.serviceMetadata,
-              conf.wms.parentLayerMeta,
-              conf.wms.layerSources(simpleSources)
-            )
-            wmtsModel = WmtsModel(
-              conf.wmts.serviceMetadata,
-              conf.wmts.tileMatrixSets,
-              conf.wmts.layerSources(simpleSources)
-            )
-            wcsModel = WcsModel(
-              conf.wcs.serviceMetadata,
-              conf.wcs.layerSources(simpleSources)
-            )
+            wmsModel = conf.wms.map { svc =>
+              WmsModel(
+                svc.serviceMetadata,
+                svc.parentLayerMeta,
+                svc.layerSources(simpleSources)
+              )
+            }
+            wmtsModel = conf.wmts.map { svc =>
+              WmtsModel(
+                svc.serviceMetadata,
+                svc.tileMatrixSets,
+                svc.layerSources(simpleSources)
+              )
+            }
+            wcsModel = conf.wcs.map { svc =>
+              WcsModel(
+                svc.serviceMetadata,
+                svc.layerSources(simpleSources)
+              )
+            }
             ogcService = new OgcService(wmsModel, wcsModel, wmtsModel, new URL(publicUrl))
             exitCode   <- BlazeServerBuilder[IO]
               .withIdleTimeout(Duration.Inf) // for test purposes only

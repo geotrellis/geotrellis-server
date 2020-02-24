@@ -36,9 +36,9 @@ import scalaxb.DataRecord
  */
 case class Conf(
   layers: Map[String, OgcSourceConf],
-  wms: WmsConf,
-  wmts: WmtsConf,
-  wcs: WcsConf
+  wms: Option[WmsConf],
+  wmts: Option[WmtsConf],
+  wcs: Option[WcsConf]
 )
 
 object Conf {
