@@ -117,6 +117,10 @@ export GT_OGC_LOG_LEVEL=ALL
 
 Extra logging for third party libraries can also be modified:
 ```sh
+# GeoTrellis store logging
+export GT_STORE_LOG_LEVEL=DEBUG
+# http4s logging
+export HTTP4S_LOG_LEVEL=DEBUG
 # Blaze server New IO logging
 export BLAZE_NIO_LOG_LEVEL=DEBUG
 # Amazon SDK logging

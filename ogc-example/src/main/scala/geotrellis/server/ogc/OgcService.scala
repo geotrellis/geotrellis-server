@@ -52,13 +52,13 @@ class OgcService(
 
   def routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
     case req @ GET -> Root if req.params.exists((isWcsReq _).tupled) =>
-      logger.debug(s"WCS: $req")
+      logger.trace(s"WCS: $req")
       wcsView.responseFor(req)
     case req @ GET -> Root if req.params.exists((isWmsReq _).tupled) =>
-      logger.debug(s"WMS: $req")
+      logger.trace(s"WMS: $req")
       wmsView.responseFor(req)
     case req @ GET -> Root if req.params.exists((isWmtsReq _).tupled) =>
-      logger.debug(s"WMTS: $req")
+      logger.trace(s"WMTS: $req")
       wmtsView.responseFor(req)
     case req =>
       logger.warn(s"""Recv'd UNHANDLED request: $req""")
