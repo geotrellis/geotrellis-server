@@ -210,6 +210,14 @@ color-maps = {
       32: 0x969798FF,
 ```
 
+> WARNING: The particular syntax used for GT Server configuration is HOCON,
+> which has some issues dealing with numeric values (decimal/floating
+> point numbers in particular) in the keys of maps. We advise always
+> quoting the keys of ColorMap definitions (e.g. `"0.1": 0xFF00FF`) or
+> at least always padding floating point keys to the tenth place (`0.0`
+> will work, whereas `0` might cause problems) to avoid configuration
+> parsing issues.
+
 #### Providing a style legend
 
 In addition to defining rendering, styles optionally provide legends to help

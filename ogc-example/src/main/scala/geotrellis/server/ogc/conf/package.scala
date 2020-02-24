@@ -84,12 +84,11 @@ package object conf {
         v.valueType match {
           case ConfigValueType.OBJECT =>
             val confmap = v.asInstanceOf[ConfigObject].asScala
-            val ans = confmap.map { case (ck, cv) =>
+            confmap.map { case (ck, cv) =>
               val key = k + "." + ck
               val value = cv.unwrapped.asInstanceOf[String]
               key -> value
             }
-            ans
           case ConfigValueType.STRING => 
             List(k -> v.unwrapped.asInstanceOf[String])
           case _ =>
