@@ -182,13 +182,15 @@ object CapabilitiesView {
         BoundingBox      = Nil,
         Metadata         = Nil,
         DatasetDescriptionSummary = Nil,
-        Style = Style(
-          Title      = LanguageStringType("Style") :: Nil,
-          Abstract   = LanguageStringType("AbstractStyle") :: Nil,
-          Identifier = CodeType("StyleID"),
-          Keywords   = Nil,
-          LegendURL  = Nil
-        ) :: Nil,
+        Style = self.styles.map { style =>
+          Style(
+            Title      = LanguageStringType(style.title) :: Nil,
+            Abstract   = LanguageStringType(style.title) :: Nil,
+            Identifier = CodeType(style.name),
+            Keywords   = Nil,
+            LegendURL  = Nil
+          )
+        },
         Format     = "image/png" :: "image/jpeg" :: Nil,
         InfoFormat = "text/xml" :: Nil,
         Dimension  = Nil,

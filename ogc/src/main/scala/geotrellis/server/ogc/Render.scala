@@ -68,28 +68,4 @@ object Render {
             throw new IllegalArgumentException(s"$format is not a valid output format")
         }
     }
-
-  def linearInterpolationBreaks(breaks: Array[Double], numStops: Int): Array[Double] = {
-    val length = breaks.length
-    val lengthBetween = numStops.toDouble / length // number of colors between each edge
-
-    val listBuffer: mutable.ListBuffer[Double] = mutable.ListBuffer()
-    var counter = 0
-    while (counter < (length - 1)) {
-      val (currentEdge, nextEdge) = breaks(counter) -> breaks(counter + 1)
-      val step = (nextEdge - currentEdge) / lengthBetween
-      val points: List[Double] = if (step == 0) {
-        List.empty[Double]
-      } else {
-        (currentEdge to nextEdge by step).toList
-      }
-
-      val append = if (counter == 0) points else points.tail
-      listBuffer ++= append
-
-      counter = counter + 1
-    }
-
-    listBuffer.toArray
-  }
 }
