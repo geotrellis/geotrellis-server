@@ -33,12 +33,13 @@ sealed trait OgcSourceConf {
 case class SimpleSourceConf(
   name: String,
   title: String,
-  source: RasterSourceConf,
+  sources: List[String],
   defaultStyle: Option[String],
   styles: List[StyleConf]
 ) extends OgcSourceConf {
   def models: List[SimpleSource] =
-    source.toRasterSources.map(SimpleSource(name, title, _, defaultStyle, styles.map(_.toStyle)))
+    sources.map(uri =>
+      SimpleSource(name, title, RasterSource(uri), defaultStyle, styles.map(_.toStyle)))
 }
 
 case class MapAlgebraSourceConf(

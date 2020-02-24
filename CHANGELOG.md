@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WMS GetMap may include time param `TIME` [#175](https://github.com/geotrellis/geotrellis-server/issues/175)
 
 ### Changed
+- GT Server sources are now loaded via the GeoTrellis RasterSource SPI API. Each `sources` definition in your application.conf should be migrated to a list of [valid RasterSource SPI URIs](https://github.com/geotrellis/geotrellis-server/pull/222/commits/5937bf6022ba192eb8ab3a7cf28c6b08738fc56a) [#222](https://github.com/geotrellis/geotrellis-server/pull/222) 
 - Included split dependencies a la GeoTrellis 3.2 for cats ecosystem libraries [\#184](https://github.com/geotrellis/geotrellis-server/pull/184)
 - Dropped WCS 1.0.0 support
 - Updated MAML up to 0.6.0 [#199](https://github.com/geotrellis/geotrellis-server/pull/199)
