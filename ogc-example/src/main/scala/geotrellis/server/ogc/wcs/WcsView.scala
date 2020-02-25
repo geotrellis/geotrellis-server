@@ -30,7 +30,7 @@ import java.net._
 class WcsView(wcsModel: WcsModel, serviceUrl: URL) {
   val logger = org.log4s.getLogger
 
-  private def handleError[Result](result: Either[Throwable, Result])(implicit ee: EntityEncoder[IO, Result]) = result match {
+  private def handleError[Result: EntityEncoder[IO, *]](result: Either[Throwable, Result]): IO[Response[IO]] = result match {
     case Right(res) =>
       logger.info(s"response ${res.toString}")
       Ok(res)
