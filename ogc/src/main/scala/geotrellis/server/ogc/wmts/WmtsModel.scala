@@ -42,12 +42,12 @@ case class WmtsModel(
     } yield {
       val style: Option[OgcStyle] = source.styles.find(_.name == p.style)
       source match {
-        case MapAlgebraSource(name, title, rasterSources, algebra, styles) =>
+        case MapAlgebraSource(name, title, rasterSources, algebra, _, styles) =>
           val simpleLayers = rasterSources.mapValues { rs =>
             SimpleTiledOgcLayer(name, title, crs, layout, rs, style)
           }
           MapAlgebraTiledOgcLayer(name, title, crs, layout, simpleLayers, algebra, style)
-        case SimpleSource(name, title, rasterSource, styles) =>
+        case SimpleSource(name, title, rasterSource, _, styles) =>
           SimpleTiledOgcLayer(name, title, crs, layout, rasterSource, style)
       }
     }

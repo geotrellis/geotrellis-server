@@ -11,7 +11,7 @@
   <logger name="org.http4s.blaze.channel.nio1" level="${BLAZE_NIO_LOG_LEVEL:-WARN}"/>
   <logger name="software.amazon.awssdk" level="${AWS_SDK_LOG_LEVEL:-WARN}"/>
 
-  <root level="ALL">
+  <root level="DEBUG">
     <appender-ref ref="STDOUT" />
   </root>
 </configuration>
