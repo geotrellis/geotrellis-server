@@ -97,6 +97,9 @@ object Main extends CommandApp(
           CORS(routes)
         }
 
+        def logOptState[A](opt: Option[A], upLog: String, downLog: String): Unit =
+          opt.fold(logger.info(downLog))({ _ => logger.info(upLog) })
+
         val stream: Stream[IO, ExitCode] = {
           import Conf._
           for {
@@ -107,20 +110,41 @@ object Main extends CommandApp(
               .collect { case ssc @ SimpleSourceConf(_, _, _, _) => ssc.models }
               .toList
               .flatten
-            wmsModel = WmsModel(
-              conf.wms.serviceMetadata,
-              conf.wms.parentLayerMeta,
-              conf.wms.layerSources(simpleSources)
-            )
-            wmtsModel = WmtsModel(
-              conf.wmts.serviceMetadata,
-              conf.wmts.tileMatrixSets,
-              conf.wmts.layerSources(simpleSources)
-            )
-            wcsModel = WcsModel(
-              conf.wcs.serviceMetadata,
-              conf.wcs.layerSources(simpleSources)
-            )
+            _ <- Stream.eval(IO(logOptState(
+              conf.wms,
+              ansi"%green{WMS configuration detected}, starting Web Map Service",
+              ansi"%red{No WMS configuration detected}, unable to start Web Map Service"
+            )))
+            wmsModel = conf.wms.map { svc =>
+              WmsModel(
+                svc.serviceMetadata,
+                svc.parentLayerMeta,
+                svc.layerSources(simpleSources)
+              )
+            }
+            _ <- Stream.eval(IO(logOptState(
+              conf.wmts,
+              ansi"%green{WMTS configuration detected}, starting Web Map Tiling Service",
+              ansi"%red{No WMTS configuration detected}, unable to start Web Map Tiling Service"
+            )))
+            wmtsModel = conf.wmts.map { svc =>
+              WmtsModel(
+                svc.serviceMetadata,
+                svc.tileMatrixSets,
+                svc.layerSources(simpleSources)
+              )
+            }
+            _ <- Stream.eval(IO(logOptState(
+              conf.wcs,
+              ansi"%green{WCS configuration detected}, starting Web Coverage Service",
+              ansi"%red{No WCS configuration detected}, unable to start Web Coverage Service"
+            )))
+            wcsModel = conf.wcs.map { svc =>
+              WcsModel(
+                svc.serviceMetadata,
+                svc.layerSources(simpleSources)
+              )
+            }
             ogcService = new OgcService(wmsModel, wcsModel, wmtsModel, new URL(publicUrl))
             exitCode   <- BlazeServerBuilder[IO]
               .withIdleTimeout(Duration.Inf) // for test purposes only

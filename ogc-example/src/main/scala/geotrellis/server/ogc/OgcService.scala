@@ -29,16 +29,16 @@ import java.net.URL
 
 
 class OgcService(
-  wmsModel: WmsModel,
-  wcsModel: WcsModel,
-  wmtsModel: WmtsModel,
+  wmsModel: Option[WmsModel],
+  wcsModel: Option[WcsModel],
+  wmtsModel: Option[WmtsModel],
   serviceUrl: URL
 )(implicit contextShift: ContextShift[IO]) extends Http4sDsl[IO] {
   val logger = org.log4s.getLogger
 
-  val wcsView = new WcsView(wcsModel, serviceUrl)
-  val wmsView = new WmsView(wmsModel, serviceUrl)
-  val wmtsView = new WmtsView(wmtsModel, serviceUrl)
+  val wcsView = wcsModel.map(new WcsView(_, serviceUrl))
+  val wmsView = wmsModel.map(new WmsView(_, serviceUrl))
+  val wmtsView = wmtsModel.map(new WmtsView(_, serviceUrl))
 
   // Predicates for choosing a service
   def isWcsReq(key: String, value: String) =
@@ -53,13 +53,19 @@ class OgcService(
   def routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
     case req @ GET -> Root if req.params.exists((isWcsReq _).tupled) =>
       logger.trace(s"WCS: $req")
-      wcsView.responseFor(req)
+      wcsView
+        .map(_.responseFor(req))
+        .getOrElse(NotFound())
     case req @ GET -> Root if req.params.exists((isWmsReq _).tupled) =>
       logger.trace(s"WMS: $req")
-      wmsView.responseFor(req)
+      wmsView
+        .map(_.responseFor(req))
+        .getOrElse(NotFound())
     case req @ GET -> Root if req.params.exists((isWmtsReq _).tupled) =>
       logger.trace(s"WMTS: $req")
-      wmtsView.responseFor(req)
+      wmtsView
+        .map(_.responseFor(req))
+        .getOrElse(NotFound())
     case req =>
       logger.warn(s"""Recv'd UNHANDLED request: $req""")
       NotFound()
