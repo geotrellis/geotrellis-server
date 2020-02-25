@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated MAML up to 0.6.0 [#199](https://github.com/geotrellis/geotrellis-server/pull/199)
 
 ### Fixed
+- Use default styles appropriately when configured [#149](https://github.com/geotrellis/geotrellis-server/issues/149)
 - Use linspace function to ensure correct interpolation of [#205](https://github.com/geotrellis/geotrellis-server/issues/205)
 - SLF4J backends have been excluded and marked as Runtime dependencies as necessary to make logging work again [#205](https://github.com/geotrellis/geotrellis-server/issues/205)
 - Fixed color interpolation bug related to constructing a range when the step is 0 [#111](https://github.com/geotrellis/geotrellis-server/issues/111)

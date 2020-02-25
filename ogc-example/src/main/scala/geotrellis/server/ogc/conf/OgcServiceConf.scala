@@ -29,9 +29,9 @@ sealed trait OgcServiceConf {
   def layerDefinitions: List[OgcSourceConf]
   def layerSources(simpleSources: List[SimpleSource]): OgcSourceRepository = {
     val simpleLayers =
-      layerDefinitions.collect { case ssc@SimpleSourceConf(_, _, _, _, _) => ssc.models }.flatten
+      layerDefinitions.collect { case ssc @ SimpleSourceConf(_, _, _, _, _) => ssc.models }.flatten
     val mapAlgebraLayers =
-      layerDefinitions.collect { case masc@MapAlgebraSourceConf(_, _, _, _, _) => masc.model(simpleSources) }
+      layerDefinitions.collect { case masc @ MapAlgebraSourceConf(_, _, _, _, _) => masc.model(simpleSources) }
     OgcSourceRepository(simpleLayers ++ mapAlgebraLayers)
   }
 }
