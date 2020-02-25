@@ -73,20 +73,26 @@ package object conf {
    * HOCON doesn't naturally handle unquoted strings which contain decimals ('.') very well.
    *  As a result, some special configuration handling is required here to allow unquoted
    *  strings specifically when we know we're trying to decode a ColorMap.
+   * 
+   * @note It is currently difficult to handle double-keyed maps. A workaround
+   * has been provided, but it only works with doubles that explicitly decimal
+   * pad to tenths (0.0 is OK, 0 is to be avoided)
    */
   implicit def colormapReader: ConfigReader[ColorMap] =
     ConfigReader[Map[String, ConfigValue]].map { cmap =>
-      val numericMap = cmap.map({ case (k, v) =>
+      val numericMap = cmap.flatMap({ case (k, v) =>
         v.valueType match {
           case ConfigValueType.OBJECT =>
             val confmap = v.asInstanceOf[ConfigObject].asScala
-            val fixedKey: String = k + "." + confmap.keys.head
-            val fixedValue: String = confmap.values.head.unwrapped.asInstanceOf[String]
-            fixedKey -> fixedValue
+            confmap.map { case (ck, cv) =>
+              val key = k + "." + ck
+              val value = cv.unwrapped.asInstanceOf[String]
+              key -> value
+            }
           case ConfigValueType.STRING => 
-            k -> v.unwrapped.asInstanceOf[String]
+            List(k -> v.unwrapped.asInstanceOf[String])
           case _ =>
-            k -> v.toString
+            List(k -> v.toString)
         }
       }).map({ case (k, v) =>
         val key = k.toDouble
