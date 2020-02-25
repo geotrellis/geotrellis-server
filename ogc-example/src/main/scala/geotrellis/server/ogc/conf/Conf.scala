@@ -20,7 +20,7 @@ import geotrellis.server.ogc.ows
 import geotrellis.server.ogc.wms.WmsParentLayerMeta
 
 import pureconfig.generic.auto._
-import pureconfig.ConfigReader
+import pureconfig._
 import scalaxb.DataRecord
 
 /**
@@ -42,7 +42,7 @@ case class Conf(
 )
 
 object Conf {
-  lazy val conf: Conf = pureconfig.loadConfigOrThrow[Conf]
+  lazy val conf: Conf = ConfigSource.default.loadOrThrow[Conf]
   implicit def ConfObjectToClass(obj: Conf.type): Conf = conf
 
   // This is a work-around to use pureconfig to read scalaxb generated case classes

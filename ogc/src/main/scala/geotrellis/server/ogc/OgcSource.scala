@@ -37,6 +37,7 @@ import opengis.wms.BoundingBox
 trait OgcSource {
   def name: String
   def title: String
+  def defaultStyle: Option[String]
   def styles: List[OgcStyle]
   def nativeExtent: Extent
   def nativeRE: GridExtent[Long]
@@ -56,6 +57,7 @@ case class SimpleSource(
   name: String,
   title: String,
   source: RasterSource,
+  defaultStyle: Option[String],
   styles: List[OgcStyle]
 ) extends OgcSource {
   def extentIn(crs: CRS): Extent = {
@@ -98,6 +100,7 @@ case class MapAlgebraSource(
   title: String,
   sources: Map[String, RasterSource],
   algebra: Expression,
+  defaultStyle: Option[String],
   styles: List[OgcStyle]
 ) extends OgcSource {
   def extentIn(crs: CRS): Extent = {

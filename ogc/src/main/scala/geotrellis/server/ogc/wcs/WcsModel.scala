@@ -28,9 +28,9 @@ case class WcsModel(
     sources
       .find(p.toQuery)
       .map {
-        case SimpleSource(name, title, source, styles) =>
+        case SimpleSource(name, title, source, _, styles) =>
           SimpleOgcLayer(name, title, p.crs, source, None)
-        case MapAlgebraSource(name, title, sources, algebra, styles) =>
+        case MapAlgebraSource(name, title, sources, algebra, _, styles) =>
           val simpleLayers = sources.mapValues { rs => SimpleOgcLayer(name, title, p.crs, rs, None) }
           MapAlgebraOgcLayer(name, title, p.crs, simpleLayers, algebra, None)
       }

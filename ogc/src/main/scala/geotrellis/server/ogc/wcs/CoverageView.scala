@@ -54,9 +54,9 @@ object CoverageView {
     val nativeCrs = source.nativeCrs.head
     val re = source.nativeRE
     val llre = source match {
-      case SimpleSource(name, title, rs, styles) =>
+      case SimpleSource(_, _, rs, _, _) =>
         ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng)
-      case MapAlgebraSource(name, title, rss, algebra, styles) =>
+      case MapAlgebraSource(_, _, rss, _, _, _) =>
         rss.values.map { rs =>
           ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng)
         }.reduce({ (re1, re2) =>

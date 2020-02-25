@@ -72,7 +72,7 @@ object LayerHistogram {
           .getOrElse(throw new RequireIntersectingSources())
       }
       _ <- IO {
-        logger.debug(
+        logger.trace(
           s"[LayerHistogram] Intersection of provided layer extents calculated: $intersection"
         )
       }
@@ -80,7 +80,7 @@ object LayerHistogram {
         SampleUtils.chooseLargestCellSize(rasterExtents.map(_.cellSize))
       }
       _ <- IO {
-        logger.debug(
+        logger.trace(
           s"[LayerHistogram] Largest cell size of provided layers calculated: $cellSize"
         )
       }
@@ -88,7 +88,7 @@ object LayerHistogram {
         LayerExtent(getExpression, getParams, interpreter)
       }
       _ <- IO {
-        logger.debug(
+        logger.trace(
           s"[LayerHistogram] calculating histogram from (approximately) ${intersection.area / (cellSize.width * cellSize.height)} cells"
         )
       }

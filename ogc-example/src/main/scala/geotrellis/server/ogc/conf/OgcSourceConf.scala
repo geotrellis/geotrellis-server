@@ -34,16 +34,18 @@ case class SimpleSourceConf(
   name: String,
   title: String,
   source: RasterSourceConf,
+  defaultStyle: Option[String],
   styles: List[StyleConf]
 ) extends OgcSourceConf {
   def models: List[SimpleSource] =
-    source.toRasterSources.map(SimpleSource(name, title, _, styles.map(_.toStyle)))
+    source.toRasterSources.map(SimpleSource(name, title, _, defaultStyle, styles.map(_.toStyle)))
 }
 
 case class MapAlgebraSourceConf(
   name: String,
   title: String,
   algebra: Expression,
+  defaultStyle: Option[String],
   styles: List[StyleConf]
 ) extends OgcSourceConf {
   private def listParams(expr: Expression): List[String] = {
@@ -70,7 +72,7 @@ case class MapAlgebraSourceConf(
       }
       name -> layerSrc.source
     }
-    MapAlgebraSource(name, title, sourceList.toMap, algebra, styles.map(_.toStyle))
+    MapAlgebraSource(name, title, sourceList.toMap, algebra, defaultStyle, styles.map(_.toStyle))
   }
 
 }

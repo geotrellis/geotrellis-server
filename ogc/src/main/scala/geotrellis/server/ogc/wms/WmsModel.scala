@@ -19,6 +19,7 @@ package geotrellis.server.ogc.wms
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.wms.WmsParams.GetMap
 
+
 /** This class holds all the information necessary to construct a response to a WMS request */
 case class WmsModel(
   serviceMeta: opengis.wms.Service,
@@ -34,15 +35,20 @@ case class WmsModel(
       supportedCrs <- parentLayerMeta.supportedProjections.find(_ == p.crs).toList
       source       <- sources.find(p.toQuery)
     } yield {
-      val styleName: Option[String] = p.styles.headOption.orElse(source.styles.headOption.map(_.name))
-      val style: Option[OgcStyle] = styleName.flatMap { name => source.styles.find(_.name == name) }
+      val styleName: Option[String] =
+        p.styles
+          .headOption
+          .filterNot(_.isEmpty)
+          .orElse(source.defaultStyle)
+      val style: Option[OgcStyle] =
+        styleName.flatMap { name => source.styles.find(_.name == name) }
       source match {
-        case MapAlgebraSource(name, title, rasterSources, algebra, styles) =>
+        case MapAlgebraSource(name, title, rasterSources, algebra, defaultStyle, styles) =>
           val simpleLayers = rasterSources.mapValues { rs =>
             SimpleOgcLayer(name, title, supportedCrs, rs, style)
           }
           MapAlgebraOgcLayer(name, title, supportedCrs, simpleLayers, algebra, style)
-        case SimpleSource(name, title, rasterSource, styles) =>
+        case SimpleSource(name, title, rasterSource, defaultStyle, styles) =>
           SimpleOgcLayer(name, title, supportedCrs, rasterSource, style)
       }
     }
