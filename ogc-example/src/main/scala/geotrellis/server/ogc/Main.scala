@@ -107,12 +107,11 @@ object Main extends CommandApp(
               .collect { case ssc @ SimpleSourceConf(_, _, _, _) => ssc.models }
               .toList
               .flatten
-            _ <- Stream.eval(IO {
-              if (conf.wms.isDefined)
-                logger.info(ansi"%green{WMS configuration detected}, starting Web Map Service")
-              else
-                logger.info(ansi"%red{WMS configuration detected}")
-            })
+            _ <- Stream.eval(IO { conf.wms.fold(
+              logger.info(ansi"%red{WMS configuration detected}")
+            )({ _ =>
+              logger.info(ansi"%green{WMS configuration detected}, starting Web Map Service")
+            })})
             wmsModel = conf.wms.map { svc =>
               WmsModel(
                 svc.serviceMetadata,
@@ -120,12 +119,11 @@ object Main extends CommandApp(
                 svc.layerSources(simpleSources)
               )
             }
-            _ <- Stream.eval(IO {
-              if (conf.wmts.isDefined)
-                logger.info(ansi"%green{WMTS configuration detected}, starting Web Map Tiling Service")
-              else
-                logger.info(ansi"%red{No WMTS configuration detected}")
-            })
+            _ <- Stream.eval(IO { conf.wmts.fold(
+              logger.info(ansi"%red{No WMTS configuration detected}")
+            )({ _ =>
+              logger.info(ansi"%green{WMTS configuration detected}, starting Web Map Tiling Service")
+            })})
             wmtsModel = conf.wmts.map { svc =>
               WmtsModel(
                 svc.serviceMetadata,
@@ -133,12 +131,11 @@ object Main extends CommandApp(
                 svc.layerSources(simpleSources)
               )
             }
-            _ <- Stream.eval(IO {
-              if (conf.wcs.isDefined)
-                logger.info(ansi"%green{WCS configuration detected}, starting Web Coverage Service")
-              else
-                logger.info(ansi"%red{No WCS configuration detected}")
-            })
+            _ <- Stream.eval(IO { conf.wcs.fold(
+              logger.info(ansi"%red{No WCS configuration detected}")
+            )({ _ =>
+              logger.info(ansi"%green{WCS configuration detected}, starting Web Coverage Service")
+            })})
             wcsModel = conf.wcs.map { svc =>
               WcsModel(
                 svc.serviceMetadata,
