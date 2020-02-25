@@ -121,18 +121,18 @@ package object conf {
     }
 
   implicit val extentReader: ConfigReader[Extent] =
-    ConfigReader[(Double, Double, Double, Double)].map { case extent@(xmin, ymin, xmax, ymax) =>
+    ConfigReader[(Double, Double, Double, Double)].map { case extent @ (xmin, ymin, xmax, ymax) =>
       Try(Extent(xmin, ymin, xmax, ymax)).toOption match {
         case Some(extent) => extent
-        case None => throw new Exception(s"Invalid extent: ${extent}. Should be (xmin, ymin, xmax, ymax)")
+        case None => throw new Exception(s"Invalid extent: $extent. Should be (xmin, ymin, xmax, ymax)")
       }
     }
 
   implicit val tileLayoutReader: ConfigReader[TileLayout] =
-    ConfigReader[(Int, Int, Int, Int)].map { case layout@(layoutCols, layoutRows, tileCols, tileRows) =>
+    ConfigReader[(Int, Int, Int, Int)].map { case layout @ (layoutCols, layoutRows, tileCols, tileRows) =>
       Try(TileLayout(layoutCols, layoutRows, tileCols, tileRows)).toOption match {
         case Some(layout) => layout
-        case None => throw new Exception(s"Invalid layout: ${layout}. Should be (layoutCols, layoutRows, tileCols, tileRows)")
+        case None => throw new Exception(s"Invalid layout: $layout. Should be (layoutCols, layoutRows, tileCols, tileRows)")
       }
     }
 

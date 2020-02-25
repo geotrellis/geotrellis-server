@@ -209,6 +209,6 @@ object CapabilitiesView {
   def modelAsLayers(wmtsModel: WmtsModel): List[DataRecord[LayerType]] =
     wmtsModel
       .sources
+      .store
       .map { src => DataRecord("wms".some, "Layer".some, src.toLayerType(wmtsModel.matrices)) }
-      .toList
 }

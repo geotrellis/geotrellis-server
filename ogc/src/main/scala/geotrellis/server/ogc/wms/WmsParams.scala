@@ -19,12 +19,13 @@ package geotrellis.server.ogc.wms
 import geotrellis.server.ogc.OutputFormat
 import geotrellis.server.ogc.params._
 import geotrellis.proj4.LatLng
+import geotrellis.proj4.CRS
+import geotrellis.store.query._
+import geotrellis.vector.{Extent, ProjectedExtent}
 
 import cats.implicits._
 import cats.data.{Validated, ValidatedNel}
 import Validated._
-import geotrellis.proj4.CRS
-import geotrellis.vector.Extent
 
 import scala.util.Try
 
@@ -57,7 +58,9 @@ object WmsParams {
     width: Int,
     height: Int,
     crs: CRS
-  ) extends WmsParams
+  ) extends WmsParams {
+    def toQuery: Query = layers.headOption.map(withName).getOrElse(nothing) and intersects(ProjectedExtent(boundingBox, crs))
+  }
 
   object GetMap {
     def build(params: ParamMap): ValidatedNel[ParamError, WmsParams] = {

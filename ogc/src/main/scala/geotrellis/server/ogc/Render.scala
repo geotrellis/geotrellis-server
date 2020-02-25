@@ -20,9 +20,6 @@ import geotrellis.raster._
 import geotrellis.raster.render._
 import geotrellis.raster.render.png._
 
-import scala.collection.mutable
-import scala.util.Try
-
 object Render {
   def rgb(mbtile: MultibandTile, maybeStyle: Option[OgcStyle], format: OutputFormat, hists: List[Histogram[Double]]): Array[Byte] =
     maybeStyle match {

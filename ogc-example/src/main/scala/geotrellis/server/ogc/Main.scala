@@ -104,8 +104,9 @@ object Main extends CommandApp(
             simpleSources = conf
               .layers
               .values
-              .collect { case ssc@SimpleSourceConf(_, _, _, _) => ssc.model }
+              .collect { case ssc @ SimpleSourceConf(_, _, _, _) => ssc.models }
               .toList
+              .flatten
             wmsModel = WmsModel(
               conf.wms.serviceMetadata,
               conf.wms.parentLayerMeta,

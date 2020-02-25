@@ -21,7 +21,8 @@ import geotrellis.raster.{CellSize, GridExtent}
 import geotrellis.server.ogc.OutputFormat
 import geotrellis.server.ogc.params.ParamError.UnsupportedFormatError
 import geotrellis.server.ogc.params._
-import geotrellis.vector.Extent
+import geotrellis.store.query._
+import geotrellis.vector.{Extent, ProjectedExtent}
 
 import cats.data.Validated._
 import cats.data.{NonEmptyList, Validated, ValidatedNel}
@@ -65,6 +66,8 @@ case class GetCoverageWcsParams(
   gridOffsets: (Double, Double),
   crs: CRS
 ) extends WcsParams {
+  def toQuery: Query = withName(identifier) and intersects(ProjectedExtent(extent, crs))
+
   val changeXY: Boolean = crs.isGeographic
 
   def cellSize: CellSize =

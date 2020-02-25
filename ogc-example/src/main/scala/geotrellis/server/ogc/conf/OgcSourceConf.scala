@@ -36,8 +36,8 @@ case class SimpleSourceConf(
   source: RasterSourceConf,
   styles: List[StyleConf]
 ) extends OgcSourceConf {
-  def model: SimpleSource =
-    SimpleSource(name, title, source.toRasterSource, styles.map(_.toStyle))
+  def models: List[SimpleSource] =
+    source.toRasterSources.map(SimpleSource(name, title, _, styles.map(_.toStyle)))
 }
 
 case class MapAlgebraSourceConf(

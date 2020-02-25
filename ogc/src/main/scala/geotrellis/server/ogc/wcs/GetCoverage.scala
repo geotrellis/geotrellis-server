@@ -25,7 +25,9 @@ import com.azavea.maml.error._
 import com.azavea.maml.eval._
 import cats.data.Validated._
 import cats.effect._
+import cats.syntax.traverse._
 import cats.syntax.flatMap._
+import cats.instances.option._
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
 
 import scala.concurrent.duration._
@@ -52,23 +54,26 @@ class GetCoverage(wcsModel: WcsModel) {
 
       case _ =>
         logger.trace(s"GetCoverage cache MISS: $params")
-        val src = wcsModel.sourceLookup(params.identifier)
         val re = params.gridExtent
-        val eval = src match {
-          case SimpleSource(name, title, source, styles) =>
-            LayerExtent.identity(SimpleOgcLayer(name, title, params.crs, source, None))
-          case MapAlgebraSource(name, title, sources, algebra, styles) =>
-            val simpleLayers = sources.mapValues { rs => SimpleOgcLayer(name, title, params.crs, rs, None) }
-            LayerExtent(IO.pure(algebra), IO.pure(simpleLayers), ConcurrentInterpreter.DEFAULT)
-        }
 
-        eval(re.extent, re.cellSize) map {
-          case Valid(mbtile) =>
-            val bytes = GeoTiff(Raster(mbtile, re.extent), params.crs).toByteArray
-            requestCache.put(params, bytes)
-            bytes
-          case Invalid(errs) => throw MamlException(errs)
-        }
+        wcsModel
+          .getLayers(params)
+          .headOption
+          .map {
+            case so @ SimpleOgcLayer(_, _, _, _, _) => LayerExtent.identity(so)
+            case MapAlgebraOgcLayer(_, _, _, simpleLayers, algebra, _) =>
+              LayerExtent(IO.pure(algebra), IO.pure(simpleLayers), ConcurrentInterpreter.DEFAULT)
+          }
+          .traverse { eval =>
+            eval(re.extent, re.cellSize) map {
+              case Valid(mbtile) =>
+                val bytes = GeoTiff(Raster(mbtile, re.extent), params.crs).toByteArray
+                requestCache.put(params, bytes)
+                bytes
+              case Invalid(errs) => throw MamlException(errs)
+            }
+          }
+          .map(_.getOrElse(Array()))
     }
   }
 }

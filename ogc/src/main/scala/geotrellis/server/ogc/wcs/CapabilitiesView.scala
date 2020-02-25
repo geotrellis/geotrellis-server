@@ -188,7 +188,7 @@ class CapabilitiesView(
 
 object CapabilitiesView {
   def coverageSummaries(wcsModel: WcsModel): List[CoverageSummaryType] =
-    wcsModel.sourceLookup.map { case (identifier, src) =>
+    wcsModel.sources.store.map { src =>
       val crs = src.nativeCrs.head
       val wgs84extent = ReprojectRasterExtent(src.nativeRE, crs, LatLng).extent
 
@@ -205,7 +205,7 @@ object CapabilitiesView {
           new URI(URN.unsafeFromCrs(LatLng)) ::
           new URI("urn:ogc:def:crs:OGC::imageCRS") :: Nil,
         SupportedFormat = "image/geotiff" :: "image/jpeg" :: "image/png" :: Nil,
-        coveragesummarytypeoption = DataRecord(None, "Identifier".some, identifier)
+        coveragesummarytypeoption = DataRecord(None, "Identifier".some, src.name)
       )
     }.toList
 }

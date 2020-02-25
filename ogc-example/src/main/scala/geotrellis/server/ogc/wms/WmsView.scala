@@ -22,19 +22,18 @@ import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wms.WmsParams.{GetCapabilities, GetMap}
 
 import geotrellis.raster.RasterExtent
-import geotrellis.raster.render.{ColorMap, ColorRamp, Png}
 import geotrellis.raster._
-import geotrellis.layer._
-import geotrellis.proj4._
 import com.azavea.maml.error._
 import com.azavea.maml.eval._
-
 import scalaxb.CanWriteXML
 import org.http4s.scalaxml._
 import org.http4s.circe._
-import org.http4s._, org.http4s.dsl.io._, org.http4s.implicits._
+import org.http4s._
+import org.http4s.dsl.io._
+import org.http4s.implicits._
 import _root_.io.circe.syntax._
-import cats._, cats.implicits._
+import cats._
+import cats.implicits._
 import cats.effect._
 import cats.data.Validated._
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
@@ -52,7 +51,6 @@ class WmsView(wmsModel: WmsModel, serviceUrl: URL) {
       .maximumSize(500)
       .build[OgcLayer, Interpreted[List[Histogram[Double]]]]()
 
-
   def responseFor(req: Request[IO])(implicit cs: ContextShift[IO]): IO[Response[IO]] = {
     WmsParams(req.multiParams) match {
       case Invalid(errors) =>
@@ -65,18 +63,18 @@ class WmsView(wmsModel: WmsModel, serviceUrl: URL) {
 
       case Valid(wmsReq: GetMap) =>
         val re = RasterExtent(wmsReq.boundingBox, wmsReq.width, wmsReq.height)
-        wmsModel.getLayer(wmsReq.crs, wmsReq.layers.headOption, wmsReq.styles.headOption).map { layer =>
+        wmsModel.getLayer(wmsReq).map { layer =>
           val evalExtent = layer match {
-            case sl@SimpleOgcLayer(_, _, _, _, _) =>
+            case sl @ SimpleOgcLayer(_, _, _, _, _) =>
               LayerExtent.identity(sl)
-            case sl@MapAlgebraOgcLayer(_, _, _, parameters, expr, _) =>
+            case MapAlgebraOgcLayer(_, _, _, parameters, expr, _) =>
               LayerExtent(IO.pure(expr), IO.pure(parameters), ConcurrentInterpreter.DEFAULT[IO])
           }
 
           val evalHisto = layer match {
-            case sl@SimpleOgcLayer(_, _, _, _, _) =>
+            case sl @ SimpleOgcLayer(_, _, _, _, _) =>
               LayerHistogram.identity(sl, 512)
-            case sl@MapAlgebraOgcLayer(_, _, _, parameters, expr, _) =>
+            case MapAlgebraOgcLayer(_, _, _, parameters, expr, _) =>
               LayerHistogram(IO.pure(expr), IO.pure(parameters), ConcurrentInterpreter.DEFAULT[IO], 512)
           }
 
@@ -107,7 +105,7 @@ class WmsView(wmsModel: WmsModel, serviceUrl: URL) {
               logger.error(err.toString)
               InternalServerError(err.toString)
           }
-        }.getOrElse(wmsReq.layers.headOption match {
+        }.headOption.getOrElse(wmsReq.layers.headOption match {
           case Some(layerName) =>
             BadRequest(s"Layer (${layerName}) not found or CRS (${wmsReq.crs}) not supported")
           case None =>

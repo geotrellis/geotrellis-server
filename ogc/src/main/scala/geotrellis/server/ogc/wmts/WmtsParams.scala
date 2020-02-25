@@ -16,8 +16,10 @@
 
 package geotrellis.server.ogc.wmts
 
+import geotrellis.store.query._
 import geotrellis.server.ogc.OutputFormat
 import geotrellis.server.ogc.params._
+import geotrellis.vector.ProjectedExtent
 
 import cats.implicits._
 import cats.data.{Validated, ValidatedNel}
@@ -56,7 +58,9 @@ object WmtsParams {
     tileMatrix: String,
     tileRow: Int,
     tileCol: Int
-  ) extends WmtsParams
+  ) extends WmtsParams {
+    def toQuery: Query = withName(layer)
+  }
 
   object GetTile {
     def build(params: ParamMap): ValidatedNel[ParamError, WmtsParams] = {

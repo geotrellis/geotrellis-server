@@ -14,9 +14,9 @@ object Dependencies {
   def catsVersion(module: String) = Def.setting {
     module match {
       case "core" =>
-        "org.typelevel" %% s"cats-$module" % ver("1.6.1", "2.0.0").value
+        "org.typelevel" %% s"cats-$module" % ver("1.6.1", "2.0.0").value force()
       case "effect" =>
-        "org.typelevel" %% s"cats-$module" % ver("1.4.0", "2.0.0").value
+        "org.typelevel" %% s"cats-$module" % ver("1.4.0", "2.0.0").value force()
     }
   }
 
@@ -52,6 +52,7 @@ object Dependencies {
   }
   val circeParser = circeVersion("parser")
   val circeRefined = circeVersion("refined")
+  val circeJava8 = circeVersion("java8")
   val commonsIO = "commons-io" % "commons-io" % "2.6"
   val commonsLang = "org.apache.commons" % "commons-lang3" % "3.7"
   val concHashMap = "com.googlecode.concurrentlinkedhashmap" % "concurrentlinkedhashmap-lru" % "1.4.2"
@@ -99,6 +100,7 @@ object Dependencies {
   val commonsIo = "commons-io" % "commons-io" % "2.6"
   val shapeless = "com.chuusai" %% "shapeless" % shapelessVer
   val logback = "ch.qos.logback" % "logback-classic" % "1.2.3" % Runtime
+  val droste = "io.higherkindness" %% "droste-core" % "0.8.0"
 
   // This dependency differs between scala 2.11 and 2.12
   val ansiColors211 = "org.backuity" %% "ansi-interpolator" % "1.1" % Provided
