@@ -156,7 +156,7 @@ object GeoTrellisRasterSourceLegacy {
 
   // stable identifiers to match in a readTiles function
   private val SpatialKeyClass    = classOf[SpatialKey]
-  private val SpaceTimeKeyClass  = classOf[SpatialKey]
+  private val SpaceTimeKeyClass  = classOf[SpaceTimeKey]
   private val TileClass          = classOf[Tile]
   private val MultibandTileClass = classOf[MultibandTile]
 

@@ -22,15 +22,18 @@ import geotrellis.proj4.LatLng
 import geotrellis.raster.reproject.ReprojectRasterExtent
 import geotrellis.raster.{Dimensions, GridExtent}
 import geotrellis.server.ogc.{MapAlgebraSource, OgcSource, SimpleSource, URN}
-
 import cats.syntax.option._
+import java.net.{URI, URL}
+
+import geotrellis.server.ogc.gml.GmlDataRecord
+import opengis.gml._
 import opengis.ows._
 import opengis.wcs._
 import opengis._
-import scalaxb._
 
 import scala.xml.Elem
-import java.net.{URI, URL}
+import scalaxb._
+
 
 class CoverageView(
   wcsModel: WcsModel,
@@ -39,8 +42,10 @@ class CoverageView(
 ) {
   def toXML: Elem = {
     val sources = if(identifiers == Nil) wcsModel.sources.store else wcsModel.sources.find(withNames(identifiers.toSet))
+    val sourcesMap: Map[String, List[OgcSource]] = sources.groupBy(_.name)
+    val coverageTypeMap = sourcesMap.mapValues(CoverageView.sourceDescription(_))
     scalaxb.toXML[CoverageDescriptions](
-      obj           = CoverageDescriptions(sources.map(CoverageView.sourceDescription)),
+      obj           = CoverageDescriptions(coverageTypeMap.values.toList),
       namespace     = None,
       elementLabel  = "CoverageDescriptions".some,
       scope         = constrainedWCSScope,
@@ -50,7 +55,9 @@ class CoverageView(
 }
 
 object CoverageView {
-  def sourceDescription(source: OgcSource): CoverageDescriptionType = {
+
+  def sourceDescription(sources: List[OgcSource]): CoverageDescriptionType = {
+    val source = sources.head
     val nativeCrs = source.nativeCrs.head
     val re = source.nativeRE
     val llre = source match {
@@ -68,6 +75,14 @@ object CoverageView {
     val ex = re.extent
     val llex = llre.extent
     val Dimensions(w, h) = re.dimensions
+    val temporalInstants = sources.flatMap { s =>
+      s.time.map(t => GmlDataRecord(TimePositionType(t.toWcsIsoString)))
+    }
+    val temporalDomain: Option[TimeSequenceType] = if (temporalInstants.length > 0) {
+      Some(TimeSequenceType(temporalInstants))
+    } else {
+      None
+    }
 
     CoverageDescriptionType(
       Title      = LanguageStringType(source.title) :: Nil,
@@ -120,7 +135,8 @@ object CoverageView {
             GridOffsets = re.cellheight :: -re.cellwidth :: Nil,
             GridCS      = new URI("urn:ogc:def:cs:OGC:0.0:Grid2dSquareCS").some
           ))
-        )
+        ),
+        TemporalDomain = temporalDomain
       ),
       RangeValue = wcs.RangeType(
         Field = FieldType(

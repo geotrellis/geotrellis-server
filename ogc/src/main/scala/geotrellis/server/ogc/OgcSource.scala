@@ -16,12 +16,13 @@
 
 package geotrellis.server.ogc
 
+import java.time.ZonedDateTime
+
 import geotrellis.server.extent.SampleUtils
 import geotrellis.server.ogc.wms._
 import geotrellis.raster._
 import geotrellis.vector.{Extent, ProjectedExtent}
 import geotrellis.proj4.CRS
-
 import com.azavea.maml.ast._
 import cats.data.{NonEmptyList => NEL}
 import opengis.wms.BoundingBox
@@ -46,6 +47,7 @@ trait OgcSource {
   def nativeCrs: Set[CRS]
   def metadata: RasterMetadata
   def attributes: Map[String, String]
+  def time: Option[ZonedDateTime]
 
   def nativeProjectedExtent: ProjectedExtent = ProjectedExtent(nativeExtent, nativeCrs.head)
 }
@@ -69,6 +71,8 @@ case class SimpleSource(
     val reprojected = source.reproject(crs)
     CapabilitiesView.boundingBox(crs, reprojected.extent, reprojected.cellSize)
   }
+
+  lazy val time = attributes.get("time").map(ZonedDateTime.parse)
 
   lazy val nativeRE: GridExtent[Long]      = source.gridExtent
   lazy val nativeCrs: Set[CRS]             = Set(source.crs)
@@ -173,4 +177,5 @@ case class MapAlgebraSource(
   lazy val minBandCount: Int               = sources.values.map(_.bandCount).min
   lazy val cellTypes: Set[CellType]        = sources.values.map(_.cellType).toSet
   lazy val resolutions: List[CellSize]     = sources.values.flatMap(_.resolutions).toList.distinct
+  val time = None
 }

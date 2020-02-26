@@ -16,7 +16,11 @@
 
 package geotrellis.server.ogc
 
+import java.time.{ZoneId, ZonedDateTime}
+import java.time.format.DateTimeFormatter
+
 import geotrellis.vector.Extent
+
 import scala.xml.NamespaceBinding
 
 package object wcs {
@@ -44,5 +48,28 @@ package object wcs {
       xmax = self.ymax,
       ymax = self.xmax
     )
+  }
+
+  /**
+   * WCS expects this very specific format for its time strings, which is not quite (TM)
+   * what Java's toString method returns. Instead we convert to Instant.toString, which
+   * does conform.
+   *
+   * The [ISO 8601:2000] syntax for dates and times may be summarized by the following template
+   * (see Annex D of the OGC Web Map Service [OGC 06-042]):
+   * ccyy-mm-ddThh:mm:ss.sssZ
+   * Where
+   * ― ccyy-mm-dd is the date (a four-digit year, and a two-digit month and day);
+   * ― Tis a separator between the data and time strings;
+   * ― hh:mm:ss.sss is the time (a two-digit hour and minute, and fractional seconds);
+   * ― Z represents the Coordinated Universal Time (UTC or ―zulu‖) time zone.
+   *
+   * This was excerpted from "WCS Implementation Standard 1.1" available at:
+   * https://portal.ogc.org/files/07-067r5
+   *
+   * @param zdt
+   */
+  implicit class ZonedDateTimeWcsOps(val zdt: ZonedDateTime) {
+    def toWcsIsoString: String = zdt.toInstant.toString
   }
 }
