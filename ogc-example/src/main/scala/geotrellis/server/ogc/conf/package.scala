@@ -66,7 +66,7 @@ package object conf {
       }
     }
 
-  implicit def colorRampReader: ConfigReader[ColorRamp] =
+  implicit val colorRampReader: ConfigReader[ColorRamp] =
     ConfigReader[List[String]].map { colors =>
       ColorRamp(colors.map(java.lang.Long.decode(_).toInt))
     }
@@ -80,7 +80,7 @@ package object conf {
    * has been provided, but it only works with doubles that explicitly decimal
    * pad to tenths (0.0 is OK, 0 is to be avoided)
    */
-  implicit def mapDoubleIntReader: ConfigReader[Map[Double, Int]] =
+  implicit val mapDoubleIntReader: ConfigReader[Map[Double, Int]] =
     ConfigReader[Map[String, ConfigValue]].map { cmap =>
       val numericMap = cmap.flatMap({ case (k, v) =>
         v.valueType match {
@@ -104,7 +104,7 @@ package object conf {
       numericMap
     }
 
-  implicit def colormapReader: ConfigReader[ColorMap] =
+  implicit val colormapReader: ConfigReader[ColorMap] =
     ConfigReader[Map[Double, Int]].map { map =>
       ColorMap(map)
     }
@@ -119,12 +119,12 @@ package object conf {
       }
     }
 
-  implicit def keywordConfigReader: ConfigReader[opengis.wms.Keyword] =
+  implicit val keywordConfigReader: ConfigReader[opengis.wms.Keyword] =
     ConfigReader[String].map { str =>
       opengis.wms.Keyword(str)
     }
 
-  implicit def nameConfigReader: ConfigReader[opengis.wms.Name] =
+  implicit val nameConfigReader: ConfigReader[opengis.wms.Name] =
     ConfigReader[String].map { str =>
       opengis.wms.Name.fromString(str, wmsScope)
     }
