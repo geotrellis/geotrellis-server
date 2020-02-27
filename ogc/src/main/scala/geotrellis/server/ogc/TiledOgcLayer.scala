@@ -17,6 +17,8 @@
 package geotrellis.server.ogc
 
 import geotrellis.server._
+import geotrellis.server.ogc.style.OgcStyle
+
 import geotrellis.layer._
 import geotrellis.raster._
 import geotrellis.raster.reproject.ReprojectRasterExtent

@@ -17,6 +17,8 @@
 package geotrellis.server.ogc
 
 import geotrellis.server._
+import geotrellis.server.ogc.style._
+
 import geotrellis.raster._
 import geotrellis.raster.resample._
 import geotrellis.raster.io.geotiff._

@@ -18,6 +18,8 @@ package geotrellis.server.ogc
 
 import geotrellis.server.extent.SampleUtils
 import geotrellis.server.ogc.wms._
+import geotrellis.server.ogc.style._
+
 import geotrellis.raster._
 import geotrellis.vector.{Extent, ProjectedExtent}
 import geotrellis.proj4.CRS

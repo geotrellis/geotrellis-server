@@ -16,6 +16,7 @@
 
 package geotrellis.server.ogc.conf
 
+import geotrellis.server.ogc.style.ClipDefinition
 import geotrellis.server.ogc.ows
 import geotrellis.server.ogc.wms.WmsParentLayerMeta
 
@@ -42,6 +43,7 @@ case class Conf(
 )
 
 object Conf {
+  implicitly[ConfigReader[ClipDefinition]]
   lazy val conf: Conf = ConfigSource.default.loadOrThrow[Conf]
   implicit def ConfObjectToClass(obj: Conf.type): Conf = conf
 

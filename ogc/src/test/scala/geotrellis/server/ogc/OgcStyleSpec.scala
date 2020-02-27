@@ -1,5 +1,7 @@
 package geotrellis.server.ogc
 
+import geotrellis.server.ogc.style._
+
 import geotrellis.raster.render.ColorRamp
 import geotrellis.raster.histogram.DoubleHistogram
 

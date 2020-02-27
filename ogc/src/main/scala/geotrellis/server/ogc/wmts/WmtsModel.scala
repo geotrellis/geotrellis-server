@@ -17,9 +17,11 @@
 package geotrellis.server.ogc.wmts
 
 import geotrellis.server.ogc._
+import geotrellis.server.ogc.style._
+import geotrellis.server.ogc.wmts.WmtsParams.GetTile
+
 import geotrellis.layer._
 import geotrellis.proj4._
-import geotrellis.server.ogc.wmts.WmtsParams.GetTile
 
 /** This class holds all the information necessary to construct a response to a WMTS request */
 case class WmtsModel(

@@ -17,6 +17,7 @@
 package geotrellis.server.ogc.wms
 
 import geotrellis.server.ogc._
+import geotrellis.server.ogc.style._
 import geotrellis.server.ogc.wms.WmsParams.GetMap
 
 
