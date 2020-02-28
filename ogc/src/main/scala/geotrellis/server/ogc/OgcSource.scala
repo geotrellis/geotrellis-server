@@ -16,16 +16,17 @@
 
 package geotrellis.server.ogc
 
-import java.time.ZonedDateTime
-
 import geotrellis.server.extent.SampleUtils
 import geotrellis.server.ogc.wms._
 import geotrellis.raster._
 import geotrellis.vector.{Extent, ProjectedExtent}
 import geotrellis.proj4.CRS
+
 import com.azavea.maml.ast._
 import cats.data.{NonEmptyList => NEL}
 import opengis.wms.BoundingBox
+
+import java.time.ZonedDateTime
 
 /**
  * This trait and its implementing types should be jointly sufficient, along with a WMS 'GetMap'
@@ -72,8 +73,7 @@ case class SimpleSource(
     CapabilitiesView.boundingBox(crs, reprojected.extent, reprojected.cellSize)
   }
 
-  lazy val time = attributes.get("time").map(ZonedDateTime.parse)
-
+  lazy val time: Option[ZonedDateTime]     = attributes.get("time").map(ZonedDateTime.parse)
   lazy val nativeRE: GridExtent[Long]      = source.gridExtent
   lazy val nativeCrs: Set[CRS]             = Set(source.crs)
   lazy val nativeExtent: Extent            = source.extent
@@ -172,10 +172,10 @@ case class MapAlgebraSource(
     new GridExtent[Long](nativeExtent, cellSize)
   }
 
-  lazy val attributes: Map[String, String] = Map.empty
-  lazy val nativeCrs: Set[CRS]             = sources.values.map(_.crs).toSet
-  lazy val minBandCount: Int               = sources.values.map(_.bandCount).min
-  lazy val cellTypes: Set[CellType]        = sources.values.map(_.cellType).toSet
-  lazy val resolutions: List[CellSize]     = sources.values.flatMap(_.resolutions).toList.distinct
-  val time = None
+  val time: Option[ZonedDateTime]      = None
+  val attributes: Map[String, String]  = Map.empty
+  lazy val nativeCrs: Set[CRS]         = sources.values.map(_.crs).toSet
+  lazy val minBandCount: Int           = sources.values.map(_.bandCount).min
+  lazy val cellTypes: Set[CellType]    = sources.values.map(_.cellType).toSet
+  lazy val resolutions: List[CellSize] = sources.values.flatMap(_.resolutions).toList.distinct
 }

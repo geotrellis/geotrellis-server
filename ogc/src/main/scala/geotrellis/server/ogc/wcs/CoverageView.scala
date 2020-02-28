@@ -18,14 +18,13 @@ package geotrellis.server.ogc.wcs
 
 import geotrellis.store.query._
 import geotrellis.server.ogc.ows.OwsDataRecord
+import geotrellis.server.ogc.gml.GmlDataRecord
 import geotrellis.proj4.LatLng
 import geotrellis.raster.reproject.ReprojectRasterExtent
 import geotrellis.raster.{Dimensions, GridExtent}
 import geotrellis.server.ogc.{MapAlgebraSource, OgcSource, SimpleSource, URN}
 import cats.syntax.option._
-import java.net.{URI, URL}
 
-import geotrellis.server.ogc.gml.GmlDataRecord
 import opengis.gml._
 import opengis.ows._
 import opengis.wcs._
@@ -34,6 +33,7 @@ import opengis._
 import scala.xml.Elem
 import scalaxb._
 
+import java.net.{URI, URL}
 
 class CoverageView(
   wcsModel: WcsModel,
@@ -43,7 +43,7 @@ class CoverageView(
   def toXML: Elem = {
     val sources = if(identifiers == Nil) wcsModel.sources.store else wcsModel.sources.find(withNames(identifiers.toSet))
     val sourcesMap: Map[String, List[OgcSource]] = sources.groupBy(_.name)
-    val coverageTypeMap = sourcesMap.mapValues(CoverageView.sourceDescription(_))
+    val coverageTypeMap = sourcesMap.mapValues(CoverageView.sourceDescription)
     scalaxb.toXML[CoverageDescriptions](
       obj           = CoverageDescriptions(coverageTypeMap.values.toList),
       namespace     = None,
@@ -75,14 +75,26 @@ object CoverageView {
     val ex = re.extent
     val llex = llre.extent
     val Dimensions(w, h) = re.dimensions
-    val temporalInstants = sources.flatMap { s =>
-      s.time.map(t => GmlDataRecord(TimePositionType(t.toWcsIsoString)))
-    }
-    val temporalDomain: Option[TimeSequenceType] = if (temporalInstants.length > 0) {
-      Some(TimeSequenceType(temporalInstants))
-    } else {
-      None
-    }
+
+    /**
+     * WCS expects this very specific format for its time strings, which is not quite (TM)
+     * what Java's toString method returns. Instead we convert to Instant.toString, which
+     * does conform.
+     *
+     * The [ISO 8601:2000] syntax for dates and times may be summarized by the following template
+     * (see Annex D of the OGC Web Map Service [OGC 06-042]):
+     * ccyy-mm-ddThh:mm:ss.sssZ
+     * Where
+     * ― ccyy-mm-dd is the date (a four-digit year, and a two-digit month and day);
+     * ― Tis a separator between the data and time strings;
+     * ― hh:mm:ss.sss is the time (a two-digit hour and minute, and fractional seconds);
+     * ― Z represents the Coordinated Universal Time (UTC or ―zulu‖) time zone.
+     *
+     * This was excerpted from "WCS Implementation Standard 1.1" available at:
+     * https://portal.ogc.org/files/07-067r5
+     */
+    val temporalInstants = sources.flatMap { _.time.map(t => GmlDataRecord(TimePositionType(t.toInstant.toString))) }
+    val temporalDomain: Option[TimeSequenceType] = if (temporalInstants.nonEmpty) TimeSequenceType(temporalInstants).some else None
 
     CoverageDescriptionType(
       Title      = LanguageStringType(source.title) :: Nil,
