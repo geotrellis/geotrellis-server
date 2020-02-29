@@ -22,8 +22,6 @@ import io.circe.Json
 import higherkindness.droste.{Algebra, scheme}
 import jp.ne.opt.chronoscala.Imports._
 
-import java.time.ZonedDateTime
-
 case class OgcSourceRepository(store: List[OgcSource]) extends Repository[List] {
   def find(query: Query): List[OgcSource] = OgcSourceRepository.eval(query)(store)
 }
@@ -31,14 +29,16 @@ case class OgcSourceRepository(store: List[OgcSource]) extends Repository[List] 
 object OgcSourceRepository {
   import geotrellis.store.query.QueryF._
 
-  def algebgra: Algebra[QueryF, List[OgcSource] => List[OgcSource]] = Algebra {
+  def algebra: Algebra[QueryF, List[OgcSource] => List[OgcSource]] = Algebra {
     case Nothing()           => _ => Nil
     case All()               => identity
     case WithName(name)      => _.filter(_.name == name)
     case WithNames(names)    => _.filter(rs => names.contains(rs.name))
-    case At(t, fn)           => _.filter(_.metadata.attributes.get(fn).map(ZonedDateTime.parse).fold(false)(_ == t))
-    case Between(t1, t2, fn) => _.filter {
-      _.metadata.attributes.get(fn).map(ZonedDateTime.parse).fold(false) { current => t1 >= current && t2 < current }
+    case At(t, _)           => _.filter(_.time.exists(_ == t))
+    case Between(t1, t2, _) => _.filter { _.time match {
+        case Some(t) => t1 >= t && t2 < t
+        case _ => false
+      }
     }
     case Intersects(e) => _.filter(_.nativeProjectedExtent.intersects(e))
     case Covers(e)     => _.filter(_.nativeProjectedExtent.covers(e))
@@ -49,10 +49,10 @@ object OgcSourceRepository {
 
   /** An alias for [[scheme.cata]] since it can confuse people */
   def eval(query: Query)(list: List[OgcSource]): List[OgcSource] =
-    scheme.cata(algebgra).apply(query)(list)
+    scheme.cata(algebra).apply(query)(list)
 
   /** An alias for [[scheme.hylo]] since it can confuse people */
   def eval(json: Json)(list: List[OgcSource]): List[OgcSource] =
-    scheme.hylo(algebgra, QueryF.coalgebraJson).apply(json)(list)
+    scheme.hylo(algebra, QueryF.coalgebraJson).apply(json)(list)
 
 }

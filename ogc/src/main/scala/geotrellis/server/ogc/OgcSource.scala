@@ -26,6 +26,8 @@ import com.azavea.maml.ast._
 import cats.data.{NonEmptyList => NEL}
 import opengis.wms.BoundingBox
 
+import java.time.ZonedDateTime
+
 /**
  * This trait and its implementing types should be jointly sufficient, along with a WMS 'GetMap'
  *  (or a WMTS 'GetTile' or a WCS 'GetCoverage' etc etc) request to produce a visual layer
@@ -46,6 +48,7 @@ trait OgcSource {
   def nativeCrs: Set[CRS]
   def metadata: RasterMetadata
   def attributes: Map[String, String]
+  def time: Option[ZonedDateTime]
 
   def nativeProjectedExtent: ProjectedExtent = ProjectedExtent(nativeExtent, nativeCrs.head)
 }
@@ -70,6 +73,7 @@ case class SimpleSource(
     CapabilitiesView.boundingBox(crs, reprojected.extent, reprojected.cellSize)
   }
 
+  lazy val time: Option[ZonedDateTime]     = attributes.get("time").map(ZonedDateTime.parse)
   lazy val nativeRE: GridExtent[Long]      = source.gridExtent
   lazy val nativeCrs: Set[CRS]             = Set(source.crs)
   lazy val nativeExtent: Extent            = source.extent
@@ -168,9 +172,10 @@ case class MapAlgebraSource(
     new GridExtent[Long](nativeExtent, cellSize)
   }
 
-  lazy val attributes: Map[String, String] = Map.empty
-  lazy val nativeCrs: Set[CRS]             = sources.values.map(_.crs).toSet
-  lazy val minBandCount: Int               = sources.values.map(_.bandCount).min
-  lazy val cellTypes: Set[CellType]        = sources.values.map(_.cellType).toSet
-  lazy val resolutions: List[CellSize]     = sources.values.flatMap(_.resolutions).toList.distinct
+  val time: Option[ZonedDateTime]      = None
+  val attributes: Map[String, String]  = Map.empty
+  lazy val nativeCrs: Set[CRS]         = sources.values.map(_.crs).toSet
+  lazy val minBandCount: Int           = sources.values.map(_.bandCount).min
+  lazy val cellTypes: Set[CellType]    = sources.values.map(_.cellType).toSet
+  lazy val resolutions: List[CellSize] = sources.values.flatMap(_.resolutions).toList.distinct
 }

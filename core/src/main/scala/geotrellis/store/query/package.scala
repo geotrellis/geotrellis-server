@@ -44,7 +44,7 @@ package object query {
   def intersects(projectedExtent: ProjectedExtent): Query = QueryF.intersects(projectedExtent)
   def contains(projectedExtent: ProjectedExtent): Query   = QueryF.contains(projectedExtent)
   def covers(projectedExtent: ProjectedExtent): Query     = QueryF.covers(projectedExtent)
-  def at(time: ZonedDateTime, fieldName: String = "time"): Query                         = QueryF.at(time, fieldName)
+  def at(time: ZonedDateTime, fieldName: String = "time"): Query = QueryF.at(time, fieldName)
   def between(from: ZonedDateTime, to: ZonedDateTime, fieldName: String = "time"): Query = QueryF.between(from, to, fieldName)
 
   implicit class RasterSourceOps(self: RasterSource) {

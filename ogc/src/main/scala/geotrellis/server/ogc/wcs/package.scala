@@ -17,6 +17,7 @@
 package geotrellis.server.ogc
 
 import geotrellis.vector.Extent
+
 import scala.xml.NamespaceBinding
 
 package object wcs {
