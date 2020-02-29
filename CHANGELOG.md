@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WCS 1.1.1 GetCoverage Support [#192](https://github.com/geotrellis/geotrellis-server/issues/192)
 - RasterSource Catalog [#162](https://github.com/geotrellis/geotrellis-server/issues/162)
 - {WCS|WMTS|WMS}Model uses RasterSource catalog [#163](https://github.com/geotrellis/geotrellis-server/issues/163)
+- WCS DescribeCoverage may include time TemporalDomain [#211](https://github.com/geotrellis/geotrellis-server/issues/211)
 
 ### Changed
 - Included split dependencies a la GeoTrellis 3.2 for cats ecosystem libraries [\#184](https://github.com/geotrellis/geotrellis-server/pull/184)
