@@ -36,7 +36,7 @@ object OgcSourceRepository {
     case WithNames(names)    => _.filter(rs => names.contains(rs.name))
     case At(t, _)           => _.filter(_.time.exists(_ == t))
     case Between(t1, t2, _) => _.filter { _.time match {
-        case Some(t) => t1 >= t && t2 < t
+        case Some(t) => t1 <= t && t < t2
         case _ => false
       }
     }
