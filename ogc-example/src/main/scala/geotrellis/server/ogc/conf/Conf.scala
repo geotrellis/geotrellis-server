@@ -43,7 +43,6 @@ case class Conf(
 )
 
 object Conf {
-  implicitly[ConfigReader[ClipDefinition]]
   lazy val conf: Conf = ConfigSource.default.loadOrThrow[Conf]
   implicit def ConfObjectToClass(obj: Conf.type): Conf = conf
 
