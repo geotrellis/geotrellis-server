@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.0] - 2020-03-03
+
 ### Added
 - Add support for an interpolated version of the color map [#161](https://github.com/geotrellis/geotrellis-server/issues/161)
 - Generate WCS 1.1.1 protocol using XSD data model [#188](https://github.com/geotrellis/geotrellis-server/issues/188)
@@ -62,7 +64,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Update geotrellis-contrib [#135](https://github.com/geotrellis/geotrellis-server/pull/135)
 
-[Unreleased]: https://github.com/geotrellis/geotrellis-server/compare/4.0.1...HEAD
+[Unreleased]: https://github.com/geotrellis/geotrellis-server/compare/4.1.0...HEAD
+[4.1.0]: https://github.com/geotrellis/geotrellis-server/compare/4.0.1...4.1.0
 [4.0.1]: https://github.com/geotrellis/geotrellis-server/compare/4.0.0...4.0.1
 [4.0.0]: https://github.com/geotrellis/geotrellis-server/compare/3.4.0...4.0.0
 [3.4.0]: https://github.com/geotrellis/geotrellis-server/compare/3.3.8...3.4.0
