@@ -5,10 +5,13 @@
     </encoder>
   </appender>
 
-  <logger name="geotrellis.server.ogc" level="${GT_OGC_LOG_LEVEL:-INFO}"/>
-  <logger name="org.http4s.blaze.channel.nio1" level="WARN"/>
+  <logger name="geotrellis.store" level="${GT_STORE_LOG_LEVEL:-WARN}"/>
+  <logger name="geotrellis.server.ogc" level="${GT_OGC_LOG_LEVEL:-DEBUG}"/>
+  <logger name="org.http4s" level="${HTTP4S_LOG_LEVEL:-WARN}"/>
+  <logger name="org.http4s.blaze.channel.nio1" level="${BLAZE_NIO_LOG_LEVEL:-WARN}"/>
+  <logger name="software.amazon.awssdk" level="${AWS_SDK_LOG_LEVEL:-WARN}"/>
 
-  <root level="ALL">
+  <root level="DEBUG">
     <appender-ref ref="STDOUT" />
   </root>
 </configuration>

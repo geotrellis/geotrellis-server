@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Azavea
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package geotrellis.server.example.stac
 
 import geotrellis.server._
@@ -7,7 +23,7 @@ import cats.data._
 import cats.data.Validated._
 import cats.effect._
 import com.azavea.maml.error.MamlError
-import com.softwaremill.sttp.{Response => _, _}
+import com.softwaremill.sttp.{Response => _, Uri => SttpUri, _}
 import com.softwaremill.sttp.circe._
 import com.softwaremill.sttp.asynchttpclient.cats.AsyncHttpClientCatsBackend
 import geotrellis.raster.{io => _, _}
@@ -15,14 +31,13 @@ import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.render._
 import io.circe._
 import io.circe.syntax._
-import org.http4s.{Http4sLiteralSyntax => _, _}
+import org.http4s._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.io._
 import org.http4s.circe._
 import org.http4s.circe.CirceEntityDecoder._
 import org.http4s.headers._
 
-import com.typesafe.scalalogging.LazyLogging
 import scala.collection.mutable.{Map => MutableMap}
 import java.net.URLDecoder
 import java.util.UUID
@@ -30,7 +45,8 @@ import java.util.UUID
 class StacService(
     implicit backend: SttpBackend[IO, Nothing],
     contextShift: ContextShift[IO]
-) extends LazyLogging {
+) {
+  val logger = org.log4s.getLogger
 
   // These are dummy caches -- in a real service you'd want something more robust
   // than a fully local mutable map, but this is just an example, so ¯\_(ツ)_/¯
@@ -59,7 +75,7 @@ class StacService(
     // This exists to show that all the json is good to go
     case GET -> Root :? UriQueryParamDecoderMatcher(uri) =>
       sttp
-        .get(uri"$uri")
+        .get(SttpUri(uri))
         .response(asJson[StacCatalog])
         .send()
         .flatMap { response =>

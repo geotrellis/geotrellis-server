@@ -6,16 +6,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.0] - 2020-03-03
+
+### Added
+- Add support for an interpolated version of the color map [#161](https://github.com/geotrellis/geotrellis-server/issues/161)
+- Generate WCS 1.1.1 protocol using XSD data model [#188](https://github.com/geotrellis/geotrellis-server/issues/188)
+- WCS 1.1.1 GetCoverage Support [#192](https://github.com/geotrellis/geotrellis-server/issues/192)
+- RasterSource Catalog [#162](https://github.com/geotrellis/geotrellis-server/issues/162)
+- {WCS|WMTS|WMS}Model uses RasterSource catalog [#163](https://github.com/geotrellis/geotrellis-server/issues/163)
+- WCS DescribeCoverage may include time TemporalDomain [#211](https://github.com/geotrellis/geotrellis-server/issues/211)
+
+### Changed
+- Included split dependencies a la GeoTrellis 3.2 for cats ecosystem libraries [\#184](https://github.com/geotrellis/geotrellis-server/pull/184)
+- Dropped WCS 1.0.0 support
+- Updated MAML up to 0.6.0 [#199](https://github.com/geotrellis/geotrellis-server/pull/199)
+- Add ability to configure subset of OGC services [#151](https://github.com/geotrellis/geotrellis-server/issues/151)
+
+### Fixed
+- Use default styles appropriately when configured [#149](https://github.com/geotrellis/geotrellis-server/issues/149)
+- Use linspace function to ensure correct interpolation of [#205](https://github.com/geotrellis/geotrellis-server/issues/205)
+- SLF4J backends have been excluded and marked as Runtime dependencies as necessary to make logging work again [#205](https://github.com/geotrellis/geotrellis-server/issues/205)
+- Fixed color interpolation bug related to constructing a range when the step is 0 [#111](https://github.com/geotrellis/geotrellis-server/issues/111)
+- Non-integer (floating point) ColorMap keys now work with or without being quoted [#187](https://github.com/geotrellis/geotrellis-server/issues/187)
+- Missing `<ows:Title>` and `<ows:Abstract>` elements in WCS GetCapabilities response [#114](https://github.com/geotrellis/geotrellis-server/issues/114) 
+- Layer definition elements unused in WMS GetCapabilities response [#115](https://github.com/geotrellis/geotrellis-server/issues/115)
+- Bad assembly strategy [#142](https://github.com/geotrellis/geotrellis-server/issues/142)
+
 ## [4.0.1] - 2019-11-22
 
 ### Changed
-- Make publishSettings accessible to aggregate modules 
+- Make publishSettings accessible to aggregate modules
 
 ## [4.0.0]- 2019-11-21
 
 ### Added
 - Enable artifact publishing for `opengis`, `ogc`, and `stac` subprojects [\#147](https://github.com/geotrellis/geotrellis-server/pull/147)
 - Included more link types based on OGC Features API [\#176](https://github.com/geotrellis/geotrellis-server/pull/176)
+- Included more OGC specs (sld, se, wfs, filter) [#186](https://github.com/geotrellis/geotrellis-server/pull/186)
 
 ### Changed
 - *Breaking* Update StacItem and StacLinkType compliance and better ergonomics with labeling extension [\#145](https://github.com/geotrellis/geotrellis-server/pull/145)
@@ -37,7 +64,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Update geotrellis-contrib [#135](https://github.com/geotrellis/geotrellis-server/pull/135)
 
-[Unreleased]: https://github.com/geotrellis/geotrellis-server/compare/4.0.1...HEAD
+[Unreleased]: https://github.com/geotrellis/geotrellis-server/compare/4.1.0...HEAD
+[4.1.0]: https://github.com/geotrellis/geotrellis-server/compare/4.0.1...4.1.0
 [4.0.1]: https://github.com/geotrellis/geotrellis-server/compare/4.0.0...4.0.1
 [4.0.0]: https://github.com/geotrellis/geotrellis-server/compare/3.4.0...4.0.0
 [3.4.0]: https://github.com/geotrellis/geotrellis-server/compare/3.3.8...3.4.0

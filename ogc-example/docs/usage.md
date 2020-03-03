@@ -110,9 +110,21 @@ are likely to pop up or in which code complexity makes reasoning more
 difficult. By default, few logs should appear. If increased logging
 output is desirable, it can be configured via environment variable.
 
-Turning on logging for *all* log levels:
+Turning on Geotrellis Server logging for *all* log levels:
 ```sh
 export GT_OGC_LOG_LEVEL=ALL
+```
+
+Extra logging for third party libraries can also be modified:
+```sh
+# GeoTrellis store logging
+export GT_STORE_LOG_LEVEL=DEBUG
+# http4s logging
+export HTTP4S_LOG_LEVEL=DEBUG
+# Blaze server New IO logging
+export BLAZE_NIO_LOG_LEVEL=DEBUG
+# Amazon SDK logging
+export AWS_SDK_LOG_LEVEL=DEBUG
 ```
 
 > NOTE: If using docker, be sure to set this environment variable

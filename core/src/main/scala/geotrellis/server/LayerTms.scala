@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Azavea
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package geotrellis.server
 
 import TmsReification.ops._
@@ -7,7 +23,6 @@ import com.azavea.maml.error._
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
 import com.azavea.maml.eval._
-import com.typesafe.scalalogging.LazyLogging
 import cats._
 import cats.effect._
 import cats.implicits._
@@ -16,7 +31,8 @@ import cats.data.{NonEmptyList => NEL}
 import geotrellis.raster._
 
 /** Provides methods for producing TMS tiles */
-object LayerTms extends LazyLogging {
+object LayerTms {
+  val logger = org.log4s.getLogger
 
   /**
    * Given an [[Expression]], a parameter map, and an interpreter, create a function
@@ -40,9 +56,9 @@ object LayerTms extends LazyLogging {
   ): (Int, Int, Int) => IO[Interpreted[MultibandTile]] = (z: Int, x: Int, y: Int) => {
     for {
       expr             <- getExpression
-      _                <- IO { logger.info(s"Retrieved MAML AST at TMS ($z, $x, $y): ${expr.toString}") }
+      _                <- IO { logger.trace(s"Retrieved MAML AST at TMS ($z, $x, $y): ${expr.toString}") }
       paramMap         <- getParams
-      _                <- IO { logger.info(s"Retrieved parameters for TMS ($z, $x, $y): ${paramMap.toString}") }
+      _                <- IO { logger.trace(s"Retrieved parameters for TMS ($z, $x, $y): ${paramMap.toString}") }
       vars             <- IO { Vars.varsWithBuffer(expr) }
       params           <- vars.toList.parTraverse { case (varName, (_, buffer)) =>
                             val eval = paramMap(varName).tmsReification(buffer)

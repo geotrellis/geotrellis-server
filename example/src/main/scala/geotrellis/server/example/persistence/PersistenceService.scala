@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Azavea
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package geotrellis.server.example.persistence
 
 import geotrellis.server._
@@ -13,7 +29,6 @@ import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
 import cats.effect._
-import com.typesafe.scalalogging.LazyLogging
 
 import java.util.UUID
 import scala.util.Try
@@ -24,7 +39,8 @@ class PersistenceService[Store, Param](
 )(implicit contextShift: ContextShift[IO],
            ms: MamlStore[Store],
            pd: Decoder[Param],
-           mr: TmsReification[Param]) extends Http4sDsl[IO] with LazyLogging {
+           mr: TmsReification[Param]) extends Http4sDsl[IO] {
+  val logger = org.log4s.getLogger
 
   // Unapply to handle UUIDs on path
   object IdVar {
@@ -60,7 +76,7 @@ class PersistenceService[Store, Param](
             BadRequest(s"""Unable to parse ${reqBody.mkString("")} as a MAML expression""")
           }
         case Left(err) =>
-          logger.debug(err.toString, err)
+          logger.debug(err.toString)
           InternalServerError(err.toString)
       }
 

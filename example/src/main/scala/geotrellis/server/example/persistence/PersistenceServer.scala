@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Azavea
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package geotrellis.server.example.persistence
 
 import geotrellis.server._
@@ -10,7 +26,6 @@ import cats.data._
 import cats.effect._
 import cats.implicits._
 import fs2._
-import com.typesafe.scalalogging.LazyLogging
 import org.http4s._
 import org.http4s.server._
 import org.http4s.server.blaze.BlazeServerBuilder
@@ -21,7 +36,8 @@ import pureconfig.generic.auto._
 import java.util.UUID
 import scala.concurrent.duration._
 
-object PersistenceServer extends LazyLogging with IOApp {
+object PersistenceServer extends IOApp {
+  val logger = org.log4s.getLogger
 
   private val corsConfig = CORSConfig(
     anyOrigin = true,

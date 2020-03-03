@@ -1,10 +1,13 @@
+import sbt.Keys._
 import xerial.sbt.Sonatype._
+import de.heikoseeberger.sbtheader._
 
 import Dependencies._
 
 scalaVersion := scalaVer
-scalaVersion in ThisBuild := scalaVer
-updateOptions := updateOptions.value.withCachedResolution(true)
+ThisBuild / scalaVersion := scalaVer
+
+val currentYear = java.time.Year.now.getValue.toString
 
 lazy val commonSettings = Seq(
   // We are overriding the default behavior of sbt-git which, by default,
@@ -17,7 +20,6 @@ lazy val commonSettings = Seq(
     else
       git.gitDescribedVersion.value.get
   },
-  cancelable in Global := true,
   scalaVersion := scalaVer,
   crossScalaVersions := crossScalaVer,
   scalacOptions := Seq(
@@ -41,25 +43,54 @@ lazy val commonSettings = Seq(
     Resolver.bintrayRepo("azavea", "geotrellis"),
     Resolver.sonatypeRepo("releases"),
     Resolver.sonatypeRepo("snapshots"),
-    "osgeo" at "http://download.osgeo.org/webdav/geotools/",
+    "osgeo" at "https://download.osgeo.org/webdav/geotools/",
     "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
     "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots"
   ),
-  updateOptions := updateOptions.value.withCachedResolution(true),
-  addCompilerPlugin(kindProjector cross CrossVersion.binary),
+  addCompilerPlugin(kindProjector cross CrossVersion.full),
   addCompilerPlugin(macrosParadise cross CrossVersion.full),
-  shellPrompt := { s => Project.extract(s).currentProject.id + " > " },
-  fork in run := true,
+  shellPrompt := { s =>
+    Project.extract(s).currentProject.id + " > "
+  },
+  run / fork := true,
   outputStrategy := Some(StdoutOutput),
-  test in assembly := {},
+  assembly / test := {},
   sources in (Compile, doc) := (sources in (Compile, doc)).value,
-  assemblyMergeStrategy in assembly := {
-    case "reference.conf" => MergeStrategy.concat
+  assembly / assemblyMergeStrategy := {
+    case "reference.conf"   => MergeStrategy.concat
     case "application.conf" => MergeStrategy.concat
-    case n if n.endsWith(".SF") || n.endsWith(".RSA") || n.endsWith(".DSA") => MergeStrategy.discard
-    case "META-INF/MANIFEST.MF" => MergeStrategy.discard
+    case PathList("META-INF", xs @ _*) =>
+      xs match {
+        case ("MANIFEST.MF" :: Nil) =>
+          MergeStrategy.discard
+        case ("services" :: _ :: Nil) =>
+          MergeStrategy.concat
+        case ("javax.media.jai.registryFile.jai" :: Nil) | ("registryFile.jai" :: Nil) | ("registryFile.jaiext" :: Nil) =>
+          MergeStrategy.concat
+        case (name :: Nil) if name.endsWith(".RSA") || name.endsWith(".DSA") || name.endsWith(".SF") =>
+          MergeStrategy.discard
+        case _ =>
+          MergeStrategy.first
+      }
     case _ => MergeStrategy.first
   },
+  headerLicense := Some(HeaderLicense.ALv2(java.time.Year.now.getValue.toString, "Azavea")),
+  headerMappings := Map(
+    FileType.scala -> CommentStyle.cStyleBlockComment.copy(commentCreator = new CommentCreator() {
+      val Pattern = "(?s).*?(\\d{4}(-\\d{4})?).*".r
+      def findYear(header: String): Option[String] = header match {
+        case Pattern(years, _) => Some(years)
+        case _                 => None
+      }
+      def apply(text: String, existingText: Option[String]): String = {
+        // preserve year of old headers
+        val newText = CommentStyle.cStyleBlockComment.commentCreator.apply(text, existingText)
+        existingText.flatMap(_ => existingText.map(_.trim)).getOrElse(newText)
+      }
+    })
+  ),
+  Global / cancelable := true,
+  useCoursier := false,
   javaOptions ++= Seq("-Djava.library.path=/usr/local/lib")
 )
 
@@ -74,21 +105,42 @@ lazy val publishSettings = Seq(
   organizationName := "GeoTrellis",
   organizationHomepage := Some(new URL("https://geotrellis.io/")),
   description := "GeoTrellis Server is a set of components designed to simplify viewing, processing, and serving raster data from arbitrary sources with an emphasis on doing so in a functional style.",
-  publishArtifact in Test := false
+  Test / publishArtifact := false
 ) ++ sonatypeSettings ++ credentialSettings
 
 lazy val sonatypeSettings = Seq(
   publishMavenStyle := true,
-
   sonatypeProfileName := "com.azavea",
-  sonatypeProjectHosting := Some(GitHubHosting(user="geotrellis", repository="maml", email="systems@azavea.com")),
-  developers := List(
-    Developer(id = "moradology", name = "Nathan Zimmerman", email = "nzimmerman@azavea.com", url = url("https://github.com/moradology")),
-    Developer(id = "echeipesh", name = "Eugene Cheipesh", email = "echeipesh@azavea.com", url = url("https://github.com/echeipesh")),
-    Developer(id = "pomadchin", name = "Grigory Pomadchin", email = "gpomadchin@azavea.com", url = url("https://github.com/pomadchin"))
+  sonatypeProjectHosting := Some(
+    GitHubHosting(
+      user = "geotrellis",
+      repository = "maml",
+      email = "systems@azavea.com"
+    )
   ),
-  licenses := Seq("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0.txt")),
-
+  developers := List(
+    Developer(
+      id = "moradology",
+      name = "Nathan Zimmerman",
+      email = "nzimmerman@azavea.com",
+      url = url("https://github.com/moradology")
+    ),
+    Developer(
+      id = "echeipesh",
+      name = "Eugene Cheipesh",
+      email = "echeipesh@azavea.com",
+      url = url("https://github.com/echeipesh")
+    ),
+    Developer(
+      id = "pomadchin",
+      name = "Grigory Pomadchin",
+      email = "gpomadchin@azavea.com",
+      url = url("https://github.com/pomadchin")
+    )
+  ),
+  licenses := Seq(
+    "Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt")
+  ),
   publishTo := sonatypePublishTo.value
 )
 
@@ -99,7 +151,6 @@ lazy val credentialSettings = Seq(
     System.getenv().get("GPG_KEY_ID"),
     "ignored"
   ),
-
   credentials += Credentials(
     "Sonatype Nexus Repository Manager",
     "oss.sonatype.org",
@@ -108,7 +159,8 @@ lazy val credentialSettings = Seq(
   )
 )
 
-lazy val root = project.in(file("."))
+lazy val root = project
+  .in(file("."))
   .settings(moduleName := "root")
   .settings(commonSettings)
   .settings(publishSettings)
@@ -120,23 +172,32 @@ lazy val core = project
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(
-    assemblyJarName in assembly := "geotrellis-server-core.jar",
+    assembly / assemblyJarName := "geotrellis-server-core.jar",
     libraryDependencies ++= Seq(
-      circeCore,
-      circeGeneric,
-      circeParser,
-      circeOptics,
-      circeShapes,
+      circeCore.value,
+      circeGeneric.value,
+      circeParser.value,
+      circeOptics.value,
+      circeShapes.value,
       geotrellisS3,
       geotrellisSpark,
       spark,
-      cats,
-      catsEffect,
+      cats.value,
+      catsEffect.value,
       mamlJvm,
       simulacrum,
-      typesafeLogging,
-      scalatest
+      scalatest,
+      droste
     )
+  )
+  .settings(
+    libraryDependencies ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, scalaMajor)) if scalaMajor == 11 =>
+          Seq(circeJava8.value)
+        case _ => Seq()
+      }
+    }
   )
 
 lazy val example = project
@@ -145,13 +206,13 @@ lazy val example = project
   .dependsOn(core, stac)
   .settings(
     moduleName := "geotrellis-server-example",
-    assemblyJarName in assembly := "geotrellis-server-example.jar",
+    assembly / assemblyJarName := "geotrellis-server-example.jar",
     libraryDependencies ++= Seq(
-      http4sDsl,
-      http4sBlazeServer,
-      http4sBlazeClient,
-      http4sCirce,
-      http4sXml,
+      http4sDsl.value,
+      http4sBlazeServer.value,
+      http4sBlazeClient.value,
+      http4sCirce.value,
+      http4sXml.value,
       scalaXml,
       geotrellisS3,
       geotrellisSpark,
@@ -161,13 +222,16 @@ lazy val example = project
       commonsIO,
       concHashMap,
       pureConfig,
-      typesafeLogging,
       sttp,
       sttpCats,
       sttpCirce,
-      scalatest
+      scalatest,
+      jaxbApi
     )
-  ).settings(dependencyOverrides += "com.azavea.gdal" % "gdal-warp-bindings" % "33.5523882")
+  )
+  .settings(
+    dependencyOverrides += "com.azavea.gdal" % "gdal-warp-bindings" % "33.60a6918"
+  )
 
 lazy val opengis = project
   .enablePlugins(ScalaxbPlugin)
@@ -177,20 +241,27 @@ lazy val opengis = project
   .settings(
     libraryDependencies ++= Seq(
       scalaXml,
-      scalaParser
+      scalaParser,
+      jaxbApi
     )
   )
   .settings(
-    scalaxbDispatchVersion in (Compile, scalaxb)     := dispatchVer,
-    scalaxbPackageName in (Compile, scalaxb)         := "generated",
-    scalaxbProtocolPackageName in scalaxb in Compile := Some("opengis"),
-    scalaxbPackageNames in scalaxb in Compile := Map(
+    Compile / scalaxb / scalaxbDispatchVersion := dispatchVer,
+    Compile / scalaxb / scalaxbPackageName := "generated",
+    Compile / scalaxb / scalaxbProtocolPackageName := Some("opengis"),
+    Compile / scalaxb /  scalaxbPackageNames := Map(
       uri("http://www.w3.org/1999/xlink")           -> "xlink",
       uri("http://www.opengis.net/wms")             -> "opengis.wms",
       uri("http://www.opengis.net/ogc")             -> "opengis.ogc",
       uri("http://www.opengis.net/wmts/1.0")        -> "opengis.wmts",
       uri("http://www.opengis.net/ows/1.1")         -> "opengis.ows",
+      uri("http://www.opengis.net/ows")             -> "opengis.sld.ows",
+      uri("http://www.opengis.net/wcs/1.1.1")       -> "opengis.wcs",
       uri("http://www.opengis.net/gml")             -> "opengis.gml",
+      uri("http://www.opengis.net/filter")          -> "opengis.filter",
+      uri("http://www.opengis.net/se")              -> "opengis.se",
+      uri("http://www.opengis.net/sld")             -> "opengis.sld",
+      uri("http://www.opengis.net/wfs")             -> "opengis.wfs",
       uri("http://www.w3.org/2001/SMIL20/")         -> "opengis.gml.smil",
       uri("http://www.w3.org/2001/SMIL20/Language") -> "opengis.gml.smil"
     )
@@ -202,16 +273,15 @@ lazy val ogc = project
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(
-    assemblyJarName in assembly := "geotrellis-server-ogc.jar",
+    assembly / assemblyJarName := "geotrellis-server-ogc.jar",
     libraryDependencies ++= Seq(
       spark,
       geotrellisS3,
       geotrellisSpark,
-      typesafeLogging,
       commonsIo, // to make GeoTiffRasterSources work
-      slf4jApi, // enable logging
       scaffeine,
-      scalatest
+      scalatest,
+      jaxbApi
     )
   )
 
@@ -222,7 +292,7 @@ lazy val ogcExample = (project in file("ogc-example"))
   .settings(commonSettings)
   .settings(noPublishSettings)
   .settings(
-    assemblyJarName in assembly := "geotrellis-server-ogc-services.jar",
+    assembly / assemblyJarName := "geotrellis-server-ogc-services.jar",
     libraryDependencies ++= Seq(
       spark,
       geotrellisS3,
@@ -231,13 +301,12 @@ lazy val ogcExample = (project in file("ogc-example"))
       geotrellisHBase,
       geotrellisAccumulo,
       geotrellisGdal,
-      http4sDsl,
-      http4sBlazeServer,
-      http4sBlazeClient,
-      http4sCirce,
-      http4sXml,
+      http4sDsl.value,
+      http4sBlazeServer.value,
+      http4sBlazeClient.value,
+      http4sCirce.value,
+      http4sXml.value,
       logback,
-      typesafeLogging,
       pureConfig,
       scaffeine,
       scalatest,
@@ -245,9 +314,12 @@ lazy val ogcExample = (project in file("ogc-example"))
     ),
     excludeDependencies ++= Seq(
       // log4j brought in via uzaygezen is a pain for us
-      ExclusionRule("log4j", "log4j")
+      ExclusionRule("log4j", "log4j"),
+      ExclusionRule("org.slf4j", "slf4j-log4j12"),
+      ExclusionRule("org.slf4j", "slf4j-nop")
     ),
-    libraryDependencies := (CrossVersion.partialVersion(scalaVersion.value) match {
+    libraryDependencies := (CrossVersion
+      .partialVersion(scalaVersion.value) match {
       case Some((2, scalaMajor)) if scalaMajor >= 12 =>
         libraryDependencies.value ++ Seq(ansiColors212)
       case Some((2, scalaMajor)) if scalaMajor >= 11 =>
@@ -261,12 +333,12 @@ lazy val stac = project
   .settings(publishSettings)
   .settings(
     libraryDependencies ++= Seq(
-      cats,
-      circeCore,
-      circeGeneric,
-      circeParser,
-      circeRefined,
-      circeShapes,
+      cats.value,
+      circeCore.value,
+      circeGeneric.value,
+      circeParser.value,
+      circeRefined.value,
+      circeShapes.value,
       geotrellisS3,
       refined,
       shapeless,
@@ -279,5 +351,6 @@ lazy val stac = project
 
 lazy val bench = project
   .dependsOn(core)
+  .settings(commonSettings)
   .settings(noPublishSettings)
   .enablePlugins(JmhPlugin)

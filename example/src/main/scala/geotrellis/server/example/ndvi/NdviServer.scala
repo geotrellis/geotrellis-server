@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Azavea
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package geotrellis.server.example.ndvi
 
 import geotrellis.server.example._
@@ -12,12 +28,12 @@ import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.{CORS, CORSConfig}
 import org.http4s.syntax.kleisli._
 import pureconfig.generic.auto._
-import com.typesafe.scalalogging.LazyLogging
 import com.azavea.maml.eval._
 
 import scala.concurrent.duration._
 
-object NdviServer extends LazyLogging with IOApp {
+object NdviServer extends IOApp {
+  val logger = org.log4s.getLogger
 
   private val corsConfig = CORSConfig(
     anyOrigin = true,

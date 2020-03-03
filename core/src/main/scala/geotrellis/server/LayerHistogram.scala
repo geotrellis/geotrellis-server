@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Azavea
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package geotrellis.server
 
 import geotrellis.server.extent.SampleUtils
@@ -9,7 +25,6 @@ import com.azavea.maml.eval._
 import geotrellis.vector.Extent
 import geotrellis.raster._
 
-import com.typesafe.scalalogging.LazyLogging
 import cats._
 import cats.data.{NonEmptyList => NEL}
 import cats.effect._
@@ -19,7 +34,8 @@ import cats.syntax.either._
 import scala.collection.mutable
 
 
-object LayerHistogram extends LazyLogging {
+object LayerHistogram {
+  val logger = org.log4s.getLogger
 
   case class NoSuitableHistogramResolution(cells: Int) extends Throwable
   case class RequireIntersectingSources() extends Throwable
@@ -56,7 +72,7 @@ object LayerHistogram extends LazyLogging {
           .getOrElse(throw new RequireIntersectingSources())
       }
       _ <- IO {
-        logger.debug(
+        logger.trace(
           s"[LayerHistogram] Intersection of provided layer extents calculated: $intersection"
         )
       }
@@ -64,7 +80,7 @@ object LayerHistogram extends LazyLogging {
         SampleUtils.chooseLargestCellSize(rasterExtents.map(_.cellSize))
       }
       _ <- IO {
-        logger.debug(
+        logger.trace(
           s"[LayerHistogram] Largest cell size of provided layers calculated: $cellSize"
         )
       }
@@ -72,7 +88,7 @@ object LayerHistogram extends LazyLogging {
         LayerExtent(getExpression, getParams, interpreter)
       }
       _ <- IO {
-        logger.debug(
+        logger.trace(
           s"[LayerHistogram] calculating histogram from (approximately) ${intersection.area / (cellSize.width * cellSize.height)} cells"
         )
       }

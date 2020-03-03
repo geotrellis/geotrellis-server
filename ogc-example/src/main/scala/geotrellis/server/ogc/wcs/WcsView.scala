@@ -1,35 +1,41 @@
+/*
+ * Copyright 2019 Azavea
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package geotrellis.server.ogc.wcs
 
-import geotrellis.server.ogc.wcs.params._
-import geotrellis.server.ogc.wcs.ops._
-import geotrellis.server.ogc._
+import geotrellis.server.ogc.params.ParamError
 
-import geotrellis.raster.histogram.Histogram
-import geotrellis.layer._
-import geotrellis.proj4._
-import geotrellis.raster.render.{ColorMap, ColorRamp, Png}
-import geotrellis.raster._
-
-import com.typesafe.scalalogging.LazyLogging
-import scalaxb.CanWriteXML
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
 import org.http4s.scalaxml._
-import org.http4s._, org.http4s.dsl.io._, org.http4s.implicits._
-import cats._, cats.implicits._
+import org.http4s._
+import org.http4s.dsl.io._
 import cats.effect._
 import cats.data.Validated
 
-import java.io.File
 import java.net._
 
-class WcsView(wcsModel: WcsModel, serviceUrl: URL) extends LazyLogging {
+class WcsView(wcsModel: WcsModel, serviceUrl: URL) {
+  val logger = org.log4s.getLogger
 
-  private def handleError[Result](result: Either[Throwable, Result])(implicit ee: EntityEncoder[IO, Result]) = result match {
+  private def handleError[Result: EntityEncoder[IO, *]](result: Either[Throwable, Result]): IO[Response[IO]] = result match {
     case Right(res) =>
-      logger.info("response", res.toString)
+      logger.info(s"response ${res.toString}")
       Ok(res)
     case Left(err) =>
-      logger.error(s"error: $err", err)
+      logger.error(s"error: $err")
       InternalServerError(err.toString)
   }
 
@@ -38,7 +44,7 @@ class WcsView(wcsModel: WcsModel, serviceUrl: URL) extends LazyLogging {
   def responseFor(req: Request[IO])(implicit cs: ContextShift[IO]): IO[Response[IO]] = {
     WcsParams(req.multiParams) match {
       case Validated.Invalid(errors) =>
-        val msg = WcsParamsError.generateErrorMessage(errors.toList)
+        val msg = ParamError.generateErrorMessage(errors.toList)
         logger.warn(s"""Error parsing parameters: ${msg}""")
         BadRequest(s"""Error parsing parameters: ${msg}""")
 
@@ -46,27 +52,19 @@ class WcsView(wcsModel: WcsModel, serviceUrl: URL) extends LazyLogging {
         wcsParams match {
           case p: GetCapabilitiesWcsParams =>
             logger.debug(ansi"%bold{GetCapabilities: $serviceUrl}")
-            val result = Operations.getCapabilities(serviceUrl.toString, wcsModel, p)
-            logger.debug(result.toString)
-            Ok(result)
+            Ok(new CapabilitiesView(wcsModel, serviceUrl).toXML)
 
           case p: DescribeCoverageWcsParams =>
             logger.debug(ansi"%bold{DescribeCoverage: ${req.uri}}")
-            for {
-              describeCoverage <- IO { Operations.describeCoverage(wcsModel, p) }.attempt
-              result <- handleError(describeCoverage)
-            } yield {
-              logger.debug("describecoverage result", result)
-              result
-            }
+            Ok(CoverageView(wcsModel, serviceUrl, p).toXML)
 
           case p: GetCoverageWcsParams =>
             logger.debug(ansi"%bold{GetCoverage: ${req.uri}}")
             for {
-              getCoverage <- IO { getCoverage.build(p) }.attempt
-              result <- handleError(getCoverage)
+              getCoverage <- getCoverage.build(p).attempt
+              result      <- handleError(getCoverage)
             } yield {
-              logger.debug("getcoverage result", result)
+              logger.debug(s"getcoverage result: $result")
               result
             }
         }

@@ -1,4 +1,22 @@
+/*
+ * Copyright 2020 Azavea
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package geotrellis.server.ogc
+
+import geotrellis.server.ogc.style._
 
 import scala.util.Try
 import geotrellis.raster.render.png._
@@ -58,6 +76,26 @@ object OutputFormat {
     }
 
     def render(tile: Tile, cm: ColorMap) = {
+      val encoder = encoding match {
+        case None =>
+          new PngEncoder(Settings(RgbaPngEncoding, PaethFilter))
+
+        case Some(GreyPngEncoding(None)) =>
+          val nd = noDataValue(tile.cellType)
+          new PngEncoder(Settings(GreyPngEncoding(nd), PaethFilter))
+
+        case Some(RgbPngEncoding(None)) =>
+          val nd = noDataValue(tile.cellType)
+          new PngEncoder(Settings(RgbPngEncoding(nd), PaethFilter))
+
+        case Some(encoding) =>
+          new PngEncoder(Settings(encoding, PaethFilter))
+      }
+
+      encoder.writeByteArray(cm.render(tile))
+    }
+
+    def render(tile: Tile, cm: InterpolatedColorMap): Array[Byte] = {
       val encoder = encoding match {
         case None =>
           new PngEncoder(Settings(RgbaPngEncoding, PaethFilter))
