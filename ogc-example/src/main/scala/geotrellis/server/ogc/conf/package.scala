@@ -17,6 +17,8 @@
 package geotrellis.server.ogc
 
 import geotrellis.server.ogc.wms.wmsScope
+import geotrellis.server.ogc.style._
+
 import geotrellis.proj4.CRS
 import geotrellis.vector.Extent
 import geotrellis.raster.TileLayout
@@ -46,7 +48,7 @@ package object conf {
     override def fieldValue(name: String): String = name.toLowerCase
   }
 
-  implicit def circeJsonReader: ConfigReader[Json] =
+  implicit val circeJsonReader: ConfigReader[Json] =
     ConfigReader[ConfigValue].emap { cv =>
       val renderOptions = ConfigRenderOptions.concise().setJson(true)
       val jsonString = cv.render(renderOptions)
@@ -64,7 +66,7 @@ package object conf {
       }
     }
 
-  implicit def colorRampReader: ConfigReader[ColorRamp] =
+  implicit val colorRampReader: ConfigReader[ColorRamp] =
     ConfigReader[List[String]].map { colors =>
       ColorRamp(colors.map(java.lang.Long.decode(_).toInt))
     }
@@ -78,7 +80,7 @@ package object conf {
    * has been provided, but it only works with doubles that explicitly decimal
    * pad to tenths (0.0 is OK, 0 is to be avoided)
    */
-  implicit def colormapReader: ConfigReader[ColorMap] =
+  implicit val mapDoubleIntReader: ConfigReader[Map[Double, Int]] =
     ConfigReader[Map[String, ConfigValue]].map { cmap =>
       val numericMap = cmap.flatMap({ case (k, v) =>
         v.valueType match {
@@ -99,15 +101,30 @@ package object conf {
         val value = java.lang.Long.decode(v).toInt
         key -> value 
       }).toMap
-      ColorMap(numericMap)
+      numericMap
     }
 
-  implicit def keywordConfigReader: ConfigReader[opengis.wms.Keyword] =
+  implicit val colormapReader: ConfigReader[ColorMap] =
+    ConfigReader[Map[Double, Int]].map { map =>
+      ColorMap(map)
+    }
+
+  implicit val clipDefinitionReader: ConfigReader[ClipDefinition] =
+    ConfigReader[String].emap { str =>
+      ClipDefinition.fromString(str) match {
+        case Some(cd) =>
+          Right(cd)
+        case None =>
+          Left(CannotConvert(str, "ClipDefinition", s"$str is not a valid ClipDefinition"))
+      }
+    }
+
+  implicit val keywordConfigReader: ConfigReader[opengis.wms.Keyword] =
     ConfigReader[String].map { str =>
       opengis.wms.Keyword(str)
     }
 
-  implicit def nameConfigReader: ConfigReader[opengis.wms.Name] =
+  implicit val nameConfigReader: ConfigReader[opengis.wms.Name] =
     ConfigReader[String].map { str =>
       opengis.wms.Name.fromString(str, wmsScope)
     }

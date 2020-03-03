@@ -14,42 +14,16 @@
  * limitations under the License.
  */
 
-package geotrellis.server.ogc
+package geotrellis.server.ogc.style
+
+import geotrellis.server.ogc._
 
 import geotrellis.raster._
 import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.render.{ColorMap, ColorRamp}
+import geotrellis.raster.render.jpg.JpgEncoder
 import geotrellis.util.np.linspace
 
-trait OgcStyle {
-  def name: String
-  def title: String
-  def legends: List[LegendModel]
-  def renderImage(mbtile: MultibandTile, format: OutputFormat, hists: List[Histogram[Double]]): Array[Byte]
-}
-
-case class ColorMapStyle(
-  name: String,
-  title: String,
-  colorMap: ColorMap,
-  legends: List[LegendModel] = Nil
-) extends OgcStyle {
-  def renderImage(
-    mbtile: MultibandTile,
-    format: OutputFormat,
-    hists: List[Histogram[Double]]
-  ): Array[Byte] = {
-    format match {
-      case format: OutputFormat.Png =>
-        format.render(mbtile.band(bandIndex = 0), colorMap)
-
-      case OutputFormat.Jpg =>
-        mbtile.band(bandIndex = 0).renderJpg(colorMap).bytes
-
-      case OutputFormat.GeoTiff => ??? // Implementation necessary
-    }
-  }
-}
 
 case class ColorRampStyle(
   name: String,
@@ -103,19 +77,3 @@ case class ColorRampStyle(
     }
   }
 }
-
-case class LegendModel(
-  format: String,
-  width: Int,
-  height: Int,
-  onlineResource: OnlineResourceModel
-)
-
-case class OnlineResourceModel(
-  `type`: String,
-  href: String,
-  role: Option[String] = None,
-  title: Option[String] = None,
-  show: Option[String] = None,
-  actuate: Option[String] = None
-)

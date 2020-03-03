@@ -16,12 +16,13 @@
 
 package geotrellis.server.ogc
 
+import geotrellis.server.ogc.style._
+
 import opengis._
 import opengis.wms._
 import scalaxb._
 
 import java.net.URI
-
 import scala.xml.NamespaceBinding
 
 package object wms {

@@ -16,6 +16,8 @@
 
 package geotrellis.server.ogc
 
+import geotrellis.server.ogc.style._
+
 import scala.util.Try
 import geotrellis.raster.render.png._
 import geotrellis.raster._
@@ -74,6 +76,26 @@ object OutputFormat {
     }
 
     def render(tile: Tile, cm: ColorMap) = {
+      val encoder = encoding match {
+        case None =>
+          new PngEncoder(Settings(RgbaPngEncoding, PaethFilter))
+
+        case Some(GreyPngEncoding(None)) =>
+          val nd = noDataValue(tile.cellType)
+          new PngEncoder(Settings(GreyPngEncoding(nd), PaethFilter))
+
+        case Some(RgbPngEncoding(None)) =>
+          val nd = noDataValue(tile.cellType)
+          new PngEncoder(Settings(RgbPngEncoding(nd), PaethFilter))
+
+        case Some(encoding) =>
+          new PngEncoder(Settings(encoding, PaethFilter))
+      }
+
+      encoder.writeByteArray(cm.render(tile))
+    }
+
+    def render(tile: Tile, cm: InterpolatedColorMap): Array[Byte] = {
       val encoder = encoding match {
         case None =>
           new PngEncoder(Settings(RgbaPngEncoding, PaethFilter))

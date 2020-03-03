@@ -18,14 +18,16 @@ package geotrellis.server.ogc.wmts
 
 import geotrellis.server._
 import geotrellis.server.ogc._
+import geotrellis.server.ogc.style._
 import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wmts.WmtsParams.{GetCapabilities, GetTile}
-import com.azavea.maml.eval._
 
 import geotrellis.layer._
 import geotrellis.proj4._
 import geotrellis.raster.render.{ColorMap, ColorRamp, Png}
 import geotrellis.raster._
+import com.azavea.maml.eval._
+
 import scalaxb.CanWriteXML
 import org.http4s.scalaxml._
 import org.http4s._, org.http4s.dsl.io._, org.http4s.implicits._

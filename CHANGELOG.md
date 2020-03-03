@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Add support for an interpolated version of the color map [#161](https://github.com/geotrellis/geotrellis-server/issues/161)
 - Generate WCS 1.1.1 protocol using XSD data model [#188](https://github.com/geotrellis/geotrellis-server/issues/188)
 - WCS 1.1.1 GetCoverage Support [#192](https://github.com/geotrellis/geotrellis-server/issues/192)
 - RasterSource Catalog [#162](https://github.com/geotrellis/geotrellis-server/issues/162)

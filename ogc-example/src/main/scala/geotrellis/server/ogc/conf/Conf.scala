@@ -16,6 +16,7 @@
 
 package geotrellis.server.ogc.conf
 
+import geotrellis.server.ogc.style.ClipDefinition
 import geotrellis.server.ogc.ows
 import geotrellis.server.ogc.wms.WmsParentLayerMeta
 

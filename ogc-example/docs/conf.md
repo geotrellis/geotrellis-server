@@ -137,8 +137,8 @@ currently supported:
 
 Note above that each layer is configured with 0 or more style
 objects. Each provided style object defines an alternative coloring
-strategy. At the highest level, this server has two flavors of styling
-object: `ColorRamp` and `ColorMap` based.
+strategy. At the highest level, this server has three flavors of styling
+object: `ColorRamp`, `ColorMap` and `InterpolatedColorMap` based.
 
 Color ramps are just a list of colors and it is up to the server to
 produce the statistics necessary to make decisions about where (in
@@ -170,22 +170,6 @@ color-ramps = {
     ]
 ```
 
-A word of caution about color ramps: statistically derived rendering
-strategies can mislead if the entire layer being colored is markedly
-different from a well known distribution. If, for instance, we have NDVI
-values from a recent wildfire and our layer contains little information
-outside of the damaged area, statistically derived styling will see a
-distribution skewing towards -1 (or 0, depending on how the NDVI is
-calculated) and is therefore likely to use too many color breaks in the
-low end of the NDVI range.
-
-In a cases like the one just described, you're better off using a color map
-that is defined specifically for the range of values capable of being
-represented (e.g. for NDVI -1 is red, 0 is yellow, and 1 is green
-regardless of the distribution of NDVI values I happen to be looking
-at). If only the minimum and maximum values are known, they may
-optionally be specified in color ramp configuration (as above).
-
 A color map style definition from `application.conf` (note the HOCON
 reference):
 ```
@@ -210,13 +194,35 @@ color-maps = {
       32: 0x969798FF,
 ```
 
+An interpolated color map style definition from `application.conf` (note the HOCON reference):
+```
+{
+    name = "interpolated-income"
+    title = "Income rendered with interpolated values"
+    type = "interpolatedcolormapconf"
+    color-map = ${interpolated-color-maps.income}
+}
+```
+
+The interpolated color map definition referred to above:
+```
+    "income": {
+        "poles": {
+            "0.0": 0xFF0000FF,
+            "75000.0": 0x777700FF
+            "200000.0": 0x00FF00FF,
+        }
+        "clip-definition": "clip-both"
+    }
+```
+
 > WARNING: The particular syntax used for GT Server configuration is HOCON,
 > which has some issues dealing with numeric values (decimal/floating
 > point numbers in particular) in the keys of maps. We advise always
-> quoting the keys of ColorMap definitions (e.g. `"0.1": 0xFF00FF`) or
-> at least always padding floating point keys to the tenth place (`0.0`
-> will work, whereas `0` might cause problems) to avoid configuration
-> parsing issues.
+> quoting the keys of `ColorMap` and `InterpolatedColorMap` definitions
+> (e.g. `"0.1": 0xFF00FF`) or at least always padding floating point keys
+> to the tenth place (`0.0` will work, whereas `0` might cause problems) to
+> avoid configuration parsing issues.
 
 #### Providing a style legend
 
