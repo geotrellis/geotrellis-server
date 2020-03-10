@@ -24,14 +24,17 @@ case class WcsModel(
   sources: OgcSourceRepository
 ) {
 
-  def getLayers(p: GetCoverageWcsParams): List[OgcLayer] =
-    sources
-      .find(p.toQuery)
-      .map {
+  private val logger = org.log4s.getLogger
+
+  def getLayers(p: GetCoverageWcsParams): List[OgcLayer] = {
+    val filteredSources = sources.find(p.toQuery)
+    logger.debug(s"Filtering sources: ${sources.store.length} -> ${filteredSources.length}")
+    filteredSources.map {
         case SimpleSource(name, title, source, _, styles) =>
           SimpleOgcLayer(name, title, p.crs, source, None)
         case MapAlgebraSource(name, title, sources, algebra, _, styles) =>
           val simpleLayers = sources.mapValues { rs => SimpleOgcLayer(name, title, p.crs, rs, None) }
           MapAlgebraOgcLayer(name, title, p.crs, simpleLayers, algebra, None)
       }
+  }
 }

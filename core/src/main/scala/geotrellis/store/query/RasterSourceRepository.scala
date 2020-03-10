@@ -49,7 +49,7 @@ object RasterSourceRepository {
     }
     case At(t, fn)           => _.filter(_.metadata.attributes.get(fn).map(ZonedDateTime.parse).fold(false)(_ == t))
     case Between(t1, t2, fn) => _.filter {
-      _.metadata.attributes.get(fn).map(ZonedDateTime.parse).fold(false) { current => t1 >= current && t2 < current }
+      _.metadata.attributes.get(fn).map(ZonedDateTime.parse).fold(false) { current => t1 <= current && current < t2 }
     }
     case Intersects(e) => _.filter(_.projectedExtent.intersects(e))
     case Covers(e)     => _.filter(_.projectedExtent.covers(e))
