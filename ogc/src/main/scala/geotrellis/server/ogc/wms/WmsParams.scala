@@ -16,13 +16,12 @@
 
 package geotrellis.server.ogc.wms
 
-import geotrellis.server.ogc.OutputFormat
+import geotrellis.server.ogc.{OgcTimeInterval, OutputFormat}
 import geotrellis.server.ogc.params._
 import geotrellis.proj4.LatLng
 import geotrellis.proj4.CRS
 import geotrellis.store.query._
 import geotrellis.vector.{Extent, ProjectedExtent}
-
 import cats.implicits._
 import cats.data.{Validated, ValidatedNel}
 import Validated._
@@ -57,9 +56,22 @@ object WmsParams {
     format: OutputFormat,
     width: Int,
     height: Int,
-    crs: CRS
+    crs: CRS,
+    time: Option[OgcTimeInterval]
   ) extends WmsParams {
-    def toQuery: Query = layers.headOption.map(withName).getOrElse(nothing) and intersects(ProjectedExtent(boundingBox, crs))
+    def toQuery: Query = {
+      val layer = layers.headOption.map(withName).getOrElse(nothing)
+      val query = layer and intersects(ProjectedExtent(boundingBox, crs))
+      time match {
+        case Some(timeInterval) => {
+          timeInterval.end match {
+            case Some(end) => query and between(timeInterval.start, end)
+            case None => query and at(timeInterval.start)
+          }
+        }
+        case None => query
+      }
+    }
   }
 
   object GetMap {
@@ -94,6 +106,8 @@ object WmsParams {
           val height =
             params.validatedParam[Int]("height", { s => Try(s.toInt).toOption })
 
+          val time = params.validatedOptionalParam("time")
+            .map(option => option.map(OgcTimeInterval.fromString))
 
           val format =
             params.validatedParam("format")
@@ -105,9 +119,9 @@ object WmsParams {
                   }
               }
 
-          (layers, styles, bbox, format, width, height, crs).mapN {
-            case (layers, styles, bbox, format, width, height, crs) =>
-              GetMap(version, layers, styles, bbox, format = format, width = width, height = height, crs = crs)
+          (layers, styles, bbox, format, width, height, crs, time).mapN {
+            case (layers, styles, bbox, format, width, height, crs, time) =>
+              GetMap(version, layers, styles, bbox, format = format, width = width, height = height, crs = crs, time = time)
           }
         }
     }
