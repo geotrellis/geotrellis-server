@@ -24,13 +24,11 @@ import geotrellis.raster.CellSize
 import geotrellis.vector.Extent
 
 import cats.syntax.option._
-import jp.ne.opt.chronoscala.Imports._
 import opengis.wms._
 import opengis._
 import scalaxb._
 
 import java.net.URL
-import java.time.ZonedDateTime
 import scala.xml.Elem
 
 /**
@@ -84,15 +82,6 @@ class CapabilitiesView(
 object CapabilitiesView {
   implicit def toRecord[T: CanWriteXML](t: T): DataRecord[T] = DataRecord(t)
 
-  implicit def timeIntervalToDimension(ogcTimeInterval: OgcTimeInterval): Seq[Dimension] = {
-    val ogcTimeString = ogcTimeInterval.toString
-    Seq(Dimension(ogcTimeString, Map(
-      "@name" -> DataRecord("time"),
-      "@units" -> DataRecord("ISO8601"),
-      "@default" -> DataRecord(ogcTimeString)
-    )))
-  }
-
   def boundingBox(crs: CRS, extent: Extent, cellSize: CellSize): BoundingBox =
     if (crs.isGeographic)
       BoundingBox(Map(
@@ -114,14 +103,6 @@ object CapabilitiesView {
         "@resx" -> cellSize.width,
         "@resy" -> cellSize.height
       ))
-
-  def timeDimension(times: Seq[Option[ZonedDateTime]]): Seq[Dimension] = {
-    times.flatten match {
-      case Nil => Nil
-      case head :: Nil => OgcTimeInterval(head)
-      case list => OgcTimeInterval(list.min, Some(list.max), None)
-    }
-  }
 
   implicit class StyleMethods(val style: OgcStyle) {
     def render: Style =
@@ -150,7 +131,16 @@ object CapabilitiesView {
           EX_GeographicBoundingBox(llExtent.xmin, llExtent.xmax, llExtent.ymin, llExtent.ymax).some
         },
         BoundingBox         = Nil,
-        Dimension           = timeDimension(Seq(source.time)),
+        Dimension           = source.time match {
+          case Some(time) => Seq(Dimension(
+            OgcTimeInterval(time).toString,
+            Map(
+              "@name" -> DataRecord("time"),
+              "@units" -> DataRecord("ISO8601")
+            )
+          ))
+          case None => Nil
+        },
         Attribution         = None,
         AuthorityURL        = Nil,
         Identifier          = Nil,
@@ -167,7 +157,6 @@ object CapabilitiesView {
   }
 
   def modelAsLayer(parentLayerMeta: WmsParentLayerMeta, model: WmsModel): Layer = {
-
     Layer(
       Name        = parentLayerMeta.name,
       Title       = parentLayerMeta.title,
@@ -189,7 +178,17 @@ object CapabilitiesView {
       },
       // TODO: bounding box for global layer
       BoundingBox         = Nil,
-      Dimension           = timeDimension(model.sources.store.map(_.time)),
+      Dimension           = model.temporalRange match {
+        case Some(interval) => Seq(Dimension(
+          interval.toString,
+          Map(
+            "@name" -> DataRecord("time"),
+            "@units" -> DataRecord("ISO8601"),
+            "@default" -> DataRecord(interval.start.toString)
+          )
+        ))
+        case None => Nil
+      },
       Attribution         = None,
       AuthorityURL        = Nil,
       Identifier          = Nil,
