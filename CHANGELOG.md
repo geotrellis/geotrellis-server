@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WCS DescribeCoverage may include time TemporalDomain [#211](https://github.com/geotrellis/geotrellis-server/issues/211)
 - WCS GetCoverage may include time param `TIMESEQUENCE` [#157](https://github.com/geotrellis/geotrellis-server/issues/157)
 - WMS GetCapabilities may include time TemporalDomain [#230](https://github.com/geotrellis/geotrellis-server/issues/230)
+- WMS GetMap may include time param `TIME` [#175](https://github.com/geotrellis/geotrellis-server/issues/175)
 
 ### Changed
 - Included split dependencies a la GeoTrellis 3.2 for cats ecosystem libraries [\#184](https://github.com/geotrellis/geotrellis-server/pull/184)
