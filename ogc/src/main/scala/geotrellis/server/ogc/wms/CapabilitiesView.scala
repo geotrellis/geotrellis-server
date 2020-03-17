@@ -131,12 +131,13 @@ object CapabilitiesView {
           EX_GeographicBoundingBox(llExtent.xmin, llExtent.xmax, llExtent.ymin, llExtent.ymax).some
         },
         BoundingBox         = Nil,
-        Dimension           = source.time match {
-          case Some(time) => Seq(Dimension(
-            OgcTimeInterval(time).toString,
+        Dimension           = source.timeInterval match {
+          case Some(interval) => Seq(Dimension(
+            interval.toString,
             Map(
               "@name" -> DataRecord("time"),
-              "@units" -> DataRecord("ISO8601")
+              "@units" -> DataRecord("ISO8601"),
+              "@default" -> DataRecord(interval.start.toString)
             )
           ))
           case None => Nil
@@ -178,7 +179,7 @@ object CapabilitiesView {
       },
       // TODO: bounding box for global layer
       BoundingBox         = Nil,
-      Dimension           = model.temporalRange match {
+      Dimension           = model.timeInterval match {
         case Some(interval) => Seq(Dimension(
           interval.toString,
           Map(

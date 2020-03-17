@@ -40,6 +40,7 @@ case class WmtsModel(
     for {
       crs    <- getMatrixCrs(p.tileMatrixSet).toList
       layout <- getMatrixLayoutDefinition(p.tileMatrixSet, p.tileMatrix).toList
+      // TODO: Refactor so that we can return multiple layers
       source <- sources.find(p.toQuery)
     } yield {
       val style: Option[OgcStyle] = source.styles.find(_.name == p.style)

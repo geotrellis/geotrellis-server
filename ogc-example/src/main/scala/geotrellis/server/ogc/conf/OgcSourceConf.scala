@@ -16,10 +16,11 @@
 
 package geotrellis.server.ogc.conf
 
-import geotrellis.server.ogc._
+import com.azavea.maml.ast._
 import geotrellis.raster.{RasterSource, ResampleMethod}
 import geotrellis.raster.resample.NearestNeighbor
-import com.azavea.maml.ast._
+import geotrellis.server.ogc._
+import geotrellis.store.GeoTrellisPath
 
 // This sumtype corresponds to the in-config representation of a source
 sealed trait OgcSourceConf {
@@ -28,17 +29,24 @@ sealed trait OgcSourceConf {
   def resampleMethod: ResampleMethod
 }
 
-case class SimpleSourceConf(
+case class RasterSourceConf(
   name: String,
   title: String,
-  sources: List[String],
+  source: String,
   defaultStyle: Option[String],
   styles: List[StyleConf],
   resampleMethod: ResampleMethod = NearestNeighbor
 ) extends OgcSourceConf {
-  def models: List[SimpleSource] =
-    sources.map(uri =>
-      SimpleSource(name, title, RasterSource(uri), defaultStyle, styles.map(_.toStyle), resampleMethod))
+  def toLayer: RasterOgcSource = {
+    GeoTrellisPath.parseOption(source) match {
+      case Some(_) => GeoTrellisOgcSource(
+        name, title, source, defaultStyle, styles.map(_.toStyle), resampleMethod
+      )
+      case None => SimpleSource(
+        name, title, RasterSource(source), defaultStyle, styles.map(_.toStyle), resampleMethod
+      )
+    }
+  }
 }
 
 case class MapAlgebraSourceConf(
@@ -64,7 +72,7 @@ case class MapAlgebraSourceConf(
    *  attempt to produce the parameter bindings necessary for evaluating the MAML [[Expression]]
    *  in the algebra field
    */
-  def model(possibleSources: List[SimpleSource]): MapAlgebraSource = {
+  def model(possibleSources: List[RasterOgcSource]): MapAlgebraSource = {
     val layerNames = listParams(algebra)
     val sourceList = layerNames.map { name =>
       val layerSrc = possibleSources.find(_.name == name).getOrElse {
@@ -75,5 +83,4 @@ case class MapAlgebraSourceConf(
     }
     MapAlgebraSource(name, title, sourceList.toMap, algebra, defaultStyle, styles.map(_.toStyle), resampleMethod)
   }
-
 }

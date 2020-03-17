@@ -16,16 +16,15 @@
 
 package geotrellis.server.ogc.wcs
 
+import cats.syntax.option._
 import geotrellis.store.query._
+import geotrellis.server.ogc.{GeoTrellisOgcSource, MapAlgebraSource, OgcSource, RasterOgcSource, URN}
 import geotrellis.server.ogc.ows.OwsDataRecord
 import geotrellis.server.ogc.gml.GmlDataRecord
 import geotrellis.proj4.LatLng
 import geotrellis.raster.reproject.ReprojectRasterExtent
 import geotrellis.raster.reproject.Reproject.Options
 import geotrellis.raster.{Dimensions, GridExtent}
-import geotrellis.server.ogc.{MapAlgebraSource, OgcSource, SimpleSource, URN}
-import cats.syntax.option._
-
 import opengis.gml._
 import opengis.ows._
 import opengis.wcs._
@@ -61,8 +60,6 @@ object CoverageView {
     val nativeCrs = source.nativeCrs.head
     val re = source.nativeRE
     val llre = source match {
-      case SimpleSource(_, _, rs, _, _, resampleMethod) =>
-        ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(resampleMethod))
       case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod) =>
         rss.values.map { rs =>
           ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(resampleMethod))
@@ -71,6 +68,9 @@ object CoverageView {
           val cs = if (re1.cellSize.resolution < re2.cellSize.resolution) re1.cellSize else re2.cellSize
           new GridExtent[Long](e, cs)
         })
+      case rasterOgcLayer: RasterOgcSource =>
+        val rs = rasterOgcLayer.source
+        ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(rasterOgcLayer.resampleMethod))
     }
     val ex = re.extent
     val llex = llre.extent
@@ -93,8 +93,18 @@ object CoverageView {
      * This was excerpted from "WCS Implementation Standard 1.1" available at:
      * https://portal.ogc.org/files/07-067r5
      */
-    val temporalInstants = sources.flatMap { _.time.map(t => GmlDataRecord(TimePositionType(t.toInstant.toString))) }
-    val temporalDomain: Option[TimeSequenceType] = if (temporalInstants.nonEmpty) TimeSequenceType(temporalInstants).some else None
+    val temporalDomain: Option[TimeSequenceType] = source match {
+      case gtl @ GeoTrellisOgcSource(_, _, _, _, _, _, _) =>
+        if (gtl.source.isTemporal) {
+          val records = gtl.source.times.map { t =>
+            GmlDataRecord(TimePositionType(t.toInstant.toString))
+          }
+          Some(TimeSequenceType(records))
+        } else {
+          None
+        }
+      case _ => None
+    }
 
     CoverageDescriptionType(
       Title      = LanguageStringType(source.title) :: Nil,

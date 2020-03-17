@@ -1,5 +1,7 @@
 package geotrellis.server.ogc
 
+import jp.ne.opt.chronoscala.Imports._
+
 import java.time.ZonedDateTime
 
 /**
@@ -30,10 +32,25 @@ final case class OgcTimeInterval(start: ZonedDateTime,
       case _ => start.toInstant.toString
     }
   }
+
+  /**
+   * Merge two OgcTimeInterval instances
+   *
+   * @note This method destroys the interval. If you need to retain interval when combining
+   *       instances, perform this operation yourself.
+   * @param other
+   * @return
+   */
+  def combine(other: OgcTimeInterval) = {
+    val times = List(Some(start), end, Some(other.start), other.end).flatten
+    OgcTimeInterval(times.min, Some(times.max), None)
+  }
 }
 
 object OgcTimeInterval {
   def apply(timePeriod: ZonedDateTime): OgcTimeInterval = OgcTimeInterval(timePeriod, None, None)
+
+  def apply(timeString: String): OgcTimeInterval = fromString(timeString)
 
   def fromString(timeString: String): OgcTimeInterval = {
     val timeParts = timeString.split("/")

@@ -6,9 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
 ### Added
 - Configurable ResampleMethod in source definitions [#229](https://github.com/geotrellis/geotrellis-server/issues/229)
 - Enable TargetCell parameter for focal operations [#212](https://github.com/geotrellis/geotrellis-server/issues/212)
+
+### Changed
+ 
+- The `layers.layer-name.sources` field in application.conf is renamed to `source` and now supports a single RasterSource URI string. See `ogc-example/src/main/resources/application.conf` for examples. 
+
+### Fixed
+
+- Addressed GeoTrellisRasterSourceLegacy issues and minimized number of RasterSource instances constructed for GeoTrellis Layers [#219](https://github.com/geotrellis/geotrellis-server/issues/219)
 
 ## [4.1.0] - 2020-03-03
 

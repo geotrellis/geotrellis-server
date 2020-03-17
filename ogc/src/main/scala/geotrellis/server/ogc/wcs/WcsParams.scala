@@ -55,7 +55,7 @@ case class GetCoverageWcsParams(
                                  version: String,
                                  identifier: String,
                                  boundingBox: Extent,
-                                 temporalSequence: Option[NonEmptyList[OgcTimeInterval]],
+                                 temporalSequence: List[OgcTimeInterval],
                                  format: OutputFormat,
                                  gridBaseCRS: CRS,
                                  gridCS: URI,
@@ -69,17 +69,17 @@ case class GetCoverageWcsParams(
 
   def toQuery: Query = {
     val query = withName(identifier) and intersects(ProjectedExtent(extent, crs))
-    temporalSequence match {
-      case Some(ts: NonEmptyList[OgcTimeInterval]) =>
-        // For now, since a RasterSource maps 1 to 1 to OgcSource, we only create a
-        // temporal filter on the first TimeInterval in the list. Revisit when we are
-        // able to utilize all requested TimeIntervals.
-        val timeInterval = ts.head
-        timeInterval.end match {
-          case Some(e) => query and between(timeInterval.start, e)
-          case _ => query and at(timeInterval.start)
-        }
-      case None => query
+    if (temporalSequence.nonEmpty) {
+      // For now, since a RasterSource maps 1 to 1 to OgcSource, we only create a
+      // temporal filter on the first TimeInterval in the list. Revisit when we are
+      // able to utilize all requested TimeIntervals.
+      val timeInterval = temporalSequence.head
+      timeInterval.end match {
+        case Some(e) => query and between(timeInterval.start, e)
+        case _ => query and at(timeInterval.start)
+      }
+    } else {
+      query
     }
   }
 
@@ -169,13 +169,10 @@ object GetCoverageWcsParams {
       }
     })
 
-  private def getTemporalSequence(params: ParamMap, field: String): ValidatedNel[ParamError, Option[NonEmptyList[OgcTimeInterval]]] = {
-    val param = params.validatedOptionalParam(field)
-    param.map { timeStringOption =>
-      timeStringOption.map { timeString =>
-        val times = timeString.split(",").map(OgcTimeInterval.fromString)
-        NonEmptyList(times.head, times.tail.toList)
-      }
+  private def getTemporalSequence(params: ParamMap, field: String): ValidatedNel[ParamError, List[OgcTimeInterval]] = {
+    params.validatedOptionalParam(field).map {
+      case Some(timeString) => timeString.split(",").map(OgcTimeInterval.fromString).toList
+      case None => List.empty[OgcTimeInterval]
     }
   }
 
