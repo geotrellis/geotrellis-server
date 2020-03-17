@@ -16,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - {WCS|WMTS|WMS}Model uses RasterSource catalog [#163](https://github.com/geotrellis/geotrellis-server/issues/163)
 - WCS DescribeCoverage may include time TemporalDomain [#211](https://github.com/geotrellis/geotrellis-server/issues/211)
 - WCS GetCoverage may include time param `TIMESEQUENCE` [#157](https://github.com/geotrellis/geotrellis-server/issues/157)
-- WMS GetCapabilities may include time TemporalDomain [#230](https://github.com/geotrellis/geotrellis-server/issues/230)
+- WMS GetCapabilities may include time TemporalDomain [#185](https://github.com/geotrellis/geotrellis-server/issues/185)
 - WMS GetMap may include time param `TIME` [#175](https://github.com/geotrellis/geotrellis-server/issues/175)
 
 ### Changed
