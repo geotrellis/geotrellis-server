@@ -16,9 +16,13 @@
 
 package geotrellis.server.ogc.wms
 
+import java.time.ZonedDateTime
+
+import cats.implicits._
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.style._
 import geotrellis.server.ogc.wms.WmsParams.GetMap
+import jp.ne.opt.chronoscala.Imports._
 
 
 /** This class holds all the information necessary to construct a response to a WMS request */
@@ -28,10 +32,26 @@ case class WmsModel(
   sources: OgcSourceRepository
 ) {
 
+  private lazy val times: List[ZonedDateTime] = sources.store.flatMap(_.time)
+
+  lazy val temporalRange: Option[OgcTimeInterval] = {
+    times match {
+      case Nil => None
+      case head :: Nil => OgcTimeInterval(head).some
+      case list => OgcTimeInterval(list.min, Some(list.max), None).some
+    }
+  }
+
   /** Take a specific request for a map and combine it with the relevant [[OgcSource]]
    *  to produce an [[OgcLayer]]
    */
-  def getLayer(p: GetMap): List[OgcLayer] = {
+  def getLayer(params: GetMap): List[OgcLayer] = {
+    val p = temporalRange match {
+      // Add default time to GetMap params if this is a temporal layer and the user didn't request a specific time
+      case Some(timeInterval) if params.time.isEmpty =>
+        params.copy(time = OgcTimeInterval(timeInterval.start).some)
+      case _ => params
+    }
     for {
       supportedCrs <- parentLayerMeta.supportedProjections.find(_ == p.crs).toList
       source       <- sources.find(p.toQuery)

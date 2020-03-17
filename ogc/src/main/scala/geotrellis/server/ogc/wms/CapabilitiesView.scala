@@ -24,13 +24,11 @@ import geotrellis.raster.CellSize
 import geotrellis.vector.Extent
 
 import cats.syntax.option._
-import jp.ne.opt.chronoscala.Imports._
 import opengis.wms._
 import opengis._
 import scalaxb._
 
 import java.net.URL
-import java.time.ZonedDateTime
 import scala.xml.Elem
 
 /**
@@ -159,12 +157,6 @@ object CapabilitiesView {
   }
 
   def modelAsLayer(parentLayerMeta: WmsParentLayerMeta, model: WmsModel): Layer = {
-    val times: List[ZonedDateTime] = model.sources.store.map(_.time).flatten
-    val timeInterval = times match {
-      case Nil => None
-      case head :: Nil => OgcTimeInterval(head).some
-      case list => OgcTimeInterval(list.min, Some(list.max), None).some
-    }
     Layer(
       Name        = parentLayerMeta.name,
       Title       = parentLayerMeta.title,
@@ -186,7 +178,7 @@ object CapabilitiesView {
       },
       // TODO: bounding box for global layer
       BoundingBox         = Nil,
-      Dimension           = timeInterval match {
+      Dimension           = model.temporalRange match {
         case Some(interval) => Seq(Dimension(
           interval.toString,
           Map(
