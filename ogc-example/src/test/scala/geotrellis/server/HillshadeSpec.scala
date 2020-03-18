@@ -64,7 +64,7 @@ class HillshadeSpec extends FunSpec with Matchers {
       val hillshadeProjectedRaster = ProjectedRaster(raster, LatLng)
 
       val interpreter = Interpreter.DEFAULT
-      val res = interpreter(FocalHillshade(List(RasterLit(hillshadeProjectedRaster)), 315, 45, TargetCell.All)).as[MultibandTile]
+      val res = interpreter(FocalHillshade(List(RasterLit(hillshadeProjectedRaster)), 315, 45)).as[MultibandTile]
 
       res match {
         case Valid(t) => GeoTiff(Raster(t, raster.extent), LatLng).write("/tmp/rs-reproject-hillshade.tiff")
