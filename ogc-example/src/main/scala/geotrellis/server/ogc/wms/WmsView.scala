@@ -65,16 +65,16 @@ class WmsView(wmsModel: WmsModel, serviceUrl: URL) {
         val re = RasterExtent(wmsReq.boundingBox, wmsReq.width, wmsReq.height)
         wmsModel.getLayer(wmsReq).map { layer =>
           val evalExtent = layer match {
-            case sl @ SimpleOgcLayer(_, _, _, _, _) =>
+            case sl @ SimpleOgcLayer(_, _, _, _, _, _) =>
               LayerExtent.identity(sl)
-            case MapAlgebraOgcLayer(_, _, _, parameters, expr, _) =>
+            case MapAlgebraOgcLayer(_, _, _, parameters, expr, _, _) =>
               LayerExtent(IO.pure(expr), IO.pure(parameters), ConcurrentInterpreter.DEFAULT[IO])
           }
 
           val evalHisto = layer match {
-            case sl @ SimpleOgcLayer(_, _, _, _, _) =>
+            case sl @ SimpleOgcLayer(_, _, _, _, _, _) =>
               LayerHistogram.identity(sl, 512)
-            case MapAlgebraOgcLayer(_, _, _, parameters, expr, _) =>
+            case MapAlgebraOgcLayer(_, _, _, parameters, expr, _, _) =>
               LayerHistogram(IO.pure(expr), IO.pure(parameters), ConcurrentInterpreter.DEFAULT[IO], 512)
           }
 

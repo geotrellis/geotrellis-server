@@ -51,6 +51,7 @@ trait OgcSource {
   def metadata: RasterMetadata
   def attributes: Map[String, String]
   def time: Option[ZonedDateTime]
+  def resampleMethod: ResampleMethod
 
   def nativeProjectedExtent: ProjectedExtent = ProjectedExtent(nativeExtent, nativeCrs.head)
 }
@@ -63,7 +64,8 @@ case class SimpleSource(
   title: String,
   source: RasterSource,
   defaultStyle: Option[String],
-  styles: List[OgcStyle]
+  styles: List[OgcStyle],
+  resampleMethod: ResampleMethod
 ) extends OgcSource {
   def extentIn(crs: CRS): Extent = {
     val reprojected = source.reproject(crs)
@@ -107,7 +109,8 @@ case class MapAlgebraSource(
   sources: Map[String, RasterSource],
   algebra: Expression,
   defaultStyle: Option[String],
-  styles: List[OgcStyle]
+  styles: List[OgcStyle],
+  resampleMethod: ResampleMethod
 ) extends OgcSource {
   def extentIn(crs: CRS): Extent = {
     val reprojectedSources: NEL[RasterSource] =

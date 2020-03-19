@@ -107,7 +107,7 @@ object Main extends CommandApp(
             simpleSources = conf
               .layers
               .values
-              .collect { case ssc@SimpleSourceConf(_, _, _, _, _) => ssc.models }
+              .collect { case ssc@SimpleSourceConf(_, _, _, _, _, _) => ssc.models }
               .toList
               .flatten
             _ <- Stream.eval(IO(logOptState(

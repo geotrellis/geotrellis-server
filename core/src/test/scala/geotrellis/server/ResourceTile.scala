@@ -27,7 +27,7 @@ import geotrellis.vector.Extent
 import cats.effect._
 import cats.data.{NonEmptyList => NEL}
 
-case class ResourceTile(name: String) {
+case class ResourceTile(name: String, resampleMethod: ResampleMethod) {
   def uri = {
     val f = getClass.getResource(s"/$name").getFile
     s"file://$f"
@@ -41,7 +41,7 @@ object ResourceTile extends RasterSourceUtils {
     def extentReification(self: ResourceTile)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
       (extent: Extent, cs: CellSize) => {
         val rs = getRasterSource(self.uri.toString)
-        rs.resample(TargetRegion(new GridExtent[Long](extent, cs)), NearestNeighbor, AutoHigherResolution)
+        rs.resample(TargetRegion(new GridExtent[Long](extent, cs)), self.resampleMethod, AutoHigherResolution)
           .read(extent)
           .map { raster => ProjectedRaster(raster, rs.crs) }
           .toIO { new Exception(s"No tile avail for RasterExtent: ${RasterExtent(extent, cs)}") }

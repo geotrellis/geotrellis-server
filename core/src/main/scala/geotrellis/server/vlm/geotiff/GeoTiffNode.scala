@@ -21,7 +21,6 @@ import geotrellis.server.vlm._
 import geotrellis.proj4.WebMercator
 import geotrellis.raster._
 import geotrellis.raster.geotiff.GeoTiffRasterSource
-import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.raster.io.geotiff.AutoHigherResolution
 
 import geotrellis.vector.Extent
@@ -33,7 +32,7 @@ import cats.data.{NonEmptyList => NEL}
 
 import java.net.URI
 
-case class GeoTiffNode(uri: URI, band: Int, celltype: Option[CellType])
+case class GeoTiffNode(uri: URI, band: Int, celltype: Option[CellType], resampleMethod: ResampleMethod)
 
 object GeoTiffNode extends RasterSourceUtils {
   def getRasterSource(uri: String): GeoTiffRasterSource = GeoTiffRasterSource(uri)
@@ -63,7 +62,7 @@ object GeoTiffNode extends RasterSourceUtils {
   implicit val CogNodeExtentReification: ExtentReification[GeoTiffNode] = new ExtentReification[GeoTiffNode] {
     def extentReification(self: GeoTiffNode)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] = (extent: Extent, cs: CellSize) => {
       getRasterSource(self.uri.toString)
-        .resample(TargetRegion(new GridExtent[Long](extent, cs)), NearestNeighbor, AutoHigherResolution)
+        .resample(TargetRegion(new GridExtent[Long](extent, cs)), self.resampleMethod, AutoHigherResolution)
         .read(extent, self.band :: Nil)
         .map { ProjectedRaster(_, WebMercator) }
         .toIO { new Exception(s"No tile avail for RasterExtent: ${RasterExtent(extent, cs)}") }

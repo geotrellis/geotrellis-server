@@ -21,6 +21,7 @@ import geotrellis.server.ogc.ows.OwsDataRecord
 import geotrellis.server.ogc.gml.GmlDataRecord
 import geotrellis.proj4.LatLng
 import geotrellis.raster.reproject.ReprojectRasterExtent
+import geotrellis.raster.reproject.Reproject.Options
 import geotrellis.raster.{Dimensions, GridExtent}
 import geotrellis.server.ogc.{MapAlgebraSource, OgcSource, SimpleSource, URN}
 import cats.syntax.option._
@@ -32,7 +33,6 @@ import opengis._
 
 import scala.xml.Elem
 import scalaxb._
-
 import java.net.{URI, URL}
 
 class CoverageView(
@@ -61,11 +61,11 @@ object CoverageView {
     val nativeCrs = source.nativeCrs.head
     val re = source.nativeRE
     val llre = source match {
-      case SimpleSource(_, _, rs, _, _) =>
-        ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng)
-      case MapAlgebraSource(_, _, rss, _, _, _) =>
+      case SimpleSource(_, _, rs, _, _, resampleMethod) =>
+        ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(resampleMethod))
+      case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod) =>
         rss.values.map { rs =>
-          ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng)
+          ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(resampleMethod))
         }.reduce({ (re1, re2) =>
           val e = re1.extent combine re2.extent
           val cs = if (re1.cellSize.resolution < re2.cellSize.resolution) re1.cellSize else re2.cellSize

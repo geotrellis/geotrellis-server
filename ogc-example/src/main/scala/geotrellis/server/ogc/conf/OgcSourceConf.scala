@@ -17,17 +17,15 @@
 package geotrellis.server.ogc.conf
 
 import geotrellis.server.ogc._
+import geotrellis.raster.{RasterSource, ResampleMethod}
 
-import geotrellis.raster.RasterSource
 import com.azavea.maml.ast._
-import cats._
-import cats.implicits._
-
 
 // This sumtype corresponds to the in-config representation of a source
 sealed trait OgcSourceConf {
   def name: String
   def styles: List[StyleConf]
+  def resampleMethod: ResampleMethod
 }
 
 case class SimpleSourceConf(
@@ -35,11 +33,12 @@ case class SimpleSourceConf(
   title: String,
   sources: List[String],
   defaultStyle: Option[String],
-  styles: List[StyleConf]
+  styles: List[StyleConf],
+  resampleMethod: ResampleMethod
 ) extends OgcSourceConf {
   def models: List[SimpleSource] =
     sources.map(uri =>
-      SimpleSource(name, title, RasterSource(uri), defaultStyle, styles.map(_.toStyle)))
+      SimpleSource(name, title, RasterSource(uri), defaultStyle, styles.map(_.toStyle), resampleMethod))
 }
 
 case class MapAlgebraSourceConf(
@@ -47,7 +46,8 @@ case class MapAlgebraSourceConf(
   title: String,
   algebra: Expression,
   defaultStyle: Option[String],
-  styles: List[StyleConf]
+  styles: List[StyleConf],
+  resampleMethod: ResampleMethod
 ) extends OgcSourceConf {
   private def listParams(expr: Expression): List[String] = {
     def eval(subExpr: Expression): List[String] = subExpr match {
@@ -73,7 +73,7 @@ case class MapAlgebraSourceConf(
       }
       name -> layerSrc.source
     }
-    MapAlgebraSource(name, title, sourceList.toMap, algebra, defaultStyle, styles.map(_.toStyle))
+    MapAlgebraSource(name, title, sourceList.toMap, algebra, defaultStyle, styles.map(_.toStyle), resampleMethod)
   }
 
 }

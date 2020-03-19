@@ -64,13 +64,13 @@ case class WmsModel(
       val style: Option[OgcStyle] =
         styleName.flatMap { name => source.styles.find(_.name == name) }
       source match {
-        case MapAlgebraSource(name, title, rasterSources, algebra, defaultStyle, styles) =>
+        case MapAlgebraSource(name, title, rasterSources, algebra, defaultStyle, styles, resampleMethod) =>
           val simpleLayers = rasterSources.mapValues { rs =>
-            SimpleOgcLayer(name, title, supportedCrs, rs, style)
+            SimpleOgcLayer(name, title, supportedCrs, rs, style, resampleMethod)
           }
-          MapAlgebraOgcLayer(name, title, supportedCrs, simpleLayers, algebra, style)
-        case SimpleSource(name, title, rasterSource, defaultStyle, styles) =>
-          SimpleOgcLayer(name, title, supportedCrs, rasterSource, style)
+          MapAlgebraOgcLayer(name, title, supportedCrs, simpleLayers, algebra, style, resampleMethod)
+        case SimpleSource(name, title, rasterSource, defaultStyle, styles, resampleMethod) =>
+          SimpleOgcLayer(name, title, supportedCrs, rasterSource, style, resampleMethod)
       }
     }
   }
