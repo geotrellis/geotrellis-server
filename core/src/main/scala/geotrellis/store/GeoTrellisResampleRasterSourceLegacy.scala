@@ -110,8 +110,8 @@ class GeoTrellisResampleRasterSourceLegacy(
 
   override def reprojection(targetCRS: CRS, resampleTarget: ResampleTarget = DefaultTarget, method: ResampleMethod = NearestNeighbor, strategy: OverviewStrategy = AutoHigherResolution): GeoTrellisReprojectRasterSourceLegacy = {
     val reprojectOptions = ResampleTarget.toReprojectOptions(this.gridExtent, resampleTarget, method)
-    val (closestLayerId, gridExtent) = GeoTrellisReprojectRasterSourceLegacy.getClosestSourceLayer(targetCRS, sourceLayers, reprojectOptions, strategy)
-    new GeoTrellisReprojectRasterSourceLegacy(attributeStore, dataPath, layerId, sourceLayers, gridExtent, targetCRS, resampleTarget, time = time, targetCellType = targetCellType)
+    val (_, gridExtent) = GeoTrellisReprojectRasterSourceLegacy.getClosestSourceLayer(targetCRS, sourceLayers, reprojectOptions, strategy)
+    new GeoTrellisReprojectRasterSourceLegacy(attributeStore, dataPath, layerId, sourceLayers, gridExtent, targetCRS, resampleTarget, method, time = time, targetCellType = targetCellType)
   }
   /** Resample underlying RasterSource to new grid extent
    * Note: ResampleTarget will be applied to GridExtent of the source layer, not the GridExtent of this RasterSource
