@@ -60,8 +60,8 @@ class GetCoverage(wcsModel: WcsModel) {
           .getLayers(params)
           .headOption
           .map {
-            case so @ SimpleOgcLayer(_, _, _, _, _) => LayerExtent.identity(so)
-            case MapAlgebraOgcLayer(_, _, _, simpleLayers, algebra, _) =>
+            case so @ SimpleOgcLayer(_, _, _, _, _, _) => LayerExtent.identity(so)
+            case MapAlgebraOgcLayer(_, _, _, simpleLayers, algebra, _, _) =>
               LayerExtent(IO.pure(algebra), IO.pure(simpleLayers), ConcurrentInterpreter.DEFAULT)
           }
           .traverse { eval =>

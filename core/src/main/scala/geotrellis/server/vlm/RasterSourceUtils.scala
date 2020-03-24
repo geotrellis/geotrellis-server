@@ -18,7 +18,7 @@ package geotrellis.server.vlm
 
 import geotrellis.proj4.{CRS, WebMercator}
 import geotrellis.raster._
-import geotrellis.raster.resample.{NearestNeighbor, ResampleMethod}
+import geotrellis.raster.resample._
 import geotrellis.layer._
 
 import cats.effect.IO
@@ -33,6 +33,36 @@ trait RasterSourceUtils {
 
   implicit val uriEncoder: Encoder[URI] = Encoder.encodeString.contramap[URI](_.toString)
   implicit val uriDecoder: Decoder[URI] = Decoder[String].emap { str => Right(URI.create(str)) }
+
+  implicit val resampleMethodEncoder: Encoder[ResampleMethod] =
+    Encoder.encodeString.contramap[ResampleMethod] {
+      case NearestNeighbor  => "nearest-neighbor"
+      case Bilinear         => "bilinear"
+      case CubicConvolution => "cubic-convolution"
+      case CubicSpline      => "cubic-spline"
+      case Lanczos          => "lanczos"
+      case Average          => "average"
+      case Mode             => "mode"
+      case Median           => "median"
+      case Max              => "max"
+      case Min              => "min"
+      case Sum              => "sum"
+    }
+
+  implicit val resampleMethodDecoder: Decoder[ResampleMethod] =
+    Decoder.decodeString.map {
+      case "nearest-neighbor"  => NearestNeighbor
+      case "bilinear"          => Bilinear
+      case "cubic-convolution" => CubicConvolution
+      case "cubic-spline"      => CubicSpline
+      case "lanczos"           => Lanczos
+      case "average"           => Average
+      case "mode"              => Mode
+      case "median"            => Median
+      case "max"               => Max
+      case "min"               => Min
+      case "sum"               => Sum
+    }
 
   def getRasterSource(uri: String): RasterSource
 

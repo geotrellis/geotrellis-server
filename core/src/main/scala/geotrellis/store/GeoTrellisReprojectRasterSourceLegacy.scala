@@ -154,15 +154,15 @@ class GeoTrellisReprojectRasterSourceLegacy(
   override def resample(resampleTarget: ResampleTarget, method: ResampleMethod, strategy: OverviewStrategy): RasterSource = {
     val newReprojectOptions = ResampleTarget.toReprojectOptions(this.gridExtent, resampleTarget, method)
     val (closestLayerId, newGridExtent) = GeoTrellisReprojectRasterSourceLegacy.getClosestSourceLayer(crs, sourceLayers, newReprojectOptions, strategy)
-    new GeoTrellisReprojectRasterSourceLegacy(attributeStore, dataPath, closestLayerId, sourceLayers, newGridExtent, crs, resampleTarget, time = time, targetCellType = targetCellType)
+    new GeoTrellisReprojectRasterSourceLegacy(attributeStore, dataPath, closestLayerId, sourceLayers, newGridExtent, crs, resampleTarget, method, time = time, targetCellType = targetCellType)
   }
 
   override def convert(targetCellType: TargetCellType): RasterSource = {
-    new GeoTrellisReprojectRasterSourceLegacy(attributeStore, dataPath, layerId, sourceLayers, gridExtent, crs, resampleTarget, time = time, targetCellType = Some(targetCellType))
+    new GeoTrellisReprojectRasterSourceLegacy(attributeStore, dataPath, layerId, sourceLayers, gridExtent, crs, resampleTarget, resampleMethod, time = time, targetCellType = Some(targetCellType))
   }
 
   override def toString: String =
-    s"GeoTrellisReprojectRasterSourceLegacy(${dataPath.value},$layerId,$crs,$gridExtent,${resampleMethod})"
+    s"GeoTrellisReprojectRasterSourceLegacy(${dataPath.value},$layerId,$crs,$gridExtent,$resampleMethod)"
 }
 
 object GeoTrellisReprojectRasterSourceLegacy {

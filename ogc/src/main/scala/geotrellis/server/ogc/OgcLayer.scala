@@ -18,7 +18,6 @@ package geotrellis.server.ogc
 
 import geotrellis.server._
 import geotrellis.server.ogc.style._
-
 import geotrellis.raster._
 import geotrellis.raster.resample._
 import geotrellis.raster.io.geotiff._
@@ -26,9 +25,9 @@ import geotrellis.raster.reproject.ReprojectRasterExtent
 import geotrellis.vector.Extent
 import geotrellis.proj4.CRS
 import com.azavea.maml.ast._
-
 import cats.effect._
 import cats.data.{NonEmptyList => NEL}
+import geotrellis.raster.reproject.Reproject.Options
 
 /**
  * Layer instances are sufficent to produce displayed the end product of 'get map'
@@ -41,6 +40,7 @@ sealed trait OgcLayer {
   def title: String
   def crs: CRS
   def style: Option[OgcStyle]
+  def resampleMethod: ResampleMethod
 }
 
 case class SimpleOgcLayer(
@@ -48,7 +48,8 @@ case class SimpleOgcLayer(
   title: String,
   crs: CRS,
   source: RasterSource,
-  style: Option[OgcStyle]
+  style: Option[OgcStyle],
+  resampleMethod: ResampleMethod
 ) extends OgcLayer
 
 case class MapAlgebraOgcLayer(
@@ -57,7 +58,8 @@ case class MapAlgebraOgcLayer(
   crs: CRS,
   parameters: Map[String, SimpleOgcLayer],
   algebra: Expression,
-  style: Option[OgcStyle]
+  style: Option[OgcStyle],
+  resampleMethod: ResampleMethod
 ) extends OgcLayer
 
 object SimpleOgcLayer {
@@ -69,7 +71,7 @@ object SimpleOgcLayer {
         logger.trace(s"attempting to retrieve layer $self at extent $extent with $cs ${targetGrid.cols}x${targetGrid.rows}")
         logger.trace(s"Requested extent geojson: ${extent.toGeoJson}")
         val raster: Raster[MultibandTile] = self.source
-          .reprojectToRegion(self.crs, targetGrid.toRasterExtent, NearestNeighbor, AutoHigherResolution)
+          .reprojectToRegion(self.crs, targetGrid.toRasterExtent, self.resampleMethod, AutoHigherResolution)
           .read(extent)
           .getOrElse(throw new Exception(s"Unable to retrieve layer $self at extent $extent $cs"))
         logger.trace(s"Successfully retrieved layer $self at extent $extent with f $cs ${targetGrid.cols}x${targetGrid.rows}")
@@ -83,7 +85,7 @@ object SimpleOgcLayer {
       IO {
         val rasterExtents = self.source.resolutions.map { cs =>
           val re = RasterExtent(self.source.extent, cs)
-          ReprojectRasterExtent(re, self.source.crs, self.crs)
+          ReprojectRasterExtent(re, self.source.crs, self.crs, Options.DEFAULT.copy(method = self.resampleMethod))
         }
         NEL.fromList(rasterExtents).get
       }
