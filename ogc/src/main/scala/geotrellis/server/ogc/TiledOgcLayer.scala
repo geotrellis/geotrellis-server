@@ -20,6 +20,7 @@ import geotrellis.server._
 import geotrellis.server.ogc.style.OgcStyle
 import geotrellis.layer._
 import geotrellis.raster._
+import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.raster.reproject.ReprojectRasterExtent
 import geotrellis.raster.reproject.Reproject.Options
 import geotrellis.vector.Extent
@@ -51,7 +52,7 @@ case class SimpleTiledOgcLayer(
   layout: LayoutDefinition,
   source: RasterSource,
   style: Option[OgcStyle],
-  resampleMethod: ResampleMethod
+  resampleMethod: ResampleMethod = NearestNeighbor
 ) extends TiledOgcLayer
 
 case class MapAlgebraTiledOgcLayer(
@@ -62,7 +63,7 @@ case class MapAlgebraTiledOgcLayer(
   parameters: Map[String, SimpleTiledOgcLayer],
   algebra: Expression,
   style: Option[OgcStyle],
-  resampleMethod: ResampleMethod
+  resampleMethod: ResampleMethod = NearestNeighbor
 ) extends TiledOgcLayer
 
 object SimpleTiledOgcLayer {

@@ -20,9 +20,9 @@ import geotrellis.server._
 import geotrellis.server.vlm._
 import geotrellis.proj4.WebMercator
 import geotrellis.raster._
+import geotrellis.raster.resample.NearestNeighbor
 import geotrellis.raster.geotiff.GeoTiffRasterSource
 import geotrellis.raster.io.geotiff.AutoHigherResolution
-
 import geotrellis.vector.Extent
 
 import _root_.io.circe._
@@ -32,7 +32,7 @@ import cats.data.{NonEmptyList => NEL}
 
 import java.net.URI
 
-case class GeoTiffNode(uri: URI, band: Int, celltype: Option[CellType], resampleMethod: ResampleMethod)
+case class GeoTiffNode(uri: URI, band: Int, celltype: Option[CellType], resampleMethod: ResampleMethod = NearestNeighbor)
 
 object GeoTiffNode extends RasterSourceUtils {
   def getRasterSource(uri: String): GeoTiffRasterSource = GeoTiffRasterSource(uri)

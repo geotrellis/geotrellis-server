@@ -21,13 +21,12 @@ import geotrellis.raster._
 import geotrellis.raster.geotiff._
 import geotrellis.raster.io.geotiff.AutoHigherResolution
 import geotrellis.raster.resample.NearestNeighbor
-import geotrellis.proj4.WebMercator
 import geotrellis.vector.Extent
 
 import cats.effect._
 import cats.data.{NonEmptyList => NEL}
 
-case class ResourceTile(name: String, resampleMethod: ResampleMethod) {
+case class ResourceTile(name: String, resampleMethod: ResampleMethod = NearestNeighbor) {
   def uri = {
     val f = getClass.getResource(s"/$name").getFile
     s"file://$f"

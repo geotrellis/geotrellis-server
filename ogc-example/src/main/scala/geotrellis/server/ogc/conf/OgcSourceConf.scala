@@ -18,7 +18,7 @@ package geotrellis.server.ogc.conf
 
 import geotrellis.server.ogc._
 import geotrellis.raster.{RasterSource, ResampleMethod}
-
+import geotrellis.raster.resample.NearestNeighbor
 import com.azavea.maml.ast._
 
 // This sumtype corresponds to the in-config representation of a source
@@ -34,7 +34,7 @@ case class SimpleSourceConf(
   sources: List[String],
   defaultStyle: Option[String],
   styles: List[StyleConf],
-  resampleMethod: ResampleMethod
+  resampleMethod: ResampleMethod = NearestNeighbor
 ) extends OgcSourceConf {
   def models: List[SimpleSource] =
     sources.map(uri =>
@@ -47,7 +47,7 @@ case class MapAlgebraSourceConf(
   algebra: Expression,
   defaultStyle: Option[String],
   styles: List[StyleConf],
-  resampleMethod: ResampleMethod
+  resampleMethod: ResampleMethod = NearestNeighbor
 ) extends OgcSourceConf {
   private def listParams(expr: Expression): List[String] = {
     def eval(subExpr: Expression): List[String] = subExpr match {
