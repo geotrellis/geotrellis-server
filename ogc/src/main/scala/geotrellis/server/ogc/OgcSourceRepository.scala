@@ -17,9 +17,8 @@
 package geotrellis.server.ogc
 
 import geotrellis.store.query._
-
-import io.circe.Json
 import higherkindness.droste.{Algebra, scheme}
+import io.circe.Json
 import jp.ne.opt.chronoscala.Imports._
 
 case class OgcSourceRepository(store: List[OgcSource]) extends Repository[List] {
@@ -34,10 +33,20 @@ object OgcSourceRepository {
     case All()               => identity
     case WithName(name)      => _.filter(_.name == name)
     case WithNames(names)    => _.filter(rs => names.contains(rs.name))
-    case At(t, _)           => _.filter(_.time.exists(_ == t))
-    case Between(t1, t2, _) => _.filter { _.time match {
-        case Some(t) => t1 <= t && t < t2
-        case _ => false
+    case At(t, _)           => _.filter(_.timeInterval match {
+      case Some(OgcTimeInterval(start, None, _)) => start == t
+      case Some(OgcTimeInterval(start, Some(end), _)) => start <= t && t <= end
+      // Assume valid OgcLayers with no explicit temporal component are valid
+      // at all times so they aren't excluded when optional TIME param is null
+      case None => true
+    })
+    case Between(t1, t2, _) => _.filter { _.timeInterval match {
+        case Some(OgcTimeInterval(start, None, _)) => t1 <= start && start <= t2
+        case Some(OgcTimeInterval(start, Some(end), _)) =>
+          t1 <= start && start <= t2 || t1 <= end && end <= t2
+        // Assume valid OgcLayers with no explicit temporal component are valid
+        // at all times so they aren't excluded when optional TIME param is null
+        case _ => true
       }
     }
     case Intersects(e) => _.filter(_.nativeProjectedExtent.intersects(e))

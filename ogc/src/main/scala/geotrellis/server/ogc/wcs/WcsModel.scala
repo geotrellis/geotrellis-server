@@ -30,10 +30,19 @@ case class WcsModel(
     val filteredSources = sources.find(p.toQuery)
     logger.debug(s"Filtering sources: ${sources.store.length} -> ${filteredSources.length}")
     filteredSources.map {
-        case SimpleSource(name, title, source, _, styles, resampleMethod) =>
+        case SimpleSource(name, title, source, _, _, resampleMethod) =>
           SimpleOgcLayer(name, title, p.crs, source, None, resampleMethod)
-        case MapAlgebraSource(name, title, sources, algebra, _, styles, resampleMethod) =>
-          val simpleLayers = sources.mapValues { rs => SimpleOgcLayer(name, title, p.crs, rs, None, resampleMethod) }
+        case gts @ GeoTrellisOgcSource(name, title, _, _, _, resampleMethod, _) =>
+          val source = if (p.temporalSequence.nonEmpty) {
+            gts.sourceForTime(p.temporalSequence.head)
+          } else {
+            gts.source
+          }
+          SimpleOgcLayer(name, title, p.crs, source, None, resampleMethod)
+        case MapAlgebraSource(name, title, sources, algebra, _, _, resampleMethod) =>
+          val simpleLayers = sources.mapValues { rs =>
+            SimpleOgcLayer(name, title, p.crs, rs, None, resampleMethod)
+          }
           MapAlgebraOgcLayer(name, title, p.crs, simpleLayers, algebra, None, resampleMethod)
       }
   }

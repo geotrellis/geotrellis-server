@@ -16,24 +16,25 @@
 
 package geotrellis.server.ogc
 
-import geotrellis.server.extent.SampleUtils
-import geotrellis.server.ogc.wms._
-import geotrellis.server.ogc.style._
-
-import geotrellis.raster._
-import geotrellis.vector.{Extent, ProjectedExtent}
-import geotrellis.proj4.CRS
-
-import com.azavea.maml.ast._
-import cats.data.{NonEmptyList => NEL}
-import opengis.wms.BoundingBox
-
 import java.time.ZonedDateTime
+
+import cats.data.{NonEmptyList => NEL}
+import cats.syntax.option._
+import com.azavea.maml.ast.Expression
+import geotrellis.proj4.CRS
+import geotrellis.raster._
+import geotrellis.server.extent.SampleUtils
+import geotrellis.server.ogc.style._
+import geotrellis.server.ogc.wms.CapabilitiesView
+import geotrellis.store.{GeoTrellisPath, GeoTrellisRasterSourceLegacy, LayerHeader}
+import geotrellis.vector.{Extent, ProjectedExtent}
+import jp.ne.opt.chronoscala.Imports._
+import opengis.wms.BoundingBox
 
 /**
  * This trait and its implementing types should be jointly sufficient, along with a WMS 'GetMap'
  *  (or a WMTS 'GetTile' or a WCS 'GetCoverage' etc etc) request to produce a visual layer
- *  (represented more fully by the [[OgcLayer]] hierarchy.
+ *  (represented more fully by [[OgcLayer]].
  *  This type represents *merely* that there is some backing by which valid OGC layers
  *  can be realized. Its purpose is to provide the appropriate level of abstraction for OGC
  *  services to conveniently reuse the same data about underlying imagery
@@ -50,10 +51,30 @@ trait OgcSource {
   def nativeCrs: Set[CRS]
   def metadata: RasterMetadata
   def attributes: Map[String, String]
-  def time: Option[ZonedDateTime]
   def resampleMethod: ResampleMethod
+  def timeInterval: Option[OgcTimeInterval]
 
   def nativeProjectedExtent: ProjectedExtent = ProjectedExtent(nativeExtent, nativeCrs.head)
+}
+
+trait RasterOgcSource extends OgcSource {
+  def source: RasterSource
+
+  def extentIn(crs: CRS): Extent = {
+    val reprojected = source.reproject(crs)
+    reprojected.extent
+  }
+
+  def bboxIn(crs: CRS): BoundingBox = {
+    val reprojected = source.reproject(crs)
+    CapabilitiesView.boundingBox(crs, reprojected.extent, reprojected.cellSize)
+  }
+
+  lazy val nativeRE: GridExtent[Long]      = source.gridExtent
+  lazy val nativeCrs: Set[CRS]             = Set(source.crs)
+  lazy val nativeExtent: Extent            = source.extent
+  lazy val metadata: RasterMetadata        = source.metadata
+  lazy val attributes: Map[String, String] = metadata.attributes
 }
 
 /**
@@ -66,23 +87,58 @@ case class SimpleSource(
   defaultStyle: Option[String],
   styles: List[OgcStyle],
   resampleMethod: ResampleMethod
-) extends OgcSource {
-  def extentIn(crs: CRS): Extent = {
-    val reprojected = source.reproject(crs)
-    reprojected.extent
-  }
+) extends RasterOgcSource {
+  val timeInterval: Option[OgcTimeInterval] = None
+}
 
-  def bboxIn(crs: CRS): BoundingBox = {
-    val reprojected = source.reproject(crs)
-    CapabilitiesView.boundingBox(crs, reprojected.extent, reprojected.cellSize)
-  }
+case class GeoTrellisOgcSource(
+  name: String,
+  title: String,
+  sourceUri: String,
+  defaultStyle: Option[String],
+  styles: List[OgcStyle],
+  resampleMethod: ResampleMethod,
+  timeMetadataKey: String = "times"
+) extends RasterOgcSource {
 
-  lazy val time: Option[ZonedDateTime]     = attributes.get("time").map(ZonedDateTime.parse)
-  lazy val nativeRE: GridExtent[Long]      = source.gridExtent
-  lazy val nativeCrs: Set[CRS]             = Set(source.crs)
-  lazy val nativeExtent: Extent            = source.extent
-  lazy val metadata: RasterMetadata        = source.metadata
-  lazy val attributes: Map[String, String] = metadata.attributes
+  private val dataPath = GeoTrellisPath.parse(sourceUri)
+
+  lazy val source = GeoTrellisRasterSourceLegacy(dataPath)
+
+  lazy val timeInterval: Option[OgcTimeInterval] =
+    if (!source.isTemporal) None
+    else if (source.times.size == 1) OgcTimeInterval(source.times.head).some
+    else OgcTimeInterval(source.times.min, source.times.max.some, None).some
+
+  /**
+   * If temporal, try to match in the following order:
+   *  1. To the closest time in known valid source times
+   *  2. To timeInterval.start
+   *  3. To the passed interval.start
+   *
+   *  @note If case 3 is matched, read queries to the returned
+   *        RasterSource may return zero results.
+   *
+   * @param interval
+   * @return
+   */
+  def sourceForTime(interval: OgcTimeInterval): GeoTrellisRasterSourceLegacy =
+    if (source.isTemporal) {
+      val defaultTime = timeInterval.getOrElse(interval).start
+      source.times.find { t =>
+        interval match {
+          case OgcTimeInterval(start, None, _)      => start == t
+          case OgcTimeInterval(start, Some(end), _) => start <= t && t < end
+          case _                                    => false
+        }
+      }.fold(sourceForTime(defaultTime))(sourceForTime)
+    } else {
+      source
+    }
+
+  def sourceForTime(time: ZonedDateTime): GeoTrellisRasterSourceLegacy =
+    if (source.isTemporal) GeoTrellisRasterSourceLegacy(dataPath, Some(time))
+    else source
 }
 
 case class MapAlgebraSourceMetadata(
@@ -177,10 +233,10 @@ case class MapAlgebraSource(
     new GridExtent[Long](nativeExtent, cellSize)
   }
 
-  val time: Option[ZonedDateTime]      = None
-  val attributes: Map[String, String]  = Map.empty
-  lazy val nativeCrs: Set[CRS]         = sources.values.map(_.crs).toSet
-  lazy val minBandCount: Int           = sources.values.map(_.bandCount).min
-  lazy val cellTypes: Set[CellType]    = sources.values.map(_.cellType).toSet
-  lazy val resolutions: List[CellSize] = sources.values.flatMap(_.resolutions).toList.distinct
+  val timeInterval: Option[OgcTimeInterval] = None
+  val attributes: Map[String, String]       = Map.empty
+  lazy val nativeCrs: Set[CRS]              = sources.values.map(_.crs).toSet
+  lazy val minBandCount: Int                = sources.values.map(_.bandCount).min
+  lazy val cellTypes: Set[CellType]         = sources.values.map(_.cellType).toSet
+  lazy val resolutions: List[CellSize]      = sources.values.flatMap(_.resolutions).toList.distinct
 }

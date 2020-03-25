@@ -16,14 +16,9 @@
 
 package geotrellis.server.ogc.wms
 
-import java.time.ZonedDateTime
-
-import cats.implicits._
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.style._
 import geotrellis.server.ogc.wms.WmsParams.GetMap
-import jp.ne.opt.chronoscala.Imports._
-
 
 /** This class holds all the information necessary to construct a response to a WMS request */
 case class WmsModel(
@@ -32,46 +27,35 @@ case class WmsModel(
   sources: OgcSourceRepository
 ) {
 
-  private lazy val times: List[ZonedDateTime] = sources.store.flatMap(_.time)
-
-  lazy val temporalRange: Option[OgcTimeInterval] = {
-    times match {
-      case Nil => None
-      case head :: Nil => OgcTimeInterval(head).some
-      case list => OgcTimeInterval(list.min, Some(list.max), None).some
-    }
-  }
+  def timeInterval: Option[OgcTimeInterval] =
+    sources.store.flatMap(_.timeInterval).reduceOption(_ combine _)
 
   /** Take a specific request for a map and combine it with the relevant [[OgcSource]]
-   *  to produce an [[OgcLayer]]
-   */
-  def getLayer(params: GetMap): List[OgcLayer] = {
-    val p = temporalRange match {
-      // Add default time to GetMap params if this is a temporal layer and the user didn't request a specific time
-      case Some(timeInterval) if params.time.isEmpty =>
-        params.copy(time = OgcTimeInterval(timeInterval.start).some)
-      case _ => params
-    }
-    for {
-      supportedCrs <- parentLayerMeta.supportedProjections.find(_ == p.crs).toList
-      source       <- sources.find(p.toQuery)
-    } yield {
-      val styleName: Option[String] =
-        p.styles
-          .headOption
-          .filterNot(_.isEmpty)
-          .orElse(source.defaultStyle)
-      val style: Option[OgcStyle] =
-        styleName.flatMap { name => source.styles.find(_.name == name) }
-      source match {
-        case MapAlgebraSource(name, title, rasterSources, algebra, defaultStyle, styles, resampleMethod) =>
-          val simpleLayers = rasterSources.mapValues { rs =>
-            SimpleOgcLayer(name, title, supportedCrs, rs, style, resampleMethod)
+    *  to produce an [[OgcLayer]]
+    */
+  def getLayer(p: GetMap): List[OgcLayer] = {
+    parentLayerMeta.supportedProjections
+      .find(_ == p.crs)
+      .fold[List[OgcLayer]](List()) { supportedCrs =>
+        sources.find(p.toQuery).map { source =>
+          val styleName: Option[String] = p.styles.headOption.filterNot(_.isEmpty)
+            .orElse(source.defaultStyle)
+          val style: Option[OgcStyle] = styleName.flatMap { name =>
+            source.styles.find(_.name == name)
           }
-          MapAlgebraOgcLayer(name, title, supportedCrs, simpleLayers, algebra, style, resampleMethod)
-        case SimpleSource(name, title, rasterSource, defaultStyle, styles, resampleMethod) =>
-          SimpleOgcLayer(name, title, supportedCrs, rasterSource, style, resampleMethod)
+          source match {
+            case MapAlgebraSource(name, title, rasterSources, algebra, _, _, resampleMethod) =>
+              val simpleLayers = rasterSources.mapValues { rs =>
+                SimpleOgcLayer(name, title, supportedCrs, rs, style, resampleMethod)
+              }
+              MapAlgebraOgcLayer(name, title, supportedCrs, simpleLayers, algebra, style, resampleMethod)
+            case SimpleSource(name, title, rasterSource, _, _, resampleMethod) =>
+              SimpleOgcLayer(name, title, supportedCrs, rasterSource, style, resampleMethod)
+            case gts @ GeoTrellisOgcSource(name, title, _, _, _, resampleMethod, _) =>
+              val rasterSource = p.time.fold(gts.source)(gts.sourceForTime)
+              SimpleOgcLayer(name, title, supportedCrs, rasterSource, style, resampleMethod)
+          }
+        }
       }
-    }
   }
 }

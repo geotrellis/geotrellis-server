@@ -30,8 +30,8 @@ import cats.data.{NonEmptyList => NEL}
 import geotrellis.raster.reproject.Reproject.Options
 
 /**
- * Layer instances are sufficent to produce displayed the end product of 'get map'
- *  requests. They are produced in [[RasterSourcesModel]] from a combination of a WMS 'GetMap'
+ * OgcLayer instances are sufficient to produce visual rasters as the end product of 'get map'
+ *  requests. They are produced from a combination of a WMS 'GetMap'
  *  (or whatever the analogous request in whatever OGC service is being produced) and an instance
  *  of [[OgcSource]]
  */
@@ -43,6 +43,10 @@ sealed trait OgcLayer {
   def resampleMethod: ResampleMethod
 }
 
+sealed trait RasterOgcLayer {
+  def source: RasterSource
+}
+
 case class SimpleOgcLayer(
   name: String,
   title: String,
@@ -50,7 +54,7 @@ case class SimpleOgcLayer(
   source: RasterSource,
   style: Option[OgcStyle],
   resampleMethod: ResampleMethod
-) extends OgcLayer
+) extends OgcLayer with RasterOgcLayer
 
 case class MapAlgebraOgcLayer(
   name: String,

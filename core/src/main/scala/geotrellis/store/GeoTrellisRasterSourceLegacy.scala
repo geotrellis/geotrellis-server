@@ -22,11 +22,10 @@ import geotrellis.raster.resample.{NearestNeighbor, ResampleMethod}
 import geotrellis.raster._
 import geotrellis.layer._
 import geotrellis.layer.filter._
-import geotrellis.store.index.hilbert.HilbertSpaceTimeKeyIndex
-import geotrellis.store.index.zcurve.ZSpaceTimeKeyIndex
 import geotrellis.vector._
+import jp.ne.opt.chronoscala.Imports._
 
-import java.time.{ZoneOffset, ZonedDateTime}
+import java.time.ZonedDateTime
 
 case class LayerLegacy(id: LayerId, metadata: TileLayerMetadata[_], bandCount: Int) {
   /** GridExtent of the data pixels in the layer */
@@ -48,8 +47,9 @@ class GeoTrellisRasterSourceLegacy(
   val attributeStore: AttributeStore,
   val dataPath: GeoTrellisPath,
   val sourceLayers: Stream[LayerLegacy],
+  val targetCellType: Option[TargetCellType],
   val time: Option[ZonedDateTime],
-  val targetCellType: Option[TargetCellType]
+  val timeMetadataKey: String = "times"
 ) extends RasterSource {
   import GeoTrellisRasterSourceLegacy._
   def name: GeoTrellisPath = dataPath
@@ -67,10 +67,15 @@ class GeoTrellisRasterSourceLegacy(
 
   def layerId: LayerId = dataPath.layerId
 
+  private val logger = org.log4s.getLogger
+
   lazy val reader = CollectionLayerReader(attributeStore, dataPath.value)
 
   // read metadata directly instead of searching sourceLayers to avoid unneeded reads
-  lazy val layerMetadata: TileLayerMetadata[_] = reader.attributeStore.readMetadataErased(layerId)
+  lazy val layerMetadata: TileLayerMetadata[_] = {
+    logger.debug(s"RasterSource(${dataPath.value}): Reading layerMetadata")
+    reader.attributeStore.readMetadataErased(layerId)
+  }
 
   lazy val gridExtent: GridExtent[Long] = layerMetadata.layout.createAlignedGridExtent(layerMetadata.extent)
 
@@ -94,6 +99,18 @@ class GeoTrellisRasterSourceLegacy(
 
   // reference to this will fully initilze the sourceLayers stream
   lazy val resolutions: List[CellSize] = sourceLayers.map(_.gridExtent.cellSize).toList
+
+  lazy val times: List[ZonedDateTime] = {
+    val layerId = dataPath.layerId
+    val header = attributeStore.readHeader[LayerHeader](layerId)
+    if (header.keyClass.contains("SpaceTimeKey")) {
+      attributeStore.read[List[ZonedDateTime]](layerId, "times").sorted
+    } else {
+      List.empty[ZonedDateTime]
+    }
+  }
+
+  lazy val isTemporal: Boolean = times.nonEmpty
 
   override def read(extent: Extent, bands: Seq[Int]): Option[Raster[MultibandTile]] =
     GeoTrellisRasterSourceLegacy.read(reader, layerId, layerMetadata, extent, bands).map(convertRaster)
@@ -136,7 +153,7 @@ class GeoTrellisRasterSourceLegacy(
   }
 
   override def convert(targetCellType: TargetCellType): RasterSource =
-    new GeoTrellisRasterSourceLegacy(attributeStore, dataPath, sourceLayers, time, Some(targetCellType))
+    new GeoTrellisRasterSourceLegacy(attributeStore, dataPath, sourceLayers, Some(targetCellType), time)
 
   override def toString: String =
     s"GeoTrellisRasterSourceLegacy($dataPath, $layerId)"
@@ -257,53 +274,20 @@ object GeoTrellisRasterSourceLegacy {
     }
   }
 
-  /**
-   * Build function that can build a list of RasterSources
-   * slicing them by time (in case of a temporal raster source).
-   *
-   * @param attributeStore GeoTrellis attribute store
-   * @param dataPath       GeoTrellis catalog DataPath
-   * @param sourceLayers   List of source layers
-   * @param tResolution    Layer temporal resolution, if not provided the function will try to derive it.
-   * @param targetCellType The target cellType
-   */
-  def build(
-    attributeStore: AttributeStore,
-    dataPath: GeoTrellisPath,
-    sourceLayers: Stream[LayerLegacy],
-    tResolution: Option[Long],
-    targetCellType: Option[TargetCellType]
-  ): List[GeoTrellisRasterSourceLegacy] = {
-    val layerId = dataPath.layerId
-    val header = attributeStore.readHeader[LayerHeader](layerId)
+  def apply(dataPath: GeoTrellisPath): GeoTrellisRasterSourceLegacy = GeoTrellisRasterSourceLegacy(dataPath, None, None)
 
-    if(header.keyClass.contains("SpatialKey"))
-      new GeoTrellisRasterSourceLegacy(attributeStore, dataPath, sourceLayers, None, targetCellType) :: Nil
-    else {
-      val md = attributeStore.readMetadata[TileLayerMetadata[SpaceTimeKey]](layerId)
-      val keyIndex = attributeStore.readKeyIndex[SpaceTimeKey](layerId)
-      val temporalResolution = tResolution.getOrElse(keyIndex match {
-        case ki if ki.isInstanceOf[ZSpaceTimeKeyIndex]       => ki.asInstanceOf[ZSpaceTimeKeyIndex].temporalResolution
-        case ki if ki.isInstanceOf[HilbertSpaceTimeKeyIndex] => ki.asInstanceOf[ZSpaceTimeKeyIndex].temporalResolution
-        case ki => throw new UnsupportedOperationException(s"Can't derive layer temporal resolution for ${ki.getClass}, try to pass a tResolution parameter explicitly.")
-      })
+  def apply(dataPath: GeoTrellisPath, time: Option[ZonedDateTime]): GeoTrellisRasterSourceLegacy = GeoTrellisRasterSourceLegacy(dataPath, time, None)
 
-      md.bounds match {
-        case KeyBounds(minKey, maxKey) =>
-          (minKey.time.toInstant.toEpochMilli to maxKey.time.toInstant.toEpochMilli by temporalResolution).toList.map { time =>
-            new GeoTrellisRasterSourceLegacy(attributeStore, dataPath, sourceLayers, Some(ZonedDateTime.ofInstant(time, ZoneOffset.UTC)), targetCellType)
-          }
-        case _ => Nil
-      }
-    }
-  }
-
-  def build(attributeStore: AttributeStore, dataPath: GeoTrellisPath): List[GeoTrellisRasterSourceLegacy] =
-    build(
-      attributeStore, dataPath,
-      GeoTrellisRasterSourceLegacy.getSourceLayersByName(attributeStore, dataPath.layerName, dataPath.bandCount.getOrElse(1)),
-      None, None
+  def apply(dataPath: GeoTrellisPath, time: Option[ZonedDateTime], targetCellType: Option[TargetCellType]): GeoTrellisRasterSourceLegacy = {
+    val attributeStore = AttributeStore(dataPath.value)
+    new GeoTrellisRasterSourceLegacy(
+      attributeStore,
+      dataPath,
+      GeoTrellisRasterSourceLegacy.getSourceLayersByName(
+        attributeStore, dataPath.layerName, dataPath.bandCount.getOrElse(1)
+      ),
+      targetCellType,
+      time
     )
-
-  def build(dataPath: GeoTrellisPath): List[GeoTrellisRasterSourceLegacy] = build(AttributeStore(dataPath.value), dataPath)
+  }
 }
