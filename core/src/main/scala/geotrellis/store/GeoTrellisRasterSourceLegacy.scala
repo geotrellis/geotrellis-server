@@ -22,7 +22,6 @@ import geotrellis.raster.resample.{NearestNeighbor, ResampleMethod}
 import geotrellis.raster._
 import geotrellis.layer._
 import geotrellis.layer.filter._
-import geotrellis.store.query.CirceCompat._
 import geotrellis.vector._
 import jp.ne.opt.chronoscala.Imports._
 
