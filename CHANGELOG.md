@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
  
 - The `layers.layer-name.sources` field in application.conf is renamed to `source` and now supports a single RasterSource URI string. See `ogc-example/src/main/resources/application.conf` for examples. 
+- `type = "simplesourceconf"` should be changed to `type = "rastersourceconf"` in application.conf
 
 ### Fixed
 
