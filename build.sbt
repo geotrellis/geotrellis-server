@@ -44,8 +44,8 @@ lazy val commonSettings = Seq(
     Resolver.sonatypeRepo("releases"),
     Resolver.sonatypeRepo("snapshots"),
     "osgeo" at "https://download.osgeo.org/webdav/geotools/",
-    "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
-    "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots"
+    "eclipse-releases" at "https://repo.eclipse.org/content/groups/releases",
+    "eclipse-snapshots" at "https://repo.eclipse.org/content/groups/snapshots"
   ),
   addCompilerPlugin(kindProjector cross CrossVersion.full),
   addCompilerPlugin(macrosParadise cross CrossVersion.full),
