@@ -17,13 +17,14 @@
 package geotrellis.server.ogc
 
 import geotrellis.server.ogc.style._
-
+import geotrellis.server.ogc.utils.ScalaxbUtils
+import cats.syntax.option._
 import opengis._
 import opengis.wms._
 import scalaxb._
-
 import java.net.URI
-import scala.xml.NamespaceBinding
+
+import scala.xml.{Elem, NamespaceBinding, NodeSeq}
 
 package object wms {
   val wmsScope: NamespaceBinding = scalaxb.toScope(
@@ -70,4 +71,10 @@ package object wms {
         "@{http://www.w3.org/1999/xlink}actuate" -> that.actuate.map(v => DataRecord(xlink.ActuateType.fromString(v, scope = scalaxb.toScope(Some("xlink") -> "http://www.w3.org/1999/xlink"))))
       ).collect { case (k, Some(v)) => k -> v })
   }
+
+  def ExtendedElement[A](key: String, records: DataRecord[A]*): Elem =
+    ScalaxbUtils.toXML(DataRecord(None, key.some, records.map(ScalaxbUtils.toXML(_)).foldLeft(NodeSeq.Empty)((acc, e) => acc ++ e)))
+
+  def ExtendedCapabilities[A](records: Elem*): List[DataRecord[Elem]] =
+    DataRecord(ScalaxbUtils.toXML(DataRecord(None, "ExtendedCapabilities".some, ScalaxbUtils.toXML(DataRecord(None, "GetMap".some, records.foldLeft(NodeSeq.Empty)((acc, e) => acc ++ e)))))) :: Nil
 }
