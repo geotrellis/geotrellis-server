@@ -18,18 +18,19 @@ package geotrellis.server.ogc.utils
 
 import scalaxb.DataRecord
 
+import scala.xml.XML
 import scala.xml.Elem
 
 object ScalaxbUtils {
-  def toXML[A](record: DataRecord[A], skipValue: Boolean = false): Elem = {
-    if (!skipValue) (record.namespace, record.key, record.value) match {
-      case (None, Some(k), _) => scala.xml.XML.loadString(s"<$k>${record.value}</$k>")
-      case (Some(n), Some(k), _) => scala.xml.XML.loadString(s"<$n:$k>${record.value}</$n:$k>")
-      case _ => scala.xml.XML.loadString(s"<${record.value}/>")
+  def toXML[A](record: DataRecord[A], dropValue: Boolean = false): Elem = {
+    if (!dropValue) (record.namespace, record.key, record.value) match {
+      case (None, Some(k), _)    => XML.loadString(s"<$k>${record.value}</$k>")
+      case (Some(n), Some(k), _) => XML.loadString(s"<$n:$k>${record.value}</$n:$k>")
+      case _                     => XML.loadString(s"<${record.value}/>")
     } else (record.namespace, record.key, record.value) match {
-      case (None, Some(k), _) => scala.xml.XML.loadString(s"<$k/>")
-      case (Some(n), Some(k), _) => scala.xml.XML.loadString(s"<$n:$k/>")
-      case _ => throw new IllegalArgumentException(s"The passed record $record should contain namespace or key.")
+      case (None, Some(k), _)    => XML.loadString(s"<$k/>")
+      case (Some(n), Some(k), _) => XML.loadString(s"<$n:$k/>")
+      case _                     => throw new IllegalArgumentException(s"The passed record $record should contain namespace or key.")
     }
   }
 }

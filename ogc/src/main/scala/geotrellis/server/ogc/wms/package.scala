@@ -17,11 +17,12 @@
 package geotrellis.server.ogc
 
 import geotrellis.server.ogc.style._
-import geotrellis.server.ogc.utils.ScalaxbUtils
+import geotrellis.server.ogc.utils._
 import cats.syntax.option._
 import opengis._
 import opengis.wms._
 import scalaxb._
+
 import java.net.URI
 
 import scala.xml.{Elem, NamespaceBinding, NodeSeq}
@@ -73,8 +74,8 @@ package object wms {
   }
 
   def ExtendedElement[A](key: String, records: DataRecord[A]*): Elem =
-    ScalaxbUtils.toXML(DataRecord(None, key.some, records.map(ScalaxbUtils.toXML(_)).foldLeft(NodeSeq.Empty)((acc, e) => acc ++ e)))
+    DataRecord(None, key.some, records.map(_.toXML).foldLeft(NodeSeq.Empty)((acc, e) => acc ++ e)).toXML
 
   def ExtendedCapabilities[A](records: Elem*): List[DataRecord[Elem]] =
-    DataRecord(ScalaxbUtils.toXML(DataRecord(None, "ExtendedCapabilities".some, ScalaxbUtils.toXML(DataRecord(None, "GetMap".some, records.foldLeft(NodeSeq.Empty)((acc, e) => acc ++ e)))))) :: Nil
+    DataRecord(DataRecord(None, "ExtendedCapabilities".some, DataRecord(None, "GetMap".some, records.foldLeft(NodeSeq.Empty)((acc, e) => acc ++ e)).toXML).toXML) :: Nil
 }

@@ -18,6 +18,8 @@ package geotrellis.server.ogc.wms
 
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.style._
+import geotrellis.server.ogc.utils._
+
 import geotrellis.proj4.{CRS, LatLng}
 import geotrellis.raster.CellSize
 import geotrellis.vector.Extent
@@ -25,11 +27,10 @@ import cats.syntax.option._
 import opengis.wms._
 import opengis._
 import scalaxb._
+
 import java.net.URL
 
-import geotrellis.server.ogc.utils.ScalaxbUtils
-
-import scala.xml.{Elem, TopScope}
+import scala.xml.Elem
 
 /**
   *
@@ -66,10 +67,10 @@ class CapabilitiesView(
       val extendedCapabilities = {
         val targetCells = DataRecord(
           None, "target".some,
-          ScalaxbUtils.toXML(DataRecord("all")) ++
-          ScalaxbUtils.toXML(DataRecord("data")) ++
-          ScalaxbUtils.toXML(DataRecord("nodata")) ++
-          ScalaxbUtils.toXML(DataRecord(None, "default".some, "all"))
+          DataRecord("all").toXML ++
+          DataRecord("data").toXML ++
+          DataRecord("nodata").toXML ++
+          DataRecord(None, "default".some, "all").toXML
         )
 
         val focalHillshade: Elem = ExtendedElement(
