@@ -118,6 +118,28 @@ addition-house-income = {
 }
 ```
 
+##### Temporal Layers
+
+GeoTrellis server allows to operate with temporal layers, however there are some requirements on the 
+layer metadata available in the layer `AttributeStore`. 
+
+All the temporal information (all the time points / slices supported by the layer) 
+should be stored in the `"times"` attribute field explicitly. 
+
+The example below shows how to add it into the layer:
+
+```scala
+import geotrellis.store.{AttributeStore, GeoTrellisPath}
+import java.time.ZonedDateTime
+  
+val path: GeoTrellisPath = "gt+s3://azavea-datahub/catalog?layer=us-census-median-household-income-30m-epsg3857&zoom=12&band_count=1"
+val attributeStore = AttributeStore(path.value)
+attributeStore.write[List[ZonedDateTime]](path.layerId, "times", List(ZonedDateTime.now))
+
+// to check out that it was written it is possible to use the read method (an unnecessary part)
+val times = attributeStore.read[List[ZonedDateTime]](path.layerId, "times")
+```
+
 ##### Alternative layer backends
 
 `RasterSource`s support s3, filesystem, HDFS, HBase, Accumulo, and
