@@ -21,12 +21,9 @@ of complex layers with MAML requires special tuning, look to
 used directly in the configuration file to support complex, map algebra
 layers) are interpreted.
 
-### Contents
+## Contents
 
 - [Starting the server](usage.md)
 - [Modifying configuration](conf.md)
 - [Custom MAML](maml.md)
 - [Available MAML operations](maml-operations.md)
-
-
-
