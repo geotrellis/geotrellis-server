@@ -120,7 +120,7 @@ addition-house-income = {
 
 ##### Temporal Layers
 
-GeoTrellis server allows to operate with temporal layers, however there are some requirements on the 
+GeoTrellis server provides temporal support for WMS and WCS layers, however there are some requirements on the 
 layer metadata available in the layer `AttributeStore`. 
 
 All the temporal information (all the time points / slices supported by the layer) 
@@ -139,6 +139,8 @@ attributeStore.write[List[ZonedDateTime]](path.layerId, "times", List(ZonedDateT
 // to check out that it was written it is possible to use the read method (an unnecessary part)
 val times = attributeStore.read[List[ZonedDateTime]](path.layerId, "times")
 ```
+
+For more information on how to query and visualize temporal WMS layers, see [temporal-layers.md](./temporal-layers.md).
 
 ##### Alternative layer backends
 
