@@ -16,6 +16,9 @@
 
 package geotrellis.server.ogc.utils
 
+import geotrellis.server.ogc.params.ExtendedParameters
+
+import com.azavea.maml.ast.Expression
 import scalaxb.DataRecord
 
 import scala.xml.Elem
@@ -23,6 +26,12 @@ import scala.xml.Elem
 trait Implicits {
   implicit class DataRecordMethods[A](dataRecord: DataRecord[A]) {
     def toXML: Elem = ScalaxbUtils.toXML(dataRecord)
+  }
+
+  implicit class ExpressionMethods(expr: Expression) {
+    def bindExtendedParameters(extendedParameters: Option[ExtendedParameters]): Expression = {
+      extendedParameters.fold(expr)(_.bindExpression(expr))
+    }
   }
 }
 

@@ -19,6 +19,7 @@ package geotrellis.server.ogc.wms
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.style._
 import geotrellis.server.ogc.wms.WmsParams.GetMap
+import geotrellis.server.ogc.utils._
 
 /** This class holds all the information necessary to construct a response to a WMS request */
 case class WmsModel(
@@ -48,7 +49,7 @@ case class WmsModel(
               val simpleLayers = rasterSources.mapValues { rs =>
                 SimpleOgcLayer(name, title, supportedCrs, rs, style, resampleMethod)
               }
-              MapAlgebraOgcLayer(name, title, supportedCrs, simpleLayers, algebra, style, resampleMethod)
+              MapAlgebraOgcLayer(name, title, supportedCrs, simpleLayers, algebra.bindExtendedParameters(p.extendedParameters), style, resampleMethod)
             case SimpleSource(name, title, rasterSource, _, _, resampleMethod) =>
               SimpleOgcLayer(name, title, supportedCrs, rasterSource, style, resampleMethod)
             case gts @ GeoTrellisOgcSource(name, title, _, _, _, resampleMethod, _) =>

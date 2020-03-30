@@ -17,6 +17,7 @@
 package geotrellis.server.ogc.wcs
 
 import geotrellis.server.ogc._
+import geotrellis.server.ogc.utils._
 
 /** This class holds all the information necessary to construct a response to a WCS request */
 case class WcsModel(
@@ -43,7 +44,7 @@ case class WcsModel(
           val simpleLayers = sources.mapValues { rs =>
             SimpleOgcLayer(name, title, p.crs, rs, None, resampleMethod)
           }
-          MapAlgebraOgcLayer(name, title, p.crs, simpleLayers, algebra, None, resampleMethod)
+          MapAlgebraOgcLayer(name, title, p.crs, simpleLayers, algebra.bindExtendedParameters(p.extendedParameters), None, resampleMethod)
       }
   }
 }

@@ -23,8 +23,9 @@ import geotrellis.proj4.CRS
 import geotrellis.store.query._
 import geotrellis.vector.{Extent, ProjectedExtent}
 import cats.implicits._
-import cats.data.{Validated, ValidatedNel}
+import cats.data.{NonEmptyList, Validated, ValidatedNel}
 import Validated._
+import geotrellis.raster.TargetCell
 
 import scala.util.Try
 
@@ -57,7 +58,8 @@ object WmsParams {
     width: Int,
     height: Int,
     crs: CRS,
-    time: Option[OgcTimeInterval]
+    time: Option[OgcTimeInterval],
+    extendedParameters: Option[ExtendedParameters]
   ) extends WmsParams {
     def toQuery: Query = {
       val layer = layers.headOption.map(withName).getOrElse(nothing)
@@ -110,7 +112,8 @@ object WmsParams {
             .map(option => option.map(OgcTimeInterval.fromString))
 
           val format =
-            params.validatedParam("format")
+            params
+              .validatedParam("format")
               .andThen { f =>
                 OutputFormat.fromString(f) match {
                   case Some(format) => Valid(format).toValidatedNel
@@ -119,9 +122,11 @@ object WmsParams {
                   }
               }
 
-          (layers, styles, bbox, format, width, height, crs, time).mapN {
-            case (layers, styles, bbox, format, width, height, crs, time) =>
-              GetMap(version, layers, styles, bbox, format = format, width = width, height = height, crs = crs, time = time)
+          val extendedParameters = ExtendedParameters.fromParams(params)
+
+          (layers, styles, bbox, format, width, height, crs, time, extendedParameters).mapN {
+            case (layers, styles, bbox, format, width, height, crs, time, ep) =>
+              GetMap(version, layers, styles, bbox, format = format, width = width, height = height, crs = crs, time = time, extendedParameters = ep)
           }
         }
     }
