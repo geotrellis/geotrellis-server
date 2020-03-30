@@ -36,10 +36,11 @@ final case class ColorRampConf(
   stops: Option[Int],
   minRender: Option[Double],
   maxRender: Option[Double],
+  clampWithColor: Boolean = false,
   legends: List[LegendModel] = Nil
 ) extends StyleConf {
   def toStyle: OgcStyle =
-    ColorRampStyle(name, title, colors, stops, minRender, maxRender, legends)
+    ColorRampStyle(name, title, colors, stops, minRender, maxRender, clampWithColor, legends)
 }
 
 /** Styling in which both a color scheme and the data-to-color mapping is known */
