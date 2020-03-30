@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package geotrellis.server.ogc.style
+package geotrellis.server.ogc.utils
 
+import scalaxb.DataRecord
 
-case class OnlineResourceModel(
-  `type`: String,
-  href: String,
-  role: Option[String] = None,
-  title: Option[String] = None,
-  show: Option[String] = None,
-  actuate: Option[String] = None
-)
+import scala.xml.Elem
+
+trait Implicits {
+  implicit class DataRecordMethods[A](dataRecord: DataRecord[A]) {
+    def toXML: Elem = ScalaxbUtils.toXML(dataRecord)
+  }
+}
+
+object Implicits extends Implicits

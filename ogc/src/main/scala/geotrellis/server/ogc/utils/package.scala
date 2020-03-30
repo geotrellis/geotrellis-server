@@ -14,14 +14,6 @@
  * limitations under the License.
  */
 
-package geotrellis.server.ogc.style
+package geotrellis.server.ogc
 
-
-case class OnlineResourceModel(
-  `type`: String,
-  href: String,
-  role: Option[String] = None,
-  title: Option[String] = None,
-  show: Option[String] = None,
-  actuate: Option[String] = None
-)
+package object utils extends utils.Implicits

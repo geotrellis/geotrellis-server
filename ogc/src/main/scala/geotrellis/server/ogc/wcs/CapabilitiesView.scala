@@ -161,6 +161,36 @@ class CapabilitiesView(
           ),
           DefaultValue = ValueType("nearest neighbor").some,
           attributes = Map("@name" -> DataRecord("InterpolationType"))
+        ) :: DomainType(
+          possibleValuesOption1 = OwsDataRecord(
+            AllowedValues(
+              OwsDataRecord(
+                ValueType("all")
+              ) :: OwsDataRecord(
+                ValueType("data")
+              ) :: OwsDataRecord(
+                ValueType("nodata")
+              ) :: Nil)
+          ),
+          DefaultValue = ValueType("all").some,
+          attributes = Map(
+            "@name" -> DataRecord("target")
+          )
+        ) :: DomainType(
+          possibleValuesOption1 = OwsDataRecord(AnyValue()),
+          attributes = Map(
+            "@name" -> DataRecord("zFactor")
+          )
+        ) :: DomainType(
+          possibleValuesOption1 = OwsDataRecord(AnyValue()),
+          attributes = Map(
+            "@name" -> DataRecord("azimuth")
+          )
+        ) :: DomainType(
+          possibleValuesOption1 = OwsDataRecord(AnyValue()),
+          attributes = Map(
+            "@name" -> DataRecord("altitude")
+          )
         ) :: Nil,
         attributes = Map("@name" -> DataRecord("GetCoverage"))
       )
