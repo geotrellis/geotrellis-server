@@ -227,19 +227,7 @@ lazy val example = project
       sttpCirce,
       scalatest,
       jaxbApi
-    ),
-    libraryDependencies ++= {
-      val deps = Seq(
-        "com.fasterxml.jackson.core" % "jackson-core" % "2.6.7",
-        "com.fasterxml.jackson.core" % "jackson-databind" % "2.6.7",
-        "com.fasterxml.jackson.core" % "jackson-annotations" % "2.6.7"
-      )
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        // if Scala 2.12+ is used
-        case Some((2, scalaMajor)) if scalaMajor >= 12 => deps
-        case _ => deps :+ "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.6.7"
-      }
-    }
+    )
   )
   .settings(
     dependencyOverrides += "com.azavea.gdal" % "gdal-warp-bindings" % "33.60a6918"
@@ -324,18 +312,6 @@ lazy val ogcExample = (project in file("ogc-example"))
       scalatest,
       decline
     ),
-    libraryDependencies ++= {
-      val deps = Seq(
-        "com.fasterxml.jackson.core" % "jackson-core" % "2.6.7",
-        "com.fasterxml.jackson.core" % "jackson-databind" % "2.6.7",
-        "com.fasterxml.jackson.core" % "jackson-annotations" % "2.6.7"
-      )
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        // if Scala 2.12+ is used
-        case Some((2, scalaMajor)) if scalaMajor >= 12 => deps
-        case _ => deps :+ "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.6.7"
-      }
-    },
     excludeDependencies ++= Seq(
       // log4j brought in via uzaygezen is a pain for us
       ExclusionRule("log4j", "log4j"),
