@@ -65,7 +65,7 @@ case class GetCoverageWcsParams(
   // GridOffsets is xres, yres // swapped in case of a geographic projection
   gridOffsets: (Double, Double),
   crs: CRS,
-  extendedParameters: Option[ExtendedParameters]
+  params: ParamMap
 ) extends WcsParams {
 
   def toQuery: Query = {
@@ -239,12 +239,10 @@ object GetCoverageWcsParams {
           }.toOption
         })
 
-        val extendedParameters = ExtendedParameters.fromParams(params)
-
-        (idAndBboxAndCrs, format, gridBaseCRS, gridCS, gridType, gridOrigin, gridOffsets, temporalSequenceOption, extendedParameters).mapN {
-          case ((id, bbox, crs), format, gridBaseCRS, gridCS, gridType, gridOrigin, gridOffsets, temporalSeqOpt, ep) =>
+        (idAndBboxAndCrs, format, gridBaseCRS, gridCS, gridType, gridOrigin, gridOffsets, temporalSequenceOption).mapN {
+          case ((id, bbox, crs), format, gridBaseCRS, gridCS, gridType, gridOrigin, gridOffsets, temporalSeqOpt) =>
           val extent = Extent(bbox(0), bbox(1), bbox(2), bbox(3))
-          GetCoverageWcsParams(version, id, extent, temporalSeqOpt, format, gridBaseCRS, gridCS, gridType, gridOrigin, gridOffsets, crs, ep)
+          GetCoverageWcsParams(version, id, extent, temporalSeqOpt, format, gridBaseCRS, gridCS, gridType, gridOrigin, gridOffsets, crs, params)
         }
       }
   }
