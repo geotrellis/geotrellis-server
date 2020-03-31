@@ -52,19 +52,20 @@ case class DescribeCoverageWcsParams(version: String, identifiers: Seq[String]) 
  * Parameters descriptions can be also found here: https://mapserver.org/ogc/wcs_server.html
  */
 case class GetCoverageWcsParams(
-                                 version: String,
-                                 identifier: String,
-                                 boundingBox: Extent,
-                                 temporalSequence: List[OgcTimeInterval],
-                                 format: OutputFormat,
-                                 gridBaseCRS: CRS,
-                                 gridCS: URI,
-                                 gridType: URI,
-                                 // GridOrigin is BBOX minx, maxy // swapped in case of a geographic projection
-                                 gridOrigin: (Double, Double),
-                                 // GridOffsets is xres, yres // swapped in case of a geographic projection
-                                 gridOffsets: (Double, Double),
-                                 crs: CRS
+  version: String,
+  identifier: String,
+  boundingBox: Extent,
+  temporalSequence: List[OgcTimeInterval],
+  format: OutputFormat,
+  gridBaseCRS: CRS,
+  gridCS: URI,
+  gridType: URI,
+  // GridOrigin is BBOX minx, maxy // swapped in case of a geographic projection
+  gridOrigin: (Double, Double),
+  // GridOffsets is xres, yres // swapped in case of a geographic projection
+  gridOffsets: (Double, Double),
+  crs: CRS,
+  params: ParamMap
 ) extends WcsParams {
 
   def toQuery: Query = {
@@ -241,7 +242,7 @@ object GetCoverageWcsParams {
         (idAndBboxAndCrs, format, gridBaseCRS, gridCS, gridType, gridOrigin, gridOffsets, temporalSequenceOption).mapN {
           case ((id, bbox, crs), format, gridBaseCRS, gridCS, gridType, gridOrigin, gridOffsets, temporalSeqOpt) =>
           val extent = Extent(bbox(0), bbox(1), bbox(2), bbox(3))
-          GetCoverageWcsParams(version, id, extent, temporalSeqOpt, format, gridBaseCRS, gridCS, gridType, gridOrigin, gridOffsets, crs)
+          GetCoverageWcsParams(version, id, extent, temporalSeqOpt, format, gridBaseCRS, gridCS, gridType, gridOrigin, gridOffsets, crs, params)
         }
       }
   }

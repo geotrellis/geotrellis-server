@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enable TargetCell parameter for focal operations [#212](https://github.com/geotrellis/geotrellis-server/issues/212)
 - WMS Extended capabilities and operations [#235](https://github.com/geotrellis/geotrellis-server/issues/235)
 - WCS GetCapabilities user defined parameters [#237](https://github.com/geotrellis/geotrellis-server/issues/237)
+- WMS GetMap support of extended parameters [#236](https://github.com/geotrellis/geotrellis-server/issues/236)
+- WCS GetCoverage support of extended parameters [#238](https://github.com/geotrellis/geotrellis-server/issues/238)
 - ColorRampStyle.clampWithColor option to render colors outside the requested render range as colors in the ramp instead of as transparent pixels [#220](https://github.com/geotrellis/geotrellis-server/issues/220)
 
 ### Changed

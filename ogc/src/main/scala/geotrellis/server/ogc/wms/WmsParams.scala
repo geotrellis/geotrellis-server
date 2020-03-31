@@ -18,6 +18,7 @@ package geotrellis.server.ogc.wms
 
 import geotrellis.server.ogc.{OgcTimeInterval, OutputFormat}
 import geotrellis.server.ogc.params._
+
 import geotrellis.proj4.LatLng
 import geotrellis.proj4.CRS
 import geotrellis.store.query._
@@ -57,7 +58,8 @@ object WmsParams {
     width: Int,
     height: Int,
     crs: CRS,
-    time: Option[OgcTimeInterval]
+    time: Option[OgcTimeInterval],
+    params: ParamMap
   ) extends WmsParams {
     def toQuery: Query = {
       val layer = layers.headOption.map(withName).getOrElse(nothing)
@@ -110,7 +112,8 @@ object WmsParams {
             .map(option => option.map(OgcTimeInterval.fromString))
 
           val format =
-            params.validatedParam("format")
+            params
+              .validatedParam("format")
               .andThen { f =>
                 OutputFormat.fromString(f) match {
                   case Some(format) => Valid(format).toValidatedNel
@@ -121,14 +124,14 @@ object WmsParams {
 
           (layers, styles, bbox, format, width, height, crs, time).mapN {
             case (layers, styles, bbox, format, width, height, crs, time) =>
-              GetMap(version, layers, styles, bbox, format = format, width = width, height = height, crs = crs, time = time)
+              GetMap(version, layers, styles, bbox, format = format, width = width, height = height, crs = crs, time = time, params)
           }
         }
     }
   }
 
   def apply(queryParams: Map[String, Seq[String]]): ValidatedNel[ParamError, WmsParams] = {
-    val params = new ParamMap(queryParams)
+    val params = ParamMap(queryParams)
 
     val serviceParam =
       params.validatedParam("service", validValues=Set("wms"))

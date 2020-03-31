@@ -17,11 +17,16 @@
 package geotrellis.server.ogc.wcs
 
 import geotrellis.server.ogc._
+import geotrellis.server.ogc.params.ParamMap
+import geotrellis.server.ogc.utils._
+
+import com.azavea.maml.ast.Expression
 
 /** This class holds all the information necessary to construct a response to a WCS request */
 case class WcsModel(
   serviceMetadata: ows.ServiceMetadata,
-  sources: OgcSourceRepository
+  sources: OgcSourceRepository,
+  extendedParametersBinding: Option[ParamMap => Option[Expression => Expression]] = None
 ) {
 
   private val logger = org.log4s.getLogger
@@ -43,7 +48,8 @@ case class WcsModel(
           val simpleLayers = sources.mapValues { rs =>
             SimpleOgcLayer(name, title, p.crs, rs, None, resampleMethod)
           }
-          MapAlgebraOgcLayer(name, title, p.crs, simpleLayers, algebra, None, resampleMethod)
+          val extendedParameters = extendedParametersBinding.flatMap(_.apply(p.params))
+          MapAlgebraOgcLayer(name, title, p.crs, simpleLayers, algebra.bindExtendedParameters(extendedParameters), None, resampleMethod)
       }
   }
 }

@@ -16,25 +16,22 @@
 
 package geotrellis.server.ogc.utils
 
+import geotrellis.raster.TargetCell
 import com.azavea.maml.ast.Expression
-
 import cats.syntax.option._
-import scalaxb.DataRecord
 
-import scala.xml.Elem
+object ExpressionUtils {
+  def bindExpression(expr: Expression, fun: Expression => Expression): Expression = {
+    def deepMap(expression: Expression, f: Expression => Expression): Expression =
+      f(expression).withChildren(expression.children.map(f).map(deepMap(_, f)))
 
-trait Implicits {
-  implicit class DataRecordMethods[A](dataRecord: DataRecord[A]) {
-    def toXML: Elem = ScalaxbUtils.toXML(dataRecord)
+    deepMap(expr, fun)
   }
 
-  implicit class ExpressionMethods(expr: Expression) {
-    def bindExtendedParameters(fun: Expression => Expression): Expression =
-      bindExtendedParameters(fun.some)
-
-    def bindExtendedParameters(fun: Option[Expression => Expression]): Expression =
-      fun.fold(expr)(ExpressionUtils.bindExpression(expr, _))
+  def targetCell(str: String): Option[TargetCell] = str match {
+    case "nodata" => TargetCell.NoData.some
+    case "data"   => TargetCell.Data.some
+    case "all"    => TargetCell.All.some
+    case _        => None
   }
 }
-
-object Implicits extends Implicits

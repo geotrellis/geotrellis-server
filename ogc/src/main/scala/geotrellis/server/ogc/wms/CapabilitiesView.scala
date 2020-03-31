@@ -18,7 +18,6 @@ package geotrellis.server.ogc.wms
 
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.style._
-import geotrellis.server.ogc.utils._
 
 import geotrellis.proj4.{CRS, LatLng}
 import geotrellis.raster.CellSize
@@ -39,7 +38,8 @@ import scala.xml.Elem
   */
 class CapabilitiesView(
   model: WmsModel,
-  serviceUrl: URL
+  serviceUrl: URL,
+  extendedCapabilities: List[DataRecord[Elem]] = Nil
 ) {
   import CapabilitiesView._
 
@@ -62,33 +62,6 @@ class CapabilitiesView(
             "@{http://www.w3.org/1999/xlink}type" -> DataRecord(xlink.Simple: xlink.TypeType)))))
         ) :: Nil
       )
-
-
-      val extendedCapabilities = {
-        val targetCells = DataRecord(
-          None, "target".some,
-          DataRecord("all").toXML ++
-          DataRecord("data").toXML ++
-          DataRecord("nodata").toXML ++
-          DataRecord(None, "default".some, "all").toXML
-        )
-
-        val focalHillshade: Elem = ExtendedElement(
-          "FocalHillshade",
-          DataRecord("zFactor"),
-          DataRecord("azimuth"),
-          DataRecord("altitude"),
-          targetCells
-        )
-
-        val focalSlope: Elem = ExtendedElement(
-          "FocalSlope",
-          DataRecord("zFactor"),
-          targetCells
-        )
-
-        ExtendedCapabilities(focalHillshade, focalSlope)
-      }
 
       Capability(
         Request = Request(GetCapabilities = getCapabilities, GetMap = getMap, GetFeatureInfo = None),

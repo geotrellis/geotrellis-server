@@ -20,6 +20,8 @@ import cats.implicits._
 import cats.data.{Validated, ValidatedNel}
 import Validated._
 
+import scala.util.{Failure, Success, Try}
+
 case class ParamMap(params: Map[String, Seq[String]]) {
   private val _params: Map[String, Seq[String]] = params.map { case (k, v) => (k.toLowerCase, v) }
 
@@ -40,6 +42,17 @@ case class ParamMap(params: Map[String, Seq[String]]) {
     (getParams(field) match {
       case None => Valid(Option.empty[String])
       case Some(v :: Nil) => Valid(Some(v))
+      case Some(vs) => Invalid(ParamError.RepeatedParam(field))
+    }).toValidatedNel
+
+  def validatedOptionalParamDouble(field: String): ValidatedNel[ParamError, Option[Double]] =
+    (getParams(field) match {
+      case None => Valid(Option.empty[Double])
+      case Some(v :: Nil) =>
+        Try { java.lang.Double.parseDouble(v) } match {
+          case Success(d) => Valid(d.some)
+          case Failure(_) => Invalid(ParamError.ParseError(field, v))
+        }
       case Some(vs) => Invalid(ParamError.RepeatedParam(field))
     }).toValidatedNel
 
