@@ -24,7 +24,6 @@ import geotrellis.raster.render.{ColorMap, ColorRamp}
 import geotrellis.raster.render.jpg.JpgEncoder
 import geotrellis.util.np.linspace
 
-
 case class ColorRampStyle(
   name: String,
   title: String,
@@ -32,6 +31,7 @@ case class ColorRampStyle(
   stops: Option[Int],
   minRender: Option[Double],
   maxRender: Option[Double],
+  clampWithColor: Boolean = false,
   legends: List[LegendModel] = Nil
 ) extends OgcStyle {
   lazy val logger = org.log4s.getLogger
@@ -59,18 +59,19 @@ case class ColorRampStyle(
     // The number of stops between each provided break
     val numStops: Int = stops.getOrElse(colorRamp.colors.length)
 
-    // The colors, interpolated (invisible added for values below our minimum break)
-    val interpolatedColors: Vector[Int] =
-      0x00000000 +: colorRamp.stops(numStops)
+    // The colors, interpolated (colors added at start and end for out of bounds values)
+    val minColor = if (clampWithColor) colorRamp.colors.head else 0x00000000
+    val maxColor = if (clampWithColor) colorRamp.colors.last else 0x00000000
+    val interpolatedColors: Vector[Int] = minColor +: colorRamp.stops(numStops) :+ maxColor
 
     val interpolatedBreaks: Array[Double] =
-      breaks(hists, interpolatedColors.length)
+      breaks(hists, interpolatedColors.length) :+ Double.MaxValue
 
     val cmap = ColorRamp(interpolatedColors).toColorMap(interpolatedBreaks)
 
     format match {
       case format: OutputFormat.Png =>
-       format.render(mbtile.band(bandIndex = 0), cmap)
+        format.render(mbtile.band(bandIndex = 0), cmap)
       case OutputFormat.Jpg =>
         mbtile.band(bandIndex = 0).renderJpg(cmap).bytes
       case OutputFormat.GeoTiff => ??? // Implementation necessary
