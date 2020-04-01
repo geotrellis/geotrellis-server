@@ -23,7 +23,7 @@ import cats.syntax.option._
 object ExpressionUtils {
   def bindExpression(expr: Expression, fun: Expression => Expression): Expression = {
     def deepMap(expression: Expression, f: Expression => Expression): Expression =
-      f(expression).withChildren(expression.children.map(f).map(deepMap(_, f)))
+      f(expression).withChildren(expression.children.map(deepMap(_, f)))
 
     deepMap(expr, fun)
   }
