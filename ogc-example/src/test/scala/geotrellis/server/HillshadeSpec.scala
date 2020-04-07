@@ -21,7 +21,7 @@ import com.azavea.maml.error.Interpreted
 import com.azavea.maml.eval.{Interpreter, Result}
 
 import geotrellis.proj4.LatLng
-import geotrellis.raster.{MultibandTile, ProjectedRaster, Raster, RasterExtent, TargetCell}
+import geotrellis.raster.{MultibandTile, ProjectedRaster, Raster, RasterExtent}
 import geotrellis.raster.io.geotiff.{AutoHigherResolution, GeoTiff}
 import geotrellis.store._
 import geotrellis.raster.resample._
@@ -45,7 +45,7 @@ class HillshadeSpec extends FunSpec with Matchers {
   describe("HillshadeSpec") {
     ignore("RasterSource reproject hillshade") {
       val uri = "gt+s3://azavea-datahub/catalog?layer=us-ned-tms-epsg3857&zoom=14&band_count=1"
-      val rs = new GeoTrellisRasterSourceLegacy(uri)
+      val rs = new GeoTrellisRasterSource(uri)
       val raster =
         rs
           .reprojectToRegion(

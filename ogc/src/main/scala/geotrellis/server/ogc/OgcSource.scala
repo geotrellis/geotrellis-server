@@ -26,7 +26,7 @@ import geotrellis.raster._
 import geotrellis.server.extent.SampleUtils
 import geotrellis.server.ogc.style._
 import geotrellis.server.ogc.wms.CapabilitiesView
-import geotrellis.store.{GeoTrellisPath, GeoTrellisRasterSourceLegacy, LayerHeader}
+import geotrellis.store.{GeoTrellisPath, GeoTrellisRasterSource, LayerHeader}
 import geotrellis.vector.{Extent, ProjectedExtent}
 import jp.ne.opt.chronoscala.Imports._
 import opengis.wms.BoundingBox
@@ -103,7 +103,7 @@ case class GeoTrellisOgcSource(
 
   private val dataPath = GeoTrellisPath.parse(sourceUri)
 
-  lazy val source = GeoTrellisRasterSourceLegacy(dataPath)
+  lazy val source = GeoTrellisRasterSource(dataPath)
 
   lazy val timeInterval: Option[OgcTimeInterval] =
     if (!source.isTemporal) None
@@ -122,7 +122,7 @@ case class GeoTrellisOgcSource(
    * @param interval
    * @return
    */
-  def sourceForTime(interval: OgcTimeInterval): GeoTrellisRasterSourceLegacy =
+  def sourceForTime(interval: OgcTimeInterval): GeoTrellisRasterSource =
     if (source.isTemporal) {
       val defaultTime = timeInterval.getOrElse(interval).start
       source.times.find { t =>
@@ -136,8 +136,8 @@ case class GeoTrellisOgcSource(
       source
     }
 
-  def sourceForTime(time: ZonedDateTime): GeoTrellisRasterSourceLegacy =
-    if (source.isTemporal) GeoTrellisRasterSourceLegacy(dataPath, Some(time))
+  def sourceForTime(time: ZonedDateTime): GeoTrellisRasterSource =
+    if (source.isTemporal) GeoTrellisRasterSource(dataPath, Some(time))
     else source
 }
 
