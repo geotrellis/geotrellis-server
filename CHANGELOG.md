@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WCS GetCoverage support of extended parameters [#238](https://github.com/geotrellis/geotrellis-server/issues/238)
 - ColorRampStyle.clampWithColor option to render colors outside the requested render range as colors in the ramp instead of as transparent pixels [#220](https://github.com/geotrellis/geotrellis-server/issues/220)
 - Expose overview strategy into the layers configuration [#252](https://github.com/geotrellis/geotrellis-server/pull/252)
+- RGB styling configuration [#249](https://github.com/geotrellis/geotrellis-server/issues/249)
 
 ### Changed
  
