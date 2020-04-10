@@ -119,7 +119,7 @@ object Main extends CommandApp(
                 svc.serviceMetadata,
                 svc.parentLayerMeta,
                 svc.layerSources(simpleSources),
-                FocalParameters.extendedParametersBinding
+                ExtendedParameters.extendedParametersBinding
               )
             }
             _ <- Stream.eval(IO(logOptState(
@@ -143,7 +143,7 @@ object Main extends CommandApp(
               WcsModel(
                 svc.serviceMetadata,
                 svc.layerSources(simpleSources),
-                FocalParameters.extendedParametersBinding
+                ExtendedParameters.extendedParametersBinding
               )
             }
             ogcService = new OgcService(wmsModel, wcsModel, wmtsModel, new URL(publicUrl))

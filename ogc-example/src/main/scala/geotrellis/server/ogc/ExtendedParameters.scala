@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package geotrellis.server.ogc.style
+package geotrellis.server.ogc
 
-import geotrellis.raster.MultibandTile
-import geotrellis.raster.histogram.Histogram
-import geotrellis.server.ogc.OutputFormat
+import com.azavea.maml.ast.Expression
+import geotrellis.server.ogc.params.ParamMap
 
-case class RGBStyle(name: String, title: String, legends: List[LegendModel] = Nil) extends OgcStyle {
-  def renderImage(mbtile: MultibandTile, format: OutputFormat, hists: List[Histogram[Double]]): Array[Byte] = {
-    format match {
-      case _: OutputFormat.Png => mbtile.renderPng()
-      case OutputFormat.Jpg => mbtile.renderJpg()
-      case OutputFormat.GeoTiff => ??? // Implementation necessary
+import cats.syntax.apply._
+import cats.instances.option._
+
+object ExtendedParameters {
+  val extendedParametersBinding: Option[ParamMap => Option[Expression => Expression]] = Option({ p =>
+    (FocalParameters.extendedParametersBinding, RGBParameters.extendedParametersBinding).tupled.flatMap { case (l, r) =>
+      (l(p), r(p)).mapN { _ andThen _ }
     }
-  }
+  })
 }

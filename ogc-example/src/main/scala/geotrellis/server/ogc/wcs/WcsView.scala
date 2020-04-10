@@ -36,6 +36,58 @@ import java.net._
 class WcsView(wcsModel: WcsModel, serviceUrl: URL) {
   val logger = getLogger
 
+  val extendedRGBParameters: List[DomainType] = {
+    val channels = "Red" :: "Green" :: "Blue" :: Nil
+
+    def clamp(band: String): List[DomainType] = DomainType(
+      possibleValuesOption1 = OwsDataRecord(AnyValue()),
+      attributes = Map(
+        "@name" -> DataRecord(s"clampMin$band")
+      )
+    ) :: DomainType(
+      possibleValuesOption1 = OwsDataRecord(AnyValue()),
+      attributes = Map(
+        "@name" -> DataRecord(s"clampMax$band")
+      )
+    ) :: Nil
+
+    def normalize(band: String): List[DomainType] = DomainType(
+      possibleValuesOption1 = OwsDataRecord(AnyValue()),
+      attributes = Map(
+        "@name" -> DataRecord(s"normalizeOldMin$band")
+      )
+    ) :: DomainType(
+      possibleValuesOption1 = OwsDataRecord(AnyValue()),
+      attributes = Map(
+        "@name" -> DataRecord(s"normalizeOldMax$band")
+      )
+    ) :: DomainType(
+      possibleValuesOption1 = OwsDataRecord(AnyValue()),
+      attributes = Map(
+        "@name" -> DataRecord(s"normalizeNewMin$band")
+      )
+    ) :: DomainType(
+      possibleValuesOption1 = OwsDataRecord(AnyValue()),
+      attributes = Map(
+        "@name" -> DataRecord(s"normalizeNewMax$band")
+      )
+    ) :: Nil
+
+    def rescale(band: String): List[DomainType] = DomainType(
+      possibleValuesOption1 = OwsDataRecord(AnyValue()),
+      attributes = Map(
+        "@name" -> DataRecord(s"rescaleNewMin$band")
+      )
+    ) :: DomainType(
+      possibleValuesOption1 = OwsDataRecord(AnyValue()),
+      attributes = Map(
+        "@name" -> DataRecord(s"rescaleNewMax$band")
+      )
+    ) :: Nil
+
+    channels.flatMap { b => clamp(b) ::: normalize(b) ::: rescale(b) }
+  }
+
   val extendedParameters: List[DomainType] = DomainType(
     possibleValuesOption1 = OwsDataRecord(
       AllowedValues(
@@ -90,7 +142,7 @@ class WcsView(wcsModel: WcsModel, serviceUrl: URL) {
         wcsParams match {
           case p: GetCapabilitiesWcsParams =>
             logger.debug(ansi"%bold{GetCapabilities: $serviceUrl}")
-            Ok(new CapabilitiesView(wcsModel, serviceUrl, extendedParameters).toXML)
+            Ok(new CapabilitiesView(wcsModel, serviceUrl, extendedParameters ::: extendedRGBParameters).toXML)
 
           case p: DescribeCoverageWcsParams =>
             logger.debug(ansi"%bold{DescribeCoverage: ${req.uri}}")
