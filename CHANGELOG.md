@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WMS GetMap support of extended parameters [#236](https://github.com/geotrellis/geotrellis-server/issues/236)
 - WCS GetCoverage support of extended parameters [#238](https://github.com/geotrellis/geotrellis-server/issues/238)
 - ColorRampStyle.clampWithColor option to render colors outside the requested render range as colors in the ramp instead of as transparent pixels [#220](https://github.com/geotrellis/geotrellis-server/issues/220)
+- Expose overview strategy into the layers configuration [#252](https://github.com/geotrellis/geotrellis-server/pull/252)
 
 ### Changed
  
@@ -24,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Addressed GeoTrellisRasterSourceLegacy issues and minimized number of RasterSource instances constructed for GeoTrellis Layers [#219](https://github.com/geotrellis/geotrellis-server/issues/219)
+- Some source resolutions are sometimes skipped leading to reading too much tiles [#215](https://github.com/geotrellis/geotrellis-server/issues/215)
 
 ## [4.1.0] - 2020-03-03
 

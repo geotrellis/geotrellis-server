@@ -16,11 +16,12 @@
 
 package geotrellis.server.ogc.conf
 
-import com.azavea.maml.ast._
-import geotrellis.raster.{RasterSource, ResampleMethod}
-import geotrellis.raster.resample.NearestNeighbor
+import geotrellis.raster.RasterSource
+import geotrellis.raster.io.geotiff.OverviewStrategy
+import geotrellis.raster.resample._
 import geotrellis.server.ogc._
 import geotrellis.store.GeoTrellisPath
+import com.azavea.maml.ast._
 
 // This sumtype corresponds to the in-config representation of a source
 sealed trait OgcSourceConf {
@@ -35,15 +36,16 @@ case class RasterSourceConf(
   source: String,
   defaultStyle: Option[String],
   styles: List[StyleConf],
-  resampleMethod: ResampleMethod = NearestNeighbor
+  resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
 ) extends OgcSourceConf {
   def toLayer: RasterOgcSource = {
     GeoTrellisPath.parseOption(source) match {
       case Some(_) => GeoTrellisOgcSource(
-        name, title, source, defaultStyle, styles.map(_.toStyle), resampleMethod
+        name, title, source, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy
       )
       case None => SimpleSource(
-        name, title, RasterSource(source), defaultStyle, styles.map(_.toStyle), resampleMethod
+        name, title, RasterSource(source), defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy
       )
     }
   }
@@ -55,7 +57,8 @@ case class MapAlgebraSourceConf(
   algebra: Expression,
   defaultStyle: Option[String],
   styles: List[StyleConf],
-  resampleMethod: ResampleMethod = NearestNeighbor
+  resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
 ) extends OgcSourceConf {
   private def listParams(expr: Expression): List[String] = {
     def eval(subExpr: Expression): List[String] = subExpr match {
@@ -81,6 +84,6 @@ case class MapAlgebraSourceConf(
       }
       name -> layerSrc.source
     }
-    MapAlgebraSource(name, title, sourceList.toMap, algebra, defaultStyle, styles.map(_.toStyle), resampleMethod)
+    MapAlgebraSource(name, title, sourceList.toMap, algebra, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy)
   }
 }

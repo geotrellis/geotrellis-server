@@ -16,20 +16,22 @@
 
 package geotrellis.server.ogc
 
-import java.time.ZonedDateTime
+import geotrellis.proj4.CRS
+import geotrellis.raster._
+import geotrellis.raster.io.geotiff.OverviewStrategy
+import geotrellis.server.extent.SampleUtils
+import geotrellis.server.ogc.style._
+import geotrellis.server.ogc.wms.CapabilitiesView
+import geotrellis.store.{GeoTrellisPath, GeoTrellisRasterSource}
+import geotrellis.vector.{Extent, ProjectedExtent}
 
 import cats.data.{NonEmptyList => NEL}
 import cats.syntax.option._
 import com.azavea.maml.ast.Expression
-import geotrellis.proj4.CRS
-import geotrellis.raster._
-import geotrellis.server.extent.SampleUtils
-import geotrellis.server.ogc.style._
-import geotrellis.server.ogc.wms.CapabilitiesView
-import geotrellis.store.{GeoTrellisPath, GeoTrellisRasterSource, LayerHeader}
-import geotrellis.vector.{Extent, ProjectedExtent}
 import jp.ne.opt.chronoscala.Imports._
 import opengis.wms.BoundingBox
+
+import java.time.ZonedDateTime
 
 /**
  * This trait and its implementing types should be jointly sufficient, along with a WMS 'GetMap'
@@ -52,6 +54,7 @@ trait OgcSource {
   def metadata: RasterMetadata
   def attributes: Map[String, String]
   def resampleMethod: ResampleMethod
+  def overviewStrategy: OverviewStrategy
   def timeInterval: Option[OgcTimeInterval]
 
   def nativeProjectedExtent: ProjectedExtent = ProjectedExtent(nativeExtent, nativeCrs.head)
@@ -86,7 +89,8 @@ case class SimpleSource(
   source: RasterSource,
   defaultStyle: Option[String],
   styles: List[OgcStyle],
-  resampleMethod: ResampleMethod
+  resampleMethod: ResampleMethod,
+  overviewStrategy: OverviewStrategy
 ) extends RasterOgcSource {
   val timeInterval: Option[OgcTimeInterval] = None
 }
@@ -98,6 +102,7 @@ case class GeoTrellisOgcSource(
   defaultStyle: Option[String],
   styles: List[OgcStyle],
   resampleMethod: ResampleMethod,
+  overviewStrategy: OverviewStrategy,
   timeMetadataKey: String = "times"
 ) extends RasterOgcSource {
 
@@ -166,7 +171,8 @@ case class MapAlgebraSource(
   algebra: Expression,
   defaultStyle: Option[String],
   styles: List[OgcStyle],
-  resampleMethod: ResampleMethod
+  resampleMethod: ResampleMethod,
+  overviewStrategy: OverviewStrategy
 ) extends OgcSource {
   def extentIn(crs: CRS): Extent = {
     val reprojectedSources: NEL[RasterSource] =

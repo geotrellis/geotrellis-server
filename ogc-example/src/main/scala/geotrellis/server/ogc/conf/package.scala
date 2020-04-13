@@ -22,10 +22,10 @@ import geotrellis.proj4.CRS
 import geotrellis.vector.Extent
 import geotrellis.raster.{ResampleMethod, TileLayout, resample}
 import geotrellis.raster.render.{ColorMap, ColorRamp}
-
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
 import com.typesafe.config._
+import geotrellis.raster.io.geotiff.{Auto, AutoHigherResolution, Base, OverviewStrategy}
 import io.circe._
 import io.circe.parser._
 import pureconfig._
@@ -166,6 +166,22 @@ package object conf {
       case "min"               => resample.Min
       case "sum"               => resample.Sum
     }
+
+  implicit val overviewStrategyReader: ConfigReader[OverviewStrategy] = {
+    def parse(strategy: String, input: String): OverviewStrategy =
+      Auto(Try { input.split(s"$strategy-").last.toInt }.toOption.getOrElse(0))
+
+    def parseAuto(str: String): OverviewStrategy  = parse("auto", str)
+    def parseLevel(str: String): OverviewStrategy = parse("level", str)
+
+    ConfigReader[String].map {
+      case "auto-higher-resolution"       => AutoHigherResolution
+      case "base"                         => Base
+      case str if str.startsWith("auto")  => parseAuto(str)
+      case str if str.startsWith("level") => parseLevel(str)
+      case _                              => OverviewStrategy.DEFAULT
+    }
+  }
 
   /** An alternative AST reading strategy that uses a separate json file */
   //private lazy val s3client = AmazonS3ClientBuilder.defaultClient()

@@ -35,21 +35,21 @@ case class WcsModel(
     val filteredSources = sources.find(p.toQuery)
     logger.debug(s"Filtering sources: ${sources.store.length} -> ${filteredSources.length}")
     filteredSources.map {
-        case SimpleSource(name, title, source, _, _, resampleMethod) =>
-          SimpleOgcLayer(name, title, p.crs, source, None, resampleMethod)
-        case gts @ GeoTrellisOgcSource(name, title, _, _, _, resampleMethod, _) =>
+        case SimpleSource(name, title, source, _, _, resampleMethod, overviewStrategy) =>
+          SimpleOgcLayer(name, title, p.crs, source, None, resampleMethod, overviewStrategy)
+        case gts @ GeoTrellisOgcSource(name, title, _, _, _, resampleMethod, overviewStrategy, _) =>
           val source = if (p.temporalSequence.nonEmpty) {
             gts.sourceForTime(p.temporalSequence.head)
           } else {
             gts.source
           }
-          SimpleOgcLayer(name, title, p.crs, source, None, resampleMethod)
-        case MapAlgebraSource(name, title, sources, algebra, _, _, resampleMethod) =>
+          SimpleOgcLayer(name, title, p.crs, source, None, resampleMethod, overviewStrategy)
+        case MapAlgebraSource(name, title, sources, algebra, _, _, resampleMethod, overviewStrategy) =>
           val simpleLayers = sources.mapValues { rs =>
-            SimpleOgcLayer(name, title, p.crs, rs, None, resampleMethod)
+            SimpleOgcLayer(name, title, p.crs, rs, None, resampleMethod, overviewStrategy)
           }
           val extendedParameters = extendedParametersBinding.flatMap(_.apply(p.params))
-          MapAlgebraOgcLayer(name, title, p.crs, simpleLayers, algebra.bindExtendedParameters(extendedParameters), None, resampleMethod)
+          MapAlgebraOgcLayer(name, title, p.crs, simpleLayers, algebra.bindExtendedParameters(extendedParameters), None, resampleMethod, overviewStrategy)
       }
   }
 }

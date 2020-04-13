@@ -22,12 +22,12 @@ import geotrellis.raster._
 import geotrellis.raster.resample._
 import geotrellis.raster.io.geotiff._
 import geotrellis.raster.reproject.ReprojectRasterExtent
+import geotrellis.raster.reproject.Reproject.Options
 import geotrellis.vector.Extent
 import geotrellis.proj4.CRS
 import com.azavea.maml.ast._
 import cats.effect._
 import cats.data.{NonEmptyList => NEL}
-import geotrellis.raster.reproject.Reproject.Options
 
 /**
  * OgcLayer instances are sufficient to produce visual rasters as the end product of 'get map'
@@ -41,6 +41,7 @@ sealed trait OgcLayer {
   def crs: CRS
   def style: Option[OgcStyle]
   def resampleMethod: ResampleMethod
+  def overviewStrategy: OverviewStrategy
 }
 
 sealed trait RasterOgcLayer {
@@ -53,7 +54,8 @@ case class SimpleOgcLayer(
   crs: CRS,
   source: RasterSource,
   style: Option[OgcStyle],
-  resampleMethod: ResampleMethod
+  resampleMethod: ResampleMethod,
+  overviewStrategy: OverviewStrategy
 ) extends OgcLayer with RasterOgcLayer
 
 case class MapAlgebraOgcLayer(
@@ -63,7 +65,8 @@ case class MapAlgebraOgcLayer(
   parameters: Map[String, SimpleOgcLayer],
   algebra: Expression,
   style: Option[OgcStyle],
-  resampleMethod: ResampleMethod
+  resampleMethod: ResampleMethod,
+  overviewStrategy: OverviewStrategy
 ) extends OgcLayer
 
 object SimpleOgcLayer {
@@ -75,7 +78,7 @@ object SimpleOgcLayer {
         logger.trace(s"attempting to retrieve layer $self at extent $extent with $cs ${targetGrid.cols}x${targetGrid.rows}")
         logger.trace(s"Requested extent geojson: ${extent.toGeoJson}")
         val raster: Raster[MultibandTile] = self.source
-          .reprojectToRegion(self.crs, targetGrid.toRasterExtent, self.resampleMethod, AutoHigherResolution)
+          .reprojectToRegion(self.crs, targetGrid.toRasterExtent, self.resampleMethod, self.overviewStrategy)
           .read(extent)
           .getOrElse(throw new Exception(s"Unable to retrieve layer $self at extent $extent $cs"))
         logger.trace(s"Successfully retrieved layer $self at extent $extent with f $cs ${targetGrid.cols}x${targetGrid.rows}")

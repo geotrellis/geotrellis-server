@@ -19,18 +19,19 @@ package geotrellis.server
 import geotrellis.server.vlm._
 import geotrellis.raster._
 import geotrellis.raster.geotiff._
-import geotrellis.raster.io.geotiff.AutoHigherResolution
-import geotrellis.raster.resample.NearestNeighbor
+import geotrellis.raster.io.geotiff.OverviewStrategy
+import geotrellis.raster.resample._
 import geotrellis.vector.Extent
 
 import cats.effect._
 import cats.data.{NonEmptyList => NEL}
 
-case class ResourceTile(name: String, resampleMethod: ResampleMethod = NearestNeighbor) {
-  def uri = {
-    val f = getClass.getResource(s"/$name").getFile
-    s"file://$f"
-  }
+case class ResourceTile(
+  name: String,
+  resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
+) {
+  def uri: String = s"file://${getClass.getResource(s"/$name").getFile}"
 }
 
 object ResourceTile extends RasterSourceUtils {
@@ -40,7 +41,7 @@ object ResourceTile extends RasterSourceUtils {
     def extentReification(self: ResourceTile)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
       (extent: Extent, cs: CellSize) => {
         val rs = getRasterSource(self.uri.toString)
-        rs.resample(TargetRegion(new GridExtent[Long](extent, cs)), self.resampleMethod, AutoHigherResolution)
+        rs.resample(TargetRegion(new GridExtent[Long](extent, cs)), self.resampleMethod, self.overviewStrategy)
           .read(extent)
           .map { raster => ProjectedRaster(raster, rs.crs) }
           .toIO { new Exception(s"No tile avail for RasterExtent: ${RasterExtent(extent, cs)}") }
