@@ -60,7 +60,7 @@ object CoverageView {
     val nativeCrs = source.nativeCrs.head
     val re = source.nativeRE
     val llre = source match {
-      case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod) =>
+      case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod, _) =>
         rss.values.map { rs =>
           ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(resampleMethod))
         }.reduce({ (re1, re2) =>
@@ -94,7 +94,7 @@ object CoverageView {
      * https://portal.ogc.org/files/07-067r5
      */
     val temporalDomain: Option[TimeSequenceType] = source match {
-      case gtl @ GeoTrellisOgcSource(_, _, _, _, _, _, _) =>
+      case gtl @ GeoTrellisOgcSource(_, _, _, _, _, _, _, _) =>
         if (gtl.source.isTemporal) {
           val records = gtl.source.times.map { t =>
             GmlDataRecord(TimePositionType(t.toInstant.toString))

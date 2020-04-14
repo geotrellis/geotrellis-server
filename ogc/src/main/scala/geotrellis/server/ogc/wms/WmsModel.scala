@@ -49,17 +49,17 @@ case class WmsModel(
             source.styles.find(_.name == name)
           }
           source match {
-            case MapAlgebraSource(name, title, rasterSources, algebra, _, _, resampleMethod) =>
+            case MapAlgebraSource(name, title, rasterSources, algebra, _, _, resampleMethod, overviewStrategy) =>
               val simpleLayers = rasterSources.mapValues { rs =>
-                SimpleOgcLayer(name, title, supportedCrs, rs, style, resampleMethod)
+                SimpleOgcLayer(name, title, supportedCrs, rs, style, resampleMethod, overviewStrategy)
               }
               val extendedParameters = extendedParametersBinding.flatMap(_.apply(p.params))
-              MapAlgebraOgcLayer(name, title, supportedCrs, simpleLayers, algebra.bindExtendedParameters(extendedParameters), style, resampleMethod)
-            case SimpleSource(name, title, rasterSource, _, _, resampleMethod) =>
-              SimpleOgcLayer(name, title, supportedCrs, rasterSource, style, resampleMethod)
-            case gts @ GeoTrellisOgcSource(name, title, _, _, _, resampleMethod, _) =>
+              MapAlgebraOgcLayer(name, title, supportedCrs, simpleLayers, algebra.bindExtendedParameters(extendedParameters), style, resampleMethod, overviewStrategy)
+            case SimpleSource(name, title, rasterSource, _, _, resampleMethod, overviewStrategy) =>
+              SimpleOgcLayer(name, title, supportedCrs, rasterSource, style, resampleMethod, overviewStrategy)
+            case gts @ GeoTrellisOgcSource(name, title, _, _, _, resampleMethod, overviewStrategy, _) =>
               val rasterSource = p.time.fold(gts.source)(gts.sourceForTime)
-              SimpleOgcLayer(name, title, supportedCrs, rasterSource, style, resampleMethod)
+              SimpleOgcLayer(name, title, supportedCrs, rasterSource, style, resampleMethod, overviewStrategy)
           }
         }
       }

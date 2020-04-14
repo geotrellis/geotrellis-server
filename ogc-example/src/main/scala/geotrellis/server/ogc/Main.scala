@@ -107,7 +107,7 @@ object Main extends CommandApp(
             simpleSources = conf
               .layers
               .values
-              .collect { case rsc@RasterSourceConf(_, _, _, _, _, _) => rsc.toLayer }
+              .collect { case rsc@RasterSourceConf(_, _, _, _, _, _, _) => rsc.toLayer }
               .toList
             _ <- Stream.eval(IO(logOptState(
               conf.wms,

@@ -20,7 +20,8 @@ import geotrellis.server._
 import geotrellis.server.ogc.style.OgcStyle
 import geotrellis.layer._
 import geotrellis.raster._
-import geotrellis.raster.resample.NearestNeighbor
+import geotrellis.raster.io.geotiff.OverviewStrategy
+import geotrellis.raster.resample._
 import geotrellis.raster.reproject.ReprojectRasterExtent
 import geotrellis.raster.reproject.Reproject.Options
 import geotrellis.vector.Extent
@@ -43,6 +44,7 @@ sealed trait TiledOgcLayer {
   def style: Option[OgcStyle]
   def layout: LayoutDefinition
   def resampleMethod: ResampleMethod
+  def overviewStrategy: OverviewStrategy
 }
 
 case class SimpleTiledOgcLayer(
@@ -52,7 +54,8 @@ case class SimpleTiledOgcLayer(
   layout: LayoutDefinition,
   source: RasterSource,
   style: Option[OgcStyle],
-  resampleMethod: ResampleMethod = NearestNeighbor
+  resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
 ) extends TiledOgcLayer
 
 case class MapAlgebraTiledOgcLayer(
@@ -63,7 +66,8 @@ case class MapAlgebraTiledOgcLayer(
   parameters: Map[String, SimpleTiledOgcLayer],
   algebra: Expression,
   style: Option[OgcStyle],
-  resampleMethod: ResampleMethod = NearestNeighbor
+  resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
 ) extends TiledOgcLayer
 
 object SimpleTiledOgcLayer {
@@ -71,7 +75,7 @@ object SimpleTiledOgcLayer {
     def extentReification(self: SimpleTiledOgcLayer)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
       (extent: Extent, cs: CellSize) =>  IO {
         val raster: Raster[MultibandTile] = self.source
-          .reprojectToRegion(self.crs, new GridExtent[Long](extent, cs).toRasterExtent, method = self.resampleMethod)
+          .reprojectToRegion(self.crs, new GridExtent[Long](extent, cs).toRasterExtent, method = self.resampleMethod, strategy = self.overviewStrategy)
           .read(extent)
           .getOrElse(throw new Exception(s"Unable to retrieve layer $self at extent $extent with cell size of $cs"))
 
@@ -85,7 +89,7 @@ object SimpleTiledOgcLayer {
         // NOTE: z comes from layout
         val tile = self.source
           .reproject(self.crs, DefaultTarget)
-          .tileToLayout(self.layout, self.resampleMethod)
+          .tileToLayout(self.layout, identity, self.resampleMethod, self.overviewStrategy)
           .read(SpatialKey(x, y))
           .getOrElse(throw new Exception(s"Unable to retrieve layer $self at XY of ($x, $y)"))
 
