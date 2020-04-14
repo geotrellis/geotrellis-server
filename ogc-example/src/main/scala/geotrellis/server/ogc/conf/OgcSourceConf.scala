@@ -28,6 +28,7 @@ sealed trait OgcSourceConf {
   def name: String
   def styles: List[StyleConf]
   def resampleMethod: ResampleMethod
+  def overviewStrategy: OverviewStrategy
 }
 
 case class RasterSourceConf(
