@@ -33,7 +33,7 @@ object Dependencies {
 
   val circeVer = "0.11.1"
   val dispatchVer = "0.11.3"
-  val gtVer = "3.3.0"
+  val gtVer = "3.3.1-SNAPSHOT"
   val jaxbApiVer = "2.3.1"
   val refinedVer = "0.9.9"
   val shapelessVer = "2.3.3"
