@@ -43,7 +43,8 @@ lazy val commonSettings = Seq(
     Resolver.bintrayRepo("azavea", "geotrellis"),
     Resolver.sonatypeRepo("releases"),
     Resolver.sonatypeRepo("snapshots"),
-    "osgeo" at "https://download.osgeo.org/webdav/geotools/",
+    "osgeo-snapshots" at "https://repo.osgeo.org/repository/snapshot/",
+    "osgeo-releases" at "https://repo.osgeo.org/repository/release/",
     "eclipse-releases" at "https://repo.eclipse.org/content/groups/releases",
     "eclipse-snapshots" at "https://repo.eclipse.org/content/groups/snapshots"
   ),
