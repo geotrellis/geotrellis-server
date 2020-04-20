@@ -63,3 +63,7 @@ final case class InterpolatedColorMapConf(
   def toStyle: OgcStyle =
     InterpolatedColorMapStyle(name, title, colorMap, legends)
 }
+
+final case class RGBStyleConf(name: String = "RGB", title: String = "Default RGB rendering", legends: List[LegendModel] = Nil) extends StyleConf {
+  def toStyle: OgcStyle = RGBStyle(name, title, legends)
+}

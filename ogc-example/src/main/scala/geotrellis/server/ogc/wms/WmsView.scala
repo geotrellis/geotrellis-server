@@ -70,7 +70,32 @@ class WmsView(wmsModel: WmsModel, serviceUrl: URL) {
       targetCells
     )
 
-    ExtendedCapabilities(focalHillshade, focalSlope)
+    val channels = "Red" :: "Green" :: "Blue" :: Nil
+    def clamp(band: String) = DataRecord(
+      None, s"Clamp$band".some,
+      DataRecord(s"clampMin$band").toXML ++
+      DataRecord(s"clampMax$band").toXML
+    )
+
+    def normalize(band: String) = DataRecord(
+      None, s"Normalize$band".some,
+      DataRecord(s"normalizeOldMin$band").toXML ++
+      DataRecord(s"normalizeOldMax$band").toXML ++
+      DataRecord(s"normalizeNewMin$band").toXML ++
+      DataRecord(s"normalizeNewMax$band").toXML
+    )
+
+    def rescale(band: String) = DataRecord(
+      None, s"Rescale$band".some,
+      DataRecord(s"rescaleNewMin$band").toXML ++
+      DataRecord(s"rescaleNewMax$band").toXML
+    )
+
+    val rgbOps = channels.flatMap { b => clamp(b) :: normalize(b) :: rescale(b) :: Nil }
+
+    val rgb: Elem = ExtendedElement("RGB", rgbOps: _*)
+
+    ExtendedCapabilities(focalHillshade, focalSlope, rgb)
   }
 
   private val histoCache: Cache[OgcLayer, Interpreted[List[Histogram[Double]]]] =
