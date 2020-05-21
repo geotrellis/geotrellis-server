@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Addressed GeoTrellisRasterSourceLegacy issues and minimized number of RasterSource instances constructed for GeoTrellis Layers [#219](https://github.com/geotrellis/geotrellis-server/issues/219)
 - Some source resolutions are sometimes skipped leading to reading too much tiles [#215](https://github.com/geotrellis/geotrellis-server/issues/215)
+- LayerHistogram should select the CellSize large enough to compute the histogram [#261](https://github.com/geotrellis/geotrellis-server/pull/261)
 
 ## [4.1.0] - 2020-03-03
 
