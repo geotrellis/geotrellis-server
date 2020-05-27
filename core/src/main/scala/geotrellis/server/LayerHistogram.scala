@@ -77,7 +77,7 @@ object LayerHistogram {
         )
       }
       cellSize <- IO {
-        SampleUtils.chooseLargestCellSize(rasterExtents.map(_.cellSize))
+        SampleUtils.chooseLargestCellSize(rasterExtents, maxCells)
       }
       _ <- IO {
         logger.trace(
