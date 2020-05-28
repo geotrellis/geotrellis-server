@@ -350,6 +350,40 @@ lazy val stac = project
     )
   )
 
+lazy val `stac-example` = project
+  .dependsOn(ogc)
+  .settings(moduleName := "geotrellis-stac-example")
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(libraryDependencies ++= Seq(
+    geotrellisGdal,
+    http4sDsl.value,
+    http4sBlazeServer.value,
+    http4sBlazeClient.value,
+    http4sCirce.value,
+    http4sXml.value,
+    logback,
+    pureConfig,
+    pureConfigCatsEffect,
+    scaffeine,
+    scalatest,
+    decline,
+    stac4s
+  ),
+  excludeDependencies ++= Seq(
+    // log4j brought in via uzaygezen is a pain for us
+    ExclusionRule("log4j", "log4j"),
+    ExclusionRule("org.slf4j", "slf4j-log4j12"),
+    ExclusionRule("org.slf4j", "slf4j-nop")
+  ),
+  libraryDependencies := (CrossVersion
+    .partialVersion(scalaVersion.value) match {
+    case Some((2, scalaMajor)) if scalaMajor >= 12 =>
+      libraryDependencies.value ++ Seq(ansiColors212)
+    case Some((2, scalaMajor)) if scalaMajor >= 11 =>
+      libraryDependencies.value ++ Seq(ansiColors211)
+  }))
+
 lazy val bench = project
   .dependsOn(core)
   .settings(commonSettings)

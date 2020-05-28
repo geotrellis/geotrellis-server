@@ -79,6 +79,7 @@ object Dependencies {
   val kindProjector = "org.typelevel" %% "kind-projector" % "0.11.0"
   val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % "0.6.0-8-g035e114-SNAPSHOT"
   val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.12.2"
+  val pureConfigCatsEffect = "com.github.pureconfig" %% "pureconfig-cats-effect" % "0.12.2"
   val refined = "eu.timepit" %% "refined" % refinedVer
   val scaffeine = "com.github.blemale" %% "scaffeine" % "2.6.0"
   val scalaXml = "org.scala-lang.modules" %% "scala-xml" % "1.1.0"
@@ -101,6 +102,7 @@ object Dependencies {
   val shapeless = "com.chuusai" %% "shapeless" % shapelessVer
   val logback = "ch.qos.logback" % "logback-classic" % "1.2.3" % Runtime
   val droste = "io.higherkindness" %% "droste-core" % "0.8.0"
+  val stac4s = "com.azavea.stac4s" %% "core" % "0.0.8"
 
   // This dependency differs between scala 2.11 and 2.12
   val ansiColors211 = "org.backuity" %% "ansi-interpolator" % "1.1" % Provided
