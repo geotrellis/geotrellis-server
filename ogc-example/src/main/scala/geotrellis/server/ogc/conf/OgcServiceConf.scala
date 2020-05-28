@@ -17,9 +17,10 @@
 package geotrellis.server.ogc.conf
 
 import geotrellis.server.ogc
-import geotrellis.server.ogc.{MapAlgebraSource, OgcSourceRepository, RasterOgcSource, ows}
+import geotrellis.server.ogc.{MapAlgebraSource, OgcSource, RasterOgcSource, ows}
 import geotrellis.server.ogc.wms.WmsParentLayerMeta
 import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
+import geotrellis.store.query.Repository
 
 /**
  * Each service has its own unique configuration requirements (see the below instances)
@@ -28,7 +29,7 @@ import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
  */
 sealed trait OgcServiceConf {
   def layerDefinitions: List[OgcSourceConf]
-  def layerSources(rasterOgcSources: List[RasterOgcSource]): OgcSourceRepository = {
+  def layerSources(rasterOgcSources: List[RasterOgcSource]): Repository[List, OgcSource] = {
     val rasterLayers: List[RasterOgcSource] =
       layerDefinitions.collect { case rsc @ RasterSourceConf(_, _, _, _, _, _, _) => rsc.toLayer }
     val mapAlgebraLayers: List[MapAlgebraSource] =

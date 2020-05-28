@@ -21,14 +21,14 @@ import geotrellis.server.ogc.params.ParamMap
 import geotrellis.server.ogc.style._
 import geotrellis.server.ogc.wms.WmsParams.GetMap
 import geotrellis.server.ogc.utils._
-
 import com.azavea.maml.ast.Expression
+import geotrellis.store.query.Repository
 
 /** This class holds all the information necessary to construct a response to a WMS request */
 case class WmsModel(
   serviceMeta: opengis.wms.Service,
   parentLayerMeta: WmsParentLayerMeta,
-  sources: OgcSourceRepository,
+  sources: Repository[List, OgcSource],
   extendedParametersBinding: Option[ParamMap => Option[Expression => Expression]] = None
 ) {
 
