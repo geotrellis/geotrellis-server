@@ -16,6 +16,7 @@
 
 package geotrellis.server.ogc.conf
 
+import geotrellis.server.ogc._
 import geotrellis.server.ogc.style._
 
 import geotrellis.raster.render.{ColorMap, ColorRamp}
@@ -61,4 +62,8 @@ final case class InterpolatedColorMapConf(
 ) extends StyleConf {
   def toStyle: OgcStyle =
     InterpolatedColorMapStyle(name, title, colorMap, legends)
+}
+
+final case class RGBStyleConf(name: String = "RGB", title: String = "Default RGB rendering", legends: List[LegendModel] = Nil) extends StyleConf {
+  def toStyle: OgcStyle = RGBStyle(name, title, legends)
 }

@@ -19,9 +19,9 @@ case class StacOgcSource(
 ) extends OgcSource {
   val timeInterval: Option[OgcTimeInterval] = None
 
-  def nativeExtent: Extent = ???
+  def nativeExtent: Extent = source.extent
 
-  def nativeRE: GridExtent[Long] = ???
+  def nativeRE: GridExtent[Long] = source.gridExtent
 
   def extentIn(crs: CRS): Extent = ???
 

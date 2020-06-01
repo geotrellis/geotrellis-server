@@ -16,10 +16,12 @@
 
 package geotrellis.server.ogc.conf
 
+import geotrellis.raster.RasterSource
 import geotrellis.server.ogc
 import geotrellis.server.ogc.{MapAlgebraSource, OgcSource, RasterOgcSource, ows}
 import geotrellis.server.ogc.wms.WmsParentLayerMeta
 import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
+import geotrellis.stac.raster.{OgcRepositories, StacOgcRepositories, StacOgcRepository}
 import geotrellis.store.query.Repository
 
 /**
@@ -34,10 +36,10 @@ sealed trait OgcServiceConf {
       layerDefinitions.collect { case rsc @ RasterSourceConf(_, _, _, _, _, _, _) => rsc.toLayer }
     val mapAlgebraLayers: List[MapAlgebraSource] =
       layerDefinitions.collect { case masc @ MapAlgebraSourceConf(_, _, _, _, _, _, _) => masc.model(rasterOgcSources) }
-    // if stac than repo should be different?
-    // TODO: improve STAC repo
-    // STACOGC Source?
-    ogc.OgcSourceRepository(rasterLayers ++ mapAlgebraLayers)
+
+    val stacLayers: List[StacSourceConf] = layerDefinitions.collect { case ssc @ StacSourceConf(_, _, _, _, _, _, _) => ssc}
+
+    OgcRepositories(ogc.OgcSourceRepository(rasterLayers ++ mapAlgebraLayers) :: StacOgcRepositories(stacLayers) :: Nil)
   }
 }
 
@@ -60,3 +62,4 @@ case class WcsConf(
   serviceMetadata: ows.ServiceMetadata,
   layerDefinitions: List[OgcSourceConf]
 ) extends OgcServiceConf
+
