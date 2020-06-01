@@ -31,26 +31,6 @@ sealed trait OgcSourceConf {
   def overviewStrategy: OverviewStrategy
 }
 
-case class RasterSourceConf(
-  name: String,
-  title: String,
-  source: String,
-  defaultStyle: Option[String],
-  styles: List[StyleConf],
-  resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
-) extends OgcSourceConf {
-  def toLayer: RasterOgcSource =
-    GeoTrellisPath.parseOption(source) match {
-      case Some(_) => GeoTrellisOgcSource(
-        name, title, source, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy
-      )
-      case None => SimpleSource(
-        name, title, RasterSource(source), defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy
-      )
-    }
-}
-
 case class StacSourceConf(
   name: String,
   title: String,
@@ -60,9 +40,31 @@ case class StacSourceConf(
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
   overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
 ) extends OgcSourceConf {
-  def toLayer: RasterOgcSource = SimpleSource(
-    name, title, RasterSource(source), defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy
-  )
+  def fromRasterSource(rs: RasterSource): SimpleSource =
+    SimpleSource(
+      name, title, rs, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy
+    )
+}
+
+case class RasterSourceConf(
+  name: String,
+  title: String,
+  source: String,
+  defaultStyle: Option[String],
+  styles: List[StyleConf],
+  resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
+) extends OgcSourceConf {
+  def toLayer: RasterOgcSource = {
+    GeoTrellisPath.parseOption(source) match {
+      case Some(_) => GeoTrellisOgcSource(
+        name, title, source, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy
+      )
+      case None => SimpleSource(
+        name, title, RasterSource(source), defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy
+      )
+    }
+  }
 }
 
 case class MapAlgebraSourceConf(

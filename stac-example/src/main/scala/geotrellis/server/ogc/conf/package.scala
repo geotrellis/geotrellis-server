@@ -22,7 +22,6 @@ import geotrellis.proj4.CRS
 import geotrellis.vector.Extent
 import geotrellis.raster.{ResampleMethod, TileLayout, resample}
 import geotrellis.raster.render.{ColorMap, ColorRamp}
-
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
 import com.typesafe.config._
@@ -75,7 +74,7 @@ package object conf {
    * HOCON doesn't naturally handle unquoted strings which contain decimals ('.') very well.
    *  As a result, some special configuration handling is required here to allow unquoted
    *  strings specifically when we know we're trying to decode a ColorMap.
-   *
+   * 
    * @note It is currently difficult to handle double-keyed maps. A workaround
    * has been provided, but it only works with doubles that explicitly decimal
    * pad to tenths (0.0 is OK, 0 is to be avoided)
@@ -91,7 +90,7 @@ package object conf {
               val value = cv.unwrapped.asInstanceOf[String]
               key -> value
             }
-          case ConfigValueType.STRING =>
+          case ConfigValueType.STRING => 
             List(k -> v.unwrapped.asInstanceOf[String])
           case _ =>
             List(k -> v.toString)
@@ -99,7 +98,7 @@ package object conf {
       }).map({ case (k, v) =>
         val key = k.toDouble
         val value = java.lang.Long.decode(v).toInt
-        key -> value
+        key -> value 
       }).toMap
       numericMap
     }
