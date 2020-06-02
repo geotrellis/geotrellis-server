@@ -18,7 +18,7 @@ case class StacRepository[F[_]: Sync](client: StacClient[F]) extends RepositoryM
     client
       .search(scheme.cata(SearchFilters.algebra).apply(query))
       .map { _ flatMap { item =>
-        item.assets.values.map(StacItemAssetRasterSource(_, item.properties))
+        item.assets.values.map(a => RasterSource(a.href))
       } }
 }
 
@@ -33,11 +33,10 @@ case class StacOgcRepository(
       .map { _ flatMap { item =>
         item.assets
           .get(stacSourceConf.asset)
-          .map(StacItemAssetRasterSource(_, item.properties))
+          .map(a => RasterSource(a.href))
       } }
     .unsafeRunSync()
     .map(stacSourceConf.fromRasterSource)
-
 }
 
 case class StacOgcRepositories(stacLayers: List[StacSourceConf], client: Client[IO]) extends Repository[List, OgcSource] {
