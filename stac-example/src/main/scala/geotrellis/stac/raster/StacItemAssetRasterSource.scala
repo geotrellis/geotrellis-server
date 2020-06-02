@@ -14,7 +14,7 @@ case class StacItemAssetRasterSource(
   private[raster] val underlyingRS: Option[RasterSource] = None,
   private[geotrellis] val targetCellType: Option[TargetCellType] = None
 ) extends RasterSource {
-  private lazy val underlying = underlyingRS.getOrElse(RasterSource(asset.href))
+  private lazy val underlying = underlyingRS.getOrElse(RasterSource(asset.href.replace("http://landsat-pds.s3.amazonaws.com/", "s3://geotrellis-test/lc8-test/")))
 
   def metadata: StacItemAssetMetadata = StacItemAssetMetadata(name, crs, bandCount, cellType, gridExtent, resolutions, itemProperties)
 

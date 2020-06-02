@@ -19,7 +19,7 @@ package geotrellis.server.ogc.conf
 import pureconfig._
 import pureconfig.generic.auto._
 import pureconfig.module.catseffect.syntax._
-import cats.effect.Sync
+import cats.effect.{Resource, Sync}
 import com.typesafe.config.ConfigFactory
 import scalaxb.DataRecord
 
@@ -46,7 +46,8 @@ object Conf {
   def loadF[F[_]: Sync](configPath: Option[String]): F[Conf] =
     ConfigSource.fromConfig(ConfigFactory.load(configPath.getOrElse("application.conf"))).loadF[F, Conf]
 
-  // implicit def ConfObjectToClass(obj: Conf.type): Conf = load
+  def loadResourceF[F[_]: Sync](configPath: Option[String]): Resource[F, Conf] =
+    Resource.liftF(loadF[F](configPath))
 
   // This is a work-around to use pureconfig to read scalaxb generated case classes
   // DataRecord should never be specified from configuration, this satisfied the resolution
