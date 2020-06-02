@@ -50,7 +50,7 @@ case class WmtsModel(
             SimpleTiledOgcLayer(name, title, crs, layout, rs, style, resampleMethod, overviewStrategy)
           }
           MapAlgebraTiledOgcLayer(name, title, crs, layout, simpleLayers, algebra, style, resampleMethod, overviewStrategy)
-        case SimpleSource(name, title, rasterSource, _, styles, resampleMethod, overviewStrategy) =>
+        case SimpleSource(name, title, rasterSource, _, _, styles, resampleMethod, overviewStrategy) =>
           SimpleTiledOgcLayer(name, title, crs, layout, rasterSource, style, resampleMethod, overviewStrategy)
       }
     }

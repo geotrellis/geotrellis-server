@@ -20,10 +20,10 @@ import geotrellis.server.ogc.conf._
 import geotrellis.server.ogc.wms._
 import geotrellis.server.ogc.wcs._
 import geotrellis.server.ogc.wmts._
+
 import cats.effect._
 import cats.implicits._
 import com.monovore.decline._
-import fs2._
 import org.http4s._
 import org.http4s.server._
 import org.http4s.server.blaze.BlazeServerBuilder
@@ -83,17 +83,6 @@ object Main extends CommandApp(
         implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
         implicit val timer: Timer[IO] = IO.timer(ExecutionContext.global)
 
-        /*val franklinIO: ContextShift[IO] = IO.contextShift(
-          ExecutionContext.fromExecutor(
-            Executors.newCachedThreadPool(
-              new ThreadFactoryBuilder().setNameFormat("raster-io-%d").build()
-            )
-          )
-        )
-
-        implicit val contextShift: ContextShift[IO] = franklinIO
-        implicit val timer: Timer[IO] = IO.timer(ExecutionContext.global)*/
-
         val commonMiddleware: HttpMiddleware[IO] = { (routes: HttpRoutes[IO]) =>
           CORS(routes)
         }
@@ -107,8 +96,7 @@ object Main extends CommandApp(
             http4sClient <- BlazeClientBuilder[IO](ec).resource
             simpleSources = conf
               .layers
-              .values
-              .collect { case rsc @ RasterSourceConf(_, _, _, _, _, _, _) => rsc.toLayer }
+              .collect { case (label, rsc @ RasterSourceConf(_, _, _, _, _, _, _, _)) =>  rsc.copy(label = Some(label)).toLayer }
               .toList
             _ <- Resource.liftF(logOptState(
               conf.wms,
@@ -131,7 +119,7 @@ object Main extends CommandApp(
               WmtsModel(
                 svc.serviceMetadata,
                 svc.tileMatrixSets,
-                svc.layerSources(simpleSources)
+                svc.layerSourcesWithStac(simpleSources, http4sClient)
               )
             }
             _ <- Resource.liftF(logOptState(

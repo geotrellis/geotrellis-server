@@ -44,6 +44,7 @@ import java.time.ZonedDateTime
 trait OgcSource {
   def name: String
   def title: String
+  def label: Option[String]
   def defaultStyle: Option[String]
   def styles: List[OgcStyle]
   def nativeExtent: Extent
@@ -87,6 +88,7 @@ case class SimpleSource(
   name: String,
   title: String,
   source: RasterSource,
+  label: Option[String],
   defaultStyle: Option[String],
   styles: List[OgcStyle],
   resampleMethod: ResampleMethod,
@@ -99,6 +101,7 @@ case class GeoTrellisOgcSource(
   name: String,
   title: String,
   sourceUri: String,
+  label: Option[String],
   defaultStyle: Option[String],
   styles: List[OgcStyle],
   resampleMethod: ResampleMethod,
@@ -174,6 +177,8 @@ case class MapAlgebraSource(
   resampleMethod: ResampleMethod,
   overviewStrategy: OverviewStrategy
 ) extends OgcSource {
+  val label = None
+
   def extentIn(crs: CRS): Extent = {
     val reprojectedSources: NEL[RasterSource] =
       NEL.fromListUnsafe(sources.values.map(_.reproject(crs)).toList)

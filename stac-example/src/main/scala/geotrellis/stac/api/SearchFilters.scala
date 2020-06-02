@@ -1,16 +1,14 @@
 package geotrellis.stac.api
 
 import com.azavea.stac4s.{Bbox, TemporalExtent, TwoDimBbox}
-import geotrellis.store.query.QueryF
-import higherkindness.droste.Algebra
+import geotrellis.store.query.{Query, QueryF}
+import higherkindness.droste.{Algebra, scheme}
 import cats.syntax.option._
+import geotrellis.proj4.LatLng
 import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.syntax._
 import geotrellis.vector._
-
-import org.locationtech.jts.geom.Coordinate
-import org.locationtech.jts.geom.CoordinateFilter
 
 case class SearchFilters(
   bbox: Option[Bbox] = None,
@@ -54,17 +52,6 @@ case class SearchFilters(
 
 object SearchFilters {
 
-  /**
-   * TODO: implement a fully correct logic here; we need to have an inverted geometry in the query if that is a lat lon thing.
-   * */
-  private class InvertCoordinateFilter extends CoordinateFilter {
-    override def filter(coord: Coordinate): Unit = {
-      val oldX = coord.x
-      coord.x = coord.y
-      coord.y = oldX
-    }
-  }
-
   implicit val searchFilterDecoder: Decoder[SearchFilters] = { c =>
     for {
       bbox <- c.downField("bbox").as[Option[Bbox]]
@@ -90,9 +77,7 @@ object SearchFilters {
   }
 
 
-  implicit val searchFilterEncoder: Encoder[SearchFilters] = { filters =>
-    deriveEncoder[SearchFilters].apply(filters.copy(intersects = filters.intersects.map { g => g.apply(new InvertCoordinateFilter()); g }))
-  }
+  implicit val searchFilterEncoder: Encoder[SearchFilters] = deriveEncoder
 
   // dont use the word demo it confuses Eugene
   // and me
@@ -106,18 +91,23 @@ object SearchFilters {
   // how this should look like?
   import geotrellis.store.query.QueryF._
   def algebra: Algebra[QueryF, SearchFilters] = Algebra {
-    case Nothing() => SearchFilters() // unsupported node
+    // unsupported node
+    case Nothing() => SearchFilters()
     case All() => SearchFilters()
     case WithName(name) => SearchFilters(query = Map("layer:ids" -> Map("superset" -> List(name).asJson).asJson).asJsonObject)
     case WithNames(names) => SearchFilters(query = Map("layer:ids" -> Map("superset" -> names.asJson).asJson).asJsonObject)
     case At(t, _) => SearchFilters(datetime = TemporalExtent(t.toInstant, None).some)
     case Between(t1, t2, _) => SearchFilters(datetime = TemporalExtent(t1.toInstant, t2.toInstant).some)
-    case Intersects(e) => SearchFilters(intersects = e.extent.toPolygon.some)
-    case Covers(e) => SearchFilters(
-      bbox = TwoDimBbox(e.extent.xmin, e.extent.xmax, e.extent.ymin, e.extent.ymax).some
-    ) // unsupported node ?
-    case Contains(_) => SearchFilters() // unsupported node
-    case And(e1, e2) => e1 and e2
-    case Or(_, _) => SearchFilters() // unsupported node
+    case Intersects(e) => SearchFilters(intersects = e.reproject(LatLng).extent.toPolygon.some)
+    case Covers(e) =>
+      val Extent(xmin, ymin, xmax, ymax) = e.reproject(LatLng).extent
+      SearchFilters(bbox = TwoDimBbox(xmin, xmax, ymin, ymax).some)
+    // unsupported node
+    case Contains(_) => SearchFilters()
+    case And(l, r) => l and r
+    // unsupported node // weirdly supported node
+    case Or(l, r) => l.copy(query = r.query)
   }
+
+  def eval(query: Query): SearchFilters = scheme.cata(SearchFilters.algebra).apply(query)
 }
