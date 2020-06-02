@@ -33,7 +33,6 @@ case class WcsModel(
 
   def getLayers(p: GetCoverageWcsParams): List[OgcLayer] = {
     val filteredSources = sources.find(p.toQuery)
-    logger.debug(s"Filtering sources: ${sources.store.length} -> ${filteredSources.length}")
     filteredSources.map {
         case SimpleSource(name, title, source, _, _, resampleMethod, overviewStrategy) =>
           SimpleOgcLayer(name, title, p.crs, source, None, resampleMethod, overviewStrategy)
