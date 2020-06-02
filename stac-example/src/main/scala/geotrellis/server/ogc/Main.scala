@@ -20,7 +20,6 @@ import geotrellis.server.ogc.conf._
 import geotrellis.server.ogc.wms._
 import geotrellis.server.ogc.wcs._
 import geotrellis.server.ogc.wmts._
-
 import cats.effect._
 import cats.implicits._
 import com.monovore.decline._
@@ -30,6 +29,7 @@ import org.http4s.server._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.CORS
 import org.http4s.syntax.kleisli._
+import org.http4s.client.blaze.BlazeClientBuilder
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
 import org.log4s._
 
@@ -79,8 +79,20 @@ object Main extends CommandApp(
             logger.info(ansi"%red{Warning}: No configuration path provided. Loading defaults.")
         }
 
+        implicit val ec = ExecutionContext.global
         implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
         implicit val timer: Timer[IO] = IO.timer(ExecutionContext.global)
+
+        /*val franklinIO: ContextShift[IO] = IO.contextShift(
+          ExecutionContext.fromExecutor(
+            Executors.newCachedThreadPool(
+              new ThreadFactoryBuilder().setNameFormat("raster-io-%d").build()
+            )
+          )
+        )
+
+        implicit val contextShift: ContextShift[IO] = franklinIO
+        implicit val timer: Timer[IO] = IO.timer(ExecutionContext.global)*/
 
         val commonMiddleware: HttpMiddleware[IO] = { (routes: HttpRoutes[IO]) =>
           CORS(routes)
@@ -89,15 +101,16 @@ object Main extends CommandApp(
         def logOptState[A](opt: Option[A], upLog: String, downLog: String): IO[Unit] =
           IO(opt.fold(logger.info(downLog))(_ => logger.info(upLog)))
 
-        val stream: Stream[IO, ExitCode] = {
+        def createServer: Resource[IO, Server[IO]] =
           for {
-            conf       <- Stream.eval(Conf.loadF[IO](configPath))
+            conf <- Conf.loadResourceF[IO](configPath)
+            http4sClient <- BlazeClientBuilder[IO](ec).resource
             simpleSources = conf
               .layers
               .values
               .collect { case rsc @ RasterSourceConf(_, _, _, _, _, _, _) => rsc.toLayer }
               .toList
-            _ <- Stream.eval(logOptState(
+            _ <- Resource.liftF(logOptState(
               conf.wms,
               ansi"%green{WMS configuration detected}, starting Web Map Service",
               ansi"%red{No WMS configuration detected}, unable to start Web Map Service"
@@ -106,10 +119,10 @@ object Main extends CommandApp(
               WmsModel(
                 svc.serviceMetadata,
                 svc.parentLayerMeta,
-                svc.layerSources(simpleSources)
+                svc.layerSourcesWithStac(simpleSources, http4sClient)
               )
             }
-            _ <- Stream.eval(logOptState(
+            _ <- Resource.liftF(logOptState(
               conf.wmts,
               ansi"%green{WMTS configuration detected}, starting Web Map Tiling Service",
               ansi"%red{No WMTS configuration detected}, unable to start Web Map Tiling Service"
@@ -121,7 +134,7 @@ object Main extends CommandApp(
                 svc.layerSources(simpleSources)
               )
             }
-            _ <- Stream.eval(logOptState(
+            _ <- Resource.liftF(logOptState(
               conf.wcs,
               ansi"%green{WCS configuration detected}, starting Web Coverage Service",
               ansi"%red{No WCS configuration detected}, unable to start Web Coverage Service"
@@ -129,11 +142,12 @@ object Main extends CommandApp(
             wcsModel = conf.wcs.map { svc =>
               WcsModel(
                 svc.serviceMetadata,
-                svc.layerSources(simpleSources)
+                svc.layerSourcesWithStac(simpleSources, http4sClient)
               )
             }
+
             ogcService = new OgcService(wmsModel, wcsModel, wmtsModel, new URL(publicUrl))
-            exitCode   <- BlazeServerBuilder[IO]
+            server <- BlazeServerBuilder[IO]
               .withIdleTimeout(Duration.Inf)
               .withResponseHeaderTimeout(Duration.Inf)
               .enableHttp2(true)
@@ -141,14 +155,11 @@ object Main extends CommandApp(
               .withHttpApp(Router(
                 "/" -> commonMiddleware(ogcService.routes)
               ).orNotFound)
-              .serve
-          } yield exitCode
-        }
+              .resource
+          } yield server
 
-        /** End of the world - wrap up the work defined above and execute it */
-        stream
-          .compile
-          .drain
+        createServer
+          .use(_ => IO.never)
           .as(ExitCode.Success)
           .void
           .unsafeRunSync
