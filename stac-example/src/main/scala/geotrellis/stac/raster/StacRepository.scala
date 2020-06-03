@@ -35,12 +35,12 @@ case class StacOgcRepository(
     val filters = SearchFilters.eval(query, stacSourceConf.layer :: Nil)
     val rasterSources = client
       .search(filters)
-      .map { _.flatMap { item =>
+      .unsafeRunSync()
+      .flatMap { item =>
         item.assets
           .get(stacSourceConf.asset)
           .map(a => RasterSource(a.href))
-      }}
-      .unsafeRunSync()
+      }
     val source: Option[RasterSource] = rasterSources match {
       case head :: Nil => head.some
       case head :: tail =>

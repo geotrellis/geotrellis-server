@@ -90,10 +90,10 @@ object SimpleTiledOgcLayer {
         println(s"tiledReification: ${(x, y, z)}")
         // NOTE: z comes from layout
         // TODO: remove AnyRef.synchronized
-        val tile = AnyRef.synchronized(self.source
+        val tile = self.source
           .reproject(self.crs, DefaultTarget)
           .tileToLayout(self.layout, identity, self.resampleMethod, self.overviewStrategy)
-          .read(SpatialKey(x, y)))
+          .read(SpatialKey(x, y))
           .getOrElse(throw new Exception(s"Unable to retrieve layer $self at XY of ($x, $y)"))
 
         val extent = self.layout.mapTransform(SpatialKey(x, y))
