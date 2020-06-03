@@ -18,12 +18,7 @@ package geotrellis.server.extent
 
 import geotrellis.vector.Extent
 import geotrellis.raster._
-
 import cats.data.{NonEmptyList => NEL}
-import cats.effect._
-import cats.implicits._
-import cats.syntax.either._
-
 
 object SampleUtils {
   val logger = org.log4s.getLogger
@@ -47,6 +42,20 @@ object SampleUtils {
     logger.trace(s"The sample extent covers ${((tl.area + tr.area + bl.area + br.area) / uberExtent.area) * 100}% of the source extent")
     (tl, tr, bl, br)
   }
+
+  /** Choose the largest cellsize with the minCells amount */
+  final def chooseLargestCellSize(rasterExtents: NEL[RasterExtent], minCells: Int): CellSize =
+    rasterExtents
+      .reduceLeft { (chosenRE: RasterExtent, nextRE: RasterExtent) =>
+        val (chosenCS, nextCS) = chosenRE.cellSize -> nextRE.cellSize
+        val chosenSize = chosenCS.height * chosenCS.width
+        val nextSize = nextCS.height * nextCS.width
+
+        if (nextSize > chosenSize && nextRE.size > minCells)
+          nextRE
+        else
+          chosenRE
+      }.cellSize
 
   /** Choose the largest cellsize */
   final def chooseLargestCellSize(nativeCellSizes: NEL[CellSize]): CellSize =
@@ -74,16 +83,13 @@ object SampleUtils {
           chosenCS
       })
 
-  final def intersectExtents(extents: NEL[Extent]): Option[Extent] = {
+  final def intersectExtents(extents: NEL[Extent]): Option[Extent] =
     extents.tail.foldLeft(Option(extents.head))({
       case (Some(ex1), ex2) => ex1 intersection ex2
       case _ => None
     })
-  }
 
   final def unionExtents(extents: NEL[Extent]): Option[Extent] =
     Some(extents.tail.foldLeft(extents.head)({ (ex1, ex2) => ex1 combine ex2 }))
 
-
 }
-

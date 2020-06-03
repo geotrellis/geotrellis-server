@@ -1,8 +1,10 @@
 package geotrellis.stac.raster
 
-import geotrellis.raster.RasterSource
-import geotrellis.server.ogc.{OgcSource, SimpleSource}
-import geotrellis.server.ogc.conf.{MapAlgebraSourceConf, StacSourceConf}
+import cats.data.NonEmptyList
+import cats.syntax.option._
+import geotrellis.raster.{MosaicRasterSource, RasterSource}
+import geotrellis.server.ogc.{ OgcSource, SimpleSource }
+import geotrellis.server.ogc.conf.{ MapAlgebraSourceConf, StacSourceConf }
 import geotrellis.stac.api.{Http4sStacClient, SearchFilters, StacClient}
 import geotrellis.store.query
 import geotrellis.store.query._
@@ -26,18 +28,30 @@ case class StacOgcRepository(
   stacSourceConf: StacSourceConf,
   client: StacClient[IO]
 ) extends Repository[List, OgcSource] {
+
   def store: List[OgcSource] = find(query.all)
   def find(query: Query): List[OgcSource] = {
     // we need to replace the actual conf name with the stac api layer name
     val filters = SearchFilters.eval(query, stacSourceConf.layer :: Nil)
-    client
+    val rasterSources = client
       .search(filters)
-      .map { _ flatMap { item =>
+      .map { _.flatMap { item =>
         item.assets
           .get(stacSourceConf.asset)
-          .map(a => stacSourceConf.toLayer(RasterSource(a.href)))
-      } }
+          .map(a => RasterSource(a.href))
+      }}
       .unsafeRunSync()
+    val source: Option[RasterSource] = rasterSources match {
+      case head :: Nil => head.some
+      case head :: tail =>
+        // TODO: Remove and test after https://github.com/locationtech/geotrellis/issues/3248
+        //       is addressed. If we let MosaicRasterSource construct it's own gridExtent
+        //       it crashes with slightly mismatched Extent for a given CellSize
+        val mosaicGridExtent = rasterSources.map(_.gridExtent).reduce(_ combine _)
+        MosaicRasterSource(NonEmptyList(head, tail), head.crs, mosaicGridExtent).some
+      case _ => None
+    }
+    source.map(stacSourceConf.toLayer).toList
   }
 }
 
@@ -59,7 +73,6 @@ case class MapAlgberaLayerStacOgcRepository(
 
     mapAlgebraSourceConf.modelOpt(sources).toList
   }
-
 }
 
 case class StacOgcRepositories(stacLayers: List[StacSourceConf], client: Client[IO]) extends Repository[List, OgcSource] {
