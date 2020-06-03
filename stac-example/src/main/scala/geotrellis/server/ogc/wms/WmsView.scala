@@ -20,6 +20,7 @@ import geotrellis.server._
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wms.WmsParams.{GetCapabilities, GetMap}
+import geotrellis.server.util._
 
 import geotrellis.raster.RasterExtent
 import geotrellis.raster._
@@ -112,9 +113,8 @@ class WmsView(wmsModel: WmsModel, serviceUrl: URL) {
               logger.debug(errs.toList.toString)
               BadRequest(errs.asJson)
             case Left(err) =>            // exceptions
-              err.printStackTrace()
-              logger.error(err.toString)
-              InternalServerError(err.toString)
+              logger.error(err.stackTraceString)
+              InternalServerError(err.stackTraceString)
           }
         }.headOption.getOrElse(wmsReq.layers.headOption match {
           case Some(layerName) =>

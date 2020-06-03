@@ -42,7 +42,6 @@ case class WmsModel(
     parentLayerMeta.supportedProjections
       .find(_ == p.crs)
       .fold[List[OgcLayer]](List()) { supportedCrs =>
-        println(s"sources.find(${p.toQuery}): ${sources.find(p.toQuery)}")
         sources.find(p.toQuery).map { source =>
           val styleName: Option[String] = p.styles.headOption.filterNot(_.isEmpty)
             .orElse(source.defaultStyle)

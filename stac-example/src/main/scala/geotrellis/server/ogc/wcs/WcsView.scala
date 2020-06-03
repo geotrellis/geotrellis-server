@@ -17,6 +17,7 @@
 package geotrellis.server.ogc.wcs
 
 import geotrellis.server.ogc.params.ParamError
+import geotrellis.server.util._
 
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
 import org.http4s.scalaxml._
@@ -36,8 +37,8 @@ class WcsView(wcsModel: WcsModel, serviceUrl: URL) {
       logger.info(s"response ${res.toString}")
       Ok(res)
     case Left(err) =>
-      logger.error(s"error: $err")
-      InternalServerError(err.toString)
+      logger.error(err.stackTraceString)
+      InternalServerError(err.stackTraceString)
   }
 
   private val getCoverage = new GetCoverage(wcsModel)

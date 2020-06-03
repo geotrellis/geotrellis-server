@@ -20,6 +20,7 @@ import geotrellis.server._
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wmts.WmtsParams.{GetCapabilities, GetTile}
+import geotrellis.server.util._
 
 import com.azavea.maml.eval._
 import org.http4s.scalaxml._
@@ -98,9 +99,8 @@ class WmtsView(wmtsModel: WmtsModel, serviceUrl: URL) {
                   logger.debug(errs.toList.toString)
                   BadRequest(errs.asJson)
                 case Left(err) => // exceptions
-                  // err.printStackTrace()
-                  logger.error(err.toString)
-                  InternalServerError(err.toString)
+                  logger.error(err.stackTraceString)
+                  InternalServerError(err.stackTraceString)
               }
             }.headOption.getOrElse(BadRequest(s"Layer ($layerName) not found"))
           }

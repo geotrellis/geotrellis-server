@@ -186,8 +186,6 @@ case class MapAlgebraSource(
   resampleMethod: ResampleMethod,
   overviewStrategy: OverviewStrategy
 ) extends OgcSource {
-  val label = None
-
   def extentIn(crs: CRS): Extent = {
     val reprojectedSources: NEL[RasterSource] =
       NEL.fromListUnsafe(sources.values.map(_.reproject(crs)).toList)

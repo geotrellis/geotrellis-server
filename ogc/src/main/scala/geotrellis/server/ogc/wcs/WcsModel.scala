@@ -34,7 +34,7 @@ case class WcsModel(
   def getLayers(p: GetCoverageWcsParams): List[OgcLayer] = {
     val filteredSources = sources.find(p.toQuery)
     filteredSources.map {
-        case SimpleSource(name, title, source,  _, _, resampleMethod, overviewStrategy) =>
+        case SimpleSource(name, title, source, _, _, resampleMethod, overviewStrategy) =>
           SimpleOgcLayer(name, title, p.crs, source, None, resampleMethod, overviewStrategy)
         case gts @ GeoTrellisOgcSource(name, title, _, _, _, resampleMethod, overviewStrategy, _) =>
           val source = if (p.temporalSequence.nonEmpty) {
