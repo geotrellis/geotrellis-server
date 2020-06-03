@@ -95,9 +95,6 @@ class WmsView(wmsModel: WmsModel, serviceUrl: URL) {
             _ <-  IO { histoCache.put(layer, hist) }
           } yield hist
 
-          //histIO.unsafeRunSync()
-          //throw new Exception("LOL")
-
           (evalExtent(re.extent, re.cellSize), histIO).parMapN {
             case (Valid(mbtile), Valid(hists)) =>
               Valid((mbtile, hists))
@@ -114,7 +111,7 @@ class WmsView(wmsModel: WmsModel, serviceUrl: URL) {
               logger.debug(errs.toList.toString)
               BadRequest(errs.asJson)
             case Left(err) =>            // exceptions
-              err.printStackTrace()
+              // err.printStackTrace()
               logger.error(err.toString)
               InternalServerError(err.toString)
           }

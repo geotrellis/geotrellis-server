@@ -97,6 +97,7 @@ class WmtsView(wmtsModel: WmtsModel, serviceUrl: URL) {
                   logger.debug(errs.toList.toString)
                   BadRequest(errs.asJson)
                 case Left(err) => // exceptions
+                  // err.printStackTrace()
                   logger.error(err.toString)
                   InternalServerError(err.toString)
               }

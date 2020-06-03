@@ -104,9 +104,7 @@ case class MapAlgebraSourceConf(
   def modelOpt(possibleSources: List[RasterOgcSource]): Option[MapAlgebraSource] = {
     val layerNames = listParams(algebra)
     val sourceList = layerNames.flatMap { name =>
-      possibleSources.find(_.name == name).map { layerSrc =>
-        name -> layerSrc.source
-      }
+      possibleSources.find(_.name == name).map { layerSrc => name -> layerSrc.source }
     }
 
     if(sourceList.nonEmpty) Some(MapAlgebraSource(name, title, sourceList.toMap, algebra, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy))

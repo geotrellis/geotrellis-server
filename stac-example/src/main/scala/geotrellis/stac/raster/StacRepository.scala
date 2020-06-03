@@ -47,20 +47,17 @@ case class MapAlgberaLayerStacOgcRepository(
   repository: Repository[List, OgcSource]
 ) extends Repository[List, OgcSource] {
   val names = stacSourceConfs.map(_.name).toSet
-  val layers = stacSourceConfs.map(_.layer).toSet
 
   def store: List[OgcSource] = find(query.all)
-
   def find(query: Query): List[OgcSource] = {
-    // replace the name of the mapalgebra with the name of each particlar lauer
+    // replace the name of the mapalgebra with the name of each layer
     val sources = names
       .toList
-      .map(n => query or withName(n))
+      .map(n => query or withName(n)) // TODO: replace it with some other command?
       .flatMap(repository.find)
       .collect { case ss @ SimpleSource(_, _, _, _, _, _, _) => ss }
 
-    if(sources.nonEmpty) mapAlgebraSourceConf.model(sources) :: Nil
-    else Nil
+    mapAlgebraSourceConf.modelOpt(sources).toList
   }
 
 }
@@ -68,20 +65,18 @@ case class MapAlgberaLayerStacOgcRepository(
 case class StacOgcRepositories(stacLayers: List[StacSourceConf], client: Client[IO]) extends Repository[List, OgcSource] {
   lazy val repos: List[StacOgcRepository] = stacLayers.map { conf => StacOgcRepository(conf, Http4sStacClient[IO](client, Uri.unsafeFromString(conf.source))) }
   def store: List[OgcSource] = find(query.all)
-  def find(query: Query): List[OgcSource] = {
-    val validStacLayers = StacOgcRepositories.eval(query)(stacLayers)
-    val repos: List[StacOgcRepository] = validStacLayers.map { conf => StacOgcRepository(conf, Http4sStacClient[IO](client, Uri.unsafeFromString(conf.source))) }
-    repos.flatMap(_.find(query))
-  }
+  def find(query: Query): List[OgcSource] =
+    StacOgcRepositories.eval(query)(stacLayers)
+      .map(conf => StacOgcRepository(conf, Http4sStacClient[IO](client, Uri.unsafeFromString(conf.source))))
+      .flatMap(_.find(query))
 }
 
 object StacOgcRepositories {
   import geotrellis.store.query._
   import geotrellis.store.query.QueryF._
-  /** Algebra that can work with List[T] */
   def algebra: Algebra[QueryF, List[StacSourceConf] => List[StacSourceConf]] = Algebra {
-    case Nothing() => _ => Nil
-    case All()     => identity
+    case Nothing()        => _ => Nil
+    case All()            => identity
     case WithName(name)   => _.filter { _.name == name }
     case WithNames(names) => _.filter { c => names.contains(c.name) }
     case At(_, _)         => identity
@@ -93,7 +88,6 @@ object StacOgcRepositories {
     case Or(e1, e2)       => list => e1(list) ++ e2(list)
   }
 
-  /** An alias for [[scheme.cata]] since it can confuse people */
   def eval(query: Query)(list: List[StacSourceConf]): List[StacSourceConf] =
     scheme.cata(algebra).apply(query)(list)
 }
@@ -101,7 +95,7 @@ object StacOgcRepositories {
 case class MapAlgberaStacLayerOgcRepositories(mapAlgebraConfLayers: List[MapAlgebraSourceConf], stacLayers: List[StacSourceConf], client: Client[IO]) extends Repository[List, OgcSource] {
   lazy val repos: List[MapAlgberaLayerStacOgcRepository] = mapAlgebraConfLayers.map { conf =>
     val layerNames = conf.listParams(conf.algebra)
-    val stacLayersFiltered = stacLayers.filter { l => layerNames.contains(l.name) }
+    val stacLayersFiltered = stacLayers.filter(l => layerNames.contains(l.name))
     MapAlgberaLayerStacOgcRepository(conf, stacLayersFiltered, StacOgcRepositories(stacLayersFiltered, client))
   }
   def store: List[OgcSource] = find(query.all)

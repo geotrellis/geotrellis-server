@@ -77,9 +77,10 @@ object SimpleOgcLayer {
         val targetGrid = new GridExtent[Long](extent, cs)
         println(s"attempting to retrieve layer $self at extent $extent with $cs ${targetGrid.cols}x${targetGrid.rows}")
         println(s"Requested extent geojson: ${extent.toGeoJson}")
-        val raster: Raster[MultibandTile] = AnyRef.synchronized(self.source
+        // TODO: remove AnyRef.synchronized
+        val raster: Raster[MultibandTile] = self.source
           .reprojectToRegion(self.crs, targetGrid.toRasterExtent, self.resampleMethod, self.overviewStrategy)
-          .read(extent))
+          .read(extent)
           .getOrElse(throw new Exception(s"Unable to retrieve layer $self at extent $extent $cs"))
         println(s"Successfully retrieved layer $self at extent $extent with f $cs ${targetGrid.cols}x${targetGrid.rows}")
 
