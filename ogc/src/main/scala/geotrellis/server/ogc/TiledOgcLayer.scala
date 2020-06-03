@@ -89,7 +89,6 @@ object SimpleTiledOgcLayer {
       (z: Int, x: Int, y: Int) => IO {
         println(s"tiledReification: ${(x, y, z)}")
         // NOTE: z comes from layout
-        // TODO: remove AnyRef.synchronized
         val tile = self.source
           .reproject(self.crs, DefaultTarget)
           .tileToLayout(self.layout, identity, self.resampleMethod, self.overviewStrategy)
