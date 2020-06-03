@@ -75,13 +75,13 @@ object SimpleOgcLayer {
     def extentReification(self: SimpleOgcLayer)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
       (extent: Extent, cs: CellSize) =>  IO {
         val targetGrid = new GridExtent[Long](extent, cs)
-        logger.trace(s"attempting to retrieve layer $self at extent $extent with $cs ${targetGrid.cols}x${targetGrid.rows}")
-        logger.trace(s"Requested extent geojson: ${extent.toGeoJson}")
-        val raster: Raster[MultibandTile] = self.source
+        println(s"attempting to retrieve layer $self at extent $extent with $cs ${targetGrid.cols}x${targetGrid.rows}")
+        println(s"Requested extent geojson: ${extent.toGeoJson}")
+        val raster: Raster[MultibandTile] = AnyRef.synchronized(self.source
           .reprojectToRegion(self.crs, targetGrid.toRasterExtent, self.resampleMethod, self.overviewStrategy)
-          .read(extent)
+          .read(extent))
           .getOrElse(throw new Exception(s"Unable to retrieve layer $self at extent $extent $cs"))
-        logger.trace(s"Successfully retrieved layer $self at extent $extent with f $cs ${targetGrid.cols}x${targetGrid.rows}")
+        println(s"Successfully retrieved layer $self at extent $extent with f $cs ${targetGrid.cols}x${targetGrid.rows}")
 
         ProjectedRaster(raster, self.crs)
       }

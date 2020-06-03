@@ -44,7 +44,6 @@ import java.time.ZonedDateTime
 trait OgcSource {
   def name: String
   def title: String
-  def label: Option[String]
   def defaultStyle: Option[String]
   def styles: List[OgcStyle]
   def nativeExtent: Extent
@@ -88,7 +87,18 @@ case class SimpleSource(
   name: String,
   title: String,
   source: RasterSource,
-  label: Option[String],
+  defaultStyle: Option[String],
+  styles: List[OgcStyle],
+  resampleMethod: ResampleMethod,
+  overviewStrategy: OverviewStrategy
+) extends RasterOgcSource {
+  val timeInterval: Option[OgcTimeInterval] = None
+}
+
+case class SimpleLayerSource(
+  name: String,
+  title: String,
+  source: RasterSource,
   defaultStyle: Option[String],
   styles: List[OgcStyle],
   resampleMethod: ResampleMethod,
@@ -101,7 +111,6 @@ case class GeoTrellisOgcSource(
   name: String,
   title: String,
   sourceUri: String,
-  label: Option[String],
   defaultStyle: Option[String],
   styles: List[OgcStyle],
   resampleMethod: ResampleMethod,

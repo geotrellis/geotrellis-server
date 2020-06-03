@@ -33,24 +33,23 @@ sealed trait OgcSourceConf {
 
 case class StacSourceConf(
   name: String,
+  layer: String,
   title: String,
   source: String,
   asset: String,
-  label: Option[String],
   defaultStyle: Option[String],
   styles: List[StyleConf],
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
   overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
 ) extends OgcSourceConf {
   def toLayer(rs: RasterSource): SimpleSource =
-    SimpleSource(name, title, rs, label, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy)
+    SimpleSource(name, title, rs, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy)
 }
 
 case class RasterSourceConf(
   name: String,
   title: String,
   source: String,
-  label: Option[String],
   defaultStyle: Option[String],
   styles: List[StyleConf],
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
@@ -59,10 +58,10 @@ case class RasterSourceConf(
   def toLayer: RasterOgcSource = {
     GeoTrellisPath.parseOption(source) match {
       case Some(_) => GeoTrellisOgcSource(
-        name, title, source, label, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy
+        name, title, source, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy
       )
       case None => SimpleSource(
-        name, title, RasterSource(source), label, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy
+        name, title, RasterSource(source), defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy
       )
     }
   }
@@ -99,19 +98,6 @@ case class MapAlgebraSourceConf(
       }
       name -> layerSrc.source
     }
-    MapAlgebraSource(name, title, sourceList.toMap, algebra, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy)
-  }
-
-  def modelLabel(possibleSources: List[RasterOgcSource]): MapAlgebraSource = {
-    val layerNames = listParams(algebra)
-    val sourceList = layerNames.map { name =>
-      val layerSrc = possibleSources.find(_.label.contains(name)).getOrElse {
-        throw new Exception(
-          s"MAML Layer expected but was unable to find the simple layer '$name', make sure all required layers are in the server configuration and are correctly spelled there and in all provided MAML")
-      }
-      name -> layerSrc.source
-    }
-
     MapAlgebraSource(name, title, sourceList.toMap, algebra, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy)
   }
 

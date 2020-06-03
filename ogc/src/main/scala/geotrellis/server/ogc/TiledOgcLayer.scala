@@ -74,6 +74,7 @@ object SimpleTiledOgcLayer {
   implicit val simpleTiledExtentReification = new ExtentReification[SimpleTiledOgcLayer] {
     def extentReification(self: SimpleTiledOgcLayer)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
       (extent: Extent, cs: CellSize) =>  IO {
+        println(s"extentReification: ${extent -> cs}")
         val raster: Raster[MultibandTile] = self.source
           .reprojectToRegion(self.crs, new GridExtent[Long](extent, cs).toRasterExtent, method = self.resampleMethod, strategy = self.overviewStrategy)
           .read(extent)
@@ -86,6 +87,7 @@ object SimpleTiledOgcLayer {
   implicit val simpleTiledReification = new TmsReification[SimpleTiledOgcLayer] {
     def tmsReification(self: SimpleTiledOgcLayer, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[ProjectedRaster[MultibandTile]] =
       (z: Int, x: Int, y: Int) => IO {
+        println(s"tiledReification: ${(x, y, z)}")
         // NOTE: z comes from layout
         val tile = self.source
           .reproject(self.crs, DefaultTarget)
