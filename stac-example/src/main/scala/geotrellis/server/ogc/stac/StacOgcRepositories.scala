@@ -41,9 +41,13 @@ case class StacOgcRepository(stacSourceConf: StacSourceConf, client: StacClient[
     /** Replace the actual conf name with the STAC Layer name */
     val filters = SearchFilters.eval(queryWithName(query))
     val rasterSources =
-      client
-        .search(filters)
-        .unsafeRunSync() // TODO: abstract over the effect type, see [[RepositoryM]]
+      filters
+        .toList
+        .flatMap(
+          client
+            .search(_)
+            .unsafeRunSync() // TODO: abstract over the effect type, see [[RepositoryM]]
+        )
         .flatMap { item =>
           item.assets
             .get(stacSourceConf.asset)
