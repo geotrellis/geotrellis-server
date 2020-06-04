@@ -18,6 +18,7 @@ package geotrellis.server.ogc.wms
 
 import geotrellis.server._
 import geotrellis.server.ogc._
+import geotrellis.server.ogc.utils._
 import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wms.WmsParams.{GetCapabilities, GetMap}
 import geotrellis.server.utils._
@@ -35,14 +36,69 @@ import cats.implicits._
 import cats.effect._
 import cats.data.Validated._
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
-import org.log4s.getLogger
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
+import org.log4s.getLogger
+import opengis._
+import scalaxb._
 
 import java.net.URL
+
 import scala.concurrent.duration._
+import scala.xml.Elem
 
 class WmsView(wmsModel: WmsModel, serviceUrl: URL) {
   val logger = getLogger
+
+  val extendedCapabilities: List[DataRecord[Elem]] = {
+    val targetCells = DataRecord(
+      None, "target".some,
+      DataRecord("all").toXML ++
+      DataRecord("data").toXML ++
+      DataRecord("nodata").toXML ++
+      DataRecord(None, "default".some, "all").toXML
+    )
+
+    val focalHillshade: Elem = ExtendedElement(
+      "FocalHillshade",
+      DataRecord("zFactor"),
+      DataRecord("azimuth"),
+      DataRecord("altitude"),
+      targetCells
+    )
+
+    val focalSlope: Elem = ExtendedElement(
+      "FocalSlope",
+      DataRecord("zFactor"),
+      targetCells
+    )
+
+    val channels = "Red" :: "Green" :: "Blue" :: Nil
+    def clamp(band: String) = DataRecord(
+      None, s"Clamp$band".some,
+      DataRecord(s"clampMin$band").toXML ++
+      DataRecord(s"clampMax$band").toXML
+    )
+
+    def normalize(band: String) = DataRecord(
+      None, s"Normalize$band".some,
+      DataRecord(s"normalizeOldMin$band").toXML ++
+      DataRecord(s"normalizeOldMax$band").toXML ++
+      DataRecord(s"normalizeNewMin$band").toXML ++
+      DataRecord(s"normalizeNewMax$band").toXML
+    )
+
+    def rescale(band: String) = DataRecord(
+      None, s"Rescale$band".some,
+      DataRecord(s"rescaleNewMin$band").toXML ++
+      DataRecord(s"rescaleNewMax$band").toXML
+    )
+
+    val rgbOps = channels.flatMap { b => clamp(b) :: normalize(b) :: rescale(b) :: Nil }
+
+    val rgb: Elem = ExtendedElement("RGB", rgbOps: _*)
+
+    ExtendedCapabilities(focalHillshade, focalSlope, rgb)
+  }
 
   private val histoCache: Cache[OgcLayer, Interpreted[List[Histogram[Double]]]] =
     Scaffeine()
@@ -67,7 +123,7 @@ class WmsView(wmsModel: WmsModel, serviceUrl: URL) {
 
       case Valid(_: GetCapabilities) =>
         logger.debug(ansi"%bold{GetCapabilities: ${req.uri}}")
-        Ok(new CapabilitiesView(wmsModel, serviceUrl).toXML)
+        Ok(new CapabilitiesView(wmsModel, serviceUrl, extendedCapabilities).toXML)
 
       case Valid(wmsReq: GetMap) =>
         logger.debug(ansi"%bold{GetMap: ${req.uri}}")

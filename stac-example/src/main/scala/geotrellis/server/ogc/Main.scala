@@ -113,7 +113,8 @@ object Main extends CommandApp(
               WmsModel(
                 svc.serviceMetadata,
                 svc.parentLayerMeta,
-                svc.layerSources(simpleSources, http4sClient)
+                svc.layerSources(simpleSources, http4sClient),
+                ExtendedParameters.extendedParametersBinding
               )
             }
             _ <- Resource.liftF(logOptState(
@@ -136,7 +137,8 @@ object Main extends CommandApp(
             wcsModel = conf.wcs.map { svc =>
               WcsModel(
                 svc.serviceMetadata,
-                svc.layerSources(simpleSources, http4sClient)
+                svc.layerSources(simpleSources, http4sClient),
+                ExtendedParameters.extendedParametersBinding
               )
             }
 
