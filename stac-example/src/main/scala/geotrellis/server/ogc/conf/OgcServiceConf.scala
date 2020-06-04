@@ -36,24 +36,19 @@ sealed trait OgcServiceConf {
     val rasterLayers: List[RasterOgcSource] =
       layerDefinitions.collect { case rsc @ RasterSourceConf(_, _, _, _, _, _, _) => rsc.toLayer }
     val mapAlgebraLayers: List[MapAlgebraSource] =
-      layerDefinitions.collect { case masc @ MapAlgebraSourceConf(_, _, _, _, _, _, _) => masc.model(rasterOgcSources) }
+      layerDefinitions.collect { case masc @ MapAlgebraSourceConf(_, _, _, _, _, _, _) => masc.modelOpt(rasterOgcSources) }.flatten
 
     ogc.OgcSourceRepository(rasterLayers ++ mapAlgebraLayers)
   }
 
-  def layerSourcesWithStac(rasterOgcSources: List[RasterOgcSource], client: Client[IO]): Repository[List, OgcSource] = {
-    val rasterLayers: List[RasterOgcSource] =
-      layerDefinitions.collect { case rsc @ RasterSourceConf(_, _, _, _, _, _, _) => rsc.toLayer }
-    val mapAlgebraLayers: List[MapAlgebraSource] =
-      layerDefinitions.collect { case masc @ MapAlgebraSourceConf(_, _, _, _, _, _, _) => masc.modelOpt(rasterOgcSources) }.flatten
-
+  def layerSources(rasterOgcSources: List[RasterOgcSource], client: Client[IO]): Repository[List, OgcSource] = {
     val stacLayers: List[StacSourceConf] = layerDefinitions.collect { case ssc @ StacSourceConf(_, _, _, _, _, _, _, _, _) => ssc }
     val mapAlgebraConfLayers: List[MapAlgebraSourceConf] = layerDefinitions.collect { case masc @ MapAlgebraSourceConf(_, _, _, _, _, _, _) => masc }
 
     OgcRepositories(
-      ogc.OgcSourceRepository(rasterLayers ++ mapAlgebraLayers) ::
+      layerSources(rasterOgcSources) ::
       StacOgcRepositories(stacLayers, client) ::
-      MapAlgberaStacLayerOgcRepositories(mapAlgebraConfLayers, stacLayers, client) :: Nil
+      MapAlgebraStacOgcRepositories(mapAlgebraConfLayers, stacLayers, client) :: Nil
     )
   }
 }

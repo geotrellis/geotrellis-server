@@ -28,7 +28,7 @@ import geotrellis.stac.IOSpec
 import org.http4s.Uri
 import cats.syntax.either._
 import geotrellis.proj4.CRS
-import geotrellis.stac.raster.{StacOgcRepository, StacRepository}
+import geotrellis.stac.raster.StacRepository
 import geotrellis.vector.{Extent, ProjectedExtent}
 
 import scala.concurrent.ExecutionContext
@@ -45,7 +45,7 @@ class Http4sStacClientSpec extends IOSpec {
   }
 
   describe("Http4sStacClientSpec") {
-    it("should handle the search query") {
+    ignore("should handle the search query") {
       withClient[IO].apply { client =>
         client
           .search()
@@ -60,13 +60,13 @@ class Http4sStacClientSpec extends IOSpec {
       }
     }
 
-    it("should handle the collections query") {
+    ignore("should handle the collections query") {
       withClient[IO].apply { client =>
         client.collections.map { list => println(list); true shouldBe true }
       }
     }
 
-    it("repository") {
+    ignore("repository") {
       import geotrellis.store.query._
       withClient[IO].apply { client =>
         StacRepository[IO](client).find {

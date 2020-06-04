@@ -95,18 +95,6 @@ case class SimpleSource(
   val timeInterval: Option[OgcTimeInterval] = None
 }
 
-case class SimpleLayerSource(
-  name: String,
-  title: String,
-  source: RasterSource,
-  defaultStyle: Option[String],
-  styles: List[OgcStyle],
-  resampleMethod: ResampleMethod,
-  overviewStrategy: OverviewStrategy
-) extends RasterOgcSource {
-  val timeInterval: Option[OgcTimeInterval] = None
-}
-
 case class GeoTrellisOgcSource(
   name: String,
   title: String,

@@ -97,8 +97,9 @@ object QueryF {
 
   /** Coalgebras that replace certain nodes  */
   def coalgebraWithName(name: String): Coalgebra[QueryF, Query] = Coalgebra {
-    case WithName(_) => WithName(name)
-    case e           => e.unfix
+    case WithName(_)  => WithName(name)
+    case WithNames(_) => WithNames(Set(name))
+    case e            => e.unfix
   }
   def coalgebraWithNames(names: NonEmptySet[String]): Coalgebra[QueryF, Query] = Coalgebra {
     case WithNames(_) => WithNames(names.toSortedSet)
