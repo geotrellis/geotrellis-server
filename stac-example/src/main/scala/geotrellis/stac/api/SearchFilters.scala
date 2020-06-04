@@ -16,15 +16,19 @@
 
 package geotrellis.stac.api
 
-import com.azavea.stac4s.{Bbox, TemporalExtent, TwoDimBbox}
 import geotrellis.store.query.{Query, QueryF}
-import higherkindness.droste.{Algebra, scheme}
-import cats.syntax.option._
+
 import geotrellis.proj4.LatLng
+import com.azavea.stac4s.{Bbox, TemporalExtent, TwoDimBbox}
 import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.syntax._
+import higherkindness.droste.{Algebra, scheme}
 import geotrellis.vector._
+import cats.syntax.option._
+import cats.Semigroup
+import cats.instances.option._
+import cats.syntax.semigroup._
 
 case class SearchFilters(
   bbox: Option[Bbox] = None,
@@ -35,38 +39,35 @@ case class SearchFilters(
   limit: Option[Int] = None,
   next: Option[String] = None,
   query: JsonObject = JsonObject.empty
-) {
-  def and(other: SearchFilters): SearchFilters = {
-    SearchFilters(
-      bbox = bbox orElse other.bbox,
-      datetime = (datetime, other.datetime) match {
-        case (Some(left), Some(right)) =>
-          val (lmin, lmax) = left.value.min -> left.value.max
-          val (rmin, rmax) = right.value.min -> right.value.max
-          TemporalExtent.from(List(
-            List(lmin, rmin).max,
-            List(lmax, rmax).min
-          )).toOption
-        case (l @ Some(_), _) => l
-        case (_, r @ Some(_)) => r
-        case _ => None
-      },
-      intersects = (intersects, other.intersects) match {
-        case (Some(l), Some(r)) => l.intersection(r).some
-        case (l @ Some(_), _) => l
-        case (_,  r @ Some(_)) => r
-        case _ => None
-      },
-      collections = (collections ++ other.collections).distinct,
-      items = (collections ++ other.collections).distinct,
-      limit = List(limit, other.limit).min,
-      next = List(next, other.next).max,
-      query = query.deepMerge(other.query)
-    )
-  }
-}
+)
 
 object SearchFilters {
+  implicit val temporalExtentSemigroup: Semigroup[TemporalExtent] =
+    Semigroup.instance { (left, right) =>
+      val (lmin, lmax) = left.value.min -> left.value.max
+      val (rmin, rmax) = right.value.min -> right.value.max
+      TemporalExtent.unsafeFrom(List(
+        List(lmin, rmin).max,
+        List(lmax, rmax).min
+      ))
+    }
+
+  implicit val geometryIntersectionSemigroup: Semigroup[Geometry] =
+    Semigroup.instance { (left, right) => left.intersection(right) }
+
+  implicit val searchFiltersSemigroup: Semigroup[SearchFilters] =
+    Semigroup.instance { (left, right) =>
+      SearchFilters(
+        bbox        = left.bbox orElse right.bbox,
+        datetime    = left.datetime |+| right.datetime,
+        intersects  = left.intersects |+| right.intersects,
+        collections = (left.collections ++ right.collections).distinct,
+        items       = (left.collections ++ right.collections).distinct,
+        limit       = List(left.limit, right.limit).min,
+        next        = right.next,
+        query       = left.query.deepMerge(right.query)
+      )
+    }
 
   implicit val searchFilterDecoder: Decoder[SearchFilters] = { c =>
     for {
@@ -110,7 +111,7 @@ object SearchFilters {
       SearchFilters(bbox = TwoDimBbox(xmin, xmax, ymin, ymax).some)
     // unsupported node
     case Contains(_) => SearchFilters()
-    case And(l, r) => l and r
+    case And(l, r) => l |+| r
     // unsupported node
     case Or(_, _)  => SearchFilters()
   }
