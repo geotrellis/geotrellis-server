@@ -44,19 +44,6 @@ case class SearchFilters(
 )
 
 object SearchFilters {
-  implicit val temporalExtentSemigroup: Semigroup[TemporalExtent] =
-    Semigroup.instance { (left, right) =>
-      val (lmin, lmax) = left.value.min -> left.value.max
-      val (rmin, rmax) = right.value.min -> right.value.max
-      TemporalExtent.unsafeFrom(List(
-        List(lmin, rmin).max,
-        List(lmax, rmax).min
-      ))
-    }
-
-  implicit val geometryIntersectionSemigroup: Semigroup[Geometry] =
-    Semigroup.instance { (left, right) => left.intersection(right) }
-
   implicit val bboxIntersectionSemigroup: Semigroup[Bbox] =
     Semigroup.instance { (left, right) =>
       val Extent(xmin, ymin, xmax, ymax) =
@@ -70,6 +57,19 @@ object SearchFilters {
 
       TwoDimBbox(xmin, ymin, xmax, ymax)
     }
+
+  implicit val temporalExtentSemigroup: Semigroup[TemporalExtent] =
+    Semigroup.instance { (left, right) =>
+      val (lmin, lmax) = left.value.min -> left.value.max
+      val (rmin, rmax) = right.value.min -> right.value.max
+      TemporalExtent.unsafeFrom(List(
+        List(lmin, rmin).max,
+        List(lmax, rmax).min
+      ))
+    }
+
+  implicit val geometryIntersectionSemigroup: Semigroup[Geometry] =
+    Semigroup.instance { (left, right) => left.intersection(right) }
 
   implicit val searchFiltersSemigroup: Semigroup[SearchFilters] =
     Semigroup.instance { (left, right) =>
@@ -113,20 +113,21 @@ object SearchFilters {
   implicit val searchFilterEncoder: Encoder[SearchFilters] = deriveEncoder
 
   import geotrellis.store.query.QueryF._
-  def algebra: Algebra[QueryF, SearchFilters] = Algebra {
-    case All()              => SearchFilters()
-    case WithName(name)     => SearchFilters(query = Map("layer:ids" -> Map("superset" -> List(name).asJson).asJson).asJsonObject)
-    case WithNames(names)   => SearchFilters(query = Map("layer:ids" -> Map("superset" -> names.asJson).asJson).asJsonObject)
-    case At(t, _)           => SearchFilters(datetime = TemporalExtent(t.toInstant, None).some)
-    case Between(t1, t2, _) => SearchFilters(datetime = TemporalExtent(t1.toInstant, t2.toInstant).some)
-    case Intersects(e)      => SearchFilters(intersects = e.reproject(LatLng).extent.toPolygon.some)
+  def algebra: Algebra[QueryF, Option[SearchFilters]] = Algebra {
+    case Nothing()          => None
+    case All()              => SearchFilters().some
+    case WithName(name)     => SearchFilters(query = Map("layer:ids" -> Map("superset" -> List(name).asJson).asJson).asJsonObject).some
+    case WithNames(names)   => SearchFilters(query = Map("layer:ids" -> Map("superset" -> names.asJson).asJson).asJsonObject).some
+    case At(t, _)           => SearchFilters(datetime = TemporalExtent(t.toInstant, None).some).some
+    case Between(t1, t2, _) => SearchFilters(datetime = TemporalExtent(t1.toInstant, t2.toInstant).some).some
+    case Intersects(e)      => SearchFilters(intersects = e.reproject(LatLng).extent.toPolygon.some).some
     case Covers(e) =>
       val Extent(xmin, ymin, xmax, ymax) = e.reproject(LatLng).extent
-      SearchFilters(bbox = TwoDimBbox(xmin, xmax, ymin, ymax).some)
+      SearchFilters(bbox = TwoDimBbox(xmin, xmax, ymin, ymax).some).some
     case And(l, r) => l |+| r
     // unsupported nodes
-    case _ => SearchFilters()
+    case _ => SearchFilters().some
   }
 
-  def eval(query: Query): SearchFilters = scheme.cata(SearchFilters.algebra).apply(query)
+  def eval(query: Query): Option[SearchFilters] = scheme.cata(SearchFilters.algebra).apply(query)
 }
