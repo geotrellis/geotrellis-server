@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-package geotrellis.stac.api
+package geotrellis.server.ogc
 
-import com.azavea.stac4s.{StacCollection, StacItem}
-import eu.timepit.refined.types.string.NonEmptyString
+import geotrellis.store.query
+import geotrellis.store.query.{Query, Repository}
 
-trait StacClient[F[_]] {
-  def search(filter: SearchFilters = SearchFilters()): F[List[StacItem]]
-  def collections: F[List[StacCollection]]
-  def collection(collectionId: NonEmptyString): F[Option[StacCollection]]
-  def items(collectionId: NonEmptyString): F[List[StacItem]]
-  def item(collectionId: NonEmptyString, itemId: NonEmptyString): F[Option[StacItem]]
+case class OgcRepositories(repos: List[Repository[List, OgcSource]]) extends Repository[List, OgcSource] {
+  def store: List[OgcSource] = find(query.all)
+  def find(query: Query): List[OgcSource] = repos.flatMap(_.find(query))
 }

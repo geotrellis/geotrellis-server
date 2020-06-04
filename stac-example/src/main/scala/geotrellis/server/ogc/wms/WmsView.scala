@@ -20,6 +20,7 @@ import geotrellis.server._
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wms.WmsParams.{GetCapabilities, GetMap}
+import geotrellis.server.utils._
 
 import geotrellis.raster.RasterExtent
 import geotrellis.raster._
@@ -86,14 +87,15 @@ class WmsView(wmsModel: WmsModel, serviceUrl: URL) {
               LayerHistogram(IO.pure(expr), IO.pure(parameters), ConcurrentInterpreter.DEFAULT[IO], 512)
           }
 
-          val histIO = for {
+          // TODO: remove this once GeoTiffRasterSource would be threadsafe
+          val histIO = IO.pure((for {
             cached <- IO { histoCache.getIfPresent(layer) }
             hist   <- cached match {
                         case Some(h) => IO.pure(h)
                         case None => evalHisto
                       }
             _ <-  IO { histoCache.put(layer, hist) }
-          } yield hist
+          } yield hist).unsafeRunSync())
 
           (evalExtent(re.extent, re.cellSize), histIO).parMapN {
             case (Valid(mbtile), Valid(hists)) =>
@@ -111,8 +113,8 @@ class WmsView(wmsModel: WmsModel, serviceUrl: URL) {
               logger.debug(errs.toList.toString)
               BadRequest(errs.asJson)
             case Left(err) =>            // exceptions
-              logger.error(err.toString)
-              InternalServerError(err.toString)
+              logger.error(err.stackTraceString)
+              InternalServerError(err.stackTraceString)
           }
         }.headOption.getOrElse(wmsReq.layers.headOption match {
           case Some(layerName) =>

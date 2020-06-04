@@ -18,10 +18,10 @@ package geotrellis.server.ogc.conf
 
 import cats.effect.IO
 import geotrellis.server.ogc
-import geotrellis.server.ogc.{MapAlgebraSource, OgcSource, RasterOgcSource, ows}
+import geotrellis.server.ogc.{MapAlgebraSource, OgcSource, RasterOgcSource, ows, OgcRepositories}
 import geotrellis.server.ogc.wms.WmsParentLayerMeta
 import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
-import geotrellis.stac.raster.{OgcRepositories, StacOgcRepositories}
+import geotrellis.server.ogc.stac._
 import geotrellis.store.query.Repository
 import org.http4s.client.Client
 
@@ -36,19 +36,20 @@ sealed trait OgcServiceConf {
     val rasterLayers: List[RasterOgcSource] =
       layerDefinitions.collect { case rsc @ RasterSourceConf(_, _, _, _, _, _, _) => rsc.toLayer }
     val mapAlgebraLayers: List[MapAlgebraSource] =
-      layerDefinitions.collect { case masc @ MapAlgebraSourceConf(_, _, _, _, _, _, _) => masc.model(rasterOgcSources) }
+      layerDefinitions.collect { case masc @ MapAlgebraSourceConf(_, _, _, _, _, _, _) => masc.modelOpt(rasterOgcSources) }.flatten
 
     ogc.OgcSourceRepository(rasterLayers ++ mapAlgebraLayers)
   }
 
-  def layerSourcesWithStac(rasterOgcSources: List[RasterOgcSource], client: Client[IO]): Repository[List, OgcSource] = {
-    val rasterLayers: List[RasterOgcSource] =
-      layerDefinitions.collect { case rsc @ RasterSourceConf(_, _, _, _, _, _, _) => rsc.toLayer }
-    val mapAlgebraLayers: List[MapAlgebraSource] =
-      layerDefinitions.collect { case masc @ MapAlgebraSourceConf(_, _, _, _, _, _, _) => masc.model(rasterOgcSources) }
-    val stacLayers: List[StacSourceConf] = layerDefinitions.collect { case ssc @ StacSourceConf(_, _, _, _, _, _, _, _) => ssc }
+  def layerSources(rasterOgcSources: List[RasterOgcSource], client: Client[IO]): Repository[List, OgcSource] = {
+    val stacLayers: List[StacSourceConf] = layerDefinitions.collect { case ssc @ StacSourceConf(_, _, _, _, _, _, _, _, _) => ssc }
+    val mapAlgebraConfLayers: List[MapAlgebraSourceConf] = layerDefinitions.collect { case masc @ MapAlgebraSourceConf(_, _, _, _, _, _, _) => masc }
 
-    OgcRepositories(ogc.OgcSourceRepository(rasterLayers ++ mapAlgebraLayers) :: StacOgcRepositories(stacLayers, client) :: Nil)
+    OgcRepositories(
+      layerSources(rasterOgcSources) ::
+      StacOgcRepositories(stacLayers, client) ::
+      MapAlgebraStacOgcRepositories(mapAlgebraConfLayers, stacLayers, client) :: Nil
+    )
   }
 }
 
@@ -71,4 +72,3 @@ case class WcsConf(
   serviceMetadata: ows.ServiceMetadata,
   layerDefinitions: List[OgcSourceConf]
 ) extends OgcServiceConf
-

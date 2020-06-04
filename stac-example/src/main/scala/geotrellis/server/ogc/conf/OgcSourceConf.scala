@@ -33,6 +33,7 @@ sealed trait OgcSourceConf {
 
 case class StacSourceConf(
   name: String,
+  layer: String,
   title: String,
   source: String,
   asset: String,
@@ -41,10 +42,8 @@ case class StacSourceConf(
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
   overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
 ) extends OgcSourceConf {
-  def fromRasterSource(rs: RasterSource): SimpleSource =
-    SimpleSource(
-      name, title, rs, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy
-    )
+  def toLayer(rs: RasterSource): SimpleSource =
+    SimpleSource(name, title, rs, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy)
 }
 
 case class RasterSourceConf(
@@ -77,12 +76,10 @@ case class MapAlgebraSourceConf(
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
   overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
 ) extends OgcSourceConf {
-  private def listParams(expr: Expression): List[String] = {
+  def listParams(expr: Expression): List[String] = {
     def eval(subExpr: Expression): List[String] = subExpr match {
-      case v: Variable =>
-        List(v.name)
-      case _ =>
-        subExpr.children.flatMap(eval)
+      case v: Variable => List(v.name)
+      case _ => subExpr.children.flatMap(eval)
     }
     eval(expr)
   }
@@ -102,5 +99,15 @@ case class MapAlgebraSourceConf(
       name -> layerSrc.source
     }
     MapAlgebraSource(name, title, sourceList.toMap, algebra, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy)
+  }
+
+  def modelOpt(possibleSources: List[RasterOgcSource]): Option[MapAlgebraSource] = {
+    val layerNames = listParams(algebra)
+    val sourceList = layerNames.flatMap { name =>
+      possibleSources.find(_.name == name).map { layerSrc => name -> layerSrc.source }
+    }
+
+    if(sourceList.nonEmpty) Some(MapAlgebraSource(name, title, sourceList.toMap, algebra, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy))
+    else None
   }
 }

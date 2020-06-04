@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Azavea
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package geotrellis.stac.api
 
 import com.azavea.stac4s.syntax._
@@ -12,7 +28,7 @@ import geotrellis.stac.IOSpec
 import org.http4s.Uri
 import cats.syntax.either._
 import geotrellis.proj4.CRS
-import geotrellis.stac.raster.{StacOgcRepository, StacRepository}
+import geotrellis.stac.raster.StacRepository
 import geotrellis.vector.{Extent, ProjectedExtent}
 
 import scala.concurrent.ExecutionContext
@@ -29,7 +45,7 @@ class Http4sStacClientSpec extends IOSpec {
   }
 
   describe("Http4sStacClientSpec") {
-    it("should handle the search query") {
+    ignore("should handle the search query") {
       withClient[IO].apply { client =>
         client
           .search()
@@ -44,13 +60,13 @@ class Http4sStacClientSpec extends IOSpec {
       }
     }
 
-    it("should handle the collections query") {
+    ignore("should handle the collections query") {
       withClient[IO].apply { client =>
         client.collections.map { list => println(list); true shouldBe true }
       }
     }
 
-    it("repository") {
+    ignore("repository") {
       import geotrellis.store.query._
       withClient[IO].apply { client =>
         StacRepository[IO](client).find {
