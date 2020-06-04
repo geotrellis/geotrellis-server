@@ -25,10 +25,12 @@ import io.circe.generic.semiauto._
 import io.circe.syntax._
 import higherkindness.droste.{Algebra, scheme}
 import geotrellis.vector._
-import cats.syntax.option._
 import cats.Semigroup
-import cats.instances.option._
+import cats.syntax.option._
+import cats.syntax.either._
 import cats.syntax.semigroup._
+import cats.instances.option._
+import cats.instances.list._
 
 case class SearchFilters(
   bbox: Option[Bbox] = None,
@@ -55,14 +57,28 @@ object SearchFilters {
   implicit val geometryIntersectionSemigroup: Semigroup[Geometry] =
     Semigroup.instance { (left, right) => left.intersection(right) }
 
+  implicit val bboxIntersectionSemigroup: Semigroup[Bbox] =
+    Semigroup.instance { (left, right) =>
+      val Extent(xmin, ymin, xmax, ymax) =
+        left
+          .toExtent
+          .flatMap { l =>
+            right
+              .toExtent
+              .flatMap(l.intersection(_).toRight(s"$left and $right have no intersections"))
+          }.valueOr(str => throw new IllegalArgumentException(str))
+
+      TwoDimBbox(xmin, ymin, xmax, ymax)
+    }
+
   implicit val searchFiltersSemigroup: Semigroup[SearchFilters] =
     Semigroup.instance { (left, right) =>
       SearchFilters(
-        bbox        = left.bbox orElse right.bbox,
+        bbox        = left.bbox |+| right.bbox,
         datetime    = left.datetime |+| right.datetime,
         intersects  = left.intersects |+| right.intersects,
-        collections = (left.collections ++ right.collections).distinct,
-        items       = (left.collections ++ right.collections).distinct,
+        collections = (left.collections |+| right.collections).distinct,
+        items       = (left.collections |+| right.collections).distinct,
         limit       = List(left.limit, right.limit).min,
         next        = right.next,
         query       = left.query.deepMerge(right.query)
@@ -98,8 +114,6 @@ object SearchFilters {
 
   import geotrellis.store.query.QueryF._
   def algebra: Algebra[QueryF, SearchFilters] = Algebra {
-    // unsupported node
-    case Nothing()          => SearchFilters()
     case All()              => SearchFilters()
     case WithName(name)     => SearchFilters(query = Map("layer:ids" -> Map("superset" -> List(name).asJson).asJson).asJsonObject)
     case WithNames(names)   => SearchFilters(query = Map("layer:ids" -> Map("superset" -> names.asJson).asJson).asJsonObject)
@@ -109,11 +123,9 @@ object SearchFilters {
     case Covers(e) =>
       val Extent(xmin, ymin, xmax, ymax) = e.reproject(LatLng).extent
       SearchFilters(bbox = TwoDimBbox(xmin, xmax, ymin, ymax).some)
-    // unsupported node
-    case Contains(_) => SearchFilters()
     case And(l, r) => l |+| r
-    // unsupported node
-    case Or(_, _)  => SearchFilters()
+    // unsupported nodes
+    case _ => SearchFilters()
   }
 
   def eval(query: Query): SearchFilters = scheme.cata(SearchFilters.algebra).apply(query)
