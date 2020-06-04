@@ -20,7 +20,6 @@ import geotrellis.server.ogc.conf._
 import geotrellis.server.ogc.wms._
 import geotrellis.server.ogc.wcs._
 import geotrellis.server.ogc.wmts._
-
 import cats.effect._
 import cats.implicits._
 import com.monovore.decline._
@@ -81,7 +80,7 @@ object Main extends CommandApp(
             logger.info(ansi"%red{Warning}: No configuration path provided. Loading defaults.")
         }
 
-        implicit val executionContext = ExecutionContext.fromExecutor(
+        implicit val executionContext: ExecutionContext = ExecutionContext.fromExecutor(
           Executors.newCachedThreadPool(
             new ThreadFactoryBuilder().setNameFormat("raster-io-%d").build()
           )
