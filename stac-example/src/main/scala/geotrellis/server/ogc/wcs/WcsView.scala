@@ -17,7 +17,7 @@
 package geotrellis.server.ogc.wcs
 
 import geotrellis.server.ogc.params.ParamError
-import geotrellis.server.util._
+import geotrellis.server.utils._
 
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
 import org.http4s.scalaxml._

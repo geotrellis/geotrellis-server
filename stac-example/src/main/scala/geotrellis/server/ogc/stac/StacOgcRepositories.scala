@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package geotrellis.stac.raster
+package geotrellis.server.ogc.stac
 
 import geotrellis.raster.{MosaicRasterSource, RasterSource}
 import geotrellis.server.ogc.OgcSource
-import geotrellis.server.ogc.conf.StacSourceConf
+import geotrellis.server.ogc.conf.{OgcSourceConf, StacSourceConf}
 import geotrellis.stac.api.{Http4sStacClient, SearchFilters, StacClient}
 import geotrellis.store.query
 import geotrellis.store.query._
@@ -82,7 +82,7 @@ case class StacOgcRepositories(stacLayers: List[StacSourceConf], client: Client[
 }
 
 object StacOgcRepositories {
-  def algebra: Algebra[QueryF, List[StacSourceConf] => List[StacSourceConf]] = Algebra {
+  def algebra[T <: OgcSourceConf]: Algebra[QueryF, List[T] => List[T]] = Algebra {
     case Nothing()        => _ => Nil
     case WithName(name)   => _.filter { _.name == name }
     case WithNames(names) => _.filter { c => names.contains(c.name) }
@@ -91,6 +91,6 @@ object StacOgcRepositories {
     case _                => identity
   }
 
-  def eval(query: Query)(list: List[StacSourceConf]): List[StacSourceConf] =
-    scheme.cata(algebra).apply(query)(list)
+  def eval[T <: OgcSourceConf](query: Query)(list: List[T]): List[T] =
+    scheme.cata(algebra[T]).apply(query)(list)
 }

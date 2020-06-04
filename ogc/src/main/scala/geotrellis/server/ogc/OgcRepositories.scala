@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package geotrellis.stac.raster
+package geotrellis.server.ogc
 
-import geotrellis.server.ogc.OgcSource
 import geotrellis.store.query
 import geotrellis.store.query.{Query, Repository}
 

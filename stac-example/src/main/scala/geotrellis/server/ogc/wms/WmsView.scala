@@ -20,7 +20,7 @@ import geotrellis.server._
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wms.WmsParams.{GetCapabilities, GetMap}
-import geotrellis.server.util._
+import geotrellis.server.utils._
 
 import geotrellis.raster.RasterExtent
 import geotrellis.raster._

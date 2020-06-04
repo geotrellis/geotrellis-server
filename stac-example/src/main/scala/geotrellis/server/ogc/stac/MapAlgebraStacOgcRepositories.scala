@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package geotrellis.stac.raster
+package geotrellis.server.ogc.stac
 
 import geotrellis.server.ogc.{OgcSource, SimpleSource}
 import geotrellis.server.ogc.conf.{MapAlgebraSourceConf, StacSourceConf}
@@ -23,7 +23,7 @@ import geotrellis.store.query._
 import geotrellis.store.query.QueryF._
 
 import cats.effect.IO
-import higherkindness.droste.{Algebra, scheme}
+import higherkindness.droste.scheme
 import org.http4s.client.Client
 
 case class MapAlgebraStacOgcRepository(
@@ -31,7 +31,7 @@ case class MapAlgebraStacOgcRepository(
   stacSourceConfs: List[StacSourceConf],
   repository: Repository[List, OgcSource]
 ) extends Repository[List, OgcSource] {
-  val names = stacSourceConfs.map(_.name).toSet
+  private val names = stacSourceConfs.map(_.name).distinct
 
   /** Replace the name of the MAML MapalgebraSource with the name of each layer */
   private def queryWithName(query: Query)(name: String): Query =
@@ -41,7 +41,6 @@ case class MapAlgebraStacOgcRepository(
   def find(query: Query): List[OgcSource] =
     mapAlgebraSourceConf.modelOpt(
       names
-        .toList
         .map(queryWithName(query))
         .flatMap(repository.find)
         .collect { case ss @ SimpleSource(_, _, _, _, _, _, _) => ss }
@@ -58,7 +57,7 @@ case class MapAlgebraStacOgcRepositories(mapAlgebraConfLayers: List[MapAlgebraSo
    * A name is unique per the STAC layer and an asset.
    */
   def find(query: Query): List[OgcSource] =
-    MapAlgebraStacOgcRepositories
+    StacOgcRepositories
       .eval(query)(mapAlgebraConfLayers)
       .map { conf =>
         /** Extract layerNames from the MAML expression */
@@ -68,19 +67,5 @@ case class MapAlgebraStacOgcRepositories(mapAlgebraConfLayers: List[MapAlgebraSo
         MapAlgebraStacOgcRepository(conf, stacLayersFiltered, StacOgcRepositories(stacLayersFiltered, client))
       }
       .flatMap(_.find(query))
-}
-
-object MapAlgebraStacOgcRepositories {
-  def algebra: Algebra[QueryF, List[MapAlgebraSourceConf] => List[MapAlgebraSourceConf]] = Algebra {
-    case Nothing()        => _ => Nil
-    case WithName(name)   => _.filter { _.name == name }
-    case WithNames(names) => _.filter { c => names.contains(c.name) }
-    case And(e1, e2)      => list => val left = e1(list); left intersect e2(left)
-    case Or(e1, e2)       => list => e1(list) ++ e2(list)
-    case _                => identity
-  }
-
-  def eval(query: Query)(list: List[MapAlgebraSourceConf]): List[MapAlgebraSourceConf] =
-    scheme.cata(algebra).apply(query)(list)
 }
 

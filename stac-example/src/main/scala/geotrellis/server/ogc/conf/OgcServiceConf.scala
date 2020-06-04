@@ -18,10 +18,10 @@ package geotrellis.server.ogc.conf
 
 import cats.effect.IO
 import geotrellis.server.ogc
-import geotrellis.server.ogc.{MapAlgebraSource, OgcSource, RasterOgcSource, ows}
+import geotrellis.server.ogc.{MapAlgebraSource, OgcSource, RasterOgcSource, ows, OgcRepositories}
 import geotrellis.server.ogc.wms.WmsParentLayerMeta
 import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
-import geotrellis.stac.raster._
+import geotrellis.server.ogc.stac._
 import geotrellis.store.query.Repository
 import org.http4s.client.Client
 
@@ -72,4 +72,3 @@ case class WcsConf(
   serviceMetadata: ows.ServiceMetadata,
   layerDefinitions: List[OgcSourceConf]
 ) extends OgcServiceConf
-

@@ -20,7 +20,7 @@ import geotrellis.server._
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wmts.WmtsParams.{GetCapabilities, GetTile}
-import geotrellis.server.util._
+import geotrellis.server.utils._
 
 import com.azavea.maml.eval._
 import org.http4s.scalaxml._
