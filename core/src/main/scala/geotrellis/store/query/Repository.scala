@@ -23,7 +23,7 @@ import cats.syntax.semigroupk._
 import geotrellis.store.query
 
 trait RepositoryM[M[_], G[_], T] {
-  def store: M[G[T]]
+  def store: M[G[T]] = find(query.all)
   def find(query: Query): M[G[T]]
 }
 
@@ -35,7 +35,5 @@ object RepositoryM {
 
         override def find(query: Query): M[G[T]] =
           x.find(query).flatMap(g => y.find(query).map(_ <+> g))
-
-        override def store: M[G[T]] = find(query.all)
     }
 }
