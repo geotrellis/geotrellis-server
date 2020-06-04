@@ -16,15 +16,15 @@
 
 package geotrellis.server.ogc.conf
 
-import cats.effect.IO
-import cats.instances.list._
-import cats.syntax.semigroup._
+import cats.effect.Sync
+import cats.instances.all._
+import cats.syntax.all._
 import geotrellis.server.ogc
 import geotrellis.server.ogc.{MapAlgebraSource, OgcSource, RasterOgcSource, ows}
 import geotrellis.server.ogc.wms.WmsParentLayerMeta
 import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
 import geotrellis.server.ogc.stac._
-import geotrellis.store.query.Repository
+import geotrellis.store.query.{Repository, RepositoryM}
 import org.http4s.client.Client
 
 /**
@@ -43,13 +43,15 @@ sealed trait OgcServiceConf {
     ogc.OgcSourceRepository(rasterLayers ++ mapAlgebraLayers)
   }
 
-  def layerSources(rasterOgcSources: List[RasterOgcSource], client: Client[IO]): Repository[List, OgcSource] = {
+  def layerSources[F[_]: Sync](rasterOgcSources: List[RasterOgcSource], client: Client[F]): RepositoryM[F, List, OgcSource] = {
     val stacLayers: List[StacSourceConf] = layerDefinitions.collect { case ssc @ StacSourceConf(_, _, _, _, _, _, _, _, _) => ssc }
     val mapAlgebraConfLayers: List[MapAlgebraSourceConf] = layerDefinitions.collect { case masc @ MapAlgebraSourceConf(_, _, _, _, _, _, _) => masc }
 
-    layerSources(rasterOgcSources) |+|
-      StacOgcRepositories(stacLayers, client) |+|
-      MapAlgebraStacOgcRepositories(mapAlgebraConfLayers, stacLayers, client)
+    val layerRepos: RepositoryM[F, List, OgcSource] = layerSources(rasterOgcSources)
+    val stacRepos: RepositoryM[F, List, OgcSource] = StacOgcRepositories(stacLayers, client)
+    val mapAlgebraStacRepos: RepositoryM[F, List, OgcSource] = MapAlgebraStacOgcRepositories(mapAlgebraConfLayers, stacLayers, client)
+
+    layerRepos |+| stacRepos |+| mapAlgebraStacRepos
   }
 }
 

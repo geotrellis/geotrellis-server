@@ -16,81 +16,97 @@
 
 package geotrellis.server.ogc.stac
 
+import cats.Applicative
+import cats.data.{NonEmptyList => NEL}
+import cats.effect.Sync
+import cats.syntax.functor._
+import cats.syntax.option._
 import geotrellis.raster.{MosaicRasterSource, RasterSource}
 import geotrellis.server.ogc.OgcSource
 import geotrellis.server.ogc.conf.{OgcSourceConf, StacSourceConf}
-import geotrellis.stac.api.{Http4sStacClient, SearchFilters, StacClient}
-import geotrellis.store.query
+import geotrellis.stac.api.{SearchFilters, StacClient}
 import geotrellis.store.query._
 import geotrellis.store.query.QueryF._
-
-import cats.data.NonEmptyList
-import cats.syntax.option._
-import cats.effect.IO
 import higherkindness.droste.{Algebra, scheme}
-import org.http4s.Uri
 import org.http4s.client.Client
 
-case class StacOgcRepository(stacSourceConf: StacSourceConf, client: StacClient[IO]) extends Repository[List, OgcSource] {
+case class StacOgcRepository[F[_]: Applicative](stacSourceConf: StacSourceConf,
+                                            client: StacClient[F])
+    extends RepositoryM[F, List, OgcSource] {
+
   /** Replace the name of the MAML MapalgebraSource with the name of each layer */
   private def queryWithName(query: Query): Query =
     scheme.ana(QueryF.coalgebraWithName(stacSourceConf.layer)).apply(query)
 
-  def find(query: Query): List[OgcSource] = {
+  override def find(query: Query): F[List[OgcSource]] = {
     /** Replace the actual conf name with the STAC Layer name */
-    val filters = SearchFilters.eval(queryWithName(query))
-    val rasterSources =
-      filters
-        .toList
-        .flatMap(
-          client
-            .search(_)
-            .unsafeRunSync() // TODO: abstract over the effect type, see [[RepositoryM]]
-        )
-        .flatMap { item =>
-          item.assets
-            .get(stacSourceConf.asset)
-            .map(a => RasterSource(a.href))
-        }
-
-    val source: Option[RasterSource] = rasterSources match {
-      case head :: Nil => head.some
-      case head :: tail =>
-        // TODO: Remove and test after https://github.com/locationtech/geotrellis/issues/3248
-        //       is addressed. If we let MosaicRasterSource construct it's own gridExtent
-        //       it crashes with slightly mismatched Extent for a given CellSize
-        val mosaicGridExtent = rasterSources.map(_.gridExtent).reduce(_ combine _)
-        MosaicRasterSource(NonEmptyList(head, tail), head.crs, mosaicGridExtent).some
-      case _ => None
+    SearchFilters.eval(queryWithName(query)) match {
+      case Some(filters) =>
+        client
+          .search(filters)
+          .map { l =>
+            val rasterSources = l.flatMap { i =>
+              i.assets
+                .get(stacSourceConf.asset)
+                .map(a => RasterSource(a.href))
+            }
+            val source: Option[RasterSource] = rasterSources match {
+              case head :: Nil  => head.some
+              case head :: tail =>
+                // TODO: Remove and test after https://github.com/locationtech/geotrellis/issues/3248
+                //       is addressed. If we let MosaicRasterSource construct it's own gridExtent
+                //       it crashes with slightly mismatched Extent for a given CellSize
+                val mosaicGridExtent =
+                  rasterSources.map(_.gridExtent).reduce(_ combine _)
+                MosaicRasterSource(NEL(head, tail), head.crs, mosaicGridExtent).some
+              case _ => None
+            }
+            source.map(stacSourceConf.toLayer).toList
+          }
+      case None => Applicative[F].pure(List.empty[OgcSource])
     }
-
-    source.map(stacSourceConf.toLayer).toList
   }
 }
 
-case class StacOgcRepositories(stacLayers: List[StacSourceConf], client: Client[IO]) extends Repository[List, OgcSource] {
+case class StacOgcRepositories[F[_]: Sync](stacLayers: List[StacSourceConf], client: Client[F])
+    extends RepositoryM[F, List, OgcSource] {
+
   /**
-   * At first, choose stacLayers that fit the query, because after that we'll erase their name.
-   * GT Server layer conf names != the STAC Layer name
-   * conf names can be different for the same STAC Layer name.
-   * A name is unique per the STAC layer and an asset.
-   */
-  def find(query: Query): List[OgcSource] =
-    StacOgcRepositories
-      .eval(query)(stacLayers)
-      .map(conf => StacOgcRepository(conf, Http4sStacClient[IO](client, Uri.unsafeFromString(conf.source))))
-      .flatMap(_.find(query))
+    * At first, choose stacLayers that fit the query, because after that we'll erase their name.
+    * GT Server layer conf names != the STAC Layer name
+    * conf names can be different for the same STAC Layer name.
+    * A name is unique per the STAC layer and an asset.
+    */
+  override def find(query: Query): F[List[OgcSource]] = ???
+//    StacOgcRepositories
+//      .eval(query)(stacLayers)
+//      .map(
+//        conf =>
+//          StacOgcRepository(
+//            conf,
+//            Http4sStacClient[F](client, Uri.unsafeFromString(conf.source))))
+//      .flatMap(_.find(query))
 }
 
 object StacOgcRepositories {
-  def algebra[T <: OgcSourceConf]: Algebra[QueryF, List[T] => List[T]] = Algebra {
-    case Nothing()        => _ => Nil
-    case WithName(name)   => _.filter { _.name == name }
-    case WithNames(names) => _.filter { c => names.contains(c.name) }
-    case And(e1, e2)      => list => val left = e1(list); left intersect e2(left)
-    case Or(e1, e2)       => list => e1(list) ++ e2(list)
-    case _                => identity
-  }
+  def algebra[T <: OgcSourceConf]: Algebra[QueryF, List[T] => List[T]] =
+    Algebra {
+      case Nothing() =>
+        _ =>
+          Nil
+      case WithName(name) => _.filter { _.name == name }
+      case WithNames(names) =>
+        _.filter { c =>
+          names.contains(c.name)
+        }
+      case And(e1, e2) =>
+        list =>
+          val left = e1(list); left intersect e2(left)
+      case Or(e1, e2) =>
+        list =>
+          e1(list) ++ e2(list)
+      case _ => identity
+    }
 
   def eval[T <: OgcSourceConf](query: Query)(list: List[T]): List[T] =
     scheme.cata(algebra[T]).apply(query)(list)
