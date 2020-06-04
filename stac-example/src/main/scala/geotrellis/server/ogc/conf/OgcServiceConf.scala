@@ -17,8 +17,10 @@
 package geotrellis.server.ogc.conf
 
 import cats.effect.IO
+import cats.instances.list._
+import cats.syntax.semigroup._
 import geotrellis.server.ogc
-import geotrellis.server.ogc.{MapAlgebraSource, OgcSource, RasterOgcSource, ows, OgcRepositories}
+import geotrellis.server.ogc.{MapAlgebraSource, OgcSource, RasterOgcSource, ows}
 import geotrellis.server.ogc.wms.WmsParentLayerMeta
 import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
 import geotrellis.server.ogc.stac._
@@ -45,11 +47,9 @@ sealed trait OgcServiceConf {
     val stacLayers: List[StacSourceConf] = layerDefinitions.collect { case ssc @ StacSourceConf(_, _, _, _, _, _, _, _, _) => ssc }
     val mapAlgebraConfLayers: List[MapAlgebraSourceConf] = layerDefinitions.collect { case masc @ MapAlgebraSourceConf(_, _, _, _, _, _, _) => masc }
 
-    OgcRepositories(
-      layerSources(rasterOgcSources) ::
-      StacOgcRepositories(stacLayers, client) ::
-      MapAlgebraStacOgcRepositories(mapAlgebraConfLayers, stacLayers, client) :: Nil
-    )
+    layerSources(rasterOgcSources) |+|
+      StacOgcRepositories(stacLayers, client) |+|
+      MapAlgebraStacOgcRepositories(mapAlgebraConfLayers, stacLayers, client)
   }
 }
 
