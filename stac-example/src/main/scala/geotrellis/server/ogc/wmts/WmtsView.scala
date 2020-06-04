@@ -20,6 +20,7 @@ import geotrellis.server._
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wmts.WmtsParams.{GetCapabilities, GetTile}
+import geotrellis.server.utils._
 
 import com.azavea.maml.eval._
 import org.http4s.scalaxml._
@@ -74,12 +75,13 @@ class WmtsView(wmtsModel: WmtsModel, serviceUrl: URL) {
                   LayerTms(IO.pure(expr), IO.pure(parameters), ConcurrentInterpreter.DEFAULT[IO])
               }
 
-              val evalHisto = layer match {
+              // TODO: remove this once GeoTiffRasterSource would be threadsafe
+              val evalHisto = IO.pure((layer match {
                 case sl@SimpleTiledOgcLayer(_, _, _, _, _, _, _, _) =>
                   LayerHistogram.identity(sl, 512)
                 case MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _, _, _) =>
                   LayerHistogram(IO.pure(expr), IO.pure(parameters), ConcurrentInterpreter.DEFAULT[IO], 512)
-              }
+              }).unsafeRunSync())
 
               (evalWmts(0, tileCol, tileRow), evalHisto).parMapN {
                 case (Valid(mbtile), Valid(hists)) =>
@@ -97,8 +99,8 @@ class WmtsView(wmtsModel: WmtsModel, serviceUrl: URL) {
                   logger.debug(errs.toList.toString)
                   BadRequest(errs.asJson)
                 case Left(err) => // exceptions
-                  logger.error(err.toString)
-                  InternalServerError(err.toString)
+                  logger.error(err.stackTraceString)
+                  InternalServerError(err.stackTraceString)
               }
             }.headOption.getOrElse(BadRequest(s"Layer ($layerName) not found"))
           }
