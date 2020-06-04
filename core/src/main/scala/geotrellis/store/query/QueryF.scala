@@ -23,14 +23,11 @@ import io.circe.generic.JsonCodec
 import cats.Functor
 import cats.syntax.either._
 import cats.data.NonEmptySet
-import cats.instances.string._
 import higherkindness.droste.scheme
 import higherkindness.droste.{Algebra, Coalgebra}
 import higherkindness.droste.syntax.fix._
 import higherkindness.droste.syntax.unfix._
 import java.time.ZonedDateTime
-
-import scala.collection.immutable.SortedSet
 
 @JsonCodec sealed trait QueryF[A]
 
@@ -98,11 +95,14 @@ object QueryF {
 
   val coalgebraJson: Coalgebra[QueryF, Json] = Coalgebra(_.foldWith(unfolder))
 
-  def coalgebraWithName(name: String): Coalgebra[QueryF, Query] = coalgebraWithNames(NonEmptySet(name, SortedSet.empty))
+  /** Coalgebras that replace certain nodes  */
+  def coalgebraWithName(name: String): Coalgebra[QueryF, Query] = Coalgebra {
+    case WithName(_) => WithName(name)
+    case e           => e.unfix
+  }
   def coalgebraWithNames(names: NonEmptySet[String]): Coalgebra[QueryF, Query] = Coalgebra {
-    case WithName(_)  => WithName(names.head)
     case WithNames(_) => WithNames(names.toSortedSet)
-    case e => e.unfix
+    case e            => e.unfix
   }
 
   def asJson(query: Query): Json  = scheme.cata(algebraJson).apply(query)

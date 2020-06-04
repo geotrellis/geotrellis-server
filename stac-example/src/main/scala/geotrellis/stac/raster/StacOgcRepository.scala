@@ -29,7 +29,7 @@ case class StacOgcRepository(
     val rasterSources =
       client
         .search(filters)
-        .unsafeRunSync()
+        .unsafeRunSync() // TODO: abstract over the effect type, see [[RepositoryM]]
         .flatMap { item =>
           item.assets
             .get(stacSourceConf.asset)
@@ -63,15 +63,14 @@ case class MapAlgberaLayerStacOgcRepository(
     scheme.ana(QueryF.coalgebraWithName(name)).apply(query)
 
   def store: List[OgcSource] = find(query.all)
-  def find(query: Query): List[OgcSource] = {
-    val sources = names
-      .toList
-      .map(queryWithName(query))
-      .flatMap(repository.find)
-      .collect { case ss @ SimpleSource(_, _, _, _, _, _, _) => ss }
-
-    mapAlgebraSourceConf.modelOpt(sources).toList
-  }
+  def find(query: Query): List[OgcSource] =
+    mapAlgebraSourceConf.modelOpt(
+      names
+        .toList
+        .map(queryWithName(query))
+        .flatMap(repository.find)
+        .collect { case ss @ SimpleSource(_, _, _, _, _, _, _) => ss }
+    ).toList
 }
 
 case class StacOgcRepositories(stacLayers: List[StacSourceConf], client: Client[IO]) extends Repository[List, OgcSource] {

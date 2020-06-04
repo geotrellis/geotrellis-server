@@ -32,10 +32,12 @@ import org.http4s.syntax.kleisli._
 import org.http4s.client.blaze.BlazeClientBuilder
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
 import org.log4s._
+import com.google.common.util.concurrent.ThreadFactoryBuilder
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 import java.net.URL
+import java.util.concurrent.Executors
 
 object Main extends CommandApp(
   name = "java -jar geotrellis-pointcloud-server-assembly.jar",
@@ -79,9 +81,13 @@ object Main extends CommandApp(
             logger.info(ansi"%red{Warning}: No configuration path provided. Loading defaults.")
         }
 
-        implicit val ec = ExecutionContext.global
-        implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
-        implicit val timer: Timer[IO] = IO.timer(ExecutionContext.global)
+        implicit val executionContext = ExecutionContext.fromExecutor(
+          Executors.newCachedThreadPool(
+            new ThreadFactoryBuilder().setNameFormat("raster-io-%d").build()
+          )
+        )
+        implicit val cs: ContextShift[IO] = IO.contextShift(executionContext)
+        implicit val timer: Timer[IO] = IO.timer(executionContext)
 
         val commonMiddleware: HttpMiddleware[IO] = { (routes: HttpRoutes[IO]) =>
           CORS(routes)
@@ -93,7 +99,7 @@ object Main extends CommandApp(
         def createServer: Resource[IO, Server[IO]] =
           for {
             conf <- Conf.loadResourceF[IO](configPath)
-            http4sClient <- BlazeClientBuilder[IO](ec).resource
+            http4sClient <- BlazeClientBuilder[IO](executionContext).resource
             simpleSources = conf
               .layers
               .values
