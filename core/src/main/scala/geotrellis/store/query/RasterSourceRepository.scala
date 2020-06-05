@@ -24,7 +24,7 @@ import jp.ne.opt.chronoscala.Imports._
 
 import java.time.ZonedDateTime
 
-case class RasterSourceRepository[T <: RasterSource](store: List[T]) extends Repository[List, T] {
+case class RasterSourceRepository[T <: RasterSource](override val store: List[T]) extends Repository[List, T] {
   def find(query: Query): List[T] = RasterSourceRepository.eval(query)(store)
 }
 
