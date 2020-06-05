@@ -37,7 +37,6 @@ case class MapAlgebraStacOgcRepository(
   private def queryWithName(query: Query)(name: String): Query =
     scheme.ana(QueryF.coalgebraWithName(name)).apply(query)
 
-  def store: List[OgcSource] = find(query.all)
   def find(query: Query): List[OgcSource] =
     mapAlgebraSourceConf.modelOpt(
       names
@@ -48,8 +47,6 @@ case class MapAlgebraStacOgcRepository(
 }
 
 case class MapAlgebraStacOgcRepositories(mapAlgebraConfLayers: List[MapAlgebraSourceConf], stacLayers: List[StacSourceConf], client: Client[IO]) extends Repository[List, OgcSource] {
-  def store: List[OgcSource] = find(query.all)
-
   /**
    * At first, choose stacLayers that fit the query, because after that we'll erase their name.
    * GT Server layer conf names != the STAC Layer name

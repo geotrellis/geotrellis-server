@@ -36,7 +36,6 @@ case class StacOgcRepository(stacSourceConf: StacSourceConf, client: StacClient[
   private def queryWithName(query: Query): Query =
     scheme.ana(QueryF.coalgebraWithName(stacSourceConf.layer)).apply(query)
 
-  def store: List[OgcSource] = find(query.all)
   def find(query: Query): List[OgcSource] = {
     /** Replace the actual conf name with the STAC Layer name */
     val filters = SearchFilters.eval(queryWithName(query))
@@ -70,8 +69,6 @@ case class StacOgcRepository(stacSourceConf: StacSourceConf, client: StacClient[
 }
 
 case class StacOgcRepositories(stacLayers: List[StacSourceConf], client: Client[IO]) extends Repository[List, OgcSource] {
-  def store: List[OgcSource] = find(query.all)
-
   /**
    * At first, choose stacLayers that fit the query, because after that we'll erase their name.
    * GT Server layer conf names != the STAC Layer name
