@@ -19,15 +19,18 @@ package geotrellis.server.ogc.stac
 import cats.Applicative
 import cats.data.{NonEmptyList => NEL}
 import cats.effect.Sync
+import cats.instances.list._
 import cats.syntax.functor._
 import cats.syntax.option._
+import cats.syntax.semigroup._
 import geotrellis.raster.{MosaicRasterSource, RasterSource}
 import geotrellis.server.ogc.OgcSource
 import geotrellis.server.ogc.conf.{OgcSourceConf, StacSourceConf}
-import geotrellis.stac.api.{SearchFilters, StacClient}
+import geotrellis.stac.api.{Http4sStacClient, SearchFilters, StacClient}
 import geotrellis.store.query._
 import geotrellis.store.query.QueryF._
 import higherkindness.droste.{Algebra, scheme}
+import org.http4s.Uri
 import org.http4s.client.Client
 
 case class StacOgcRepository[F[_]: Applicative](stacSourceConf: StacSourceConf,
@@ -38,7 +41,7 @@ case class StacOgcRepository[F[_]: Applicative](stacSourceConf: StacSourceConf,
   private def queryWithName(query: Query): Query =
     scheme.ana(QueryF.coalgebraWithName(stacSourceConf.layer)).apply(query)
 
-  override def find(query: Query): F[List[OgcSource]] = {
+  def find(query: Query): F[List[OgcSource]] = {
     /** Replace the actual conf name with the STAC Layer name */
     SearchFilters.eval(queryWithName(query)) match {
       case Some(filters) =>
@@ -77,15 +80,17 @@ case class StacOgcRepositories[F[_]: Sync](stacLayers: List[StacSourceConf], cli
     * conf names can be different for the same STAC Layer name.
     * A name is unique per the STAC layer and an asset.
     */
-  override def find(query: Query): F[List[OgcSource]] = ???
-//    StacOgcRepositories
-//      .eval(query)(stacLayers)
-//      .map(
-//        conf =>
-//          StacOgcRepository(
-//            conf,
-//            Http4sStacClient[F](client, Uri.unsafeFromString(conf.source))))
-//      .flatMap(_.find(query))
+  def find(query: Query): F[List[OgcSource]] = {
+    // TODO: Double check this is safe!
+    StacOgcRepositories.eval(query)(stacLayers).map { conf =>
+      StacOgcRepository(
+        conf,
+        Http4sStacClient[F](client, Uri.unsafeFromString(conf.source))
+      )
+    }.reduce { (a: RepositoryM[F, List, OgcSource], b: RepositoryM[F, List, OgcSource]) =>
+      a |+| b
+    }.find(query)
+  }
 }
 
 object StacOgcRepositories {
