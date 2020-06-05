@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `layers.layer-name.sources` field in application.conf is renamed to `source` and now supports a single RasterSource URI string. See `ogc-example/src/main/resources/application.conf` for examples. 
 - `type = "simplesourceconf"` should be changed to `type = "rastersourceconf"` in application.conf
 - Remove GeoTrellisRasterSourceLegacy [#197](https://github.com/geotrellis/geotrellis-server/issues/197)
+- Receive GPG key while publishing artifacts [#271](https://github.com/geotrellis/geotrellis-server/pull/271)
 
 ### Fixed
 
