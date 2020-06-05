@@ -25,6 +25,8 @@ aliases:
     - run:
         name: "Import signing key"
         command: |
+          gpg --keyserver keyserver.ubuntu.com \
+            --recv-keys 0x13E9AA1D8153E95E && \
           echo "${GPG_KEY}" | base64 -d > signing_key.asc && \
           gpg --batch \
             --import signing_key.asc
