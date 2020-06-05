@@ -85,7 +85,6 @@ workflows:
                 - develop
                 - /release\/.*/
                 - /hotfix\/.*/
-                - feature/cek/receive-gpg-key
 
 jobs:
   "openjdk8-scala2.11.12":
