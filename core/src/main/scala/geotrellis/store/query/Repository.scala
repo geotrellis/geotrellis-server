@@ -33,7 +33,7 @@ object RepositoryM {
     (x: RepositoryM[M, G, T], y: RepositoryM[M, G, T]) =>
       new RepositoryM[M, G, T] {
 
-        override def find(query: Query): M[G[T]] =
+        def find(query: Query): M[G[T]] =
           x.find(query).flatMap(g => y.find(query).map(_ <+> g))
     }
 }
