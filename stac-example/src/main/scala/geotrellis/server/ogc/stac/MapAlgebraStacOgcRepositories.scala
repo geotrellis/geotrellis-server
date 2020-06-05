@@ -18,7 +18,6 @@ package geotrellis.server.ogc.stac
 
 import geotrellis.server.ogc.{OgcSource, SimpleSource}
 import geotrellis.server.ogc.conf.{MapAlgebraSourceConf, StacSourceConf}
-import geotrellis.store.query
 import geotrellis.store.query._
 import geotrellis.store.query.QueryF._
 
