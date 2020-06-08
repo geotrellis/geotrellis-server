@@ -42,11 +42,11 @@ case class StacOgcRepository(stacSourceConf: StacSourceConf, client: StacClient[
     val rasterSources =
       filters
         .toList
-        .flatMap(
+        .flatMap { filter => {
           client
-            .search(_)
+            .search(filter.copy(limit = stacSourceConf.assetLimit))
             .unsafeRunSync() // TODO: abstract over the effect type, see [[RepositoryM]]
-        )
+        }}
         .flatMap { item =>
           item.assets
             .get(stacSourceConf.asset)

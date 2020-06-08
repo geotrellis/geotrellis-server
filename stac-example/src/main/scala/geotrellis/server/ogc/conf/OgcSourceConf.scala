@@ -37,6 +37,7 @@ case class StacSourceConf(
   title: String,
   source: String,
   asset: String,
+  assetLimit: Option[Int],
   defaultStyle: Option[String],
   styles: List[StyleConf],
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
