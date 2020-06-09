@@ -16,6 +16,7 @@
 
 package geotrellis.server.ogc.wms
 
+import geotrellis.store.query._
 import geotrellis.server._
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.utils._
@@ -174,7 +175,18 @@ class WmsView(wmsModel: WmsModel, serviceUrl: URL) {
           }
         }.headOption.getOrElse(wmsReq.layers.headOption match {
           case Some(layerName) =>
-            BadRequest(s"Layer (${layerName}) not found or CRS (${wmsReq.crs}) not supported")
+            // Handle the case where the STAC item was requested for some area between the tiles.
+            // STAC search will return an empty list, however QGIS may expect a test pixel to
+            // return the actual tile
+            // TODO: is there a better way to handle it?
+            wmsModel.sources.find(withName(layerName)).headOption match {
+              case Some(_) =>
+                val tile = ArrayTile(Array(0, 0), 1, 1)
+                val mbtile = MultibandTile(tile, tile, tile)
+                Ok(Render.singleband(mbtile, None, wmsReq.format, Nil))
+              case _ =>
+                BadRequest(s"Layer ($layerName) not found or CRS (${wmsReq.crs}) not supported")
+            }
           case None =>
             BadRequest(s"Layer not found (no layer name provided in request)")
         })

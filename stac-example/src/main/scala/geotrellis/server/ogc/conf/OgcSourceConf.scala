@@ -22,6 +22,10 @@ import geotrellis.raster.resample._
 import geotrellis.server.ogc._
 import geotrellis.store.GeoTrellisPath
 import com.azavea.maml.ast._
+import geotrellis.proj4.{CRS, WebMercator}
+import pureconfig.ConfigReader
+
+import scala.util.Try
 
 // This sumtype corresponds to the in-config representation of a source
 sealed trait OgcSourceConf {
@@ -39,11 +43,22 @@ case class StacSourceConf(
   asset: String,
   defaultStyle: Option[String],
   styles: List[StyleConf],
+  commonCRS: CRS = WebMercator,
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
   overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
 ) extends OgcSourceConf {
   def toLayer(rs: RasterSource): SimpleSource =
     SimpleSource(name, title, rs, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy)
+}
+
+object StacSourceConf {
+  implicit val crsReader: ConfigReader[CRS] =
+    ConfigReader[String].map { str =>
+      Try(CRS.fromName(str)).toOption orElse Try(CRS.fromString(str)).toOption match {
+        case Some(crs) => crs
+        case None => throw new Exception(s"Invalid Proj4 String: $str")
+      }
+    }
 }
 
 case class RasterSourceConf(

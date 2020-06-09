@@ -19,21 +19,18 @@ package geotrellis.store.query
 import cats.syntax.apply._
 import cats.syntax.semigroupk._
 import cats.{FlatMap, Semigroup, SemigroupK}
-import geotrellis.store.query
 
 trait RepositoryM[M[_], G[_], T] {
-  def store: M[G[T]] = find(query.all)
+  def store: M[G[T]]
   def find(query: Query): M[G[T]]
 }
 
 object RepositoryM {
-  implicit def semigroupRepositoryM[M[_]: FlatMap, G[_]: SemigroupK, T]
-      : Semigroup[RepositoryM[M, G, T]] = Semigroup.instance {
-    (x: RepositoryM[M, G, T], y: RepositoryM[M, G, T]) =>
+  implicit def semigroupRepositoryM[M[_]: FlatMap, G[_]: SemigroupK, T]: Semigroup[RepositoryM[M, G, T]] =
+    Semigroup.instance { (l, r) =>
       new RepositoryM[M, G, T] {
-
-        def find(query: Query): M[G[T]] = x.find(query).map2(y.find(query))(_ <+> _)
+        def store: M[G[T]] = l.store.map2(r.store)(_ <+> _)
+        def find(query: Query): M[G[T]] = l.find(query).map2(r.find(query))(_ <+> _)
       }
-
-  }
+    }
 }
