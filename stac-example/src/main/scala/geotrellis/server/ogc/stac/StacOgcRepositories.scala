@@ -63,18 +63,8 @@ case class StacOgcRepository(stacSourceConf: StacSourceConf, client: StacClient[
         //       is addressed. If we let MosaicRasterSource construct it's own gridExtent
         //       it crashes with slightly mismatched Extent for a given CellSize
         val commonCRS = if(rasterSources.map(_.crs).distinct.size == 1) head.crs else stacSourceConf.commonCRS
-        val reprojectedSources = rasterSources.map(_.reproject(commonCRS))
-        val gridExtents = reprojectedSources.map(_.gridExtent)
-        val combinedExtent = gridExtents.map(_.extent).reduce(_ combine _)
-        val minCellSize = reprojectedSources.map(_.cellSize).maxBy(_.resolution)
-        val combinedGridExtent = GridExtent[Long](combinedExtent, minCellSize)
-
-        new MosaicRasterSource {
-          val sources: NonEmptyList[RasterSource] = NonEmptyList.fromListUnsafe(reprojectedSources)
-          val crs: CRS = commonCRS
-          def gridExtent: GridExtent[Long] = combinedGridExtent
-          val name: SourceName = EmptyName
-        }.some
+        val reprojectedSources = NonEmptyList.fromListUnsafe(rasterSources.map(_.reproject(commonCRS)))
+        MosaicRasterSource.instance(reprojectedSources, commonCRS).some
       case _ => None
     }
 
