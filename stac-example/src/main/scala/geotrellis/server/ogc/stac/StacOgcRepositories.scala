@@ -16,13 +16,13 @@
 
 package geotrellis.server.ogc.stac
 
+import geotrellis.store.query._
+import geotrellis.store.query.QueryF._
 import geotrellis.raster.{MosaicRasterSource, RasterSource}
 import geotrellis.server.ogc.OgcSource
 import geotrellis.server.ogc.conf.{OgcSourceConf, StacSourceConf}
 import geotrellis.stac.api.{Http4sStacClient, SearchFilters, StacClient}
 import geotrellis.store.query
-import geotrellis.store.query._
-import geotrellis.store.query.QueryF._
 
 import cats.data.NonEmptyList
 import cats.syntax.option._
@@ -32,6 +32,8 @@ import org.http4s.Uri
 import org.http4s.client.Client
 
 case class StacOgcRepository(stacSourceConf: StacSourceConf, client: StacClient[IO]) extends Repository[List, OgcSource] {
+  def store: List[OgcSource] = find(query.all)
+
   /** Replace the name of the MAML MapalgebraSource with the name of each layer */
   private def queryWithName(query: Query): Query =
     scheme.ana(QueryF.coalgebraWithName(stacSourceConf.layer)).apply(query)
@@ -55,12 +57,10 @@ case class StacOgcRepository(stacSourceConf: StacSourceConf, client: StacClient[
 
     val source: Option[RasterSource] = rasterSources match {
       case head :: Nil => head.some
-      case head :: tail =>
-        // TODO: Remove and test after https://github.com/locationtech/geotrellis/issues/3248
-        //       is addressed. If we let MosaicRasterSource construct it's own gridExtent
-        //       it crashes with slightly mismatched Extent for a given CellSize
-        val mosaicGridExtent = rasterSources.map(_.gridExtent).reduce(_ combine _)
-        MosaicRasterSource(NonEmptyList(head, tail), head.crs, mosaicGridExtent).some
+      case head :: _ =>
+        val commonCRS = if(rasterSources.map(_.crs).distinct.size == 1) head.crs else stacSourceConf.commonCRS
+        val reprojectedSources = rasterSources.map(_.reproject(commonCRS))
+        MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCRS).some
       case _ => None
     }
 
@@ -69,6 +69,7 @@ case class StacOgcRepository(stacSourceConf: StacSourceConf, client: StacClient[
 }
 
 case class StacOgcRepositories(stacLayers: List[StacSourceConf], client: Client[IO]) extends Repository[List, OgcSource] {
+  def store: List[OgcSource] = find(query.withNames(stacLayers.map(_.name).toSet))
   /**
    * At first, choose stacLayers that fit the query, because after that we'll erase their name.
    * GT Server layer conf names != the STAC Layer name

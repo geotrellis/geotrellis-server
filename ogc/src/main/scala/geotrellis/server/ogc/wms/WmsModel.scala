@@ -38,7 +38,7 @@ case class WmsModel(
   /** Take a specific request for a map and combine it with the relevant [[OgcSource]]
     *  to produce an [[OgcLayer]]
     */
-  def getLayer(p: GetMap): List[OgcLayer] = {
+  def getLayer(p: GetMap): List[OgcLayer] =
     parentLayerMeta.supportedProjections
       .find(_ == p.crs)
       .fold[List[OgcLayer]](List()) { supportedCrs =>
@@ -63,5 +63,4 @@ case class WmsModel(
           }
         }
       }
-  }
 }
