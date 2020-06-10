@@ -18,11 +18,10 @@ package geotrellis.server.ogc.stac
 
 import geotrellis.store.query._
 import geotrellis.store.query.QueryF._
-import geotrellis.raster.{EmptyName, GridExtent, MosaicRasterSource, RasterSource, SourceName}
+import geotrellis.raster.{MosaicRasterSource, RasterSource}
 import geotrellis.server.ogc.OgcSource
 import geotrellis.server.ogc.conf.{OgcSourceConf, StacSourceConf}
 import geotrellis.stac.api.{Http4sStacClient, SearchFilters, StacClient}
-import geotrellis.proj4.CRS
 import geotrellis.store.query
 
 import cats.data.NonEmptyList
@@ -59,12 +58,9 @@ case class StacOgcRepository(stacSourceConf: StacSourceConf, client: StacClient[
     val source: Option[RasterSource] = rasterSources match {
       case head :: Nil => head.some
       case head :: _ =>
-        // TODO: Remove and test after https://github.com/locationtech/geotrellis/issues/3248
-        //       is addressed. If we let MosaicRasterSource construct it's own gridExtent
-        //       it crashes with slightly mismatched Extent for a given CellSize
         val commonCRS = if(rasterSources.map(_.crs).distinct.size == 1) head.crs else stacSourceConf.commonCRS
-        val reprojectedSources = NonEmptyList.fromListUnsafe(rasterSources.map(_.reproject(commonCRS)))
-        MosaicRasterSource.instance(reprojectedSources, commonCRS).some
+        val reprojectedSources = rasterSources.map(_.reproject(commonCRS))
+        MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCRS).some
       case _ => None
     }
 
