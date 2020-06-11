@@ -52,7 +52,7 @@ case class StacOgcRepository(stacSourceConf: StacSourceConf, client: StacClient[
         .flatMap { item =>
           item.assets
             .get(stacSourceConf.asset)
-            .map(a => RasterSource(a.href.replace("https://s3-us-west-2.amazonaws.com/landsat-pds/c1/", "gdal+file:///Users/daunnc/Downloads/lc8-test/")))
+            .map(a => RasterSource(a.href))
         }
 
     val source: Option[RasterSource] = rasterSources match {
