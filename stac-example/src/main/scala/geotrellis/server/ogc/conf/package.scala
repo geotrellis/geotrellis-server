@@ -36,7 +36,6 @@ import pureconfig.generic.auto._
 import scala.util.Try
 import scala.collection.JavaConverters._
 
-
 /** A grab bag of [[ConfigReader]] instances necessary to read the configuration */
 package object conf {
   /** Starting 0.11.0 https://github.com/pureconfig/pureconfig/blob/bfc74ce436297b2a9da091e04d362be61108a3cf/CHANGELOG.md#0110-may-9-2019
@@ -182,36 +181,4 @@ package object conf {
       case _                              => OverviewStrategy.DEFAULT
     }
   }
-
-  /** An alternative AST reading strategy that uses a separate json file */
-  //private lazy val s3client = AmazonS3ClientBuilder.defaultClient()
-
-  //def readString(uri: URI): String = uri.getScheme match {
-  //  case "http" | "https" =>
-  //    //Http(uri.toString).method("GET").asString.body
-  //    throw new Exception("http-backed maml is not supported at this time, please use s3 or filesystem storage")
-  //  case "file" =>
-  //    Source.fromFile(uri.getPath).getLines.mkString
-  //  case "s3" =>
-  //    val s3uri = new AmazonS3URI(uri)
-  //    val objectIS = s3client
-  //      .getObject(s3uri.getBucket, s3uri.getKey)
-  //      .getObjectContent()
-  //    // found this method for IS => String from: https://stackoverflow.com/questions/309424/how-do-i-read-convert-an-inputstream-into-a-string-in-java
-  //    new BufferedReader(new InputStreamReader(objectIS))
-  //      .lines()
-  //      .collect(Collectors.joining("\n"));
-  //  case _ =>
-  //    throw new Exception(
-  //      "A valid URI is required...")
-  //}
-
-  //  implicit val expressionReader: ConfigReader[Expression] =
-  //  ConfigReader[URI].map { expressionURI =>
-  //    val expressionString = readString(expressionURI)
-  //    decode[Expression](expressionString) match {
-  //      case Right(expr) => expr
-  //      case Left(err) => throw err
-  //    }
-  //  }
 }
