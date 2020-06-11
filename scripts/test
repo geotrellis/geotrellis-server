@@ -19,5 +19,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     else
         echo "Executing Scala test suite"
         ./sbt "++${SCALA_VERSION:-2.11.12}" test
+
+        if [ `echo ${SCALA_VERSION:-2.11.12} | cut -f1-2 -d "."` = "2.12" ]; then
+            ./sbt "++${SCALA_VERSION}" "project stac-example" test
+        fi
     fi
 fi

@@ -6,8 +6,9 @@ aliases:
     key: sbt-cache-{{ checksum "/tmp/scala_version" }}-{{ epoch }}
     paths:
       - "~/.ivy2/cache"
-      - "~/.sbt"
       - "~/.cache/coursier"
+      - "~/.sbt"
+      - "~/.m2"
 
   - &run_cibuild
     - checkout
