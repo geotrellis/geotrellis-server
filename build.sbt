@@ -78,11 +78,6 @@ lazy val commonSettings = Seq(
   headerLicense := Some(HeaderLicense.ALv2(java.time.Year.now.getValue.toString, "Azavea")),
   headerMappings := Map(
     FileType.scala -> CommentStyle.cStyleBlockComment.copy(commentCreator = new CommentCreator() {
-      val Pattern = "(?s).*?(\\d{4}(-\\d{4})?).*".r
-      def findYear(header: String): Option[String] = header match {
-        case Pattern(years, _) => Some(years)
-        case _                 => None
-      }
       def apply(text: String, existingText: Option[String]): String = {
         // preserve year of old headers
         val newText = CommentStyle.cStyleBlockComment.commentCreator.apply(text, existingText)
@@ -355,6 +350,7 @@ lazy val `stac-example` = project
   .settings(moduleName := "geotrellis-stac-example")
   .settings(commonSettings)
   .settings(publishSettings)
+  .settings(crossScalaVersions := Seq(scalaVer))
   .settings(libraryDependencies ++= Seq(
     geotrellisGdal,
     http4sDsl.value,

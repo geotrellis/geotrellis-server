@@ -28,7 +28,7 @@ object Dependencies {
     "org.http4s" %% s"http4s-$module" % ver("0.20.15", "0.21.0-M6").value
   }
 
-  val crossScalaVer = List("2.12.10", "2.11.12")
+  val crossScalaVer = List("2.12.11", "2.11.12")
   val scalaVer = crossScalaVer.head
 
   val circeVer = "0.11.1"
@@ -65,17 +65,12 @@ object Dependencies {
   val geotrellisAccumulo = "org.locationtech.geotrellis" %% "geotrellis-accumulo" % gtVer
   val geotrellisCassandra = "org.locationtech.geotrellis" %% "geotrellis-cassandra" % gtVer
   val geotrellisGdal = "org.locationtech.geotrellis" %% "geotrellis-gdal" % gtVer
-  val hadoop = "org.apache.hadoop" % "hadoop-client" % "2.8.0" % Provided
   val http4sBlazeClient = http4sVer("blaze-client")
   val http4sBlazeServer = http4sVer("blaze-server")
   val http4sCirce = http4sVer("circe")
   val http4sDsl = http4sVer("dsl")
   val http4sXml = http4sVer("scala-xml")
   val jaxbApi = "javax.xml.bind" % "jaxb-api" % jaxbApiVer
-  val kamonCore = "io.kamon" %% "kamon-core" % "1.1.3"
-  val kamonHttp4s = "io.kamon" %% "kamon-http4s" % "1.0.7"
-  val kamonPrometheus = "io.kamon" %% "kamon-prometheus" % "1.0.0"
-  val kamonSysMetrics = "io.kamon" %% "kamon-system-metrics" % "1.0.0"
   val kindProjector = "org.typelevel" %% "kind-projector" % "0.11.0"
   val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % "0.6.0-8-g035e114-SNAPSHOT"
   val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.12.2"
@@ -87,17 +82,14 @@ object Dependencies {
   val scalacheck = "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
   val scalacheckCats = "io.chrisdavenport" %% "cats-scalacheck" % "0.1.1" % Test
   val simulacrum = "com.github.mpilquist" %% "simulacrum" % "0.12.0"
-  val spark = "org.apache.spark" %% "spark-core" % "2.4.0" % Provided
+  val spark = "org.apache.spark" %% "spark-core" % "2.4.6" % Provided
   val spdxChecker = "com.github.tbouron" % "spdx-license-checker" % spdxCheckerVer
   val sttp = "com.softwaremill.sttp" %% "core" % sttpVer
   val sttpCirce = "com.softwaremill.sttp" %% "circe" % sttpVer
   val sttpCats = "com.softwaremill.sttp" %% "async-http-client-backend-cats" % sttpVer
   val tsecCommon = "io.github.jmcardon" %% "tsec-common" % tsecVer
-  val tsecHttp4s = "io.github.jmcardon" %% "tsec-http4s" % tsecVer
-  val macrosParadise = "org.scalamacros" % "paradise" % "2.1.0"
+  val macrosParadise = "org.scalamacros" % "paradise" % "2.1.1"
   val scalaParser = "org.scala-lang.modules" %% "scala-parser-combinators" % "1.1.1"
-  val dispatch = "net.databinder.dispatch" %% "dispatch-core" % dispatchVer
-  val apacheMath = "org.apache.commons" % "commons-math3" % "3.6.1"
   val commonsIo = "commons-io" % "commons-io" % "2.6"
   val shapeless = "com.chuusai" %% "shapeless" % shapelessVer
   val logback = "ch.qos.logback" % "logback-classic" % "1.2.3" % Runtime

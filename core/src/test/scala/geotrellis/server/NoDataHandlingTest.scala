@@ -16,22 +16,10 @@
 
 package geotrellis.server
 
-import geotrellis.server.vlm._
-
 import geotrellis.raster._
-import geotrellis.raster.io.geotiff.AutoHigherResolution
-import geotrellis.proj4._
-import geotrellis.spark.tiling._
-import geotrellis.raster.resample.NearestNeighbor
-import geotrellis.vector.Extent
 
 import com.azavea.maml.ast._
-import com.azavea.maml.ast.codec.tree._
 import com.azavea.maml.eval._
-import com.azavea.maml.error._
-import cats._
-import cats.effect._
-import cats.data.{NonEmptyList => NEL}
 import org.scalatest._
 
 import scala.concurrent.ExecutionContext
