@@ -44,46 +44,42 @@ case class SearchFilters(
 )
 
 object SearchFilters {
-  implicit val bboxIntersectionSemigroup: Semigroup[Bbox] =
-    Semigroup.instance { (left, right) =>
-      val Extent(xmin, ymin, xmax, ymax) =
-        left
-          .toExtent
-          .flatMap { l =>
-            right
-              .toExtent
-              .flatMap(l.intersection(_).toRight(s"$left and $right have no intersections"))
-          }.valueOr(str => throw new IllegalArgumentException(str))
+  implicit val bboxIntersectionSemigroup: Semigroup[Bbox] = { (left, right) =>
+    val Extent(xmin, ymin, xmax, ymax) =
+      left
+        .toExtent
+        .flatMap { l =>
+          right
+            .toExtent
+            .flatMap(l.intersection(_).toRight(s"$left and $right have no intersections"))
+        }.valueOr(str => throw new IllegalArgumentException(str))
 
-      TwoDimBbox(xmin, ymin, xmax, ymax)
-    }
+    TwoDimBbox(xmin, ymin, xmax, ymax)
+  }
 
-  implicit val temporalExtentSemigroup: Semigroup[TemporalExtent] =
-    Semigroup.instance { (left, right) =>
-      val (lmin, lmax) = left.value.min -> left.value.max
-      val (rmin, rmax) = right.value.min -> right.value.max
-      TemporalExtent.unsafeFrom(List(
-        List(lmin, rmin).max,
-        List(lmax, rmax).min
-      ))
-    }
+  implicit val temporalExtentSemigroup: Semigroup[TemporalExtent] = { (left, right) =>
+    val (lmin, lmax) = left.value.min -> left.value.max
+    val (rmin, rmax) = right.value.min -> right.value.max
+    TemporalExtent.unsafeFrom(List(
+      List(lmin, rmin).max,
+      List(lmax, rmax).min
+    ))
+  }
 
-  implicit val geometryIntersectionSemigroup: Semigroup[Geometry] =
-    Semigroup.instance { (left, right) => left.intersection(right) }
+  implicit val geometryIntersectionSemigroup: Semigroup[Geometry] = { (left, right) => left.intersection(right) }
 
-  implicit val searchFiltersSemigroup: Semigroup[SearchFilters] =
-    Semigroup.instance { (left, right) =>
-      SearchFilters(
-        bbox        = left.bbox |+| right.bbox,
-        datetime    = left.datetime |+| right.datetime,
-        intersects  = left.intersects |+| right.intersects,
-        collections = (left.collections |+| right.collections).distinct,
-        items       = (left.collections |+| right.collections).distinct,
-        limit       = List(left.limit, right.limit).min,
-        next        = right.next,
-        query       = left.query.deepMerge(right.query)
-      )
-    }
+  implicit val searchFiltersSemigroup: Semigroup[SearchFilters] = { (left, right) =>
+    SearchFilters(
+      bbox        = left.bbox |+| right.bbox,
+      datetime    = left.datetime |+| right.datetime,
+      intersects  = left.intersects |+| right.intersects,
+      collections = (left.collections |+| right.collections).distinct,
+      items       = (left.collections |+| right.collections).distinct,
+      limit       = List(left.limit, right.limit).min,
+      next        = right.next,
+      query       = left.query.deepMerge(right.query)
+    )
+  }
 
   implicit val searchFilterDecoder: Decoder[SearchFilters] = { c =>
     for {
