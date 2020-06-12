@@ -35,7 +35,7 @@ case class MapAlgebraStacOgcRepository(
 
   def store: List[OgcSource] = find(query.all)
 
-  /** Replace the name of the MAML MapalgebraSource with the name of each layer */
+  /** Replace the OGC layer name with the name of each layer */
   private def queryWithName(query: Query)(name: String): Query =
     scheme.ana(QueryF.coalgebraWithName(name)).apply(query)
 

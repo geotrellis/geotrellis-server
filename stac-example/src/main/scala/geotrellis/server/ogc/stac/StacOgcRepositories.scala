@@ -34,7 +34,7 @@ import org.http4s.client.Client
 case class StacOgcRepository(stacSourceConf: StacSourceConf, client: StacClient[IO]) extends Repository[List, OgcSource] {
   def store: List[OgcSource] = find(query.all)
 
-  /** Replace the name of the MAML MapalgebraSource with the name of each layer */
+  /** Replace the OGC layer name with the name of each layer */
   private def queryWithName(query: Query): Query =
     scheme.ana(QueryF.coalgebraWithName(stacSourceConf.layer)).apply(query)
 
