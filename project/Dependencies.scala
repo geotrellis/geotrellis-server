@@ -60,7 +60,7 @@ object Dependencies {
   val geotrellisRaster = "org.locationtech.geotrellis" %% "geotrellis-raster" % gtVer
   val geotrellisVector = "org.locationtech.geotrellis" %% "geotrellis-vector" % gtVer
   val geotrellisS3 = "org.locationtech.geotrellis" %% "geotrellis-s3" % gtVer
-  val geotrellisSpark = "org.locationtech.geotrellis" %% "geotrellis-spark" % gtVer
+  val geotrellisStore = "org.locationtech.geotrellis" %% "geotrellis-store" % gtVer
   val geotrellisHBase = "org.locationtech.geotrellis" %% "geotrellis-hbase" % gtVer
   val geotrellisAccumulo = "org.locationtech.geotrellis" %% "geotrellis-accumulo" % gtVer
   val geotrellisCassandra = "org.locationtech.geotrellis" %% "geotrellis-cassandra" % gtVer
@@ -82,7 +82,6 @@ object Dependencies {
   val scalacheck = "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
   val scalacheckCats = "io.chrisdavenport" %% "cats-scalacheck" % "0.1.1" % Test
   val simulacrum = "com.github.mpilquist" %% "simulacrum" % "0.12.0"
-  val spark = "org.apache.spark" %% "spark-core" % "2.4.6" % Provided
   val spdxChecker = "com.github.tbouron" % "spdx-license-checker" % spdxCheckerVer
   val sttp = "com.softwaremill.sttp" %% "core" % sttpVer
   val sttpCirce = "com.softwaremill.sttp" %% "circe" % sttpVer

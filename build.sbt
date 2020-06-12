@@ -176,8 +176,7 @@ lazy val core = project
       circeOptics.value,
       circeShapes.value,
       geotrellisS3,
-      geotrellisSpark,
-      spark,
+      geotrellisStore,
       cats.value,
       catsEffect.value,
       mamlJvm,
@@ -211,9 +210,8 @@ lazy val example = project
       http4sXml.value,
       scalaXml,
       geotrellisS3,
-      geotrellisSpark,
+      geotrellisStore,
       geotrellisGdal,
-      spark,
       decline,
       commonsIO,
       concHashMap,
@@ -271,9 +269,8 @@ lazy val ogc = project
   .settings(
     assembly / assemblyJarName := "geotrellis-server-ogc.jar",
     libraryDependencies ++= Seq(
-      spark,
       geotrellisS3,
-      geotrellisSpark,
+      geotrellisStore,
       commonsIo, // to make GeoTiffRasterSources work
       scaffeine,
       scalatest,
@@ -290,9 +287,8 @@ lazy val ogcExample = (project in file("ogc-example"))
   .settings(
     assembly / assemblyJarName := "geotrellis-server-ogc-services.jar",
     libraryDependencies ++= Seq(
-      spark,
       geotrellisS3,
-      geotrellisSpark,
+      geotrellisStore,
       geotrellisCassandra,
       geotrellisHBase,
       geotrellisAccumulo,
@@ -372,6 +368,7 @@ lazy val `stac-example` = project
     ExclusionRule("org.slf4j", "slf4j-log4j12"),
     ExclusionRule("org.slf4j", "slf4j-nop")
   ),
+  assembly / assemblyJarName := "geotrellis-stac-example.jar",
   libraryDependencies := (CrossVersion
     .partialVersion(scalaVersion.value) match {
     case Some((2, scalaMajor)) if scalaMajor >= 12 =>

@@ -18,7 +18,7 @@ package geotrellis.server.vlm.geotiff.util
 
 import geotrellis.util.{FileRangeReader, RangeReader}
 import geotrellis.store.s3.util.S3RangeReader
-import geotrellis.spark.store.http.util.HttpRangeReader
+import geotrellis.store.http.util.HttpRangeReader
 import geotrellis.store.s3.AmazonS3URI
 import geotrellis.store.s3.S3ClientProducer
 
