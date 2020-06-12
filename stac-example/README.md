@@ -22,7 +22,7 @@ For more details about available commands you can look into the [Makefile](Makef
 In the [./catalog](./catalog) folder you can find a GeoTrellis server compatible static [STAC catalog](https://github.com/radiantearth/stac-spec) 
 with the STAC Layer extension, that can be imported into [Franklin](https://azavea.github.io/franklin/docs/introduction).
 
-### The new STAC configuration description:
+### The new STAC configuration description
 
 ```javascript
 stac-lc8-red-us = {
