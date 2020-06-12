@@ -4,7 +4,7 @@ This project allows to use [STAC API](https://github.com/radiantearth/stac-api-s
 GeoTrellis server translates input OGC queries into STAC queries and reads
 requested items assets respectively.
 
-GeoTrellis server requires the requested catalog to use the STAC Layer extension. 
+GeoTrellis server requires the STAC Layer extension usage. 
 
 ### Project description
 
@@ -13,6 +13,7 @@ List of commands available to run from this folder:
 * `make run` - starts the postgres database for Franklin, applies all Franklin migrations, inserts 
 the [./catalog](./catalog), starts the Franklin server and start the geotrellis-server that is configured to work
 with this layer.
+* `make run-geotrellis-server` - runs the GeoTrellis OGC server
 
 For more details about available commands you can look into the [Makefile](Makefile).
 
