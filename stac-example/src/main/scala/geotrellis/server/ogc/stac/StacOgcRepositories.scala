@@ -58,9 +58,9 @@ case class StacOgcRepository(stacSourceConf: StacSourceConf, client: StacClient[
     val source: Option[RasterSource] = rasterSources match {
       case head :: Nil => head.some
       case head :: _ =>
-        val commonCRS = if(rasterSources.map(_.crs).distinct.size == 1) head.crs else stacSourceConf.commonCRS
-        val reprojectedSources = rasterSources.map(_.reproject(commonCRS))
-        MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCRS).some
+        val commonCrs = if(rasterSources.map(_.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
+        val reprojectedSources = rasterSources.map(_.reproject(commonCrs))
+        MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs).some
       case _ => None
     }
 
