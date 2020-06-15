@@ -44,7 +44,7 @@ case class StacSourceConf(
   assetLimit: Option[Int],
   defaultStyle: Option[String],
   styles: List[StyleConf],
-  commonCRS: CRS = WebMercator,
+  commonCrs: CRS = WebMercator,
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
   overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
 ) extends OgcSourceConf {
