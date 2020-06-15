@@ -58,8 +58,12 @@ case class WmsModel(
             case SimpleSource(name, title, rasterSource, _, _, resampleMethod, overviewStrategy) =>
               SimpleOgcLayer(name, title, supportedCrs, rasterSource, style, resampleMethod, overviewStrategy)
             case gts @ GeoTrellisOgcSource(name, title, _, _, _, resampleMethod, overviewStrategy, _) =>
-              val rasterSource = p.time.fold(gts.source)(gts.sourceForTime)
-              SimpleOgcLayer(name, title, supportedCrs, rasterSource, style, resampleMethod, overviewStrategy)
+              val source = p.time match {
+                case Some(t) => gts.sourceForTime(t)
+                case _ if gts.source.isTemporal => gts.sourceForTime(gts.source.times.head)
+                case _ => gts.source
+              }
+              SimpleOgcLayer(name, title, supportedCrs, source, style, resampleMethod, overviewStrategy)
           }
         }
       }
