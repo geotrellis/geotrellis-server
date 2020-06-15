@@ -84,7 +84,7 @@ class GetCoverage(wcsModel: WcsModel) {
              // STAC search will return an empty list, however QGIS may expect a test pixel to
              // return the actual tile
              // TODO: handle it in a proper way, how to get information about the bands amount?
-             val tile = ArrayTile(Array(0, 0), 1, 1)
+             val tile = ArrayTile.empty(IntCellType, 1, 1)
              GeoTiff(
                Raster(
                  MultibandTile(tile, tile, tile),

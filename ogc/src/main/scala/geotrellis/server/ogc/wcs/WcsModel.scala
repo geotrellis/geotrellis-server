@@ -37,11 +37,10 @@ case class WcsModel(
         case SimpleSource(name, title, source, _, _, resampleMethod, overviewStrategy) =>
           SimpleOgcLayer(name, title, p.crs, source, None, resampleMethod, overviewStrategy)
         case gts @ GeoTrellisOgcSource(name, title, _, _, _, resampleMethod, overviewStrategy, _) =>
-          val source = if (p.temporalSequence.nonEmpty) {
-            gts.sourceForTime(p.temporalSequence.head)
-          } else {
-            gts.source
-          }
+          val source =
+            if (p.temporalSequence.nonEmpty) gts.sourceForTime(p.temporalSequence.head)
+            else if (p.temporalSequence.isEmpty && gts.source.isTemporal) gts.sourceForTime(gts.source.times.head)
+            else gts.source
           SimpleOgcLayer(name, title, p.crs, source, None, resampleMethod, overviewStrategy)
         case MapAlgebraSource(name, title, sources, algebra, _, _, resampleMethod, overviewStrategy) =>
           val simpleLayers = sources.mapValues { rs =>

@@ -80,7 +80,10 @@ object SimpleOgcLayer {
         val raster: Raster[MultibandTile] = self.source
           .reprojectToRegion(self.crs, targetGrid.toRasterExtent, self.resampleMethod, self.overviewStrategy)
           .read(extent)
-          .getOrElse(throw new Exception(s"Unable to retrieve layer $self at extent $extent $cs"))
+          .getOrElse {
+            logger.trace(s"Unable to retrieve layer $self at extent $extent $cs")
+            Raster(MultibandTile(ArrayTile.empty(self.source.cellType, 10, 10)), extent)
+          }
         logger.trace(s"Successfully retrieved layer $self at extent $extent with f $cs ${targetGrid.cols}x${targetGrid.rows}")
 
         ProjectedRaster(raster, self.crs)
