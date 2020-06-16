@@ -49,7 +49,7 @@ case class StacSourceConf(
   overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
 ) extends OgcSourceConf {
   def toLayer(rs: RasterSource): SimpleSource =
-    SimpleSource(name, title, rs, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy)
+    SimpleSource(name, title, rs, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, Option("datetime"))
 }
 
 object StacSourceConf {
@@ -73,12 +73,8 @@ case class RasterSourceConf(
 ) extends OgcSourceConf {
   def toLayer: RasterOgcSource = {
     GeoTrellisPath.parseOption(source) match {
-      case Some(_) => GeoTrellisOgcSource(
-        name, title, source, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy
-      )
-      case None => SimpleSource(
-        name, title, RasterSource(source), defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy
-      )
+      case Some(_) => GeoTrellisOgcSource(name, title, source, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy)
+      case None => SimpleSource(name, title, RasterSource(source), defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, None)
     }
   }
 }

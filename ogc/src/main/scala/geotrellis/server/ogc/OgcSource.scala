@@ -55,7 +55,7 @@ trait OgcSource {
   def attributes: Map[String, String]
   def resampleMethod: ResampleMethod
   def overviewStrategy: OverviewStrategy
-  def timeInterval: Option[OgcTimeInterval]
+  def timeInterval: Option[OgcTime]
 
   def nativeProjectedExtent: ProjectedExtent = ProjectedExtent(nativeExtent, nativeCrs.head)
 }
@@ -90,9 +90,30 @@ case class SimpleSource(
   defaultStyle: Option[String],
   styles: List[OgcStyle],
   resampleMethod: ResampleMethod,
-  overviewStrategy: OverviewStrategy
+  overviewStrategy: OverviewStrategy,
+  timeMetadataKey: Option[String]
 ) extends RasterOgcSource {
-  val timeInterval: Option[OgcTimeInterval] = None
+  lazy val timeInterval: Option[OgcTime] =
+    timeMetadataKey.flatMap { key =>
+      source match {
+        case mrs: MosaicRasterSource =>
+          val times = mrs.metadata.list.toList.flatMap(_.attributes.get(key)).map(ZonedDateTime.parse)
+          times match {
+            case head :: tail => OgcTimePositions(NEL(head, tail)).some
+            case _ => None
+          }
+
+        case _ =>
+          source
+            .metadata
+            .attributes
+            .get(key)
+            .map(ZonedDateTime.parse)
+            .map(OgcTimePositions(_))
+      }
+    }
+
+  def isTemporal: Boolean = timeMetadataKey.nonEmpty && timeInterval.nonEmpty
 }
 
 case class GeoTrellisOgcSource(

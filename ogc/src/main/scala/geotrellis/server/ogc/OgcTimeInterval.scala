@@ -17,8 +17,34 @@
 package geotrellis.server.ogc
 
 import jp.ne.opt.chronoscala.Imports._
+import cats.data.NonEmptyList
+import cats.Semigroup
+import cats.syntax.semigroup._
 
 import java.time.ZonedDateTime
+
+sealed trait OgcTime
+
+object OgcTime {
+  implicit val ogcTimeSemigroup: Semigroup[OgcTime] = Semigroup.instance {
+    case (l: OgcTimePositions, r: OgcTimePositions) => l |+| r
+    case (l: OgcTimeInterval, r: OgcTimeInterval) => l |+| r
+    case (l, _) => l
+  }
+}
+
+final case class OgcTimePositions(list: NonEmptyList[ZonedDateTime]) extends OgcTime {
+  override def toString: String = list.toList.map(_.toInstant.toString).mkString(", ")
+}
+
+object OgcTimePositions {
+  implicit val ogcTimePositionsSemigroup: Semigroup[OgcTimePositions] = Semigroup.instance { (l, r) =>
+    OgcTimePositions(l.list ::: r.list)
+  }
+
+  def apply(timePeriod: ZonedDateTime): OgcTimePositions = OgcTimePositions(NonEmptyList(timePeriod, Nil))
+  def apply(timeString: String): OgcTimePositions = apply(ZonedDateTime.parse(timeString))
+}
 
 /**
   * Represents the TimeInterval and TimePosition types used in TimeSequence requests
@@ -39,31 +65,26 @@ import java.time.ZonedDateTime
   *                 @note This param is not validated. It is up to the user to ensure that it is
   *                       encoded directly
   */
-final case class OgcTimeInterval(start: ZonedDateTime,
-                                 end: Option[ZonedDateTime],
-                                 interval: Option[String]) {
+final case class OgcTimeInterval(start: ZonedDateTime, end: Option[ZonedDateTime], interval: Option[String]) extends OgcTime {
   override def toString: String = {
     end match {
       case Some(e) => s"${start.toInstant.toString}/${e.toInstant.toString}${interval.map("/" + _).getOrElse("")}"
       case _ => start.toInstant.toString
     }
   }
-
-  /**
-   * Merge two OgcTimeInterval instances
-   *
-   * @note This method destroys the interval. If you need to retain interval when combining
-   *       instances, perform this operation yourself.
-   * @param other
-   * @return
-   */
-  def combine(other: OgcTimeInterval) = {
-    val times = List(Some(start), end, Some(other.start), other.end).flatten
-    OgcTimeInterval(times.min, Some(times.max), None)
-  }
 }
 
 object OgcTimeInterval {
+  /**
+   * Merge two OgcTimeInterval instances
+   * This semigroup instance destroys the interval. If you need to retain interval when combining
+   *  instances, perform this operation yourself.
+   */
+  implicit val ogcTimePositionsSemigroup: Semigroup[OgcTimeInterval] = Semigroup.instance { (l, r) =>
+    val times = List(Some(l.start), l.end, Some(r.start), r.end).flatten
+    OgcTimeInterval(times.min, Some(times.max), None)
+  }
+
   def apply(timePeriod: ZonedDateTime): OgcTimeInterval = OgcTimeInterval(timePeriod, None, None)
 
   def apply(timeString: String): OgcTimeInterval = fromString(timeString)

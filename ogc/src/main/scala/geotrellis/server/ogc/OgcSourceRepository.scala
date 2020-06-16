@@ -34,6 +34,12 @@ object OgcSourceRepository {
     case WithName(name)      => _.filter(_.name == name)
     case WithNames(names)    => _.filter(rs => names.contains(rs.name))
     case At(t, _)           => _.filter(_.timeInterval match {
+      case Some(OgcTimePositions(list)) =>
+        if(list.length == 1) list.head == t
+        else {
+          val sorted = list.toList.sorted
+          sorted.head <= t && t <= sorted.last
+        }
       case Some(OgcTimeInterval(start, None, _)) => start == t
       case Some(OgcTimeInterval(start, Some(end), _)) => start <= t && t <= end
       // Assume valid OgcLayers with no explicit temporal component are valid
