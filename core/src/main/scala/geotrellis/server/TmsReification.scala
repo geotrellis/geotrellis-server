@@ -17,10 +17,27 @@
 package geotrellis.server
 
 import geotrellis.raster.{ProjectedRaster, MultibandTile}
+import cats.Contravariant
 import cats.effect._
 import simulacrum._
 
 @typeclass trait TmsReification[A] {
-  @op("tmsReification") def tmsReification(self: A, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[ProjectedRaster[MultibandTile]]
+  @op("tmsReification") def tmsReification[F[_]](
+      self: A,
+      buffer: Int
+  ): (Int, Int, Int) => F[ProjectedRaster[MultibandTile]]
 }
 
+object TmsReificiation {
+  implicit val contravariantTmsReification: Contravariant[TmsReification] =
+    new Contravariant[TmsReification] {
+      def contramap[A, B](fa: TmsReification[A])(f: B => A): TmsReification[B] =
+        new TmsReification[B] {
+          def tmsReification[F[_]](
+              self: B,
+              buffer: Int
+          ): (Int, Int, Int) => F[ProjectedRaster[MultibandTile]] =
+            fa.tmsReification(f(self), buffer)
+        }
+    }
+}

@@ -31,11 +31,11 @@ import java.net.URI
 import scala.util.Try
 
 trait RasterSourceUtils {
-  implicit val cellTypeEncoder: Encoder[CellType] = Encoder.encodeString.contramap[CellType](CellType.toName)
-  implicit val cellTypeDecoder: Decoder[CellType] = Decoder[String].emap { name => Right(CellType.fromName(name)) }
-
-  implicit val uriEncoder: Encoder[URI] = Encoder.encodeString.contramap[URI](_.toString)
-  implicit val uriDecoder: Decoder[URI] = Decoder[String].emap { str => Right(URI.create(str)) }
+  implicit val uriEncoder: Encoder[URI] =
+    Encoder.encodeString.contramap[URI](_.toString)
+  implicit val uriDecoder: Decoder[URI] = Decoder[String].emap { str =>
+    Right(URI.create(str))
+  }
 
   implicit val resampleMethodEncoder: Encoder[ResampleMethod] =
     Encoder.encodeString.contramap[ResampleMethod] {
@@ -79,7 +79,7 @@ trait RasterSourceUtils {
     def parse(strategy: String, input: String): OverviewStrategy =
       Auto(Try { input.split(s"$strategy-").last.toInt }.toOption.getOrElse(0))
 
-    def parseAuto(str: String): OverviewStrategy  = parse("auto", str)
+    def parseAuto(str: String): OverviewStrategy = parse("auto", str)
     def parseLevel(str: String): OverviewStrategy = parse("level", str)
 
     Decoder.decodeString.map {
@@ -91,25 +91,24 @@ trait RasterSourceUtils {
     }
   }
 
-  def getRasterSource(uri: String): RasterSource
+  def targetCRS: CRS
 
-  // the target CRS
-  val crs: CRS = WebMercator
+  val crs: CRS
 
   val tmsLevels: Array[LayoutDefinition] = {
     val scheme = ZoomedLayoutScheme(crs, 256)
     for (zoom <- 0 to 64) yield scheme.levelForZoom(zoom).layout
   }.toArray
 
-  def fetchTile(
-    uri: String,
-    zoom: Int,
-    x: Int,
-    y: Int,
-    crs: CRS = WebMercator,
-    method: ResampleMethod = ResampleMethod.DEFAULT,
-    target: ResampleTarget = DefaultTarget,
-    overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
+  def fetchTile[F[_]](
+      rasterSource: RasterSource,
+      zoom: Int,
+      x: Int,
+      y: Int,
+      crs: CRS = WebMercator,
+      method: ResampleMethod = ResampleMethod.DEFAULT,
+      target: ResampleTarget = DefaultTarget,
+      overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): IO[Raster[MultibandTile]] =
     IO {
       val key = SpatialKey(x, y)
@@ -120,17 +119,14 @@ trait RasterSourceUtils {
 
       rs.read(key).map(Raster(_, ld.mapTransform(key)))
     } flatMap {
-        case Some(t) =>
-          IO.pure(t)
-        case _ =>
-          IO.raiseError(new Exception(s"No Tile availble for the following SpatialKey: ${x}, ${y}"))
+      case Some(t) =>
+        IO.pure(t)
+      case _ =>
+        IO.raiseError(
+          new Exception(
+            s"No Tile availble for the following SpatialKey: ${x}, ${y}"
+          )
+        )
     }
 
-  def getCRS(uri: String): IO[CRS] = IO { getRasterSource(uri).crs }
-  def getRasterExtents(uri: String): IO[NEL[RasterExtent]] = IO {
-    val rs = getRasterSource(uri)
-    NEL.fromList(rs.resolutions.map { cs =>
-      RasterExtent(rs.extent, cs)
-    }).getOrElse(NEL(rs.gridExtent.toRasterExtent, Nil))
-  }
 }

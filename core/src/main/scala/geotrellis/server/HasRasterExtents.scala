@@ -18,12 +18,28 @@ package geotrellis.server
 
 import geotrellis.raster.RasterExtent
 
+import cats.Contravariant
 import cats.data.{NonEmptyList => NEL}
 import cats.effect._
 
-import simulacrum._
-
-@typeclass trait HasRasterExtents[A] {
-  @op("rasterExtents") def rasterExtents(self: A)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]]
+trait HasRasterExtents[F[_], A] {
+  def rasterExtents(self: A): F[NEL[RasterExtent]]
 }
 
+object HasRasterExtents {
+  def apply[F[_], A](implicit ev: HasRasterExtents[F, A]) = ev
+
+  implicit def contravariantHasRasterExtents[F[_]]
+      : Contravariant[HasRasterExtents[F, *]] =
+    new Contravariant[HasRasterExtents[F, *]] {
+      def contramap[A, B](
+          fa: HasRasterExtents[F, A]
+      )(f: B => A): HasRasterExtents[F, B] =
+        new HasRasterExtents[F, B] {
+          def rasterExtents(
+              self: B
+          ): F[NEL[RasterExtent]] =
+            fa.rasterExtents(f(self))
+        }
+    }
+}

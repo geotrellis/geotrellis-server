@@ -14,9 +14,9 @@ object Dependencies {
   def catsVersion(module: String) = Def.setting {
     module match {
       case "core" =>
-        "org.typelevel" %% s"cats-$module" % ver("1.6.1", "2.0.0").value force()
+        "org.typelevel" %% s"cats-$module" % ver("1.6.1", "2.0.0").value force ()
       case "effect" =>
-        "org.typelevel" %% s"cats-$module" % ver("1.4.0", "2.0.0").value force()
+        "org.typelevel" %% s"cats-$module" % ver("1.4.0", "2.0.0").value force ()
     }
   }
 
@@ -72,6 +72,7 @@ object Dependencies {
   val http4sXml = http4sVer("scala-xml")
   val jaxbApi = "javax.xml.bind" % "jaxb-api" % jaxbApiVer
   val kindProjector = "org.typelevel" %% "kind-projector" % "0.11.0"
+  val log4cats = "io.chrisdavenport" %% "log4cats-slf4j" % "1.1.1"
   val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % "0.6.1"
   val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.12.2"
   val pureConfigCatsEffect = "com.github.pureconfig" %% "pureconfig-cats-effect" % "0.12.2"
