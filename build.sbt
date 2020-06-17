@@ -14,8 +14,10 @@ lazy val commonSettings = Seq(
   // only appends the `-SNAPSHOT` suffix if there are uncommitted
   // changes in the workspace.
   version := {
-    // Avoid Cyclic reference involving error
-    if (git.gitCurrentTags.value.isEmpty || git.gitUncommittedChanges.value)
+    if (git.gitHeadCommit.value.isEmpty) "0.0.1-SNAPSHOT"
+    else if (git.gitDescribedVersion.value.isEmpty)
+      git.gitHeadCommit.value.get.substring(0, 7) + "-SNAPSHOT"
+    else if (git.gitCurrentTags.value.isEmpty || git.gitUncommittedChanges.value)
       git.gitDescribedVersion.value.get + "-SNAPSHOT"
     else
       git.gitDescribedVersion.value.get
@@ -267,8 +269,6 @@ lazy val ogc = project
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(
-    // 2.11 doesn't see the macroParadise import
-    addCompilerPlugin(macrosParadise cross CrossVersion.full),
     assembly / assemblyJarName := "geotrellis-server-ogc.jar",
     libraryDependencies ++= Seq(
       geotrellisS3,

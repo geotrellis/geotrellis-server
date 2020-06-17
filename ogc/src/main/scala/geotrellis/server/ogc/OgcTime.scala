@@ -18,9 +18,8 @@ package geotrellis.server.ogc
 
 import jp.ne.opt.chronoscala.Imports._
 import cats.data.NonEmptyList
-import cats.Semigroup
-import cats.syntax.semigroup._
-import cats.syntax.option._
+import cats.{Order, Semigroup}
+import cats.implicits._
 
 import java.time.ZonedDateTime
 
@@ -53,8 +52,10 @@ final case class OgcTimePositions(list: NonEmptyList[ZonedDateTime]) extends Ogc
 }
 
 object OgcTimePositions {
+  implicit val timeOrder: Order[ZonedDateTime] = { (l, r) => implicitly[Ordering[ZonedDateTime]].compare(l, r) }
+
   implicit val ogcTimePositionsSemigroup: Semigroup[OgcTimePositions] = Semigroup.instance { (l, r) =>
-    OgcTimePositions(l.list ::: r.list)
+    OgcTimePositions((l.list ::: r.list).distinct)
   }
 
   def apply(timePeriod: ZonedDateTime): OgcTimePositions = OgcTimePositions(NonEmptyList(timePeriod, Nil))
