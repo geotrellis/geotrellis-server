@@ -18,9 +18,10 @@ package geotrellis.server.ogc.wms
 
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.style._
-
 import geotrellis.proj4.{CRS, LatLng}
-import geotrellis.raster.CellSize
+import geotrellis.raster.{CellSize, GridExtent}
+import geotrellis.raster.reproject.Reproject.Options
+import geotrellis.raster.reproject.ReprojectRasterExtent
 import geotrellis.vector.Extent
 import cats.syntax.option._
 import opengis.wms._
@@ -28,7 +29,6 @@ import opengis._
 import scalaxb._
 
 import java.net.URL
-
 import scala.xml.Elem
 
 /**
@@ -129,8 +129,26 @@ object CapabilitiesView {
             .getOrElse(throw new java.lang.Exception(s"Unable to construct EPSG code from $crs"))
         },
         EX_GeographicBoundingBox = {
-          val llExtent = source.extentIn(LatLng)
-          EX_GeographicBoundingBox(llExtent.xmin, llExtent.xmax, llExtent.ymin, llExtent.ymax).some
+          val llre = source match {
+            case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod, _) =>
+              rss.values.map { rs =>
+                ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(resampleMethod))
+              }.reduce({ (re1, re2) =>
+                val e = re1.extent combine re2.extent
+                val cs = if (re1.cellSize.resolution < re2.cellSize.resolution) re1.cellSize else re2.cellSize
+                new GridExtent[Long](e, cs)
+              })
+            case rasterOgcLayer: RasterOgcSource =>
+              val rs = rasterOgcLayer.source
+              ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(rasterOgcLayer.resampleMethod))
+          }
+
+          /**
+           * TODO: replace with source.extentIn(LatLng)
+           * see: https://github.com/locationtech/geotrellis/issues/3258
+           */
+          val Extent(xmin, ymin, xmax, ymax) = llre.extent
+          EX_GeographicBoundingBox(xmin, xmax, ymin, ymax).some
         },
         BoundingBox         = Nil,
         Dimension           = source.timeInterval match {
@@ -185,7 +203,33 @@ object CapabilitiesView {
       // Extent of all layers in default CRS
       // Should it be world extent? To simplify tests and QGIS work it's all RasterSources extent
       EX_GeographicBoundingBox = {
-        val llExtents = model.sources.store.map(_.extentIn(LatLng))
+        /*val llExtents = model.sources.store.map(_.extentIn(LatLng))
+        val llExtent = llExtents.tail.fold(llExtents.head)(_ combine _)*/
+
+        val llExtents = model.sources.store.map { source =>
+          val llre = source match {
+            case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod, _) =>
+              rss.values.map { rs =>
+                ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(resampleMethod))
+              }.reduce({ (re1, re2) =>
+                val e = re1.extent combine re2.extent
+                val cs = if (re1.cellSize.resolution < re2.cellSize.resolution) re1.cellSize else re2.cellSize
+                new GridExtent[Long](e, cs)
+              })
+            case rasterOgcLayer: RasterOgcSource =>
+              val rs = rasterOgcLayer.source
+              ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(rasterOgcLayer.resampleMethod))
+          }
+
+          /**
+           * TODO: replace with
+           * val llExtents = model.sources.store.map(_.extentIn(LatLng))
+           * val llExtent = llExtents.tail.fold(llExtents.head)(_ combine _)
+           * see: https://github.com/locationtech/geotrellis/issues/3258
+           */
+          llre.extent
+        }
+
         val llExtent = llExtents.tail.fold(llExtents.head)(_ combine _)
         EX_GeographicBoundingBox(llExtent.xmin, llExtent.xmax, llExtent.ymin, llExtent.ymax).some
       },
