@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix ExtentRefication, wcs and wms default behavior when time is not specified for temporal layers [#278](https://github.com/geotrellis/geotrellis-server/pull/278)
 - Expose STAC temporal metadata [#279](https://github.com/geotrellis/geotrellis-server/pull/279)
 - Support for Time lists in WMS GetCapabilities [#259](https://github.com/geotrellis/geotrellis-server/issues/259)
+- Default attribute should not be used to serve response inside Time extent [#260](https://github.com/geotrellis/geotrellis-server/issues/260)
 
 ### Changed
  
