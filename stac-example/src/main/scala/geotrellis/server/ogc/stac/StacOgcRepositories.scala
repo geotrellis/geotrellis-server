@@ -23,10 +23,10 @@ import geotrellis.server.ogc.OgcSource
 import geotrellis.server.ogc.conf.{OgcSourceConf, StacSourceConf}
 import geotrellis.stac.api.{Http4sStacClient, SearchFilters, StacClient}
 import geotrellis.store.query
-
 import cats.data.NonEmptyList
 import cats.syntax.option._
 import cats.effect.IO
+import geotrellis.stac.raster.StacAssetRasterSource
 import higherkindness.droste.{Algebra, scheme}
 import org.http4s.Uri
 import org.http4s.client.Client
@@ -52,7 +52,7 @@ case class StacOgcRepository(stacSourceConf: StacSourceConf, client: StacClient[
         .flatMap { item =>
           item.assets
             .get(stacSourceConf.asset)
-            .map(a => RasterSource(a.href))
+            .map(StacAssetRasterSource(_, item.properties))
         }
 
     val source: Option[RasterSource] = rasterSources match {

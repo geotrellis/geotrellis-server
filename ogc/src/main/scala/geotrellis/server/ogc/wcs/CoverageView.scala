@@ -18,7 +18,7 @@ package geotrellis.server.ogc.wcs
 
 import cats.syntax.option._
 import geotrellis.store.query._
-import geotrellis.server.ogc.{GeoTrellisOgcSource, MapAlgebraSource, OgcSource, RasterOgcSource, URN}
+import geotrellis.server.ogc.{GeoTrellisOgcSource, MapAlgebraSource, OgcSource, OgcTimeEmpty, OgcTimeInterval, OgcTimePositions, RasterOgcSource, SimpleSource, URN}
 import geotrellis.server.ogc.ows.OwsDataRecord
 import geotrellis.server.ogc.gml.GmlDataRecord
 import geotrellis.proj4.LatLng
@@ -96,13 +96,22 @@ object CoverageView {
     val temporalDomain: Option[TimeSequenceType] = source match {
       case gtl @ GeoTrellisOgcSource(_, _, _, _, _, _, _, _) =>
         if (gtl.source.isTemporal) {
-          val records = gtl.source.times.map { t =>
-            GmlDataRecord(TimePositionType(t.toInstant.toString))
-          }
-          Some(TimeSequenceType(records))
-        } else {
-          None
+          val records = gtl.source.times.map { t => GmlDataRecord(TimePositionType(t.toInstant.toString)) }
+          TimeSequenceType(records).some
+        } else None
+      case ss @ SimpleSource(_, _, _, _, _, _, _, _) if ss.isTemporal =>
+        val records = ss.time match {
+          case OgcTimePositions(nel) =>
+            nel.toList.map { t => GmlDataRecord(TimePositionType(t.toInstant.toString)) }
+          case OgcTimeInterval(start, end, _) if start == end =>
+            GmlDataRecord(TimePositionType(start.toInstant.toString)) :: Nil
+          case OgcTimeInterval(start, end, _) =>
+            GmlDataRecord(TimePositionType(start.toInstant.toString)) ::
+            GmlDataRecord(TimePositionType(end.toInstant.toString)) :: Nil
+          case OgcTimeEmpty => Nil
         }
+        if(records.nonEmpty) TimeSequenceType(records).some
+        else None
       case _ => None
     }
 

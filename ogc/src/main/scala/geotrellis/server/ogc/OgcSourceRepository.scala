@@ -33,20 +33,24 @@ object OgcSourceRepository {
     case All()               => identity
     case WithName(name)      => _.filter(_.name == name)
     case WithNames(names)    => _.filter(rs => names.contains(rs.name))
-    case At(t, _)           => _.filter(_.timeInterval match {
-      case Some(OgcTimeInterval(start, None, _)) => start == t
-      case Some(OgcTimeInterval(start, Some(end), _)) => start <= t && t <= end
+    case At(t, _)           => _.filter(_.time match {
+      case OgcTimePositions(list) => list.exists(_ == t)
+      case OgcTimeInterval(start, end, _) => start <= t && t <= end
       // Assume valid OgcLayers with no explicit temporal component are valid
       // at all times so they aren't excluded when optional TIME param is null
-      case None => true
+      case OgcTimeEmpty => true
     })
-    case Between(t1, t2, _) => _.filter { _.timeInterval match {
-        case Some(OgcTimeInterval(start, None, _)) => t1 <= start && start <= t2
-        case Some(OgcTimeInterval(start, Some(end), _)) =>
-          t1 <= start && start <= t2 || t1 <= end && end <= t2
-        // Assume valid OgcLayers with no explicit temporal component are valid
-        // at all times so they aren't excluded when optional TIME param is null
-        case _ => true
+    case Between(t1, t2, _) => _.filter { _.time match {
+      case OgcTimePositions(list) =>
+        val sorted = list.toList.sorted
+        val start = sorted.head
+        val end = sorted.last
+        t1 <= start && start <= t2 || t1 <= end && end <= t2
+      case OgcTimeInterval(start, end, _) =>
+        t1 <= start && start <= t2 || t1 <= end && end <= t2
+      // Assume valid OgcLayers with no explicit temporal component are valid
+      // at all times so they aren't excluded when optional TIME param is null
+      case OgcTimeEmpty => true
       }
     }
     case Intersects(e) => _.filter(_.nativeProjectedExtent.intersects(e))

@@ -55,7 +55,7 @@ trait OgcSource {
   def attributes: Map[String, String]
   def resampleMethod: ResampleMethod
   def overviewStrategy: OverviewStrategy
-  def timeInterval: Option[OgcTimeInterval]
+  def time: OgcTime
 
   def nativeProjectedExtent: ProjectedExtent = ProjectedExtent(nativeExtent, nativeCrs.head)
 }
@@ -90,9 +90,30 @@ case class SimpleSource(
   defaultStyle: Option[String],
   styles: List[OgcStyle],
   resampleMethod: ResampleMethod,
-  overviewStrategy: OverviewStrategy
+  overviewStrategy: OverviewStrategy,
+  timeMetadataKey: Option[String]
 ) extends RasterOgcSource {
-  val timeInterval: Option[OgcTimeInterval] = None
+  lazy val time: OgcTime =
+    timeMetadataKey.flatMap { key =>
+      source match {
+        case mrs: MosaicRasterSource =>
+          val times = mrs.metadata.list.toList.flatMap(_.attributes.get(key)).map(ZonedDateTime.parse)
+          times match {
+            case head :: tail => OgcTimePositions(NEL(head, tail)).some
+            case _ => None
+          }
+
+        case _ =>
+          source
+            .metadata
+            .attributes
+            .get(key)
+            .map(ZonedDateTime.parse)
+            .map(OgcTimePositions(_))
+      }
+    }.getOrElse(OgcTimeEmpty)
+
+  def isTemporal: Boolean = timeMetadataKey.nonEmpty && time.nonEmpty
 }
 
 case class GeoTrellisOgcSource(
@@ -110,16 +131,20 @@ case class GeoTrellisOgcSource(
 
   lazy val source = GeoTrellisRasterSource(dataPath)
 
-  lazy val timeInterval: Option[OgcTimeInterval] =
-    if (!source.isTemporal) None
-    else if (source.times.size == 1) OgcTimeInterval(source.times.head).some
-    else OgcTimeInterval(source.times.min, source.times.max.some, None).some
+  lazy val time: OgcTime =
+    if (!source.isTemporal) OgcTimeEmpty
+    else OgcTimePositions(source.times)
 
   /**
    * If temporal, try to match in the following order:
+   *
+   * OgcTimeInterval behavior
    *  1. To the closest time in known valid source times
-   *  2. To timeInterval.start
+   *  2. To time.start
    *  3. To the passed interval.start
+   *
+   *  OgcTimePosition:
+   * 1. finds the exact match
    *
    *  @note If case 3 is matched, read queries to the returned
    *        RasterSource may return zero results.
@@ -127,19 +152,29 @@ case class GeoTrellisOgcSource(
    * @param interval
    * @return
    */
-  def sourceForTime(interval: OgcTimeInterval): GeoTrellisRasterSource =
+  def sourceForTime(interval: OgcTime): GeoTrellisRasterSource =
     if (source.isTemporal) {
-      val defaultTime = timeInterval.getOrElse(interval).start
-      source.times.find { t =>
-        interval match {
-          case OgcTimeInterval(start, None, _)      => start == t
-          case OgcTimeInterval(start, Some(end), _) => start <= t && t < end
-          case _                                    => false
-        }
-      }.fold(sourceForTime(defaultTime))(sourceForTime)
-    } else {
-      source
-    }
+      time match {
+        case sourceInterval: OgcTimeInterval =>
+          source.times.find { t =>
+            interval match {
+              case OgcTimeInterval(start, end, _) => start <= t && t <= end
+              case OgcTimePositions(list)         => list.exists(_ == t)
+              case OgcTimeEmpty                   => false
+            }
+          }.fold(sourceForTime(sourceInterval))(sourceForTime)
+
+        case OgcTimePositions(NEL(head, _)) =>
+          source.times.find { t =>
+            interval match {
+              case OgcTimeInterval(start, end, _) => start <= t && t <= end
+              case OgcTimePositions(list)         => list.exists(_ == t)
+              case OgcTimeEmpty                   => false
+            }
+          }.fold(sourceForTime(head))(sourceForTime)
+        case _ => source
+      }
+    } else source
 
   def sourceForTime(time: ZonedDateTime): GeoTrellisRasterSource =
     if (source.isTemporal) GeoTrellisRasterSource(dataPath, Some(time))
@@ -239,7 +274,7 @@ case class MapAlgebraSource(
     new GridExtent[Long](nativeExtent, cellSize)
   }
 
-  val timeInterval: Option[OgcTimeInterval] = None
+  val time: OgcTime                         = OgcTimeEmpty
   val attributes: Map[String, String]       = Map.empty
   lazy val nativeCrs: Set[CRS]              = sources.values.map(_.crs).toSet
   lazy val minBandCount: Int                = sources.values.map(_.bandCount).min

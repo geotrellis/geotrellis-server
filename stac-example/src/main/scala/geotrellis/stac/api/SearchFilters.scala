@@ -16,8 +16,8 @@
 
 package geotrellis.stac.api
 
+import geotrellis.stac._
 import geotrellis.store.query.{Query, QueryF}
-
 import geotrellis.proj4.LatLng
 import com.azavea.stac4s.{Bbox, TemporalExtent, TwoDimBbox}
 import io.circe._
@@ -44,41 +44,82 @@ case class SearchFilters(
 )
 
 object SearchFilters {
-  implicit val bboxIntersectionSemigroup: Semigroup[Bbox] = { (left, right) =>
-    val Extent(xmin, ymin, xmax, ymax) =
-      left
-        .toExtent
-        .flatMap { l =>
-          right
-            .toExtent
-            .flatMap(l.intersection(_).toRight(s"$left and $right have no intersections"))
-        }.valueOr(str => throw new IllegalArgumentException(str))
+  object IntersectionSemigroup {
+    implicit val bboxIntersectionSemigroup: Semigroup[Bbox] = { (left, right) =>
+      val Extent(xmin, ymin, xmax, ymax) =
+        left
+          .toExtent
+          .flatMap { l =>
+            right
+              .toExtent
+              .flatMap(l.intersection(_).toRight(s"$left and $right have no intersections"))
+          }.valueOr(str => throw new IllegalArgumentException(str))
 
-    TwoDimBbox(xmin, ymin, xmax, ymax)
+      TwoDimBbox(xmin, ymin, xmax, ymax)
+    }
+
+    implicit val temporalExtentSemigroup: Semigroup[TemporalExtent] = { (left, right) =>
+      val (lmin, lmax) = left.value.min -> left.value.max
+      val (rmin, rmax) = right.value.min -> right.value.max
+      TemporalExtent.unsafeFrom(List(
+        List(lmin, rmin).max,
+        List(lmax, rmax).min
+      ))
+    }
+
+    implicit val geometryIntersectionSemigroup: Semigroup[Geometry] = { (left, right) => left.intersection(right) }
+
+    implicit val searchFiltersSemigroup: Semigroup[SearchFilters] = { (left, right) =>
+      SearchFilters(
+        bbox = left.bbox |+| right.bbox,
+        datetime = left.datetime |+| right.datetime,
+        intersects = left.intersects |+| right.intersects,
+        collections = (left.collections |+| right.collections).distinct,
+        items = (left.collections |+| right.collections).distinct,
+        limit = List(left.limit, right.limit).min,
+        next = right.next,
+        query = left.query.deepMerge(right.query)
+      )
+    }
   }
 
-  implicit val temporalExtentSemigroup: Semigroup[TemporalExtent] = { (left, right) =>
-    val (lmin, lmax) = left.value.min -> left.value.max
-    val (rmin, rmax) = right.value.min -> right.value.max
-    TemporalExtent.unsafeFrom(List(
-      List(lmin, rmin).max,
-      List(lmax, rmax).min
-    ))
-  }
+  object UnionSemigroup {
+    implicit val bboxUnionSemigroup: Semigroup[Bbox] = { (left, right) =>
+      val Extent(xmin, ymin, xmax, ymax) =
+        left
+          .toExtent
+          .flatMap { l =>
+            right
+              .toExtent
+              .flatMap(l.combine(_).some.toRight(s"$left and $right have no intersections"))
+          }.valueOr(str => throw new IllegalArgumentException(str))
 
-  implicit val geometryIntersectionSemigroup: Semigroup[Geometry] = { (left, right) => left.intersection(right) }
+      TwoDimBbox(xmin, ymin, xmax, ymax)
+    }
 
-  implicit val searchFiltersSemigroup: Semigroup[SearchFilters] = { (left, right) =>
-    SearchFilters(
-      bbox        = left.bbox |+| right.bbox,
-      datetime    = left.datetime |+| right.datetime,
-      intersects  = left.intersects |+| right.intersects,
-      collections = (left.collections |+| right.collections).distinct,
-      items       = (left.collections |+| right.collections).distinct,
-      limit       = List(left.limit, right.limit).min,
-      next        = right.next,
-      query       = left.query.deepMerge(right.query)
-    )
+    implicit val temporalExtentSemigroup: Semigroup[TemporalExtent] = { (left, right) =>
+      val (lmin, lmax) = left.value.min -> left.value.max
+      val (rmin, rmax) = right.value.min -> right.value.max
+      TemporalExtent.unsafeFrom(List(
+        List(lmin, rmin).min,
+        List(lmax, rmax).max
+      ))
+    }
+
+    implicit val geometryUnionSemigroup: Semigroup[Geometry] = { (left, right) => left.union(right) }
+
+    implicit val searchFiltersSemigroup: Semigroup[SearchFilters] = { (left, right) =>
+      SearchFilters(
+        bbox = left.bbox |+| right.bbox,
+        datetime = left.datetime |+| right.datetime,
+        intersects = left.intersects |+| right.intersects,
+        collections = (left.collections |+| right.collections).distinct,
+        items = (left.collections |+| right.collections).distinct,
+        limit = List(left.limit, right.limit).min,
+        next = right.next,
+        query = left.query.deepMerge(right.query)
+      )
+    }
   }
 
   implicit val searchFilterDecoder: Decoder[SearchFilters] = { c =>
@@ -117,10 +158,9 @@ object SearchFilters {
     case At(t, _)           => SearchFilters(datetime = TemporalExtent(t.toInstant, None).some).some
     case Between(t1, t2, _) => SearchFilters(datetime = TemporalExtent(t1.toInstant, t2.toInstant).some).some
     case Intersects(e)      => SearchFilters(intersects = e.reproject(LatLng).extent.toPolygon.some).some
-    case Covers(e) =>
-      val Extent(xmin, ymin, xmax, ymax) = e.reproject(LatLng).extent
-      SearchFilters(bbox = TwoDimBbox(xmin, xmax, ymin, ymax).some).some
-    case And(l, r) => l |+| r
+    case Covers(e)          => SearchFilters(bbox = e.reproject(LatLng).extent.toTwoDimBbox.some).some
+    case And(l, r)          => import IntersectionSemigroup._; l |+| r
+    case Or(l, r)           => import UnionSemigroup._; l |+| r
     // unsupported nodes
     case _ => SearchFilters().some
   }

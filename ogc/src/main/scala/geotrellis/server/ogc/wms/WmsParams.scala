@@ -16,9 +16,8 @@
 
 package geotrellis.server.ogc.wms
 
-import geotrellis.server.ogc.{OgcTimeInterval, OutputFormat}
+import geotrellis.server.ogc.{OgcTime, OgcTimeEmpty, OgcTimeInterval, OgcTimePositions, OutputFormat}
 import geotrellis.server.ogc.params._
-
 import geotrellis.proj4.LatLng
 import geotrellis.proj4.CRS
 import geotrellis.store.query._
@@ -58,20 +57,18 @@ object WmsParams {
     width: Int,
     height: Int,
     crs: CRS,
-    time: Option[OgcTimeInterval],
+    time: OgcTime,
     params: ParamMap
   ) extends WmsParams {
     def toQuery: Query = {
       val layer = layers.headOption.map(withName).getOrElse(nothing)
       val query = layer and intersects(ProjectedExtent(boundingBox, crs))
       time match {
-        case Some(timeInterval) => {
-          timeInterval.end match {
-            case Some(end) => query and between(timeInterval.start, end)
-            case None => query and at(timeInterval.start)
-          }
-        }
-        case None => query
+        case timeInterval: OgcTimeInterval =>
+          query and between(timeInterval.start, timeInterval.end)
+        case OgcTimePositions(list) =>
+          query and list.toList.map(at(_)).reduce(_ or _)
+        case OgcTimeEmpty => query
       }
     }
   }
@@ -108,8 +105,7 @@ object WmsParams {
           val height =
             params.validatedParam[Int]("height", { s => Try(s.toInt).toOption })
 
-          val time = params.validatedOptionalParam("time")
-            .map(option => option.map(OgcTimeInterval.fromString))
+          val time = params.validatedOgcTime("time")
 
           val format =
             params
@@ -134,13 +130,13 @@ object WmsParams {
     val params = ParamMap(queryParams)
 
     val serviceParam =
-      params.validatedParam("service", validValues=Set("wms"))
+      params.validatedParam("service", validValues = Set("wms"))
 
     val requestParam =
-      params.validatedParam("request", validValues=Set("getcapabilities", "getmap"))
+      params.validatedParam("request", validValues = Set("getcapabilities", "getmap"))
 
     val firstStageValidation =
-      (serviceParam, requestParam).mapN { case (a, b) => b }
+      (serviceParam, requestParam).mapN { case (_, b) => b }
 
     firstStageValidation.andThen {
       case "getcapabilities" =>

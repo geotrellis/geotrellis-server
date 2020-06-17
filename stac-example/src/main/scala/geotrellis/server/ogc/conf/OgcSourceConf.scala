@@ -23,6 +23,7 @@ import geotrellis.server.ogc._
 import geotrellis.store.GeoTrellisPath
 import com.azavea.maml.ast._
 import geotrellis.proj4.{CRS, WebMercator}
+import cats.syntax.option._
 import pureconfig.ConfigReader
 
 import scala.util.Try
@@ -48,8 +49,9 @@ case class StacSourceConf(
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
   overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
 ) extends OgcSourceConf {
+  private val datetimeField = "datetime"
   def toLayer(rs: RasterSource): SimpleSource =
-    SimpleSource(name, title, rs, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy)
+    SimpleSource(name, title, rs, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, datetimeField.some)
 }
 
 object StacSourceConf {
@@ -73,12 +75,8 @@ case class RasterSourceConf(
 ) extends OgcSourceConf {
   def toLayer: RasterOgcSource = {
     GeoTrellisPath.parseOption(source) match {
-      case Some(_) => GeoTrellisOgcSource(
-        name, title, source, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy
-      )
-      case None => SimpleSource(
-        name, title, RasterSource(source), defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy
-      )
+      case Some(_) => GeoTrellisOgcSource(name, title, source, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy)
+      case None => SimpleSource(name, title, RasterSource(source), defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, None)
     }
   }
 }

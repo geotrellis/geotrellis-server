@@ -32,8 +32,10 @@ case class WmsModel(
   extendedParametersBinding: Option[ParamMap => Option[Expression => Expression]] = None
 ) {
 
-  def timeInterval: Option[OgcTimeInterval] =
-    sources.store.flatMap(_.timeInterval).reduceOption(_ combine _)
+  // TODO: remove once Scala 2.11 is dropped
+  // workaround a Scala 2.11 bug
+  // should be _ |+| _
+  def time: OgcTime = sources.store.map(_.time).reduce(OgcTime.ogcTimeSemigroup.combine)
 
   /** Take a specific request for a map and combine it with the relevant [[OgcSource]]
     *  to produce an [[OgcLayer]]
@@ -55,11 +57,11 @@ case class WmsModel(
               }
               val extendedParameters = extendedParametersBinding.flatMap(_.apply(p.params))
               MapAlgebraOgcLayer(name, title, supportedCrs, simpleLayers, algebra.bindExtendedParameters(extendedParameters), style, resampleMethod, overviewStrategy)
-            case SimpleSource(name, title, rasterSource, _, _, resampleMethod, overviewStrategy) =>
+            case SimpleSource(name, title, rasterSource, _, _, resampleMethod, overviewStrategy, _) =>
               SimpleOgcLayer(name, title, supportedCrs, rasterSource, style, resampleMethod, overviewStrategy)
             case gts @ GeoTrellisOgcSource(name, title, _, _, _, resampleMethod, overviewStrategy, _) =>
               val source = p.time match {
-                case Some(t) => gts.sourceForTime(t)
+                case t if t.nonEmpty => gts.sourceForTime(t)
                 case _ if gts.source.isTemporal => gts.sourceForTime(gts.source.times.head)
                 case _ => gts.source
               }

@@ -44,7 +44,7 @@ case class MapAlgebraStacOgcRepository(
       names
         .map(queryWithName(query))
         .flatMap(repository.find)
-        .collect { case ss @ SimpleSource(_, _, _, _, _, _, _) => ss }
+        .collect { case ss @ SimpleSource(_, _, _, _, _, _, _, _) => ss }
     ).toList
 }
 

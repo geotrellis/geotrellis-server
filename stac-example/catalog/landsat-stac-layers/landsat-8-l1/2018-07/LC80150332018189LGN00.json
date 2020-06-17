@@ -45,7 +45,7 @@
   "properties": {
     "collection": "landsat-8-l1",
     "layer:ids" : ["layer-us", "layer-pa"],
-    "datetime": "2018-07-08T15:45:34.125700+00:00",
+    "datetime": "2018-07-08T15:45:34Z",
     "eo:sun_azimuth": 125.31095515,
     "eo:sun_elevation": 65.2014335,
     "eo:cloud_cover": 0,

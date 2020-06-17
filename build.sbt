@@ -14,8 +14,10 @@ lazy val commonSettings = Seq(
   // only appends the `-SNAPSHOT` suffix if there are uncommitted
   // changes in the workspace.
   version := {
-    // Avoid Cyclic reference involving error
-    if (git.gitCurrentTags.value.isEmpty || git.gitUncommittedChanges.value)
+    if (git.gitHeadCommit.value.isEmpty) "0.0.1-SNAPSHOT"
+    else if (git.gitDescribedVersion.value.isEmpty)
+      git.gitHeadCommit.value.get.substring(0, 7) + "-SNAPSHOT"
+    else if (git.gitCurrentTags.value.isEmpty || git.gitUncommittedChanges.value)
       git.gitDescribedVersion.value.get + "-SNAPSHOT"
     else
       git.gitDescribedVersion.value.get
@@ -161,7 +163,7 @@ lazy val root = project
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(noPublishSettings)
-  .aggregate(core, example, ogc, ogcExample, opengis, stac)
+  .aggregate(core, example, ogc, `ogc-example`, opengis, stac)
 
 lazy val core = project
   .settings(moduleName := "geotrellis-server-core")
@@ -278,7 +280,7 @@ lazy val ogc = project
     )
   )
 
-lazy val ogcExample = (project in file("ogc-example"))
+lazy val `ogc-example` = project
   .dependsOn(ogc)
   .enablePlugins(DockerPlugin)
   .settings(moduleName := "geotrellis-server-ogc-example")

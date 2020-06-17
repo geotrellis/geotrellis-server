@@ -40,17 +40,16 @@ case class WmtsModel(
     for {
       crs    <- getMatrixCrs(p.tileMatrixSet).toList
       layout <- getMatrixLayoutDefinition(p.tileMatrixSet, p.tileMatrix).toList
-      // TODO: Refactor so that we can return multiple layers
       source <- sources.find(p.toQuery)
     } yield {
       val style: Option[OgcStyle] = source.styles.find(_.name == p.style)
       source match {
-        case MapAlgebraSource(name, title, rasterSources, algebra, _, styles, resampleMethod, overviewStrategy) =>
+        case MapAlgebraSource(name, title, rasterSources, algebra, _, _, resampleMethod, overviewStrategy) =>
           val simpleLayers = rasterSources.mapValues { rs =>
             SimpleTiledOgcLayer(name, title, crs, layout, rs, style, resampleMethod, overviewStrategy)
           }
           MapAlgebraTiledOgcLayer(name, title, crs, layout, simpleLayers, algebra, style, resampleMethod, overviewStrategy)
-        case SimpleSource(name, title, rasterSource, _, styles, resampleMethod, overviewStrategy) =>
+        case SimpleSource(name, title, rasterSource, _, _, resampleMethod, overviewStrategy, _) =>
           SimpleTiledOgcLayer(name, title, crs, layout, rasterSource, style, resampleMethod, overviewStrategy)
       }
     }
