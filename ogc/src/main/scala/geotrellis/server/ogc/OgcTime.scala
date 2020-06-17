@@ -19,7 +19,8 @@ package geotrellis.server.ogc
 import jp.ne.opt.chronoscala.Imports._
 import cats.data.NonEmptyList
 import cats.{Order, Semigroup}
-import cats.implicits._
+import cats.syntax.semigroup._
+import cats.syntax.option._
 
 import java.time.ZonedDateTime
 
@@ -47,12 +48,13 @@ object OgcTime {
   }
 }
 
+/** Represents the TimePosition used in TimeSequence requests */
 final case class OgcTimePositions(list: NonEmptyList[ZonedDateTime]) extends OgcTime {
   override def toString: String = list.toList.map(_.toInstant.toString).mkString(", ")
 }
 
 object OgcTimePositions {
-  implicit val timeOrder: Order[ZonedDateTime] = { (l, r) => implicitly[Ordering[ZonedDateTime]].compare(l, r) }
+  implicit val timeOrder: Order[ZonedDateTime] = Order.fromOrdering
 
   implicit val ogcTimePositionsSemigroup: Semigroup[OgcTimePositions] = Semigroup.instance { (l, r) =>
     OgcTimePositions((l.list ::: r.list).distinct)
@@ -69,7 +71,7 @@ object OgcTimePositions {
 }
 
 /**
-  * Represents the TimeInterval and TimePosition types used in TimeSequence requests
+  * Represents the TimeInterval used in TimeSequence requests
   *
   * If end is provided, a TimeInterval is assumed. Otherwise, a TimePosition.
   *
@@ -99,7 +101,7 @@ object OgcTimeInterval {
    * This semigroup instance destroys the interval. If you need to retain interval when combining
    *  instances, perform this operation yourself.
    */
-  implicit val ogcTimePositionsSemigroup: Semigroup[OgcTimeInterval] = Semigroup.instance { (l, r) =>
+  implicit val ogcTimeIntervalSemigroup: Semigroup[OgcTimeInterval] = Semigroup.instance { (l, r) =>
     val times = List(l.start, l.end, r.start, r.end)
     OgcTimeInterval(times.min, times.max, None)
   }

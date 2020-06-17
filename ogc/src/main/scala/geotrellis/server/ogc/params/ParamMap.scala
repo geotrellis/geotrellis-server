@@ -106,9 +106,5 @@ case class ParamMap(params: Map[String, Seq[String]]) {
     }
 
   def validatedOgcTime(field: String): ValidatedNel[ParamError, OgcTime] =
-    validatedOptionalParam(field).map {
-      case Some(timeString) if timeString.contains("/") => OgcTimeInterval.fromString(timeString)
-      case Some(timeString) => OgcTimePositions(timeString.split(",").toList)
-      case None => OgcTimeEmpty
-    }
+    validatedOgcTimeSequence(field).map(_.head)
 }
