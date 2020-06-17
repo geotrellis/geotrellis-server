@@ -98,15 +98,16 @@ case class ParamMap(params: Map[String, Seq[String]]) {
         }
     }).toValidatedNel
 
-  def validatedTemporalSequence(field: String): ValidatedNel[ParamError, List[OgcTime]] =
+  def validatedOgcTimeSequence(field: String): ValidatedNel[ParamError, List[OgcTime]] =
     validatedOptionalParam(field).map {
       case Some(timeString) if timeString.contains("/") => timeString.split(",").map(OgcTimeInterval.fromString).toList
       case Some(timeString) => OgcTimePositions(timeString.split(",").toList) :: Nil
       case None => List.empty[OgcTime]
     }
 
-  def validatedTemporalPosition(field: String): ValidatedNel[ParamError, OgcTime] =
+  def validatedOgcTime(field: String): ValidatedNel[ParamError, OgcTime] =
     validatedOptionalParam(field).map {
+      case Some(timeString) if timeString.contains("/") => OgcTimeInterval.fromString(timeString)
       case Some(timeString) => OgcTimePositions(timeString.split(",").toList)
       case None => OgcTimeEmpty
     }

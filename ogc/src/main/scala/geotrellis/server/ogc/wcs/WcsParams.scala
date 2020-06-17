@@ -18,13 +18,13 @@ package geotrellis.server.ogc.wcs
 
 import geotrellis.proj4.CRS
 import geotrellis.raster.{CellSize, GridExtent}
-import geotrellis.server.ogc.{OgcTime, OgcTimeInterval, OgcTimePositions, OutputFormat}
+import geotrellis.server.ogc.{OgcTime, OgcTimeEmpty, OgcTimeInterval, OgcTimePositions, OutputFormat}
 import geotrellis.server.ogc.params.ParamError.UnsupportedFormatError
 import geotrellis.server.ogc.params._
 import geotrellis.store.query._
 import geotrellis.vector.{Extent, ProjectedExtent}
 import cats.data.Validated._
-import cats.data.{NonEmptyList => NEL, Validated, ValidatedNel}
+import cats.data.{Validated, ValidatedNel, NonEmptyList => NEL}
 import cats.syntax.apply._
 import cats.syntax.option._
 import jp.ne.opt.chronoscala.Imports._
@@ -83,9 +83,7 @@ case class GetCoverageWcsParams(
       case Some(OgcTimePositions(list)) =>
         list match {
           case NEL(head, Nil) => query and at(head)
-          case _ =>
-            val times = list.toList.sorted
-            query and between(times.head, times.last)
+          case _ => query and list.toList.map(at(_)).reduce(_ or _)
         }
       case _ => query
     }
@@ -210,7 +208,7 @@ object GetCoverageWcsParams {
               }
             }
 
-        val temporalSequenceOption = params.validatedTemporalSequence("timesequence")
+        val temporalSequenceOption = params.validatedOgcTimeSequence("timesequence")
 
         val format =
           params.validatedParam("format")
