@@ -18,15 +18,16 @@ package geotrellis.server.ogc.wcs
 
 import geotrellis.proj4.CRS
 import geotrellis.raster.{CellSize, GridExtent}
-import geotrellis.server.ogc.{OgcTimeInterval, OutputFormat}
+import geotrellis.server.ogc.{OgcTime, OgcTimeInterval, OgcTimePositions, OutputFormat}
 import geotrellis.server.ogc.params.ParamError.UnsupportedFormatError
 import geotrellis.server.ogc.params._
 import geotrellis.store.query._
 import geotrellis.vector.{Extent, ProjectedExtent}
 import cats.data.Validated._
-import cats.data.{NonEmptyList, Validated, ValidatedNel}
+import cats.data.{NonEmptyList => NEL, Validated, ValidatedNel}
 import cats.syntax.apply._
 import cats.syntax.option._
+import jp.ne.opt.chronoscala.Imports._
 
 import scala.util.Try
 import java.net.URI
@@ -55,7 +56,7 @@ case class GetCoverageWcsParams(
   version: String,
   identifier: String,
   boundingBox: Extent,
-  temporalSequence: List[OgcTimeInterval],
+  temporalSequence: List[OgcTime],
   format: OutputFormat,
   gridBaseCRS: CRS,
   gridCS: URI,
@@ -70,17 +71,23 @@ case class GetCoverageWcsParams(
 
   def toQuery: Query = {
     val query = withName(identifier) and intersects(ProjectedExtent(extent, crs))
-    if (temporalSequence.nonEmpty) {
+    temporalSequence.headOption match {
       // For now, since a RasterSource maps 1 to 1 to OgcSource, we only create a
       // temporal filter on the first TimeInterval in the list. Revisit when we are
       // able to utilize all requested TimeIntervals.
-      val timeInterval = temporalSequence.head
-      timeInterval.end match {
-        case Some(e) => query and between(timeInterval.start, e)
-        case _ => query and at(timeInterval.start)
-      }
-    } else {
-      query
+      case Some(timeInterval: OgcTimeInterval) =>
+        timeInterval.end match {
+          case Some(e) => query and between(timeInterval.start, e)
+          case _ => query and at(timeInterval.start)
+        }
+      case Some(OgcTimePositions(list)) =>
+        list match {
+          case NEL(head, Nil) => query and at(head)
+          case _ =>
+            val times = list.toList.sorted
+            query and between(times.head, times.last)
+        }
+      case _ => query
     }
   }
 
@@ -170,13 +177,6 @@ object GetCoverageWcsParams {
       }
     })
 
-  private def getTemporalSequence(params: ParamMap, field: String): ValidatedNel[ParamError, List[OgcTimeInterval]] = {
-    params.validatedOptionalParam(field).map {
-      case Some(timeString) => timeString.split(",").map(OgcTimeInterval.fromString).toList
-      case None => List.empty[OgcTimeInterval]
-    }
-  }
-
   def build(params: ParamMap): ValidatedNel[ParamError, WcsParams] = {
     val versionParam = params.validatedVersion("1.1.1")
 
@@ -200,7 +200,7 @@ object GetCoverageWcsParams {
         val gridBaseCRS = params.validatedParam("gridbasecrs").andThen(CRSUtils.ogcToCRS)
 
         // Transform the OGC urn CRS code into a CRS.
-        val idAndBboxAndCrs: Validated[NonEmptyList[ParamError], (String, Vector[Double], CRS)] =
+        val idAndBboxAndCrs: Validated[NEL[ParamError], (String, Vector[Double], CRS)] =
           idAndBboxAndCrsOption
             .andThen { case (id, bbox, crsOption) =>
               // If the CRS wasn't in the boundingbox parameter, pull it out of the CRS field.
@@ -210,7 +210,7 @@ object GetCoverageWcsParams {
               }
             }
 
-        val temporalSequenceOption = getTemporalSequence(params, "timesequence")
+        val temporalSequenceOption = params.validatedTemporalSequence("timesequence")
 
         val format =
           params.validatedParam("format")

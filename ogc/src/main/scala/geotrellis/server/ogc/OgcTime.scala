@@ -20,6 +20,7 @@ import jp.ne.opt.chronoscala.Imports._
 import cats.data.NonEmptyList
 import cats.Semigroup
 import cats.syntax.semigroup._
+import cats.syntax.option._
 
 import java.time.ZonedDateTime
 
@@ -44,6 +45,14 @@ object OgcTimePositions {
 
   def apply(timePeriod: ZonedDateTime): OgcTimePositions = OgcTimePositions(NonEmptyList(timePeriod, Nil))
   def apply(timeString: String): OgcTimePositions = apply(ZonedDateTime.parse(timeString))
+  def apply(times: List[ZonedDateTime]): Option[OgcTimePositions] =
+    times match {
+      case head :: tail => OgcTimePositions(NonEmptyList(head, tail)).some
+      case _ => None
+    }
+  def apply(times: List[String])(implicit d: DummyImplicit): Option[OgcTimePositions] = apply(times.map(ZonedDateTime.parse))
+  def unsafeFromList(times: List[String]): OgcTimePositions =
+    apply(times).getOrElse(throw new UnsupportedOperationException(s"Unsupported strings format for OgcTimePositions: $times"))
 }
 
 /**

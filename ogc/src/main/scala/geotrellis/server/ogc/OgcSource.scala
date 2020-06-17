@@ -131,10 +131,9 @@ case class GeoTrellisOgcSource(
 
   lazy val source = GeoTrellisRasterSource(dataPath)
 
-  lazy val timeInterval: Option[OgcTimeInterval] =
+  lazy val timeInterval: Option[OgcTime] =
     if (!source.isTemporal) None
-    else if (source.times.size == 1) OgcTimeInterval(source.times.head).some
-    else OgcTimeInterval(source.times.min, source.times.max.some, None).some
+    else OgcTimePositions(source.times)
 
   /**
    * If temporal, try to match in the following order:
@@ -148,16 +147,38 @@ case class GeoTrellisOgcSource(
    * @param interval
    * @return
    */
-  def sourceForTime(interval: OgcTimeInterval): GeoTrellisRasterSource =
+  def sourceForTime(interval: OgcTime): GeoTrellisRasterSource =
     if (source.isTemporal) {
-      val defaultTime = timeInterval.getOrElse(interval).start
-      source.times.find { t =>
-        interval match {
-          case OgcTimeInterval(start, None, _)      => start == t
-          case OgcTimeInterval(start, Some(end), _) => start <= t && t < end
-          case _                                    => false
-        }
-      }.fold(sourceForTime(defaultTime))(sourceForTime)
+      timeInterval match {
+        case Some(sourceInterval: OgcTimeInterval) =>
+          source.times.find { t =>
+            interval match {
+              case OgcTimeInterval(start, None, _)      => start == t
+              case OgcTimeInterval(start, Some(end), _) => start <= t && t < end
+              case OgcTimePositions(list)               =>
+                val sorted = list.toList.sorted
+                val start = sorted.head
+                val end = sorted.last
+                start <= t && t < end
+              case _                                    => false
+            }
+          }.fold(sourceForTime(sourceInterval))(sourceForTime)
+
+        case Some(OgcTimePositions(NEL(head, _))) =>
+          source.times.find { t =>
+            interval match {
+              case OgcTimeInterval(start, None, _)      => start == t
+              case OgcTimeInterval(start, Some(end), _) => start <= t && t < end
+              case OgcTimePositions(list)               =>
+                val sorted = list.toList.sorted
+                val start = sorted.head
+                val end = sorted.last
+                start <= t && t < end
+              case _                                    => false
+            }
+          }.fold(sourceForTime(head))(sourceForTime)
+        case _ => source
+      }
     } else {
       source
     }

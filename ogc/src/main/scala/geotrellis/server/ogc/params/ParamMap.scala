@@ -19,6 +19,7 @@ package geotrellis.server.ogc.params
 import cats.implicits._
 import cats.data.{Validated, ValidatedNel}
 import Validated._
+import geotrellis.server.ogc.{OgcTime, OgcTimeInterval, OgcTimePositions}
 
 import scala.util.{Failure, Success, Try}
 
@@ -96,4 +97,17 @@ case class ParamMap(params: Map[String, Seq[String]]) {
             Valid(default)
         }
     }).toValidatedNel
+
+  def validatedTemporalSequence(field: String): ValidatedNel[ParamError, List[OgcTime]] =
+    validatedOptionalParam(field).map {
+      case Some(timeString) if timeString.contains("/") => timeString.split(",").map(OgcTimeInterval.fromString).toList
+      case Some(timeString) => OgcTimePositions.unsafeFromList(timeString.split(",").toList) :: Nil
+      case None => List.empty[OgcTime]
+    }
+
+  def validatedTemporalPosition(field: String): ValidatedNel[ParamError, Option[OgcTimePositions]] =
+    validatedOptionalParam(field).map {
+      case Some(timeString) => OgcTimePositions(timeString.split(",").toList)
+      case None => Option.empty[OgcTimePositions]
+    }
 }

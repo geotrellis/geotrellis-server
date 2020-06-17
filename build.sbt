@@ -161,7 +161,7 @@ lazy val root = project
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(noPublishSettings)
-  .aggregate(core, example, ogc, ogcExample, opengis, stac)
+  .aggregate(core, example, ogc, `ogc-example`, opengis, stac)
 
 lazy val core = project
   .settings(moduleName := "geotrellis-server-core")
@@ -267,6 +267,8 @@ lazy val ogc = project
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(
+    // 2.11 doesn't see the macroParadise import
+    addCompilerPlugin(macrosParadise cross CrossVersion.full),
     assembly / assemblyJarName := "geotrellis-server-ogc.jar",
     libraryDependencies ++= Seq(
       geotrellisS3,
@@ -278,7 +280,7 @@ lazy val ogc = project
     )
   )
 
-lazy val ogcExample = (project in file("ogc-example"))
+lazy val `ogc-example` = project
   .dependsOn(ogc)
   .enablePlugins(DockerPlugin)
   .settings(moduleName := "geotrellis-server-ogc-example")

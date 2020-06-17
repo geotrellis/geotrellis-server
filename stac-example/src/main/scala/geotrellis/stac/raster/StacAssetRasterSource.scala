@@ -7,9 +7,6 @@ import geotrellis.raster._
 import geotrellis.vector.Extent
 import _root_.io.circe.JsonObject
 import cats.syntax.option._
-import java.time.ZonedDateTime
-
-import scala.util.Try
 
 case class StacAssetRasterSource(
   asset: StacItemAsset,
@@ -18,9 +15,6 @@ case class StacAssetRasterSource(
   private[geotrellis] val targetCellType: Option[TargetCellType] = None
 ) extends RasterSource {
   private lazy val underlying = underlyingRS.getOrElse(RasterSource(asset.href.replace("https://s3-us-west-2.amazonaws.com/landsat-pds/c1/", "gdal+file:///Users/daunnc/Downloads/lc8-test/")))
-
-  def isTemporal: Boolean = attributes.contains("datetime")
-  def dateTime: Option[ZonedDateTime] = attributes.get("datetime").flatMap(str => Try(ZonedDateTime.parse(str)).toOption)
 
   def metadata: StacAssetMetadata = StacAssetMetadata(name, crs, bandCount, cellType, gridExtent, resolutions, itemProperties)
 

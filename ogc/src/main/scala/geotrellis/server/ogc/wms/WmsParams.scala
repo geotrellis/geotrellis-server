@@ -16,16 +16,16 @@
 
 package geotrellis.server.ogc.wms
 
-import geotrellis.server.ogc.{OgcTimeInterval, OutputFormat}
+import geotrellis.server.ogc.{OgcTime, OgcTimeInterval, OgcTimePositions, OutputFormat}
 import geotrellis.server.ogc.params._
-
 import geotrellis.proj4.LatLng
 import geotrellis.proj4.CRS
 import geotrellis.store.query._
 import geotrellis.vector.{Extent, ProjectedExtent}
 import cats.implicits._
-import cats.data.{Validated, ValidatedNel}
+import cats.data.{Validated, ValidatedNel, NonEmptyList => NEL}
 import Validated._
+import jp.ne.opt.chronoscala.Imports._
 
 import scala.util.Try
 
@@ -58,19 +58,26 @@ object WmsParams {
     width: Int,
     height: Int,
     crs: CRS,
-    time: Option[OgcTimeInterval],
+    time: Option[OgcTime],
     params: ParamMap
   ) extends WmsParams {
     def toQuery: Query = {
       val layer = layers.headOption.map(withName).getOrElse(nothing)
       val query = layer and intersects(ProjectedExtent(boundingBox, crs))
       time match {
-        case Some(timeInterval) => {
+        case Some(timeInterval: OgcTimeInterval) =>
           timeInterval.end match {
             case Some(end) => query and between(timeInterval.start, end)
             case None => query and at(timeInterval.start)
           }
-        }
+        case Some(OgcTimePositions(list)) =>
+          list match {
+            case NEL(head, Nil) => query and at(head)
+            case _ =>
+              val times = list.toList.sorted
+              query and between(times.head, times.last)
+          }
+
         case None => query
       }
     }
@@ -108,8 +115,7 @@ object WmsParams {
           val height =
             params.validatedParam[Int]("height", { s => Try(s.toInt).toOption })
 
-          val time = params.validatedOptionalParam("time")
-            .map(option => option.map(OgcTimeInterval.fromString))
+          val time = params.validatedTemporalPosition("time")
 
           val format =
             params
