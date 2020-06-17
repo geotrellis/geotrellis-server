@@ -58,19 +58,19 @@ object WmsParams {
     width: Int,
     height: Int,
     crs: CRS,
-    time: Option[OgcTime],
+    time: OgcTime,
     params: ParamMap
   ) extends WmsParams {
     def toQuery: Query = {
       val layer = layers.headOption.map(withName).getOrElse(nothing)
       val query = layer and intersects(ProjectedExtent(boundingBox, crs))
       time match {
-        case Some(timeInterval: OgcTimeInterval) =>
+        case timeInterval: OgcTimeInterval =>
           timeInterval.end match {
             case Some(end) => query and between(timeInterval.start, end)
             case None => query and at(timeInterval.start)
           }
-        case Some(OgcTimePositions(list)) =>
+        case OgcTimePositions(list) =>
           list match {
             case NEL(head, Nil) => query and at(head)
             case _ =>
@@ -78,7 +78,7 @@ object WmsParams {
               query and between(times.head, times.last)
           }
 
-        case None => query
+        case _ => query
       }
     }
   }

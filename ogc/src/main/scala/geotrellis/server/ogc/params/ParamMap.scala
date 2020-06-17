@@ -16,10 +16,10 @@
 
 package geotrellis.server.ogc.params
 
+import geotrellis.server.ogc._
 import cats.implicits._
 import cats.data.{Validated, ValidatedNel}
 import Validated._
-import geotrellis.server.ogc.{OgcTime, OgcTimeInterval, OgcTimePositions}
 
 import scala.util.{Failure, Success, Try}
 
@@ -33,7 +33,7 @@ case class ParamMap(params: Map[String, Seq[String]]) {
   def validatedParam(field: String): ValidatedNel[ParamError, String] =
     (getParams(field) match {
       case Some(v :: Nil) => Valid(v)
-      case Some(vs) => Invalid(ParamError.RepeatedParam(field))
+      case Some(_) => Invalid(ParamError.RepeatedParam(field))
       case None => Invalid(ParamError.MissingParam(field))
     }).toValidatedNel
 
@@ -43,7 +43,7 @@ case class ParamMap(params: Map[String, Seq[String]]) {
     (getParams(field) match {
       case None => Valid(Option.empty[String])
       case Some(v :: Nil) => Valid(Some(v))
-      case Some(vs) => Invalid(ParamError.RepeatedParam(field))
+      case Some(_) => Invalid(ParamError.RepeatedParam(field))
     }).toValidatedNel
 
   def validatedOptionalParamDouble(field: String): ValidatedNel[ParamError, Option[Double]] =
@@ -54,7 +54,7 @@ case class ParamMap(params: Map[String, Seq[String]]) {
           case Success(d) => Valid(d.some)
           case Failure(_) => Invalid(ParamError.ParseError(field, v))
         }
-      case Some(vs) => Invalid(ParamError.RepeatedParam(field))
+      case Some(_) => Invalid(ParamError.RepeatedParam(field))
     }).toValidatedNel
 
   /** Get a field that must appear only once, parse the value successfully, otherwise error */
@@ -65,7 +65,7 @@ case class ParamMap(params: Map[String, Seq[String]]) {
           case Some(valid) => Valid(valid)
           case None => Invalid(ParamError.ParseError(field, v))
         }
-      case Some(vs) => Invalid(ParamError.RepeatedParam(field))
+      case Some(_) => Invalid(ParamError.RepeatedParam(field))
       case None => Invalid(ParamError.MissingParam(field))
     }).toValidatedNel
 
@@ -74,7 +74,7 @@ case class ParamMap(params: Map[String, Seq[String]]) {
     (getParams(field) match {
       case Some(v :: Nil) if validValues.contains(v.toLowerCase) => Valid(v.toLowerCase)
       case Some(v :: Nil) => Invalid(ParamError.InvalidValue(field, v, validValues.toList))
-      case Some(vs) => Invalid(ParamError.RepeatedParam(field))
+      case Some(_) => Invalid(ParamError.RepeatedParam(field))
       case None => Invalid(ParamError.MissingParam(field))
     }).toValidatedNel
 
@@ -82,7 +82,7 @@ case class ParamMap(params: Map[String, Seq[String]]) {
     (getParams("version") match {
       case Some(Nil) => Valid(default)
       case Some(version :: Nil) => Valid(version)
-      case Some(s) => Invalid(ParamError.RepeatedParam("version"))
+      case Some(_) => Invalid(ParamError.RepeatedParam("version"))
       case None =>
         // Can send "acceptversions" instead
         getParams("acceptversions") match {
@@ -90,7 +90,7 @@ case class ParamMap(params: Map[String, Seq[String]]) {
             Valid(default)
           case Some(versions :: Nil) =>
             Valid(versions.split(",").max)
-          case Some(s) =>
+          case Some(_) =>
             Invalid(ParamError.RepeatedParam("acceptversions"))
           case None =>
             // Version string is optional, reply with highest supported version if omitted
@@ -101,13 +101,13 @@ case class ParamMap(params: Map[String, Seq[String]]) {
   def validatedTemporalSequence(field: String): ValidatedNel[ParamError, List[OgcTime]] =
     validatedOptionalParam(field).map {
       case Some(timeString) if timeString.contains("/") => timeString.split(",").map(OgcTimeInterval.fromString).toList
-      case Some(timeString) => OgcTimePositions.unsafeFromList(timeString.split(",").toList) :: Nil
+      case Some(timeString) => OgcTimePositions(timeString.split(",").toList) :: Nil
       case None => List.empty[OgcTime]
     }
 
-  def validatedTemporalPosition(field: String): ValidatedNel[ParamError, Option[OgcTimePositions]] =
+  def validatedTemporalPosition(field: String): ValidatedNel[ParamError, OgcTime] =
     validatedOptionalParam(field).map {
       case Some(timeString) => OgcTimePositions(timeString.split(",").toList)
-      case None => Option.empty[OgcTimePositions]
+      case None => OgcTimeEmpty
     }
 }

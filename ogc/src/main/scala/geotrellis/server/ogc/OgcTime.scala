@@ -20,16 +20,27 @@ import jp.ne.opt.chronoscala.Imports._
 import cats.data.NonEmptyList
 import cats.Semigroup
 import cats.syntax.semigroup._
-import cats.syntax.option._
 
 import java.time.ZonedDateTime
 
-sealed trait OgcTime
+sealed trait OgcTime {
+  def isEmpty: Boolean = false
+  def nonEmpty: Boolean = !isEmpty
+}
+
+case object OgcTimeEmpty extends OgcTime {
+  override def isEmpty: Boolean = true
+  implicit val ogcTimeEmptySemigroup: Semigroup[OgcTimeEmpty.type] = Semigroup.instance { (l, _) => l }
+}
 
 object OgcTime {
   implicit val ogcTimeSemigroup: Semigroup[OgcTime] = Semigroup.instance {
     case (l: OgcTimePositions, r: OgcTimePositions) => l |+| r
     case (l: OgcTimeInterval, r: OgcTimeInterval) => l |+| r
+    case (l: OgcTimePositions, _: OgcTimeEmpty.type) => l
+    case (l: OgcTimeInterval, _: OgcTimeEmpty.type) => l
+    case (_: OgcTimeEmpty.type, r: OgcTimePositions) => r
+    case (_: OgcTimeEmpty.type, r: OgcTimeInterval) => r
     case (l, _) => l
   }
 }
@@ -45,14 +56,12 @@ object OgcTimePositions {
 
   def apply(timePeriod: ZonedDateTime): OgcTimePositions = OgcTimePositions(NonEmptyList(timePeriod, Nil))
   def apply(timeString: String): OgcTimePositions = apply(ZonedDateTime.parse(timeString))
-  def apply(times: List[ZonedDateTime]): Option[OgcTimePositions] =
+  def apply(times: List[ZonedDateTime]): OgcTime =
     times match {
-      case head :: tail => OgcTimePositions(NonEmptyList(head, tail)).some
-      case _ => None
+      case head :: tail => OgcTimePositions(NonEmptyList(head, tail))
+      case _ => OgcTimeEmpty
     }
-  def apply(times: List[String])(implicit d: DummyImplicit): Option[OgcTimePositions] = apply(times.map(ZonedDateTime.parse))
-  def unsafeFromList(times: List[String]): OgcTimePositions =
-    apply(times).getOrElse(throw new UnsupportedOperationException(s"Unsupported strings format for OgcTimePositions: $times"))
+  def apply(times: List[String])(implicit d: DummyImplicit): OgcTime = apply(times.map(ZonedDateTime.parse))
 }
 
 /**

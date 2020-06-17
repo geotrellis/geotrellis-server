@@ -33,7 +33,7 @@ case class WmsModel(
   extendedParametersBinding: Option[ParamMap => Option[Expression => Expression]] = None
 ) {
 
-  def timeInterval: Option[OgcTime] = sources.store.flatMap(_.timeInterval).reduceOption(_ |+| _)
+  def timeInterval: OgcTime = sources.store.map(_.timeInterval).reduce(_ |+| _)
 
   /** Take a specific request for a map and combine it with the relevant [[OgcSource]]
     *  to produce an [[OgcLayer]]
@@ -59,7 +59,7 @@ case class WmsModel(
               SimpleOgcLayer(name, title, supportedCrs, rasterSource, style, resampleMethod, overviewStrategy)
             case gts @ GeoTrellisOgcSource(name, title, _, _, _, resampleMethod, overviewStrategy, _) =>
               val source = p.time match {
-                case Some(t) => gts.sourceForTime(t)
+                case t if t.nonEmpty => gts.sourceForTime(t)
                 case _ if gts.source.isTemporal => gts.sourceForTime(gts.source.times.head)
                 case _ => gts.source
               }

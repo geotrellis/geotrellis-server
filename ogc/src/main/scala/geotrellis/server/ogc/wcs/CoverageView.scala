@@ -100,7 +100,7 @@ object CoverageView {
           TimeSequenceType(records).some
         } else None
       case ss @ SimpleSource(_, _, _, _, _, _, _, _) if ss.isTemporal =>
-        val records = ss.timeInterval.toList.flatMap {
+        val records = ss.timeInterval match {
           case OgcTimePositions(nel) =>
             nel.toList.map { t => GmlDataRecord(TimePositionType(t.toInstant.toString)) }
           case OgcTimeInterval(start, Some(end), _) =>

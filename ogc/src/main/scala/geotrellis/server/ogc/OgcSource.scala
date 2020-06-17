@@ -55,7 +55,7 @@ trait OgcSource {
   def attributes: Map[String, String]
   def resampleMethod: ResampleMethod
   def overviewStrategy: OverviewStrategy
-  def timeInterval: Option[OgcTime]
+  def timeInterval: OgcTime
 
   def nativeProjectedExtent: ProjectedExtent = ProjectedExtent(nativeExtent, nativeCrs.head)
 }
@@ -93,7 +93,7 @@ case class SimpleSource(
   overviewStrategy: OverviewStrategy,
   timeMetadataKey: Option[String]
 ) extends RasterOgcSource {
-  lazy val timeInterval: Option[OgcTime] =
+  lazy val timeInterval: OgcTime =
     timeMetadataKey.flatMap { key =>
       source match {
         case mrs: MosaicRasterSource =>
@@ -111,7 +111,7 @@ case class SimpleSource(
             .map(ZonedDateTime.parse)
             .map(OgcTimePositions(_))
       }
-    }
+    }.getOrElse(OgcTimeEmpty)
 
   def isTemporal: Boolean = timeMetadataKey.nonEmpty && timeInterval.nonEmpty
 }
@@ -131,8 +131,8 @@ case class GeoTrellisOgcSource(
 
   lazy val source = GeoTrellisRasterSource(dataPath)
 
-  lazy val timeInterval: Option[OgcTime] =
-    if (!source.isTemporal) None
+  lazy val timeInterval: OgcTime =
+    if (!source.isTemporal) OgcTimeEmpty
     else OgcTimePositions(source.times)
 
   /**
@@ -150,7 +150,7 @@ case class GeoTrellisOgcSource(
   def sourceForTime(interval: OgcTime): GeoTrellisRasterSource =
     if (source.isTemporal) {
       timeInterval match {
-        case Some(sourceInterval: OgcTimeInterval) =>
+        case sourceInterval: OgcTimeInterval =>
           source.times.find { t =>
             interval match {
               case OgcTimeInterval(start, None, _)      => start == t
@@ -164,7 +164,7 @@ case class GeoTrellisOgcSource(
             }
           }.fold(sourceForTime(sourceInterval))(sourceForTime)
 
-        case Some(OgcTimePositions(NEL(head, _))) =>
+        case OgcTimePositions(NEL(head, _)) =>
           source.times.find { t =>
             interval match {
               case OgcTimeInterval(start, None, _)      => start == t
@@ -179,9 +179,7 @@ case class GeoTrellisOgcSource(
           }.fold(sourceForTime(head))(sourceForTime)
         case _ => source
       }
-    } else {
-      source
-    }
+    } else source
 
   def sourceForTime(time: ZonedDateTime): GeoTrellisRasterSource =
     if (source.isTemporal) GeoTrellisRasterSource(dataPath, Some(time))
@@ -281,7 +279,7 @@ case class MapAlgebraSource(
     new GridExtent[Long](nativeExtent, cellSize)
   }
 
-  val timeInterval: Option[OgcTimeInterval] = None
+  val timeInterval: OgcTime                 = OgcTimeEmpty
   val attributes: Map[String, String]       = Map.empty
   lazy val nativeCrs: Set[CRS]              = sources.values.map(_.crs).toSet
   lazy val minBandCount: Int                = sources.values.map(_.bandCount).min

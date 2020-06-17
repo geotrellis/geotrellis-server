@@ -134,28 +134,25 @@ object CapabilitiesView {
         },
         BoundingBox         = Nil,
         Dimension           = source.timeInterval match {
-          case Some(interval) =>
-            interval match {
-              case tp @ OgcTimePositions(nel) =>
-                Dimension(
-                  tp.toString,
-                  Map(
-                    "@name" -> DataRecord("time"),
-                    "@units" -> DataRecord("ISO8601"),
-                    "@default" -> DataRecord(nel.head.toInstant.toString)
-                  )
-                ) :: Nil
-              case ti @ OgcTimeInterval(start, _, _) =>
-                Dimension(
-                  ti.toString,
-                  Map(
-                    "@name" -> DataRecord("time"),
-                    "@units" -> DataRecord("ISO8601"),
-                    "@default" -> DataRecord(start.toString)
-                  )
-                ) :: Nil
-            }
-          case None => Nil
+          case tp @ OgcTimePositions(nel) =>
+            Dimension(
+              tp.toString,
+              Map(
+                "@name" -> DataRecord("time"),
+                "@units" -> DataRecord("ISO8601"),
+                "@default" -> DataRecord(nel.head.toInstant.toString)
+              )
+            ) :: Nil
+          case ti @ OgcTimeInterval(start, _, _) =>
+            Dimension(
+              ti.toString,
+              Map(
+                "@name" -> DataRecord("time"),
+                "@units" -> DataRecord("ISO8601"),
+                "@default" -> DataRecord(start.toString)
+              )
+            ) :: Nil
+          case _ => Nil
         },
         Attribution         = None,
         AuthorityURL        = Nil,
@@ -195,28 +192,25 @@ object CapabilitiesView {
       // TODO: bounding box for global layer
       BoundingBox         = Nil,
       Dimension           = model.timeInterval match {
-        case Some(interval) =>
-          Seq(interval match {
-            case tp @ OgcTimePositions(nel) =>
-              Dimension(
-                tp.toString,
-                Map(
-                  "@name" -> DataRecord("time"),
-                  "@units" -> DataRecord("ISO8601"),
-                  "@default" -> DataRecord(nel.head.toInstant.toString)
-                )
-              )
-            case ti @ OgcTimeInterval(start, _, _) =>
-              Dimension(
-                ti.toString,
-                Map(
-                  "@name" -> DataRecord("time"),
-                  "@units" -> DataRecord("ISO8601"),
-                  "@default" -> DataRecord(start.toString)
-                )
-              )
-          })
-        case None => Nil
+        case tp @ OgcTimePositions(nel) =>
+          Dimension(
+            tp.toString,
+            Map(
+              "@name" -> DataRecord("time"),
+              "@units" -> DataRecord("ISO8601"),
+              "@default" -> DataRecord(nel.head.toInstant.toString)
+            )
+          ) :: Nil
+        case ti @ OgcTimeInterval(start, _, _) =>
+          Dimension(
+            ti.toString,
+            Map(
+              "@name" -> DataRecord("time"),
+              "@units" -> DataRecord("ISO8601"),
+              "@default" -> DataRecord(start.toString)
+            )
+          ) :: Nil
+        case _ => Nil
       },
       Attribution         = None,
       AuthorityURL        = Nil,
