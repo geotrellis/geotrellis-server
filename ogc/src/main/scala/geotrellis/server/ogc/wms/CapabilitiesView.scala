@@ -203,9 +203,6 @@ object CapabilitiesView {
       // Extent of all layers in default CRS
       // Should it be world extent? To simplify tests and QGIS work it's all RasterSources extent
       EX_GeographicBoundingBox = {
-        /*val llExtents = model.sources.store.map(_.extentIn(LatLng))
-        val llExtent = llExtents.tail.fold(llExtents.head)(_ combine _)*/
-
         val llExtents = model.sources.store.map { source =>
           val llre = source match {
             case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod, _) =>

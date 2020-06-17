@@ -19,7 +19,6 @@ package geotrellis.server.ogc
 import jp.ne.opt.chronoscala.Imports._
 import cats.data.NonEmptyList
 import cats.{Order, Semigroup}
-import cats.syntax.semigroup._
 import cats.syntax.option._
 
 import java.time.ZonedDateTime
@@ -29,17 +28,13 @@ sealed trait OgcTime {
   def nonEmpty: Boolean = !isEmpty
 }
 
-case object OgcTimeEmpty extends OgcTime {
-  override val isEmpty: Boolean = true
-  override val nonEmpty: Boolean = !isEmpty
-
-  implicit val ogcTimeEmptySemigroup: Semigroup[OgcTimeEmpty.type] = Semigroup.instance { (l, _) => l }
-}
-
 object OgcTime {
   implicit val ogcTimeSemigroup: Semigroup[OgcTime] = Semigroup.instance {
-    case (l: OgcTimePositions, r: OgcTimePositions) => l |+| r
-    case (l: OgcTimeInterval, r: OgcTimeInterval) => l |+| r
+    // TODO: remove once Scala 2.11 is dropped
+    // workaround a Scala 2.11 bug
+    // should be l |+| r
+    case (l: OgcTimePositions, r: OgcTimePositions) => OgcTimePositions.ogcTimePositionsSemigroup.combine(l, r)
+    case (l: OgcTimeInterval, r: OgcTimeInterval) => OgcTimeInterval.ogcTimeIntervalSemigroup.combine(l, r)
     case (l: OgcTimePositions, _: OgcTimeEmpty.type) => l
     case (l: OgcTimeInterval, _: OgcTimeEmpty.type) => l
     case (_: OgcTimeEmpty.type, r: OgcTimePositions) => r
@@ -48,8 +43,19 @@ object OgcTime {
   }
 }
 
+case object OgcTimeEmpty extends OgcTime {
+  override val isEmpty: Boolean = true
+  override val nonEmpty: Boolean = !isEmpty
+
+  implicit val ogcTimeEmptySemigroup: Semigroup[OgcTimeEmpty.type] = Semigroup.instance { (l, _) => l }
+}
+
 /** Represents the TimePosition used in TimeSequence requests */
 final case class OgcTimePositions(list: NonEmptyList[ZonedDateTime]) extends OgcTime {
+  def toOgcTimeInterval: OgcTimeInterval = {
+    val l = list.toList.sorted
+    OgcTimeInterval(l.min, l.max, None)
+  }
   override def toString: String = list.toList.map(_.toInstant.toString).mkString(", ")
 }
 
