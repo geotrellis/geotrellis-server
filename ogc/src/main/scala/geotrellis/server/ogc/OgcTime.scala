@@ -20,6 +20,7 @@ import jp.ne.opt.chronoscala.Imports._
 import cats.data.NonEmptyList
 import cats.Semigroup
 import cats.syntax.semigroup._
+import cats.syntax.option._
 
 import java.time.ZonedDateTime
 
@@ -29,7 +30,9 @@ sealed trait OgcTime {
 }
 
 case object OgcTimeEmpty extends OgcTime {
-  override def isEmpty: Boolean = true
+  override val isEmpty: Boolean = true
+  override val nonEmpty: Boolean = !isEmpty
+
   implicit val ogcTimeEmptySemigroup: Semigroup[OgcTimeEmpty.type] = Semigroup.instance { (l, _) => l }
 }
 
@@ -83,13 +86,10 @@ object OgcTimePositions {
   *                 @note This param is not validated. It is up to the user to ensure that it is
   *                       encoded directly
   */
-final case class OgcTimeInterval(start: ZonedDateTime, end: Option[ZonedDateTime], interval: Option[String]) extends OgcTime {
-  override def toString: String = {
-    end match {
-      case Some(e) => s"${start.toInstant.toString}/${e.toInstant.toString}${interval.map("/" + _).getOrElse("")}"
-      case _ => start.toInstant.toString
-    }
-  }
+final case class OgcTimeInterval(start: ZonedDateTime, end: ZonedDateTime, interval: Option[String]) extends OgcTime {
+  override def toString: String =
+    if(start != end) s"${start.toInstant.toString}/${end.toInstant.toString}${interval.map("/" + _).getOrElse("")}"
+    else start.toInstant.toString
 }
 
 object OgcTimeInterval {
@@ -99,11 +99,11 @@ object OgcTimeInterval {
    *  instances, perform this operation yourself.
    */
   implicit val ogcTimePositionsSemigroup: Semigroup[OgcTimeInterval] = Semigroup.instance { (l, r) =>
-    val times = List(Some(l.start), l.end, Some(r.start), r.end).flatten
-    OgcTimeInterval(times.min, Some(times.max), None)
+    val times = List(l.start, l.end, r.start, r.end)
+    OgcTimeInterval(times.min, times.max, None)
   }
 
-  def apply(timePeriod: ZonedDateTime): OgcTimeInterval = OgcTimeInterval(timePeriod, None, None)
+  def apply(timePeriod: ZonedDateTime): OgcTimeInterval = OgcTimeInterval(timePeriod, timePeriod, None)
 
   def apply(timeString: String): OgcTimeInterval = fromString(timeString)
 
@@ -111,9 +111,9 @@ object OgcTimeInterval {
     val timeParts = timeString.split("/")
     timeParts match {
       case Array(start, end, interval) =>
-        OgcTimeInterval(ZonedDateTime.parse(start), Some(ZonedDateTime.parse(end)), Some(interval))
+        OgcTimeInterval(ZonedDateTime.parse(start), ZonedDateTime.parse(end), interval.some)
       case Array(start, end) =>
-        OgcTimeInterval(ZonedDateTime.parse(start), Some(ZonedDateTime.parse(end)), None)
+        OgcTimeInterval(ZonedDateTime.parse(start), ZonedDateTime.parse(end), None)
       case Array(start) => OgcTimeInterval(ZonedDateTime.parse(start))
       case _ => throw new UnsupportedOperationException("Unsupported string format for OgcTimeInterval")
     }

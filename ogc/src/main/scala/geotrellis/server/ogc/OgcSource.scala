@@ -55,7 +55,7 @@ trait OgcSource {
   def attributes: Map[String, String]
   def resampleMethod: ResampleMethod
   def overviewStrategy: OverviewStrategy
-  def timeInterval: OgcTime
+  def time: OgcTime
 
   def nativeProjectedExtent: ProjectedExtent = ProjectedExtent(nativeExtent, nativeCrs.head)
 }
@@ -93,7 +93,7 @@ case class SimpleSource(
   overviewStrategy: OverviewStrategy,
   timeMetadataKey: Option[String]
 ) extends RasterOgcSource {
-  lazy val timeInterval: OgcTime =
+  lazy val time: OgcTime =
     timeMetadataKey.flatMap { key =>
       source match {
         case mrs: MosaicRasterSource =>
@@ -113,7 +113,7 @@ case class SimpleSource(
       }
     }.getOrElse(OgcTimeEmpty)
 
-  def isTemporal: Boolean = timeMetadataKey.nonEmpty && timeInterval.nonEmpty
+  def isTemporal: Boolean = timeMetadataKey.nonEmpty && time.nonEmpty
 }
 
 case class GeoTrellisOgcSource(
@@ -131,15 +131,20 @@ case class GeoTrellisOgcSource(
 
   lazy val source = GeoTrellisRasterSource(dataPath)
 
-  lazy val timeInterval: OgcTime =
+  lazy val time: OgcTime =
     if (!source.isTemporal) OgcTimeEmpty
     else OgcTimePositions(source.times)
 
   /**
    * If temporal, try to match in the following order:
+   *
+   * OgcTimeInterval behavior
    *  1. To the closest time in known valid source times
-   *  2. To timeInterval.start
+   *  2. To time.start
    *  3. To the passed interval.start
+   *
+   *  OgcTimePosition:
+   * 1. finds the exact match
    *
    *  @note If case 3 is matched, read queries to the returned
    *        RasterSource may return zero results.
@@ -149,32 +154,22 @@ case class GeoTrellisOgcSource(
    */
   def sourceForTime(interval: OgcTime): GeoTrellisRasterSource =
     if (source.isTemporal) {
-      timeInterval match {
+      time match {
         case sourceInterval: OgcTimeInterval =>
           source.times.find { t =>
             interval match {
-              case OgcTimeInterval(start, None, _)      => start == t
-              case OgcTimeInterval(start, Some(end), _) => start <= t && t < end
-              case OgcTimePositions(list)               =>
-                val sorted = list.toList.sorted
-                val start = sorted.head
-                val end = sorted.last
-                start <= t && t < end
-              case _                                    => false
+              case OgcTimeInterval(start, end, _) => start <= t && t <= end
+              case OgcTimePositions(list)         => list.exists(_ == t)
+              case OgcTimeEmpty                   => false
             }
           }.fold(sourceForTime(sourceInterval))(sourceForTime)
 
         case OgcTimePositions(NEL(head, _)) =>
           source.times.find { t =>
             interval match {
-              case OgcTimeInterval(start, None, _)      => start == t
-              case OgcTimeInterval(start, Some(end), _) => start <= t && t < end
-              case OgcTimePositions(list)               =>
-                val sorted = list.toList.sorted
-                val start = sorted.head
-                val end = sorted.last
-                start <= t && t < end
-              case _                                    => false
+              case OgcTimeInterval(start, end, _) => start <= t && t <= end
+              case OgcTimePositions(list)         => list.exists(_ == t)
+              case OgcTimeEmpty                   => false
             }
           }.fold(sourceForTime(head))(sourceForTime)
         case _ => source
@@ -279,7 +274,7 @@ case class MapAlgebraSource(
     new GridExtent[Long](nativeExtent, cellSize)
   }
 
-  val timeInterval: OgcTime                 = OgcTimeEmpty
+  val time: OgcTime                         = OgcTimeEmpty
   val attributes: Map[String, String]       = Map.empty
   lazy val nativeCrs: Set[CRS]              = sources.values.map(_.crs).toSet
   lazy val minBandCount: Int                = sources.values.map(_.bandCount).min

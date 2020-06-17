@@ -23,9 +23,8 @@ import geotrellis.proj4.CRS
 import geotrellis.store.query._
 import geotrellis.vector.{Extent, ProjectedExtent}
 import cats.implicits._
-import cats.data.{Validated, ValidatedNel, NonEmptyList => NEL}
+import cats.data.{Validated, ValidatedNel}
 import Validated._
-import jp.ne.opt.chronoscala.Imports._
 
 import scala.util.Try
 
@@ -66,15 +65,9 @@ object WmsParams {
       val query = layer and intersects(ProjectedExtent(boundingBox, crs))
       time match {
         case timeInterval: OgcTimeInterval =>
-          timeInterval.end match {
-            case Some(end) => query and between(timeInterval.start, end)
-            case None => query and at(timeInterval.start)
-          }
+          query and between(timeInterval.start, timeInterval.end)
         case OgcTimePositions(list) =>
-          list match {
-            case NEL(head, Nil) => query and at(head)
-            case _ => query and list.toList.map(at(_)).reduce(_ or _)
-          }
+          query and list.toList.map(at(_)).reduce(_ or _)
         case OgcTimeEmpty => query
       }
     }

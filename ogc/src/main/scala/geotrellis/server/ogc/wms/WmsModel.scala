@@ -33,7 +33,7 @@ case class WmsModel(
   extendedParametersBinding: Option[ParamMap => Option[Expression => Expression]] = None
 ) {
 
-  def timeInterval: OgcTime = sources.store.map(_.timeInterval).reduce(_ |+| _)
+  def time: OgcTime = sources.store.map(_.time).reduce(_ |+| _)
 
   /** Take a specific request for a map and combine it with the relevant [[OgcSource]]
     *  to produce an [[OgcLayer]]

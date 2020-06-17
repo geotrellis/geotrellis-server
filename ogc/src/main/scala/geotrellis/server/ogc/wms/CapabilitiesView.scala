@@ -151,7 +151,7 @@ object CapabilitiesView {
           EX_GeographicBoundingBox(xmin, xmax, ymin, ymax).some
         },
         BoundingBox         = Nil,
-        Dimension           = source.timeInterval match {
+        Dimension           = source.time match {
           case tp @ OgcTimePositions(nel) =>
             Dimension(
               tp.toString,
@@ -170,7 +170,7 @@ object CapabilitiesView {
                 "@default" -> DataRecord(start.toString)
               )
             ) :: Nil
-          case _ => Nil
+          case OgcTimeEmpty => Nil
         },
         Attribution         = None,
         AuthorityURL        = Nil,
@@ -235,7 +235,7 @@ object CapabilitiesView {
       },
       // TODO: bounding box for global layer
       BoundingBox         = Nil,
-      Dimension           = model.timeInterval match {
+      Dimension           = model.time match {
         case tp @ OgcTimePositions(nel) =>
           Dimension(
             tp.toString,
@@ -254,7 +254,7 @@ object CapabilitiesView {
               "@default" -> DataRecord(start.toString)
             )
           ) :: Nil
-        case _ => Nil
+        case OgcTimeEmpty => Nil
       },
       Attribution         = None,
       AuthorityURL        = Nil,
@@ -265,7 +265,7 @@ object CapabilitiesView {
       Style               = Nil,
       MinScaleDenominator = None,
       MaxScaleDenominator = None,
-      Layer               = model.sources.store.map { _.toLayer(parentLayerMeta.supportedProjections) },
+      Layer               = model.sources.store.map(_.toLayer(parentLayerMeta.supportedProjections)),
       attributes          = Map("@queryable" -> DataRecord(false))
     )
   }

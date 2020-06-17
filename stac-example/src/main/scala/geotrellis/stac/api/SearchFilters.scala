@@ -16,8 +16,8 @@
 
 package geotrellis.stac.api
 
+import geotrellis.stac._
 import geotrellis.store.query.{Query, QueryF}
-
 import geotrellis.proj4.LatLng
 import com.azavea.stac4s.{Bbox, TemporalExtent, TwoDimBbox}
 import io.circe._
@@ -158,11 +158,9 @@ object SearchFilters {
     case At(t, _)           => SearchFilters(datetime = TemporalExtent(t.toInstant, None).some).some
     case Between(t1, t2, _) => SearchFilters(datetime = TemporalExtent(t1.toInstant, t2.toInstant).some).some
     case Intersects(e)      => SearchFilters(intersects = e.reproject(LatLng).extent.toPolygon.some).some
-    case Covers(e) =>
-      val Extent(xmin, ymin, xmax, ymax) = e.reproject(LatLng).extent
-      SearchFilters(bbox = TwoDimBbox(xmin, xmax, ymin, ymax).some).some
-    case And(l, r) => import IntersectionSemigroup._; l |+| r
-    case Or(l, r) => import UnionSemigroup._; l |+| r
+    case Covers(e)          => SearchFilters(bbox = e.reproject(LatLng).extent.toTwoDimBbox.some).some
+    case And(l, r)          => import IntersectionSemigroup._; l |+| r
+    case Or(l, r)           => import UnionSemigroup._; l |+| r
     // unsupported nodes
     case _ => SearchFilters().some
   }

@@ -18,7 +18,7 @@ package geotrellis.server.ogc.wcs
 
 import geotrellis.proj4.CRS
 import geotrellis.raster.{CellSize, GridExtent}
-import geotrellis.server.ogc.{OgcTime, OgcTimeEmpty, OgcTimeInterval, OgcTimePositions, OutputFormat}
+import geotrellis.server.ogc.{OgcTime, OgcTimeInterval, OgcTimePositions, OutputFormat}
 import geotrellis.server.ogc.params.ParamError.UnsupportedFormatError
 import geotrellis.server.ogc.params._
 import geotrellis.store.query._
@@ -27,7 +27,6 @@ import cats.data.Validated._
 import cats.data.{Validated, ValidatedNel, NonEmptyList => NEL}
 import cats.syntax.apply._
 import cats.syntax.option._
-import jp.ne.opt.chronoscala.Imports._
 
 import scala.util.Try
 import java.net.URI
@@ -76,15 +75,9 @@ case class GetCoverageWcsParams(
       // temporal filter on the first TimeInterval in the list. Revisit when we are
       // able to utilize all requested TimeIntervals.
       case Some(timeInterval: OgcTimeInterval) =>
-        timeInterval.end match {
-          case Some(e) => query and between(timeInterval.start, e)
-          case _ => query and at(timeInterval.start)
-        }
+        query and between(timeInterval.start, timeInterval.end)
       case Some(OgcTimePositions(list)) =>
-        list match {
-          case NEL(head, Nil) => query and at(head)
-          case _ => query and list.toList.map(at(_)).reduce(_ or _)
-        }
+        query and list.toList.map(at(_)).reduce(_ or _)
       case _ => query
     }
   }
