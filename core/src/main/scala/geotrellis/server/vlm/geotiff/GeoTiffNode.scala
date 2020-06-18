@@ -44,10 +44,6 @@ case class GeoTiffNode(
 )
 
 object GeoTiffNode extends RasterSourceUtils {
-
-  def getRasterSource(uri: String): GeoTiffRasterSource =
-    GeoTiffRasterSource(uri)
-
   implicit val cogNodeEncoder: Encoder[GeoTiffNode] = deriveEncoder[GeoTiffNode]
   implicit val cogNodeDecoder: Decoder[GeoTiffNode] = deriveDecoder[GeoTiffNode]
 
@@ -64,8 +60,9 @@ object GeoTiffNode extends RasterSourceUtils {
       }
     }
 
-  implicit def cogNodeTmsReification: TmsReification[GeoTiffNode] =
-    new TmsReification[GeoTiffNode] {
+  implicit def cogNodeTmsReification[F[_]: Sync]
+      : TmsReification[F, GeoTiffNode] =
+    new TmsReification[F, GeoTiffNode] {
       val targetCRS = WebMercator
 
       val tmsLevels: Array[LayoutDefinition] = {
@@ -76,47 +73,50 @@ object GeoTiffNode extends RasterSourceUtils {
       def tmsReification(
           self: GeoTiffNode,
           buffer: Int
-      ): (Int, Int, Int) => IO[ProjectedRaster[MultibandTile]] =
+      ): (Int, Int, Int) => F[ProjectedRaster[MultibandTile]] =
         (z: Int, x: Int, y: Int) =>
-          IO {
-            val raster = RasterSource(self.uri.toString)
-              .reproject(targetCRS)
-              .tileToLayout(
-                tmsLevels(z),
-                identity,
-                self.resampleMethod,
-                self.overviewStrategy
-              )
-              .read(SpatialKey(x, y))
-              .getOrElse(
-                throw new Exception(
-                  s"Unable to retrieve layer $self at XY of ($x, $y)"
+          Sync[F].delay {
+            val layout = tmsLevels(z)
+            val key = SpatialKey(x, y)
+            val raster = Raster(
+              RasterSource(self.uri.toString)
+                .reproject(targetCRS)
+                .tileToLayout(
+                  layout,
+                  identity,
+                  self.resampleMethod,
+                  self.overviewStrategy
                 )
-              )
+                .read(key)
+                .getOrElse(
+                  throw new Exception(
+                    s"Unable to retrieve layer $self at XY of ($x, $y)"
+                  )
+                ),
+              layout.mapTransform(key)
+            )
 
             ProjectedRaster(raster, targetCRS)
           }
     }
 
-  implicit val CogNodeExtentReification: ExtentReification[GeoTiffNode] =
-    new ExtentReification[GeoTiffNode] {
-      def extentReification(self: GeoTiffNode)(
-          implicit contextShift: ContextShift[IO]
-      ): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
-        (extent: Extent, cs: CellSize) => {
-          getRasterSource(self.uri.toString)
-            .resample(
-              TargetRegion(new GridExtent[Long](extent, cs)),
-              self.resampleMethod,
-              self.overviewStrategy
-            )
-            .read(extent, self.band :: Nil)
-            .map { ProjectedRaster(_, WebMercator) }
-            .toIO {
-              new Exception(
-                s"No tile avail for RasterExtent: ${RasterExtent(extent, cs)}"
+  implicit def CogNodeExtentReification[F[_]: Sync]
+      : ExtentReification[F, GeoTiffNode] =
+    new ExtentReification[F, GeoTiffNode] {
+      def extentReification(
+          self: GeoTiffNode
+      ): (Extent, CellSize) => F[ProjectedRaster[MultibandTile]] =
+        (extent: Extent, cs: CellSize) =>
+          Sync[F].delay {
+            RasterSource(self.uri.toString)
+              .resample(
+                TargetRegion(new GridExtent[Long](extent, cs)),
+                self.resampleMethod,
+                self.overviewStrategy
               )
-            }
-        }
+              .read(extent, self.band :: Nil)
+              .map { ProjectedRaster(_, WebMercator) }
+              .getOrElse { throw new Exception(s"no data at $extent") }
+          }
     }
 }

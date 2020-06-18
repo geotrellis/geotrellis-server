@@ -16,8 +16,6 @@
 
 package geotrellis.server
 
-import ExtentReification.ops._
-
 import geotrellis.vector.Extent
 import geotrellis.raster.{io => _, _}
 import com.azavea.maml.util.Vars
@@ -34,7 +32,7 @@ import io.chrisdavenport.log4cats.Logger
 
 object LayerExtent {
   // Provide IOs for both expression and Ts, get back a tile
-  def apply[F[_]: Logger: Parallel: Monad, T: ExtentReification](
+  def apply[F[_]: Logger: Parallel: Monad, T: ExtentReification[F, *]](
       getExpression: F[Expression],
       getParams: F[Map[String, T]],
       interpreter: Interpreter[F]
@@ -54,7 +52,8 @@ object LayerExtent {
         params <- vars.toList.parTraverse {
           case (varName, (_, buffer)) =>
             val thingify =
-              ExtentReification[T].extentReification[F](paramMap(varName))
+              implicitly[ExtentReification[F, T]]
+                .extentReification(paramMap(varName))
             thingify(extent, cs).map(varName -> _)
         } map { _.toMap }
         reified <- Expression.bindParams(expr, params.mapValues(RasterLit(_))) match {
@@ -73,14 +72,17 @@ object LayerExtent {
     }
   }
 
-  def generateExpression[F[_]: Logger: Parallel: Monad, T: ExtentReification](
+  def generateExpression[F[_]: Logger: Parallel: Monad, T: ExtentReification[
+    F,
+    *
+  ]](
       mkExpr: Map[String, T] => Expression,
       getParams: F[Map[String, T]],
       interpreter: Interpreter[F]
   ) = apply[F, T](getParams.map(mkExpr(_)), getParams, interpreter)
 
   /** Provide an expression and expect arguments to fulfill its needs */
-  def curried[F[_]: Logger: Parallel: Monad, T: ExtentReification](
+  def curried[F[_]: Logger: Parallel: Monad, T: ExtentReification[F, *]](
       expr: Expression,
       interpreter: Interpreter[F]
   ): (Map[String, T], Extent, CellSize) => F[Interpreted[MultibandTile]] =
@@ -91,7 +93,10 @@ object LayerExtent {
     }
 
   /** The identity endpoint (for simple display of raster) */
-  def concurrent[F[_]: Logger: Parallel: Monad: Concurrent, T: ExtentReification](
+  def concurrent[F[_]: Logger: Parallel: Monad: Concurrent, T: ExtentReification[
+    F,
+    *
+  ]](
       param: T
   ): (Extent, CellSize) => F[Interpreted[MultibandTile]] =
     (extent: Extent, cellsize: CellSize) => {

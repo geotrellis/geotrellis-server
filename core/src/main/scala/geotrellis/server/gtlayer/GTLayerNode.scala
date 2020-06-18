@@ -97,13 +97,15 @@ object GTLayerNode {
         Applicative[F].pure { self.crs }
     }
 
-  implicit val gtLayerNodeTmsReification: TmsReification[GTLayerNode] =
-    new TmsReification[GTLayerNode] {
-      def tmsReification(self: GTLayerNode, buffer: Int)(
-          implicit contextShift: ContextShift[IO]
-      ): (Int, Int, Int) => IO[ProjectedRaster[MultibandTile]] =
+  implicit def gtLayerNodeTmsReification[F[_]: Sync]
+      : TmsReification[F, GTLayerNode] =
+    new TmsReification[F, GTLayerNode] {
+      def tmsReification(
+          self: GTLayerNode,
+          buffer: Int
+      ): (Int, Int, Int) => F[ProjectedRaster[MultibandTile]] =
         (z: Int, x: Int, y: Int) =>
-          IO {
+          Sync[F].delay {
             val bounds = GridBounds(x - 1, y - 1, x + 1, y + 1)
             val values =
               self.collectionReader
@@ -148,13 +150,14 @@ object GTLayerNode {
           }
     }
 
-  implicit val gtLayerNodeExtentReification: ExtentReification[GTLayerNode] =
-    new ExtentReification[GTLayerNode] {
-      def extentReification(self: GTLayerNode)(
-          implicit contextShift: ContextShift[IO]
-      ): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] = {
+  implicit def gtLayerNodeExtentReification[F[_]: Sync]
+      : ExtentReification[F, GTLayerNode] =
+    new ExtentReification[F, GTLayerNode] {
+      def extentReification(
+          self: GTLayerNode
+      ): (Extent, CellSize) => F[ProjectedRaster[MultibandTile]] = {
         (ex: Extent, cs: CellSize) =>
-          IO {
+          Sync[F].delay {
             def csToDiag(cell: CellSize) =
               math.sqrt(cell.width * cell.width + cell.height * cell.height)
             val reqDiag = csToDiag(cs)

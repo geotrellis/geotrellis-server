@@ -16,8 +16,6 @@
 
 package geotrellis.server
 
-import TmsReification.ops._
-
 import com.azavea.maml.util.Vars
 import com.azavea.maml.error._
 import com.azavea.maml.ast._
@@ -46,7 +44,7 @@ object LayerTms {
     * @param interpreter a MAML-compliant interpreter (with buffering)
     * @return a function from (Int, Int, Int) to a Tile corresponding to the Param provided
     */
-  def apply[F[_]: Logger: Parallel: Monad, T: TmsReification](
+  def apply[F[_]: Logger: Parallel: Monad, T: TmsReification[F, *]](
       getExpression: F[Expression],
       getParams: F[Map[String, T]],
       interpreter: Interpreter[F]
@@ -66,7 +64,8 @@ object LayerTms {
         params <- vars.toList.parTraverse {
           case (varName, (_, buffer)) =>
             val eval =
-              TmsReification[T].tmsReification[F](paramMap(varName), buffer)
+              implicitly[TmsReification[F, T]]
+                .tmsReification(paramMap(varName), buffer)
             eval(z, x, y).map(varName -> _)
         } map { _.toMap }
         reified <- Expression.bindParams(expr, params.mapValues(RasterLit(_))) match {
@@ -80,14 +79,17 @@ object LayerTms {
   /** Provide a function to produce an expression given a set of arguments and an
     *  F for getting arguments; getting back a tile
     */
-  def generateExpression[F[_]: Logger: Parallel: Monad, T: TmsReification](
+  def generateExpression[F[_]: Logger: Parallel: Monad, T: TmsReification[
+    F,
+    *
+  ]](
       mkExpr: Map[String, T] => Expression,
       getParams: F[Map[String, T]],
       interpreter: Interpreter[F]
   ) = apply[F, T](getParams.map(mkExpr(_)), getParams, interpreter)
 
   /** Provide an expression and expect arguments to fulfill its needs */
-  def curried[F[_]: Logger: Parallel: Monad, T: TmsReification](
+  def curried[F[_]: Logger: Parallel: Monad, T: TmsReification[F, *]](
       expr: Expression,
       interpreter: Interpreter[F]
   ): (Map[String, T], Int, Int, Int) => F[Interpreted[MultibandTile]] =
@@ -98,7 +100,10 @@ object LayerTms {
     }
 
   /** The identity endpoint (for simple display of raster) */
-  def concurrent[F[_]: Logger: Parallel: Monad: Concurrent, T: TmsReification](
+  def concurrent[F[_]: Logger: Parallel: Monad: Concurrent, T: TmsReification[
+    F,
+    *
+  ]](
       param: T
   ) = (z: Int, x: Int, y: Int) => {
     val eval =

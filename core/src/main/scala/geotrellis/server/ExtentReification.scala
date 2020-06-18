@@ -22,21 +22,21 @@ import cats.Contravariant
 import cats.effect._
 import simulacrum._
 
-@typeclass trait ExtentReification[A] {
-  @op("extentReification") def extentReification[F[_]](
+trait ExtentReification[F[_], A] {
+  def extentReification(
       self: A
   ): (Extent, CellSize) => F[ProjectedRaster[MultibandTile]]
 }
 
 object ExtentReification {
-  implicit val contravariantExtentReification
-      : Contravariant[ExtentReification] =
-    new Contravariant[ExtentReification] {
+  implicit def contravariantExtentReification[F[_]]
+      : Contravariant[ExtentReification[F, *]] =
+    new Contravariant[ExtentReification[F, *]] {
       def contramap[A, B](
-          fa: ExtentReification[A]
-      )(f: B => A): ExtentReification[B] =
-        new ExtentReification[B] {
-          def extentReification[F[_]](
+          fa: ExtentReification[F, A]
+      )(f: B => A): ExtentReification[F, B] =
+        new ExtentReification[F, B] {
+          def extentReification(
               self: B
           ): (Extent, CellSize) => F[ProjectedRaster[MultibandTile]] =
             fa.extentReification(f(self))

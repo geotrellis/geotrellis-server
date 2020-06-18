@@ -51,7 +51,7 @@ object LayerHistogram {
     }
 
   // Provide IOs for both expression and params, get back a tile
-  def apply[F[_]: Logger: Parallel: Monad, T: ExtentReification: HasRasterExtents[
+  def apply[F[_]: Logger: Parallel: Monad, T: ExtentReification[F, *]: HasRasterExtents[
     F,
     *
   ]](
@@ -104,7 +104,10 @@ object LayerHistogram {
     }
   }
 
-  def generateExpression[F[_]: Logger: Parallel: Monad, T: ExtentReification: HasRasterExtents[
+  def generateExpression[F[_]: Logger: Parallel: Monad, T: ExtentReification[
+    F,
+    *
+  ]: HasRasterExtents[
     F,
     *
   ]](
@@ -116,7 +119,7 @@ object LayerHistogram {
     apply[F, T](getParams.map(mkExpr(_)), getParams, interpreter, maxCells)
 
   /** Provide an expression and expect arguments to fulfill its needs */
-  def curried[F[_]: Logger: Parallel: Monad, T: ExtentReification: HasRasterExtents[
+  def curried[F[_]: Logger: Parallel: Monad, T: ExtentReification[F, *]: HasRasterExtents[
     F,
     *
   ]](
@@ -134,7 +137,10 @@ object LayerHistogram {
     }
 
   /** The identity endpoint (for simple display of raster) */
-  def concurrent[F[_]: Logger: Parallel: Monad: Concurrent, T: ExtentReification: HasRasterExtents[
+  def concurrent[F[_]: Logger: Parallel: Monad: Concurrent, T: ExtentReification[
+    F,
+    *
+  ]: HasRasterExtents[
     F,
     *
   ]](

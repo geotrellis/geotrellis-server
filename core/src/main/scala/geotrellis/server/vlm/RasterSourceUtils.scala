@@ -91,42 +91,4 @@ trait RasterSourceUtils {
     }
   }
 
-  def targetCRS: CRS
-
-  val crs: CRS
-
-  val tmsLevels: Array[LayoutDefinition] = {
-    val scheme = ZoomedLayoutScheme(crs, 256)
-    for (zoom <- 0 to 64) yield scheme.levelForZoom(zoom).layout
-  }.toArray
-
-  def fetchTile[F[_]](
-      rasterSource: RasterSource,
-      zoom: Int,
-      x: Int,
-      y: Int,
-      crs: CRS = WebMercator,
-      method: ResampleMethod = ResampleMethod.DEFAULT,
-      target: ResampleTarget = DefaultTarget,
-      overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
-  ): IO[Raster[MultibandTile]] =
-    IO {
-      val key = SpatialKey(x, y)
-      val ld = tmsLevels(zoom)
-      val rs = getRasterSource(uri)
-        .reproject(crs, target)
-        .tileToLayout(ld, identity, method, overviewStrategy)
-
-      rs.read(key).map(Raster(_, ld.mapTransform(key)))
-    } flatMap {
-      case Some(t) =>
-        IO.pure(t)
-      case _ =>
-        IO.raiseError(
-          new Exception(
-            s"No Tile availble for the following SpatialKey: ${x}, ${y}"
-          )
-        )
-    }
-
 }
