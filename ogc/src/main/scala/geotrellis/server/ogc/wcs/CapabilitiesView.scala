@@ -21,6 +21,8 @@ import geotrellis.server.ogc.URN
 import geotrellis.proj4.LatLng
 import geotrellis.raster.reproject.ReprojectRasterExtent
 
+import cats.Functor
+import cats.syntax.functor._
 import cats.syntax.option._
 import opengis.ows._
 import opengis.wcs._
@@ -30,35 +32,43 @@ import scalaxb._
 import scala.xml.Elem
 import java.net.{URI, URL}
 
-class CapabilitiesView(
-  wcsModel: WcsModel,
-  serviceUrl: URL,
-  extendedParameters: List[DomainType] = Nil
+class CapabilitiesView[F[_]: Functor](
+    wcsModel: WcsModel[F],
+    serviceUrl: URL,
+    extendedParameters: List[DomainType] = Nil
 ) {
-  def toXML: Elem = {
+  def toXML: F[Elem] = {
     val serviceIdentification = ServiceIdentification(
-      Title              = LanguageStringType(wcsModel.serviceMetadata.identification.title) :: Nil,
-      Abstract           = LanguageStringType(wcsModel.serviceMetadata.identification.description) :: Nil,
-      Keywords           = KeywordsType(wcsModel.serviceMetadata.identification.keywords.map(LanguageStringType(_)), None) :: Nil,
-      ServiceType        = CodeType("OGC WCS"),
+      Title = LanguageStringType(wcsModel.serviceMetadata.identification.title) :: Nil,
+      Abstract = LanguageStringType(
+        wcsModel.serviceMetadata.identification.description
+      ) :: Nil,
+      Keywords = KeywordsType(
+        wcsModel.serviceMetadata.identification.keywords
+          .map(LanguageStringType(_)),
+        None
+      ) :: Nil,
+      ServiceType = CodeType("OGC WCS"),
       ServiceTypeVersion = "1.1.1" :: Nil,
-      Profile            = Nil,
-      Fees               = wcsModel.serviceMetadata.identification.fees.getOrElse("NONE").some,
-      AccessConstraints  = "NONE" :: Nil
+      Profile = Nil,
+      Fees = wcsModel.serviceMetadata.identification.fees.getOrElse("NONE").some,
+      AccessConstraints = "NONE" :: Nil
     )
 
-    val contact = wcsModel.serviceMetadata.provider.contact.map { contact =>
-      ResponsiblePartySubsetType(
-        IndividualName = contact.name,
-        PositionName   = contact.position,
-        ContactInfo    = None,
-        Role           = contact.role.map(CodeType(_, Map()))
-      )
-    }.getOrElse(ResponsiblePartySubsetType())
+    val contact = wcsModel.serviceMetadata.provider.contact
+      .map { contact =>
+        ResponsiblePartySubsetType(
+          IndividualName = contact.name,
+          PositionName = contact.position,
+          ContactInfo = None,
+          Role = contact.role.map(CodeType(_, Map()))
+        )
+      }
+      .getOrElse(ResponsiblePartySubsetType())
 
     val serviceProvider =
       ServiceProvider(
-        ProviderName   = wcsModel.serviceMetadata.provider.name,
+        ProviderName = wcsModel.serviceMetadata.provider.name,
         ServiceContact = contact
       )
 
@@ -66,11 +76,18 @@ class CapabilitiesView(
       val getCapabilities = Operation(
         DCP = DCP(
           OwsDataRecord(
-            HTTP(OwsDataRecord(
-              "Get",
-              RequestMethodType(
-                attributes = Map("@{http://www.w3.org/1999/xlink}href" -> DataRecord(serviceUrl.toURI))
-              )) :: Nil)
+            HTTP(
+              OwsDataRecord(
+                "Get",
+                RequestMethodType(
+                  attributes = Map(
+                    "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
+                      serviceUrl.toURI
+                    )
+                  )
+                )
+              ) :: Nil
+            )
           )
         ) :: Nil,
         Parameter = DomainType(
@@ -78,7 +95,8 @@ class CapabilitiesView(
             AllowedValues(
               OwsDataRecord(
                 ValueType("WCS")
-              ) :: Nil)
+              ) :: Nil
+            )
           ),
           attributes = Map("@name" -> DataRecord("service"))
         ) :: DomainType(
@@ -86,7 +104,8 @@ class CapabilitiesView(
             AllowedValues(
               OwsDataRecord(
                 ValueType("1.1.1")
-              ) :: Nil)
+              ) :: Nil
+            )
           ),
           attributes = Map("@name" -> DataRecord("AcceptVersions"))
         ) :: Nil,
@@ -96,11 +115,18 @@ class CapabilitiesView(
       val describeCoverage = Operation(
         DCP = DCP(
           OwsDataRecord(
-            HTTP(OwsDataRecord(
-              "Get",
-              RequestMethodType(
-                attributes = Map("@{http://www.w3.org/1999/xlink}href" -> DataRecord(serviceUrl.toURI))
-              )) :: Nil)
+            HTTP(
+              OwsDataRecord(
+                "Get",
+                RequestMethodType(
+                  attributes = Map(
+                    "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
+                      serviceUrl.toURI
+                    )
+                  )
+                )
+              ) :: Nil
+            )
           )
         ) :: Nil,
         Parameter = DomainType(
@@ -108,7 +134,8 @@ class CapabilitiesView(
             AllowedValues(
               OwsDataRecord(
                 ValueType("WCS")
-              ) :: Nil)
+              ) :: Nil
+            )
           ),
           attributes = Map("@name" -> DataRecord("service"))
         ) :: DomainType(
@@ -116,7 +143,8 @@ class CapabilitiesView(
             AllowedValues(
               OwsDataRecord(
                 ValueType("1.1.1")
-              ) :: Nil)
+              ) :: Nil
+            )
           ),
           attributes = Map("@name" -> DataRecord("AcceptVersions"))
         ) :: Nil,
@@ -126,11 +154,18 @@ class CapabilitiesView(
       val getCoverage = Operation(
         DCP = DCP(
           OwsDataRecord(
-            HTTP(OwsDataRecord(
-              "Get",
-              RequestMethodType(
-                attributes = Map("@{http://www.w3.org/1999/xlink}href" -> DataRecord(serviceUrl.toURI))
-              )) :: Nil)
+            HTTP(
+              OwsDataRecord(
+                "Get",
+                RequestMethodType(
+                  attributes = Map(
+                    "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
+                      serviceUrl.toURI
+                    )
+                  )
+                )
+              ) :: Nil
+            )
           )
         ) :: Nil,
         Parameter = (DomainType(
@@ -138,7 +173,8 @@ class CapabilitiesView(
             AllowedValues(
               OwsDataRecord(
                 ValueType("WCS")
-              ) :: Nil)
+              ) :: Nil
+            )
           ),
           attributes = Map("@name" -> DataRecord("service"))
         ) :: DomainType(
@@ -146,7 +182,8 @@ class CapabilitiesView(
             AllowedValues(
               OwsDataRecord(
                 ValueType("1.1.1")
-              ) :: Nil)
+              ) :: Nil
+            )
           ),
           attributes = Map("@name" -> DataRecord("AcceptVersions"))
         ) :: DomainType(
@@ -158,7 +195,8 @@ class CapabilitiesView(
                 ValueType("bilinear")
               ) :: OwsDataRecord(
                 ValueType("bicubic")
-              ) :: Nil)
+              ) :: Nil
+            )
           ),
           DefaultValue = ValueType("nearest neighbor").some,
           attributes = Map("@name" -> DataRecord("InterpolationType"))
@@ -166,35 +204,43 @@ class CapabilitiesView(
         attributes = Map("@name" -> DataRecord("GetCoverage"))
       )
 
-      OperationsMetadata(Operation = getCapabilities :: describeCoverage :: getCoverage :: Nil)
+      OperationsMetadata(
+        Operation = getCapabilities :: describeCoverage :: getCoverage :: Nil
+      )
     }
 
-    val contents = Contents(CoverageSummary = CapabilitiesView.coverageSummaries(wcsModel))
+    CapabilitiesView.coverageSummaries(wcsModel).map { summaries =>
+      val contents = Contents(CoverageSummary = summaries)
+      scalaxb
+        .toXML[Capabilities](
+          obj = Capabilities(
+            ServiceIdentification = serviceIdentification.some,
+            ServiceProvider = serviceProvider.some,
+            OperationsMetadata = operationsMetadata.some,
+            Contents = contents.some,
+            attributes = Map("@version" -> DataRecord("1.1.1"))
+          ),
+          namespace = None,
+          elementLabel = "Capabilities".some,
+          scope = constrainedWCSScope,
+          typeAttribute = false
+        )
+        .asInstanceOf[Elem]
+    }
 
-    scalaxb.toXML[Capabilities](
-      obj = Capabilities(
-        ServiceIdentification = serviceIdentification.some,
-        ServiceProvider       = serviceProvider.some,
-        OperationsMetadata    = operationsMetadata.some,
-        Contents              = contents.some,
-        attributes            = Map("@version" -> DataRecord("1.1.1"))
-      ),
-      namespace     = None,
-      elementLabel  = "Capabilities".some,
-      scope         = constrainedWCSScope,
-      typeAttribute = false
-    ).asInstanceOf[Elem]
   }
 }
 
 object CapabilitiesView {
-  def coverageSummaries(wcsModel: WcsModel): List[CoverageSummaryType] =
-    wcsModel.sources.store.map { src =>
+  def coverageSummaries[F[_]: Functor](
+      wcsModel: WcsModel[F]
+  ): F[List[CoverageSummaryType]] =
+    wcsModel.sources.store.map(_.map { src =>
       val crs = src.nativeCrs.head
       val wgs84extent = ReprojectRasterExtent(src.nativeRE, crs, LatLng).extent
 
       CoverageSummaryType(
-        Title    = LanguageStringType(src.title) :: Nil,
+        Title = LanguageStringType(src.title) :: Nil,
         Abstract = Nil,
         Keywords = Nil,
         WGS84BoundingBox = WGS84BoundingBoxType(
@@ -203,10 +249,11 @@ object CapabilitiesView {
         ) :: Nil,
         SupportedCRS =
           new URI(URN.unsafeFromCrs(crs)) ::
-          new URI(URN.unsafeFromCrs(LatLng)) ::
-          new URI("urn:ogc:def:crs:OGC::imageCRS") :: Nil,
+            new URI(URN.unsafeFromCrs(LatLng)) ::
+            new URI("urn:ogc:def:crs:OGC::imageCRS") :: Nil,
         SupportedFormat = "image/geotiff" :: "image/jpeg" :: "image/png" :: Nil,
-        coveragesummarytypeoption = DataRecord(None, "Identifier".some, src.name)
+        coveragesummarytypeoption =
+          DataRecord(None, "Identifier".some, src.name)
       )
-    }.toList
+    }.toList)
 }
