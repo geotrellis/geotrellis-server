@@ -22,7 +22,7 @@ import geotrellis.raster.io.geotiff.OverviewStrategy
 import geotrellis.server.extent.SampleUtils
 import geotrellis.server.ogc.style._
 import geotrellis.server.ogc.wms.CapabilitiesView
-import geotrellis.store.{GeoTrellisPath, GeoTrellisRasterSource}
+import geotrellis.store.{AttributeStore, GeoTrellisPath, GeoTrellisRasterSource}
 import geotrellis.vector.{Extent, ProjectedExtent}
 
 import cats.data.{NonEmptyList => NEL}
@@ -56,6 +56,8 @@ trait OgcSource {
   def resampleMethod: ResampleMethod
   def overviewStrategy: OverviewStrategy
   def time: OgcTime
+  def timeMetadataKey: Option[String]
+  def isTemporal: Boolean = timeMetadataKey.nonEmpty && time.nonEmpty
 
   def nativeProjectedExtent: ProjectedExtent = ProjectedExtent(nativeExtent, nativeCrs.head)
 }
@@ -112,8 +114,6 @@ case class SimpleSource(
             .map(OgcTimePositions(_))
       }
     }.getOrElse(OgcTimeEmpty)
-
-  def isTemporal: Boolean = timeMetadataKey.nonEmpty && time.nonEmpty
 }
 
 case class GeoTrellisOgcSource(
@@ -124,12 +124,24 @@ case class GeoTrellisOgcSource(
   styles: List[OgcStyle],
   resampleMethod: ResampleMethod,
   overviewStrategy: OverviewStrategy,
-  timeMetadataKey: String = "times"
+  timeMetadataKey: Option[String] = "times".some
 ) extends RasterOgcSource {
 
   private val dataPath = GeoTrellisPath.parse(sourceUri)
 
-  lazy val source = GeoTrellisRasterSource(dataPath)
+  lazy val source = {
+    val attributeStore = AttributeStore(dataPath.value)
+    new GeoTrellisRasterSource(
+      attributeStore,
+      dataPath,
+      GeoTrellisRasterSource.getSourceLayersByName(
+        attributeStore, dataPath.layerName, dataPath.bandCount.getOrElse(1)
+      ),
+      None,
+      None,
+      timeMetadataKey.getOrElse("times")
+    )
+  }
 
   lazy val time: OgcTime =
     if (!source.isTemporal) OgcTimeEmpty
@@ -207,7 +219,8 @@ case class MapAlgebraSource(
   defaultStyle: Option[String],
   styles: List[OgcStyle],
   resampleMethod: ResampleMethod,
-  overviewStrategy: OverviewStrategy
+  overviewStrategy: OverviewStrategy,
+  timeMetadataKey: Option[String]
 ) extends OgcSource {
   def extentIn(crs: CRS): Extent = {
     val reprojectedSources: NEL[RasterSource] =
@@ -274,7 +287,29 @@ case class MapAlgebraSource(
     new GridExtent[Long](nativeExtent, cellSize)
   }
 
-  val time: OgcTime                         = OgcTimeEmpty
+  // TODO: remove once Scala 2.11 is dropped
+  // workaround a Scala 2.11 bug
+  // should be _ |+| _
+  val time: OgcTime =
+    timeMetadataKey.toList.flatMap { key =>
+      sources.values.toList.flatMap {
+        case mrs: MosaicRasterSource =>
+          val times = mrs.metadata.list.toList.flatMap(_.attributes.get(key)).map(ZonedDateTime.parse)
+          times match {
+            case head :: tail => OgcTimePositions(NEL(head, tail)).some
+            case _ => None
+          }
+
+        case source =>
+          source
+            .metadata
+            .attributes
+            .get(key)
+            .map(ZonedDateTime.parse)
+            .map(OgcTimePositions(_))
+      }
+    }.foldLeft[OgcTime](OgcTimeEmpty)(OgcTime.ogcTimeSemigroup.combine)
+
   val attributes: Map[String, String]       = Map.empty
   lazy val nativeCrs: Set[CRS]              = sources.values.map(_.crs).toSet
   lazy val minBandCount: Int                = sources.values.map(_.bandCount).min

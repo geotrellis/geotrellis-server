@@ -60,7 +60,7 @@ object CoverageView {
     val nativeCrs = source.nativeCrs.head
     val re = source.nativeRE
     val llre = source match {
-      case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod, _) =>
+      case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod, _, _) =>
         rss.values.map { rs =>
           ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(resampleMethod))
         }.reduce({ (re1, re2) =>
@@ -93,26 +93,19 @@ object CoverageView {
      * This was excerpted from "WCS Implementation Standard 1.1" available at:
      * https://portal.ogc.org/files/07-067r5
      */
-    val temporalDomain: Option[TimeSequenceType] = source match {
-      case gtl @ GeoTrellisOgcSource(_, _, _, _, _, _, _, _) =>
-        if (gtl.source.isTemporal) {
-          val records = gtl.source.times.map { t => GmlDataRecord(TimePositionType(t.toInstant.toString)) }
-          TimeSequenceType(records).some
-        } else None
-      case ss @ SimpleSource(_, _, _, _, _, _, _, _) if ss.isTemporal =>
-        val records = ss.time match {
-          case OgcTimePositions(nel) =>
-            nel.toList.map { t => GmlDataRecord(TimePositionType(t.toInstant.toString)) }
-          case OgcTimeInterval(start, end, _) if start == end =>
-            GmlDataRecord(TimePositionType(start.toInstant.toString)) :: Nil
-          case OgcTimeInterval(start, end, _) =>
-            GmlDataRecord(TimePositionType(start.toInstant.toString)) ::
+    val temporalDomain: Option[TimeSequenceType] = {
+      val records = source.time match {
+        case OgcTimePositions(nel) =>
+          nel.toList.map { t => GmlDataRecord(TimePositionType(t.toInstant.toString)) }
+        case OgcTimeInterval(start, end, _) if start == end =>
+          GmlDataRecord(TimePositionType(start.toInstant.toString)) :: Nil
+        case OgcTimeInterval(start, end, _) =>
+          GmlDataRecord(TimePositionType(start.toInstant.toString)) ::
             GmlDataRecord(TimePositionType(end.toInstant.toString)) :: Nil
-          case OgcTimeEmpty => Nil
-        }
-        if(records.nonEmpty) TimeSequenceType(records).some
-        else None
-      case _ => None
+        case OgcTimeEmpty => Nil
+      }
+      if(records.nonEmpty) TimeSequenceType(records).some
+      else None
     }
 
     CoverageDescriptionType(

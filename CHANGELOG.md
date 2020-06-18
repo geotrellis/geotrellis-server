@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Expose STAC temporal metadata [#279](https://github.com/geotrellis/geotrellis-server/pull/279)
 - Support for Time lists in WMS GetCapabilities [#259](https://github.com/geotrellis/geotrellis-server/issues/259)
 - Default attribute should not be used to serve response inside Time extent [#260](https://github.com/geotrellis/geotrellis-server/issues/260)
+- Enabling Time Dimension for mapalgebrasourceconf on Temporal Layers [#262](https://github.com/geotrellis/geotrellis-server/issues/262)
 
 ### Changed
  

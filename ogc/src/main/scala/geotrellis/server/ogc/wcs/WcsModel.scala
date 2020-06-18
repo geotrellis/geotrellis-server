@@ -42,7 +42,7 @@ case class WcsModel(
               case _ => gts.source
             }
           SimpleOgcLayer(name, title, p.crs, source, None, resampleMethod, overviewStrategy)
-        case MapAlgebraSource(name, title, sources, algebra, _, _, resampleMethod, overviewStrategy) =>
+        case MapAlgebraSource(name, title, sources, algebra, _, _, resampleMethod, overviewStrategy, _) =>
           val simpleLayers = sources.mapValues { rs =>
             SimpleOgcLayer(name, title, p.crs, rs, None, resampleMethod, overviewStrategy)
           }

@@ -130,7 +130,7 @@ object CapabilitiesView {
         },
         EX_GeographicBoundingBox = {
           val llre = source match {
-            case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod, _) =>
+            case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod, _, _) =>
               rss.values.map { rs =>
                 ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(resampleMethod))
               }.reduce({ (re1, re2) =>
@@ -205,7 +205,7 @@ object CapabilitiesView {
       EX_GeographicBoundingBox = {
         val llExtents = model.sources.store.map { source =>
           val llre = source match {
-            case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod, _) =>
+            case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod, _, _) =>
               rss.values.map { rs =>
                 ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(resampleMethod))
               }.reduce({ (re1, re2) =>
