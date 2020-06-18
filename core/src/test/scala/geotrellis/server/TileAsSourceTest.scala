@@ -41,24 +41,38 @@ trait TileAsSourceImplicits {
     for (zoom <- 0 to 64) yield scheme.levelForZoom(zoom).layout
   }.toArray
 
-  implicit val extentReification: ExtentReification[Tile] = new ExtentReification[Tile] {
-    def extentReification(self: Tile)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
-      (extent: Extent, cs: CellSize) =>
-        IO.pure(ProjectedRaster(MultibandTile(self), extent, WebMercator))
-  }
+  implicit val extentReification: ExtentReification[IO, Tile] =
+    new ExtentReification[IO, Tile] {
+      def extentReification(
+          self: Tile
+      ): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
+        (extent: Extent, cs: CellSize) =>
+          IO.pure(ProjectedRaster(MultibandTile(self), extent, WebMercator))
+    }
 
-  implicit val nodeRasterExtents: HasRasterExtents[Tile] = new HasRasterExtents[Tile] {
-    def rasterExtents(self: Tile)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] =
-      IO.pure(NEL.of(RasterExtent(Extent(0, 0, 100, 100), 1.0, 1.0, self.cols, self.rows)))
+  implicit val nodeRasterExtents: HasRasterExtents[IO, Tile] =
+    new HasRasterExtents[IO, Tile] {
+      def rasterExtents(
+          self: Tile
+      ): IO[NEL[RasterExtent]] =
+        IO.pure(
+          NEL.of(
+            RasterExtent(Extent(0, 0, 100, 100), 1.0, 1.0, self.cols, self.rows)
+          )
+        )
 
-  }
+    }
 
-  implicit val tmsReification: TmsReification[Tile] = new TmsReification[Tile] {
-    def tmsReification(self: Tile, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[ProjectedRaster[MultibandTile]] =
-      (z: Int, x: Int, y: Int) => {
-        val extent = tmsLevels(z).mapTransform.keyToExtent(x, y)
-        IO.pure(ProjectedRaster(MultibandTile(self), extent, WebMercator))
-      }
+  implicit val tmsReification: TmsReification[IO, Tile] =
+    new TmsReification[IO, Tile] {
+      def tmsReification(
+          self: Tile,
+          buffer: Int
+      ): (Int, Int, Int) => IO[ProjectedRaster[MultibandTile]] =
+        (z: Int, x: Int, y: Int) => {
+          val extent = tmsLevels(z).mapTransform.keyToExtent(x, y)
+          IO.pure(ProjectedRaster(MultibandTile(self), extent, WebMercator))
+        }
     }
 
 }

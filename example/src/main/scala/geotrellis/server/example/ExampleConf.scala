@@ -16,10 +16,26 @@
 
 package geotrellis.server.example
 
+import cats.effect.{Resource, Sync}
+import com.typesafe.config.ConfigFactory
+import pureconfig._
+import pureconfig.generic.auto._
+import pureconfig.module.catseffect.syntax._
+
 case class ExampleConf(http: ExampleConf.Http, auth: ExampleConf.Auth)
 
 object ExampleConf {
   case class Http(interface: String, port: Int)
   case class Auth(signingKey: String)
-}
 
+  lazy val load: ExampleConf = ConfigSource.default.loadOrThrow[ExampleConf]
+  def loadF[F[_]: Sync](configPath: Option[String]): F[ExampleConf] =
+    ConfigSource
+      .fromConfig(ConfigFactory.load(configPath.getOrElse("application.conf")))
+      .loadF[F, ExampleConf]
+
+  def loadResourceF[F[_]: Sync](
+      configPath: Option[String]
+  ): Resource[F, ExampleConf] =
+    Resource.liftF(loadF[F](configPath))
+}

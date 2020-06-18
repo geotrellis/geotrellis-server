@@ -228,11 +228,13 @@ lazy val example = project
       commonsIO,
       concHashMap,
       pureConfig,
+      pureConfigCatsEffect,
       sttp,
       sttpCats,
       sttpCirce,
       scalatest,
-      jaxbApi
+      jaxbApi,
+      log4cats
     )
   )
   .settings(
