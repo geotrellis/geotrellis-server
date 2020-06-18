@@ -106,5 +106,5 @@ case class ParamMap(params: Map[String, Seq[String]]) {
     }
 
   def validatedOgcTime(field: String): ValidatedNel[ParamError, OgcTime] =
-    validatedOgcTimeSequence(field).map(_.head)
+    validatedOgcTimeSequence(field).map(_.headOption.getOrElse(OgcTimeEmpty))
 }
