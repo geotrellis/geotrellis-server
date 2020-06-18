@@ -110,18 +110,19 @@ case class MapAlgebraSourceConf(
         throw new Exception(
           s"MAML Layer expected but was unable to find the simple layer '$name', make sure all required layers are in the server configuration and are correctly spelled there and in all provided MAML")
       }
-      name -> layerSrc.source
+      (layerSrc.timeMetadataKey, name -> layerSrc.source)
     }
-    MapAlgebraSource(name, title, sourceList.toMap, algebra, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy)
+    val timeMetadataKey = sourceList.flatMap(_._1).headOption
+    MapAlgebraSource(name, title, sourceList.map(_._2).toMap, algebra, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, timeMetadataKey)
   }
 
   def modelOpt(possibleSources: List[RasterOgcSource]): Option[MapAlgebraSource] = {
     val layerNames = listParams(algebra)
     val sourceList = layerNames.flatMap { name =>
-      possibleSources.find(_.name == name).map { layerSrc => name -> layerSrc.source }
+      possibleSources.find(_.name == name).map { layerSrc => (layerSrc.timeMetadataKey, name -> layerSrc.source) }
     }
-
-    if(sourceList.nonEmpty) Some(MapAlgebraSource(name, title, sourceList.toMap, algebra, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy))
+    val timeMetadataKey = sourceList.flatMap(_._1).headOption
+    if(sourceList.nonEmpty) MapAlgebraSource(name, title, sourceList.map(_._2).toMap, algebra, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, timeMetadataKey).some
     else None
   }
 }

@@ -51,7 +51,7 @@ case class WmsModel(
             source.styles.find(_.name == name)
           }
           source match {
-            case MapAlgebraSource(name, title, rasterSources, algebra, _, _, resampleMethod, overviewStrategy) =>
+            case MapAlgebraSource(name, title, rasterSources, algebra, _, _, resampleMethod, overviewStrategy, _) =>
               val simpleLayers = rasterSources.mapValues { rs =>
                 SimpleOgcLayer(name, title, supportedCrs, rs, style, resampleMethod, overviewStrategy)
               }
