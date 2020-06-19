@@ -23,6 +23,8 @@ import cats.effect.{Resource, Sync}
 import com.typesafe.config.ConfigFactory
 import scalaxb.DataRecord
 
+import java.io.File
+
 /**
  * The top level configuration object for all layers and styles.
  * This object should be supplied by the various sections in the provided configuration. If
@@ -44,7 +46,10 @@ case class Conf(
 object Conf {
   lazy val load: Conf = ConfigSource.default.loadOrThrow[Conf]
   def loadF[F[_]: Sync](configPath: Option[String]): F[Conf] =
-    ConfigSource.fromConfig(ConfigFactory.load(configPath.getOrElse("application.conf"))).loadF[F, Conf]
+    configPath match {
+      case Some(path) => ConfigSource.fromConfig(ConfigFactory.parseFile(new File(path))).loadF[F, Conf]
+      case _ => ConfigSource.default.loadF[F, Conf]
+    }
 
   def loadResourceF[F[_]: Sync](configPath: Option[String]): Resource[F, Conf] =
     Resource.liftF(loadF[F](configPath))
