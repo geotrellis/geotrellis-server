@@ -34,13 +34,14 @@ import cats.syntax.functor._
 
 import java.net.URL
 import scala.xml.Elem
+import cats.Monad
 
 /**
   *
   * @param model Model of layers we can report
   * @param serviceUrl URL where this service can be reached with addition of `?request=` query parameter
   */
-class CapabilitiesView[F[_]: Functor: Apply](
+class CapabilitiesView[F[_]: Functor: Apply: Monad](
     model: WmsModel[F],
     serviceUrl: URL,
     extendedCapabilities: List[DataRecord[Elem]] = Nil
@@ -249,114 +250,117 @@ object CapabilitiesView {
     }
   }
 
-  def modelAsLayer(
+  def modelAsLayer[F[_]: Monad](
       parentLayerMeta: WmsParentLayerMeta,
-      model: WmsModel
-  ): Layer = {
-    Layer(
-      Name = parentLayerMeta.name,
-      Title = parentLayerMeta.title,
-      Abstract = parentLayerMeta.description,
-      KeywordList = None,
-      // All layers are avail at least at this CRS
-      // All sublayers would have metadata in this CRS + its own
-      CRS = parentLayerMeta.supportedProjections.distinct.map { crs =>
-        crs.epsgCode
-          .map { code =>
-            s"EPSG:$code"
-          }
-          .getOrElse(
-            throw new java.lang.Exception(
-              s"Unable to construct EPSG code from $crs"
-            )
-          )
-      },
-      // Extent of all layers in default CRS
-      // Should it be world extent? To simplify tests and QGIS work it's all RasterSources extent
-      EX_GeographicBoundingBox = {
-        val llExtents = model.sources.store.map {
-          source =>
-            val llre = source match {
-              case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod, _, _) =>
-                rss.values
-                  .map { rs =>
-                    ReprojectRasterExtent(
-                      rs.gridExtent,
-                      rs.crs,
-                      LatLng,
-                      Options.DEFAULT.copy(resampleMethod)
-                    )
-                  }
-                  .reduce({ (re1, re2) =>
-                    val e = re1.extent combine re2.extent
-                    val cs =
-                      if (re1.cellSize.resolution < re2.cellSize.resolution)
-                        re1.cellSize
-                      else re2.cellSize
-                    new GridExtent[Long](e, cs)
-                  })
-              case rasterOgcLayer: RasterOgcSource =>
-                val rs = rasterOgcLayer.source
+      model: WmsModel[F]
+  ): F[Layer] = {
+    val bboxAndLayers = model.sources.store map { sources =>
+      val bboxes = sources map { source =>
+        val llre = source match {
+          case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod, _, _) =>
+            rss.values
+              .map { rs =>
                 ReprojectRasterExtent(
                   rs.gridExtent,
                   rs.crs,
                   LatLng,
-                  Options.DEFAULT.copy(rasterOgcLayer.resampleMethod)
+                  Options.DEFAULT.copy(resampleMethod)
                 )
-            }
-
-            /**
-              * TODO: replace with
-              * val llExtents = model.sources.store.map(_.extentIn(LatLng))
-              * val llExtent = llExtents.tail.fold(llExtents.head)(_ combine _)
-              * see: https://github.com/locationtech/geotrellis/issues/3258
-              */
-            llre.extent
+              }
+              .reduce({ (re1, re2) =>
+                val e = re1.extent combine re2.extent
+                val cs =
+                  if (re1.cellSize.resolution < re2.cellSize.resolution)
+                    re1.cellSize
+                  else re2.cellSize
+                new GridExtent[Long](e, cs)
+              })
+          case rasterOgcLayer: RasterOgcSource =>
+            val rs = rasterOgcLayer.source
+            ReprojectRasterExtent(
+              rs.gridExtent,
+              rs.crs,
+              LatLng,
+              Options.DEFAULT.copy(rasterOgcLayer.resampleMethod)
+            )
         }
 
-        val llExtent = llExtents.tail.fold(llExtents.head)(_ combine _)
-        EX_GeographicBoundingBox(
-          llExtent.xmin,
-          llExtent.xmax,
-          llExtent.ymin,
-          llExtent.ymax
-        ).some
-      },
-      // TODO: bounding box for global layer
-      BoundingBox = Nil,
-      Dimension = model.time match {
-        case tp @ OgcTimePositions(nel) =>
-          Dimension(
-            tp.toString,
-            Map(
-              "@name" -> DataRecord("time"),
-              "@units" -> DataRecord("ISO8601"),
-              "@default" -> DataRecord(nel.head.toInstant.toString)
-            )
-          ) :: Nil
-        case ti @ OgcTimeInterval(start, _, _) =>
-          Dimension(
-            ti.toString,
-            Map(
-              "@name" -> DataRecord("time"),
-              "@units" -> DataRecord("ISO8601"),
-              "@default" -> DataRecord(start.toString)
-            )
-          ) :: Nil
-        case OgcTimeEmpty => Nil
-      },
-      Attribution = None,
-      AuthorityURL = Nil,
-      Identifier = Nil,
-      MetadataURL = Nil,
-      DataURL = Nil,
-      FeatureListURL = Nil,
-      Style = Nil,
-      MinScaleDenominator = None,
-      MaxScaleDenominator = None,
-      Layer = model.sources.store
-        .map(_.toLayer(parentLayerMeta.supportedProjections)),
-      attributes = Map("@queryable" -> DataRecord(false))
-    )
+        /**
+          * TODO: replace with
+          * val llExtents = model.sources.store.map(_.extentIn(LatLng))
+          * val llExtent = llExtents.tail.fold(llExtents.head)(_ combine _)
+          * see: https://github.com/locationtech/geotrellis/issues/3258
+          */
+        llre.extent
+
+      }
+      val bbox = bboxes.tail.fold(bboxes.head)(_ combine _)
+      val ogcBbox = EX_GeographicBoundingBox(
+        bbox.xmin,
+        bbox.xmax,
+        bbox.ymin,
+        bbox.ymax
+      ).some
+      (ogcBbox, sources.map(_.toLayer(parentLayerMeta.supportedProjections)))
+    }
+    (bboxAndLayers, model.time).mapN {
+      case ((bbox, layers), time) =>
+        Layer(
+          Name = parentLayerMeta.name,
+          Title = parentLayerMeta.title,
+          Abstract = parentLayerMeta.description,
+          KeywordList = None,
+          // All layers are avail at least at this CRS
+          // All sublayers would have metadata in this CRS + its own
+          CRS = parentLayerMeta.supportedProjections.distinct.map { crs =>
+            crs.epsgCode
+              .map { code =>
+                s"EPSG:$code"
+              }
+              .getOrElse(
+                throw new java.lang.Exception(
+                  s"Unable to construct EPSG code from $crs"
+                )
+              )
+          },
+          // Extent of all layers in default CRS
+          // Should it be world extent? To simplify tests and QGIS work it's all RasterSources extent
+          EX_GeographicBoundingBox = bbox,
+          // TODO: bounding box for global layer
+          BoundingBox = Nil,
+          Dimension = time match {
+            case tp @ OgcTimePositions(nel) =>
+              Dimension(
+                tp.toString,
+                Map(
+                  "@name" -> DataRecord("time"),
+                  "@units" -> DataRecord("ISO8601"),
+                  "@default" -> DataRecord(nel.head.toInstant.toString)
+                )
+              ) :: Nil
+            case ti @ OgcTimeInterval(start, _, _) =>
+              Dimension(
+                ti.toString,
+                Map(
+                  "@name" -> DataRecord("time"),
+                  "@units" -> DataRecord("ISO8601"),
+                  "@default" -> DataRecord(start.toString)
+                )
+              ) :: Nil
+            case OgcTimeEmpty => Nil
+          },
+          Attribution = None,
+          AuthorityURL = Nil,
+          Identifier = Nil,
+          MetadataURL = Nil,
+          DataURL = Nil,
+          FeatureListURL = Nil,
+          Style = Nil,
+          MinScaleDenominator = None,
+          MaxScaleDenominator = None,
+          Layer = layers,
+          attributes = Map("@queryable" -> DataRecord(false))
+        )
+    }
   }
 }

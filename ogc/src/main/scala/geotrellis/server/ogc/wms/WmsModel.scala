@@ -41,8 +41,10 @@ case class WmsModel[F[_]: Monad](
   // TODO: remove once Scala 2.11 is dropped
   // workaround a Scala 2.11 bug
   // should be _ |+| _
-  def time: OgcTime =
-    sources.store.map(_.time).reduce(OgcTime.ogcTimeSemigroup.combine)
+  def time: F[OgcTime] =
+    sources.store
+      .map(_.map(_.time))
+      .map(_.reduce(_ |+| _))
 
   /** Take a specific request for a map and combine it with the relevant [[OgcSource]]
     *  to produce an [[OgcLayer]]
@@ -50,94 +52,97 @@ case class WmsModel[F[_]: Monad](
   def getLayer(p: GetMap): F[List[OgcLayer]] = {
     parentLayerMeta.supportedProjections
       .find(_ == p.crs)
-      .fold[List[OgcLayer]](List()) { supportedCrs =>
-        sources.find(p.toQuery).map { source =>
-          val styleName: Option[String] = p.styles.headOption
-            .filterNot(_.isEmpty)
-            .orElse(source.defaultStyle)
-          val style: Option[OgcStyle] = styleName.flatMap { name =>
-            source.styles.find(_.name == name)
-          }
-          source match {
-            case MapAlgebraSource(
-                name,
-                title,
-                rasterSources,
-                algebra,
-                _,
-                _,
-                resampleMethod,
-                overviewStrategy,
-                _
-                ) =>
-              val simpleLayers = rasterSources.mapValues { rs =>
-                SimpleOgcLayer(
+      .fold[F[List[OgcLayer]]](Monad[F].pure(List())) { supportedCrs =>
+        sources.find(p.toQuery).map { sources =>
+          sources map { source =>
+            val styleName: Option[String] = p.styles.headOption
+              .filterNot(_.isEmpty)
+              .orElse(source.defaultStyle)
+            val style: Option[OgcStyle] = styleName.flatMap { name =>
+              source.styles.find(_.name == name)
+            }
+            source match {
+              case MapAlgebraSource(
                   name,
                   title,
-                  supportedCrs,
-                  rs,
-                  style,
-                  resampleMethod,
-                  overviewStrategy
-                )
-              }
-              val extendedParameters =
-                extendedParametersBinding.flatMap(_.apply(p.params))
-              MapAlgebraOgcLayer(
-                name,
-                title,
-                supportedCrs,
-                simpleLayers,
-                algebra.bindExtendedParameters(extendedParameters),
-                style,
-                resampleMethod,
-                overviewStrategy
-              )
-            case SimpleSource(
-                name,
-                title,
-                rasterSource,
-                _,
-                _,
-                resampleMethod,
-                overviewStrategy,
-                _
-                ) =>
-              SimpleOgcLayer(
-                name,
-                title,
-                supportedCrs,
-                rasterSource,
-                style,
-                resampleMethod,
-                overviewStrategy
-              )
-            case gts @ GeoTrellisOgcSource(
-                  name,
-                  title,
-                  _,
+                  rasterSources,
+                  algebra,
                   _,
                   _,
                   resampleMethod,
                   overviewStrategy,
                   _
-                ) =>
-              val source = p.time match {
-                case t if t.nonEmpty => gts.sourceForTime(t)
-                case _ if gts.source.isTemporal =>
-                  gts.sourceForTime(gts.source.times.head)
-                case _ => gts.source
-              }
-              SimpleOgcLayer(
-                name,
-                title,
-                supportedCrs,
-                source,
-                style,
-                resampleMethod,
-                overviewStrategy
-              )
+                  ) =>
+                val simpleLayers = rasterSources.mapValues { rs =>
+                  SimpleOgcLayer(
+                    name,
+                    title,
+                    supportedCrs,
+                    rs,
+                    style,
+                    resampleMethod,
+                    overviewStrategy
+                  )
+                }
+                val extendedParameters =
+                  extendedParametersBinding.flatMap(_.apply(p.params))
+                MapAlgebraOgcLayer(
+                  name,
+                  title,
+                  supportedCrs,
+                  simpleLayers,
+                  algebra.bindExtendedParameters(extendedParameters),
+                  style,
+                  resampleMethod,
+                  overviewStrategy
+                )
+              case SimpleSource(
+                  name,
+                  title,
+                  rasterSource,
+                  _,
+                  _,
+                  resampleMethod,
+                  overviewStrategy,
+                  _
+                  ) =>
+                SimpleOgcLayer(
+                  name,
+                  title,
+                  supportedCrs,
+                  rasterSource,
+                  style,
+                  resampleMethod,
+                  overviewStrategy
+                )
+              case gts @ GeoTrellisOgcSource(
+                    name,
+                    title,
+                    _,
+                    _,
+                    _,
+                    resampleMethod,
+                    overviewStrategy,
+                    _
+                  ) =>
+                val source = p.time match {
+                  case t if t.nonEmpty => gts.sourceForTime(t)
+                  case _ if gts.source.isTemporal =>
+                    gts.sourceForTime(gts.source.times.head)
+                  case _ => gts.source
+                }
+                SimpleOgcLayer(
+                  name,
+                  title,
+                  supportedCrs,
+                  source,
+                  style,
+                  resampleMethod,
+                  overviewStrategy
+                )
+            }
           }
+
         }
       }
   }

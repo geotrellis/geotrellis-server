@@ -63,7 +63,9 @@ object RangeReaderUtils {
         S3RangeReader(s3Uri.getBucket, s3Uri.getKey, s3Client)
 
       case scheme =>
-        throw new java.lang.IllegalArgumentException(s"Unrecognized scheme found for range reader: $scheme")
+        throw new java.lang.IllegalArgumentException(
+          s"Unrecognized scheme found for range reader: $scheme"
+        )
     }
   }
 }
