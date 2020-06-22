@@ -32,10 +32,9 @@ import java.net.URL
 class OgcService[F[_]: Sync: Parallel: Concurrent: Logger](
     wmsModel: Option[WmsModel[F]],
     wcsModel: Option[WcsModel[F]],
-    wmtsModel: Option[WmtsModel],
+    wmtsModel: Option[WmtsModel[F]],
     serviceUrl: URL
-)(implicit contextShift: ContextShift[F])
-    extends Http4sDsl[F] {
+) extends Http4sDsl[F] {
   val logger = getLogger
 
   val wcsView = wcsModel.map(new WcsView(_, serviceUrl))

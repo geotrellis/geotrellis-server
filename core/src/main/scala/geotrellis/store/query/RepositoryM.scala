@@ -16,21 +16,40 @@
 
 package geotrellis.store.query
 
+import cats.{~>, Applicative, Id}
+import cats.arrow.FunctionK
 import cats.syntax.apply._
 import cats.syntax.semigroupk._
 import cats.{FlatMap, Semigroup, SemigroupK}
 
-trait RepositoryM[M[_], G[_], T] {
+trait RepositoryM[M[_], G[_], T] { self =>
   def store: M[G[T]]
   def find(query: Query): M[G[T]]
+
+  def mapK[F[_]](f: M ~> F): RepositoryM[F, G, T] = new RepositoryM[F, G, T] {
+    def store: F[G[T]] = f(self.store)
+    def find(query: Query): F[G[T]] = f(self.find(query))
+  }
 }
 
 object RepositoryM {
-  implicit def semigroupRepositoryM[M[_]: FlatMap, G[_]: SemigroupK, T]: Semigroup[RepositoryM[M, G, T]] =
+  implicit def semigroupRepositoryM[M[_]: FlatMap, G[_]: SemigroupK, T]
+      : Semigroup[RepositoryM[M, G, T]] =
     Semigroup.instance { (l, r) =>
       new RepositoryM[M, G, T] {
         def store: M[G[T]] = l.store.map2(r.store)(_ <+> _)
-        def find(query: Query): M[G[T]] = l.find(query).map2(r.find(query))(_ <+> _)
+        def find(query: Query): M[G[T]] =
+          l.find(query).map2(r.find(query))(_ <+> _)
+      }
+    }
+
+  // TODO: fix kind projector: // repository.mapK(λ[Id ~> M](Applicative[M].pure))
+  implicit def idToApplicativeF[M[_]: Applicative, G[_], T](
+      repository: Repository[G, T]
+  ): RepositoryM[M, G, T] =
+    repository.mapK {
+      new FunctionK[Id, M] {
+        def apply[A](id: Id[A]): M[A] = Applicative[M].pure(id)
       }
     }
 }
