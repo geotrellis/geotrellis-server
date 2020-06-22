@@ -56,10 +56,12 @@ object LayerHistogram {
     val logger = Logger[F]
     for {
       params          <- getParams
-      rasterExtents   <- NEL.fromListUnsafe(params.values.toList)
+      rasterExtents   <- NEL
+                           .fromListUnsafe(params.values.toList)
                            .traverse(HasRasterExtents[F, T].rasterExtents(_))
                            .map(_.flatten)
-      extents         <- NEL.fromListUnsafe(params.values.toList)
+      extents         <- NEL
+                           .fromListUnsafe(params.values.toList)
                            .traverse(
                              HasRasterExtents[F, T]
                                .rasterExtents(_)

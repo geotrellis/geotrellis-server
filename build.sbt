@@ -198,7 +198,7 @@ lazy val core = project
 lazy val example = project
   .settings(commonSettings)
   .settings(noPublishSettings)
-  .dependsOn(core, stac)
+  .dependsOn(core)
   .settings(
     moduleName := "geotrellis-server-example",
     assembly / assemblyJarName := "geotrellis-server-example.jar",

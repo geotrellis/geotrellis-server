@@ -95,7 +95,7 @@ object QueryF {
 
   val coalgebraJson: Coalgebra[QueryF, Json] = Coalgebra(_.foldWith(unfolder))
 
-  /** Coalgebras that replace certain nodes  */
+  /** Coalgebras that replace certain nodes */
   def coalgebraWithName(name: String): Coalgebra[QueryF, Query] =
     Coalgebra {
       case WithName(_)  => WithName(name)

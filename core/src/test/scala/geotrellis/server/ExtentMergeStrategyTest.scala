@@ -26,11 +26,10 @@ import org.scalatest._
   * There are various possible relationships between extents of raster, we need to have union and
   *  intersection strategies which handle each of them appropriately
   *
- * case 1: all extents share some intersection extent
+  * case 1: all extents share some intersection extent
   * case 2: some intersections exist among the extents but no single shared extent
   * case 3: no intersection among the extents
-  *
- */
+  */
 class ExtentMergeStrategyTest extends FunSuite with Matchers {
 
   test("total overlap - intersection") {

@@ -47,11 +47,10 @@ object ResourceTile extends RasterSourceUtils {
         (extent: Extent, cs: CellSize) => {
           val rs = getRasterSource(self.uri.toString)
           rs.resample(
-              TargetRegion(new GridExtent[Long](extent, cs)),
-              self.resampleMethod,
-              self.overviewStrategy
-            )
-            .read(extent)
+            TargetRegion(new GridExtent[Long](extent, cs)),
+            self.resampleMethod,
+            self.overviewStrategy
+          ).read(extent)
             .map { raster =>
               ProjectedRaster(raster, rs.crs)
             }

@@ -76,7 +76,7 @@ package object conf {
     *  As a result, some special configuration handling is required here to allow unquoted
     *  strings specifically when we know we're trying to decode a ColorMap.
     *
-   * @note It is currently difficult to handle double-keyed maps. A workaround
+    * @note It is currently difficult to handle double-keyed maps. A workaround
     * has been provided, but it only works with doubles that explicitly decimal
     * pad to tenths (0.0 is OK, 0 is to be avoided)
     */

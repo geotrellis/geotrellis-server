@@ -32,7 +32,7 @@ import java.io.File
   * descend through properties verifying that the configuration file provides sufficient
   * information.
   *
- * Complex types can be read with the help of [[ConfigReader]] instances. See package.scala
+  * Complex types can be read with the help of [[ConfigReader]] instances. See package.scala
   *  and https://pureconfig.github.io/docs/supporting-new-types.html for more examples and
   *  explanation of ConfigReader instances.
   */

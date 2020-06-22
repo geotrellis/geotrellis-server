@@ -37,7 +37,6 @@ import scala.xml.Elem
 import cats.Monad
 
 /**
-  *
   * @param model Model of layers we can report
   * @param serviceUrl URL where this service can be reached with addition of `?request=` query parameter
   */

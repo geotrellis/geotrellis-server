@@ -34,7 +34,6 @@ import java.net.{URI, URL}
 import scala.xml.Elem
 
 /**
-  *
   * @param wmtsModel WmtsModel of layers and tile matrices we can report
   * @param serviceUrl URL where this service can be reached with addition of `?request=` query parameter
   */

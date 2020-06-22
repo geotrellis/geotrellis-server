@@ -49,18 +49,17 @@ class HillshadeSpec extends FunSpec with Matchers {
       val rs     = new GeoTrellisRasterSource(uri)
       val raster =
         rs.reprojectToRegion(
-            LatLng,
-            RasterExtent(
-              Extent(-120.2952713630537, 39.13161870369179, -120.1235160949708, 39.25813307365495),
-              2.0018096513158e-4,
-              2.0018096513159e-4,
-              858,
-              632
-            ),
-            Bilinear,
-            AutoHigherResolution
-          )
-          .read(Extent(-120.2952713630537, 39.13161870369179, -120.1235160949708, 39.25813307365495))
+          LatLng,
+          RasterExtent(
+            Extent(-120.2952713630537, 39.13161870369179, -120.1235160949708, 39.25813307365495),
+            2.0018096513158e-4,
+            2.0018096513159e-4,
+            858,
+            632
+          ),
+          Bilinear,
+          AutoHigherResolution
+        ).read(Extent(-120.2952713630537, 39.13161870369179, -120.1235160949708, 39.25813307365495))
           .get
 
       val hillshadeProjectedRaster = ProjectedRaster(raster, LatLng)

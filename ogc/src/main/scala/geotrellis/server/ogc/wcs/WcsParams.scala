@@ -48,7 +48,7 @@ case class DescribeCoverageWcsParams(version: String, identifiers: Seq[String]) 
   *  "The number of axes included, and the order of these axes, shall be as specified
   *  by the referenced CRS." That means inverted for geographic.
   *
- * Reference to QGIS: https://github.com/qgis/QGIS/blob/final-3_10_2/src/providers/wcs/qgswcsprovider.cpp#L674
+  * Reference to QGIS: https://github.com/qgis/QGIS/blob/final-3_10_2/src/providers/wcs/qgswcsprovider.cpp#L674
   * Parameters descriptions can be also found here: https://mapserver.org/ogc/wcs_server.html
   */
 case class GetCoverageWcsParams(

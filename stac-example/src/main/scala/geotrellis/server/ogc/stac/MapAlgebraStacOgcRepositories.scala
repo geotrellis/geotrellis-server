@@ -75,14 +75,9 @@ case class MapAlgebraStacOgcRepositories[F[_]: Sync: SemigroupK](
         val layerNames = conf.listParams(conf.algebra)
 
         /** Get all ogc layers that are required for the MAML expression evaluation */
-        val stacLayersFiltered =
-          stacLayers.filter(l => layerNames.contains(l.name))
-        MapAlgebraStacOgcRepository[F](
-          conf,
-          stacLayersFiltered,
-          StacOgcRepositories[F](stacLayersFiltered, client)
-        )
+        val stacLayersFiltered = stacLayers.filter(l => layerNames.contains(l.name))
+        MapAlgebraStacOgcRepository[F](conf, stacLayersFiltered, StacOgcRepositories[F](stacLayersFiltered, client)): RepositoryM[F, List, OgcSource]
       }
-      .reduce[RepositoryM[F, List, OgcSource]](_ |+| _)
+      .reduce(_ |+| _)
       .find(query)
 }

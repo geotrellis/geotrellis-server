@@ -148,18 +148,18 @@ case class GeoTrellisOgcSource(
   /**
     * If temporal, try to match in the following order:
     *
-   * OgcTimeInterval behavior
+    * OgcTimeInterval behavior
     *  1. To the closest time in known valid source times
     *  2. To time.start
     *  3. To the passed interval.start
     *
-   *  OgcTimePosition:
+    *  OgcTimePosition:
     * 1. finds the exact match
     *
-   *  @note If case 3 is matched, read queries to the returned
+    *  @note If case 3 is matched, read queries to the returned
     *        RasterSource may return zero results.
     *
-   * @param interval
+    * @param interval
     * @return
     */
   def sourceForTime(interval: OgcTime): GeoTrellisRasterSource =

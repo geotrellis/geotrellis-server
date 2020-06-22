@@ -94,8 +94,8 @@ case class StacOgcRepositories[F[_]: Sync](
   def find(query: Query): F[List[OgcSource]] =
     StacOgcRepositories
       .eval(query)(stacLayers)
-      .map { conf => StacOgcRepository(conf, Http4sStacClient[F](client, Uri.unsafeFromString(conf.source))) }
-      .reduce[RepositoryM[F, List, OgcSource]](_ |+| _)
+      .map { conf => StacOgcRepository(conf, Http4sStacClient[F](client, Uri.unsafeFromString(conf.source))): RepositoryM[F, List, OgcSource] }
+      .reduce(_ |+| _)
       .find(query)
 }
 
