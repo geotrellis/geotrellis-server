@@ -32,6 +32,7 @@ import java.time.ZonedDateTime
 @JsonCodec sealed trait QueryF[A]
 
 object QueryF {
+
   /** Tree leaves */
   @JsonCodec case class Or[A](left: A, right: A)                                                       extends QueryF[A]
   @JsonCodec case class And[A](left: A, right: A)                                                      extends QueryF[A]

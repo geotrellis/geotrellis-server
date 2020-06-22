@@ -116,10 +116,7 @@ object Main
                 for {
                   conf         <- Conf.loadResourceF[IO](configPath)
                   http4sClient <- BlazeClientBuilder[IO](executionContext).resource
-                  simpleSources = conf.layers.values.collect {
-                                    case rsc @ RasterSourceConf(_, _, _, _, _, _, _) =>
-                                      rsc.toLayer
-                                  }.toList
+                  simpleSources = conf.layers.values.collect { case rsc @ RasterSourceConf(_, _, _, _, _, _, _) => rsc.toLayer }.toList
                   _            <- Resource.liftF(
                                     logOptState(
                                       conf.wms,

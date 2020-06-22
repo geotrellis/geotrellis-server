@@ -52,7 +52,6 @@ import java.net.URL
 
 import scala.concurrent.duration._
 import scala.xml.Elem
-import cats.Monad
 
 class WmsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[*[_], Throwable]](
   wmsModel: WmsModel[F],

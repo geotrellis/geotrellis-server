@@ -169,7 +169,7 @@ lazy val root = project
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(noPublishSettings)
-  .aggregate(core, example, ogc, `ogc-example`, opengis, stac)
+  .aggregate(core, example, ogc, opengis, `ogc-example`, `stac-example`)
 
 lazy val core = project
   .settings(moduleName := "geotrellis-server-core")
@@ -302,6 +302,7 @@ lazy val `ogc-example` = project
       http4sXml.value,
       logback,
       pureConfig,
+      pureConfigCatsEffect,
       scaffeine,
       scalatest,
       decline,
@@ -312,28 +313,6 @@ lazy val `ogc-example` = project
       ExclusionRule("log4j", "log4j"),
       ExclusionRule("org.slf4j", "slf4j-log4j12"),
       ExclusionRule("org.slf4j", "slf4j-nop")
-    )
-  )
-
-lazy val stac = project
-  .settings(moduleName := "geotrellis-server-stac")
-  .settings(commonSettings)
-  .settings(publishSettings)
-  .settings(
-    libraryDependencies ++= Seq(
-      cats.value,
-      circeCore.value,
-      circeGeneric.value,
-      circeParser.value,
-      circeRefined.value,
-      circeShapes.value,
-      geotrellisS3,
-      refined,
-      shapeless,
-      scalacheck,
-      scalacheckCats,
-      scalatest,
-      spdxChecker
     )
   )
 

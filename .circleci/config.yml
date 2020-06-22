@@ -35,12 +35,6 @@ aliases:
         command: ./scripts/cipublish
 
   # Build environments
-  - &openjdk8-scala2_11_12_environment
-    docker:
-      - image: circleci/openjdk:8-jdk
-    environment:
-      SCALA_VERSION: 2.11.12
-
   - &openjdk8-scala2_12_11_environment
     docker:
       - image: circleci/openjdk:8-jdk
@@ -52,28 +46,11 @@ workflows:
   version: 2
   build:
     jobs:
-      - "openjdk8-scala2.11.12":
-          filters: # required since `openjdk8-scala2.11.12_deploy` has tag filters AND requires `openjdk8-scala2.11.12`
-            tags:
-              only:
-                - /^(.*)$/
       - "openjdk8-scala2.12.11":
           filters: # required since `openjdk8-scala2.12.11_deploy` has tag filters AND requires `openjdk8-scala2.12.11`
             tags:
               only:
                 - /^(.*)$/
-      - "openjdk8-scala2.11.12_deploy":
-          requires:
-            - "openjdk8-scala2.11.12"
-          filters:
-            tags:
-              only:
-                - /^(.*)$/
-            branches:
-              only:
-                - develop
-                - /release\/.*/
-                - /hotfix\/.*/
       - "openjdk8-scala2.12.11_deploy":
           requires:
             - "openjdk8-scala2.12.11"
@@ -88,17 +65,9 @@ workflows:
                 - /hotfix\/.*/
 
 jobs:
-  "openjdk8-scala2.11.12":
-    <<: *openjdk8-scala2_11_12_environment
-    steps: *run_cibuild
-
   "openjdk8-scala2.12.11":
     <<: *openjdk8-scala2_12_11_environment
     steps: *run_cibuild
-
-  "openjdk8-scala2.11.12_deploy":
-    <<: *openjdk8-scala2_11_12_environment
-    steps: *run_cipublish
 
   "openjdk8-scala2.12.11_deploy":
     <<: *openjdk8-scala2_12_11_environment
