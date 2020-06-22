@@ -25,8 +25,11 @@ import org.http4s.scalaxml._
 import org.http4s._
 import org.http4s.dsl.io._
 import cats.effect._
+import cats.Parallel
 import cats.data.Validated
+import cats.syntax.flatMap._
 import cats.syntax.option._
+import io.chrisdavenport.log4cats.Logger
 import opengis.ows.{AllowedValues, AnyValue, DomainType, ValueType}
 import org.log4s.getLogger
 import opengis._
@@ -34,59 +37,67 @@ import scalaxb._
 
 import java.net._
 
-class WcsView(wcsModel: WcsModel, serviceUrl: URL) {
+class WcsView[F[_]: Sync: Logger: Concurrent: Parallel](
+    wcsModel: WcsModel[F],
+    serviceUrl: URL
+) {
   val logger = getLogger
 
   val extendedRGBParameters: List[DomainType] = {
     val channels = "Red" :: "Green" :: "Blue" :: Nil
 
-    def clamp(band: String): List[DomainType] = DomainType(
-      possibleValuesOption1 = OwsDataRecord(AnyValue()),
-      attributes = Map(
-        "@name" -> DataRecord(s"clampMin$band")
-      )
-    ) :: DomainType(
-      possibleValuesOption1 = OwsDataRecord(AnyValue()),
-      attributes = Map(
-        "@name" -> DataRecord(s"clampMax$band")
-      )
-    ) :: Nil
+    def clamp(band: String): List[DomainType] =
+      DomainType(
+        possibleValuesOption1 = OwsDataRecord(AnyValue()),
+        attributes = Map(
+          "@name" -> DataRecord(s"clampMin$band")
+        )
+      ) :: DomainType(
+        possibleValuesOption1 = OwsDataRecord(AnyValue()),
+        attributes = Map(
+          "@name" -> DataRecord(s"clampMax$band")
+        )
+      ) :: Nil
 
-    def normalize(band: String): List[DomainType] = DomainType(
-      possibleValuesOption1 = OwsDataRecord(AnyValue()),
-      attributes = Map(
-        "@name" -> DataRecord(s"normalizeOldMin$band")
-      )
-    ) :: DomainType(
-      possibleValuesOption1 = OwsDataRecord(AnyValue()),
-      attributes = Map(
-        "@name" -> DataRecord(s"normalizeOldMax$band")
-      )
-    ) :: DomainType(
-      possibleValuesOption1 = OwsDataRecord(AnyValue()),
-      attributes = Map(
-        "@name" -> DataRecord(s"normalizeNewMin$band")
-      )
-    ) :: DomainType(
-      possibleValuesOption1 = OwsDataRecord(AnyValue()),
-      attributes = Map(
-        "@name" -> DataRecord(s"normalizeNewMax$band")
-      )
-    ) :: Nil
+    def normalize(band: String): List[DomainType] =
+      DomainType(
+        possibleValuesOption1 = OwsDataRecord(AnyValue()),
+        attributes = Map(
+          "@name" -> DataRecord(s"normalizeOldMin$band")
+        )
+      ) :: DomainType(
+        possibleValuesOption1 = OwsDataRecord(AnyValue()),
+        attributes = Map(
+          "@name" -> DataRecord(s"normalizeOldMax$band")
+        )
+      ) :: DomainType(
+        possibleValuesOption1 = OwsDataRecord(AnyValue()),
+        attributes = Map(
+          "@name" -> DataRecord(s"normalizeNewMin$band")
+        )
+      ) :: DomainType(
+        possibleValuesOption1 = OwsDataRecord(AnyValue()),
+        attributes = Map(
+          "@name" -> DataRecord(s"normalizeNewMax$band")
+        )
+      ) :: Nil
 
-    def rescale(band: String): List[DomainType] = DomainType(
-      possibleValuesOption1 = OwsDataRecord(AnyValue()),
-      attributes = Map(
-        "@name" -> DataRecord(s"rescaleNewMin$band")
-      )
-    ) :: DomainType(
-      possibleValuesOption1 = OwsDataRecord(AnyValue()),
-      attributes = Map(
-        "@name" -> DataRecord(s"rescaleNewMax$band")
-      )
-    ) :: Nil
+    def rescale(band: String): List[DomainType] =
+      DomainType(
+        possibleValuesOption1 = OwsDataRecord(AnyValue()),
+        attributes = Map(
+          "@name" -> DataRecord(s"rescaleNewMin$band")
+        )
+      ) :: DomainType(
+        possibleValuesOption1 = OwsDataRecord(AnyValue()),
+        attributes = Map(
+          "@name" -> DataRecord(s"rescaleNewMax$band")
+        )
+      ) :: Nil
 
-    channels.flatMap { b => clamp(b) ::: normalize(b) ::: rescale(b) }
+    channels.flatMap { b =>
+      clamp(b) ::: normalize(b) ::: rescale(b)
+    }
   }
 
   val extendedParameters: List[DomainType] = DomainType(
@@ -98,7 +109,8 @@ class WcsView(wcsModel: WcsModel, serviceUrl: URL) {
           ValueType("data")
         ) :: OwsDataRecord(
           ValueType("nodata")
-        ) :: Nil)
+        ) :: Nil
+      )
     ),
     DefaultValue = ValueType("all").some,
     attributes = Map(
@@ -121,7 +133,9 @@ class WcsView(wcsModel: WcsModel, serviceUrl: URL) {
     )
   ) :: Nil
 
-  private def handleError[Result: EntityEncoder[IO, *]](result: Either[Throwable, Result]): IO[Response[IO]] = result match {
+  private def handleError[Result: EntityEncoder[IO, *]](
+      result: Either[Throwable, Result]
+  ): IO[Response[IO]] = result match {
     case Right(res) =>
       logger.info(s"response ${res.toString}")
       Ok(res)
@@ -132,7 +146,9 @@ class WcsView(wcsModel: WcsModel, serviceUrl: URL) {
 
   private val getCoverage = new GetCoverage(wcsModel)
 
-  def responseFor(req: Request[IO])(implicit cs: ContextShift[IO]): IO[Response[IO]] = {
+  def responseFor(
+      req: Request[IO]
+  )(implicit cs: ContextShift[IO]): IO[Response[IO]] = {
     WcsParams(req.multiParams) match {
       case Validated.Invalid(errors) =>
         val msg = ParamError.generateErrorMessage(errors.toList)
@@ -143,7 +159,11 @@ class WcsView(wcsModel: WcsModel, serviceUrl: URL) {
         wcsParams match {
           case _: GetCapabilitiesWcsParams =>
             logger.debug(ansi"%bold{GetCapabilities: $serviceUrl}")
-            Ok(new CapabilitiesView(wcsModel, serviceUrl, extendedParameters ::: extendedRGBParameters).toXML)
+            new CapabilitiesView(
+              wcsModel,
+              serviceUrl,
+              extendedParameters ::: extendedRGBParameters
+            ).toXML flatMap { Ok(_) }
 
           case p: DescribeCoverageWcsParams =>
             logger.debug(ansi"%bold{DescribeCoverage: ${req.uri}}")

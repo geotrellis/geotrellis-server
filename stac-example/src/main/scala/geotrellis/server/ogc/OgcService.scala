@@ -23,16 +23,18 @@ import geotrellis.server.ogc.wmts._
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
 import cats.effect._
+import io.chrisdavenport.log4cats.Logger
 import org.log4s.getLogger
 
 import java.net.URL
 
-class OgcService(
-  wmsModel: Option[WmsModel],
-  wcsModel: Option[WcsModel],
-  wmtsModel: Option[WmtsModel],
-  serviceUrl: URL
-)(implicit contextShift: ContextShift[IO]) extends Http4sDsl[IO] {
+class OgcService[F[_]: Sync: Concurrent: Logger](
+    wmsModel: Option[WmsModel[F]],
+    wcsModel: Option[WcsModel[F]],
+    wmtsModel: Option[WmtsModel],
+    serviceUrl: URL
+)(implicit contextShift: ContextShift[IO])
+    extends Http4sDsl[F] {
   val logger = getLogger
 
   val wcsView = wcsModel.map(new WcsView(_, serviceUrl))

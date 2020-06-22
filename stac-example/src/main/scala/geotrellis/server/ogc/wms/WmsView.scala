@@ -46,17 +46,19 @@ import java.net.URL
 
 import scala.concurrent.duration._
 import scala.xml.Elem
+import cats.Monad
 
-class WmsView(wmsModel: WmsModel, serviceUrl: URL) {
+class WmsView[F[_]: Monad](wmsModel: WmsModel[F], serviceUrl: URL) {
   val logger = getLogger
 
   val extendedCapabilities: List[DataRecord[Elem]] = {
     val targetCells = DataRecord(
-      None, "target".some,
+      None,
+      "target".some,
       DataRecord("all").toXML ++
-      DataRecord("data").toXML ++
-      DataRecord("nodata").toXML ++
-      DataRecord(None, "default".some, "all").toXML
+        DataRecord("data").toXML ++
+        DataRecord("nodata").toXML ++
+        DataRecord(None, "default".some, "all").toXML
     )
 
     val focalHillshade: Elem = ExtendedElement(
@@ -75,33 +77,39 @@ class WmsView(wmsModel: WmsModel, serviceUrl: URL) {
 
     val channels = "Red" :: "Green" :: "Blue" :: Nil
     def clamp(band: String) = DataRecord(
-      None, s"Clamp$band".some,
+      None,
+      s"Clamp$band".some,
       DataRecord(s"clampMin$band").toXML ++
-      DataRecord(s"clampMax$band").toXML
+        DataRecord(s"clampMax$band").toXML
     )
 
     def normalize(band: String) = DataRecord(
-      None, s"Normalize$band".some,
+      None,
+      s"Normalize$band".some,
       DataRecord(s"normalizeOldMin$band").toXML ++
-      DataRecord(s"normalizeOldMax$band").toXML ++
-      DataRecord(s"normalizeNewMin$band").toXML ++
-      DataRecord(s"normalizeNewMax$band").toXML
+        DataRecord(s"normalizeOldMax$band").toXML ++
+        DataRecord(s"normalizeNewMin$band").toXML ++
+        DataRecord(s"normalizeNewMax$band").toXML
     )
 
     def rescale(band: String) = DataRecord(
-      None, s"Rescale$band".some,
+      None,
+      s"Rescale$band".some,
       DataRecord(s"rescaleNewMin$band").toXML ++
-      DataRecord(s"rescaleNewMax$band").toXML
+        DataRecord(s"rescaleNewMax$band").toXML
     )
 
-    val rgbOps = channels.flatMap { b => clamp(b) :: normalize(b) :: rescale(b) :: Nil }
+    val rgbOps = channels.flatMap { b =>
+      clamp(b) :: normalize(b) :: rescale(b) :: Nil
+    }
 
     val rgb: Elem = ExtendedElement("RGB", rgbOps: _*)
 
     ExtendedCapabilities(focalHillshade, focalSlope, rgb)
   }
 
-  private val histoCache: Cache[OgcLayer, Interpreted[List[Histogram[Double]]]] =
+  private val histoCache
+      : Cache[OgcLayer, Interpreted[List[Histogram[Double]]]] =
     Scaffeine()
       .recordStats()
       .expireAfterWrite(1.hour)
@@ -115,7 +123,9 @@ class WmsView(wmsModel: WmsModel, serviceUrl: URL) {
       .maximumSize(500)
       .build[GetMap, Array[Byte]]()
 
-  def responseFor(req: Request[IO])(implicit cs: ContextShift[IO]): IO[Response[IO]] = {
+  def responseFor(
+      req: Request[IO]
+  )(implicit cs: ContextShift[IO]): IO[Response[IO]] = {
     WmsParams(req.multiParams) match {
       case Invalid(errors) =>
         val msg = ParamError.generateErrorMessage(errors.toList)
@@ -124,72 +134,90 @@ class WmsView(wmsModel: WmsModel, serviceUrl: URL) {
 
       case Valid(_: GetCapabilities) =>
         logger.debug(ansi"%bold{GetCapabilities: ${req.uri}}")
-        Ok(new CapabilitiesView(wmsModel, serviceUrl, extendedCapabilities).toXML)
+        Ok(
+          new CapabilitiesView(wmsModel, serviceUrl, extendedCapabilities).toXML
+        )
 
       case Valid(wmsReq: GetMap) =>
         logger.debug(ansi"%bold{GetMap: ${req.uri}}")
         val re = RasterExtent(wmsReq.boundingBox, wmsReq.width, wmsReq.height)
-        lazy val res = wmsModel.getLayer(wmsReq).map { layer =>
-          val evalExtent = layer match {
-            case sl @ SimpleOgcLayer(_, _, _, _, _, _, _) =>
-              LayerExtent.identity(sl)
-            case MapAlgebraOgcLayer(_, _, _, parameters, expr, _, _, _) =>
-              LayerExtent(IO.pure(expr), IO.pure(parameters), ConcurrentInterpreter.DEFAULT[IO])
-          }
-
-          val evalHisto = layer match {
-            case sl @ SimpleOgcLayer(_, _, _, _, _, _, _) =>
-              LayerHistogram.identity(sl, 512)
-            case MapAlgebraOgcLayer(_, _, _, parameters, expr, _, _, _) =>
-              LayerHistogram(IO.pure(expr), IO.pure(parameters), ConcurrentInterpreter.DEFAULT[IO], 512)
-          }
-
-          // TODO: remove this once GeoTiffRasterSource would be threadsafe
-          val histIO = IO.pure((for {
-            cached <- IO { histoCache.getIfPresent(layer) }
-            hist   <- cached match {
-                        case Some(h) => IO.pure(h)
-                        case None => evalHisto
-                      }
-            _ <-  IO { histoCache.put(layer, hist) }
-          } yield hist).unsafeRunSync())
-
-          (evalExtent(re.extent, re.cellSize), histIO).parMapN {
-            case (Valid(mbtile), Valid(hists)) =>
-              Valid((mbtile, hists))
-            case (Invalid(errs), _) =>
-              Invalid(errs)
-            case (_, Invalid(errs)) =>
-              Invalid(errs)
-          }.attempt flatMap {
-            case Right(Valid((mbtile, hists))) => // success
-              val rendered = Render.singleband(mbtile, layer.style, wmsReq.format, hists)
-              tileCache.put(wmsReq, rendered)
-              Ok(rendered)
-            case Right(Invalid(errs)) => // maml-specific errors
-              logger.debug(errs.toList.toString)
-              BadRequest(errs.asJson)
-            case Left(err) =>            // exceptions
-              logger.error(err.stackTraceString)
-              InternalServerError(err.stackTraceString)
-          }
-        }.headOption.getOrElse(wmsReq.layers.headOption match {
-          case Some(layerName) =>
-            // Handle the case where the STAC item was requested for some area between the tiles.
-            // STAC search will return an empty list, however QGIS may expect a test pixel to
-            // return the actual tile
-            // TODO: is there a better way to handle it?
-            wmsModel.sources.find(withName(layerName)).headOption match {
-              case Some(_) =>
-                val tile = ArrayTile(Array(0, 0), 1, 1)
-                val mbtile = MultibandTile(tile, tile, tile)
-                Ok(Render.singleband(mbtile, None, wmsReq.format, Nil))
-              case _ =>
-                BadRequest(s"Layer ($layerName) not found or CRS (${wmsReq.crs}) not supported")
+        lazy val res = wmsModel
+          .getLayer(wmsReq)
+          .map { layer =>
+            val evalExtent = layer match {
+              case sl @ SimpleOgcLayer(_, _, _, _, _, _, _) =>
+                LayerExtent.identity(sl)
+              case MapAlgebraOgcLayer(_, _, _, parameters, expr, _, _, _) =>
+                LayerExtent(
+                  IO.pure(expr),
+                  IO.pure(parameters),
+                  ConcurrentInterpreter.DEFAULT[IO]
+                )
             }
-          case None =>
-            BadRequest(s"Layer not found (no layer name provided in request)")
-        })
+
+            val evalHisto = layer match {
+              case sl @ SimpleOgcLayer(_, _, _, _, _, _, _) =>
+                LayerHistogram.identity(sl, 512)
+              case MapAlgebraOgcLayer(_, _, _, parameters, expr, _, _, _) =>
+                LayerHistogram(
+                  IO.pure(expr),
+                  IO.pure(parameters),
+                  ConcurrentInterpreter.DEFAULT[IO],
+                  512
+                )
+            }
+
+            // TODO: remove this once GeoTiffRasterSource would be threadsafe
+            val histIO = IO.pure((for {
+              cached <- IO { histoCache.getIfPresent(layer) }
+              hist <- cached match {
+                case Some(h) => IO.pure(h)
+                case None    => evalHisto
+              }
+              _ <- IO { histoCache.put(layer, hist) }
+            } yield hist).unsafeRunSync())
+
+            (evalExtent(re.extent, re.cellSize), histIO).parMapN {
+              case (Valid(mbtile), Valid(hists)) =>
+                Valid((mbtile, hists))
+              case (Invalid(errs), _) =>
+                Invalid(errs)
+              case (_, Invalid(errs)) =>
+                Invalid(errs)
+            }.attempt flatMap {
+              case Right(Valid((mbtile, hists))) => // success
+                val rendered =
+                  Render.singleband(mbtile, layer.style, wmsReq.format, hists)
+                tileCache.put(wmsReq, rendered)
+                Ok(rendered)
+              case Right(Invalid(errs)) => // maml-specific errors
+                logger.debug(errs.toList.toString)
+                BadRequest(errs.asJson)
+              case Left(err) => // exceptions
+                logger.error(err.stackTraceString)
+                InternalServerError(err.stackTraceString)
+            }
+          }
+          .headOption
+          .getOrElse(wmsReq.layers.headOption match {
+            case Some(layerName) =>
+              // Handle the case where the STAC item was requested for some area between the tiles.
+              // STAC search will return an empty list, however QGIS may expect a test pixel to
+              // return the actual tile
+              // TODO: is there a better way to handle it?
+              wmsModel.sources.find(withName(layerName)).headOption match {
+                case Some(_) =>
+                  val tile = ArrayTile(Array(0, 0), 1, 1)
+                  val mbtile = MultibandTile(tile, tile, tile)
+                  Ok(Render.singleband(mbtile, None, wmsReq.format, Nil))
+                case _ =>
+                  BadRequest(
+                    s"Layer ($layerName) not found or CRS (${wmsReq.crs}) not supported"
+                  )
+              }
+            case None =>
+              BadRequest(s"Layer not found (no layer name provided in request)")
+          })
 
         tileCache.getIfPresent(wmsReq) match {
           case Some(rendered) => Ok(rendered)
