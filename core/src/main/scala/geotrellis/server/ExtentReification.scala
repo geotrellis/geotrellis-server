@@ -16,30 +16,21 @@
 
 package geotrellis.server
 
-import geotrellis.raster.{ProjectedRaster, MultibandTile, CellSize}
+import geotrellis.raster.{CellSize, MultibandTile, ProjectedRaster}
 import geotrellis.vector.Extent
 import cats.Contravariant
 import cats.effect._
 import simulacrum._
 
 trait ExtentReification[F[_], A] {
-  def extentReification(
-      self: A
-  ): (Extent, CellSize) => F[ProjectedRaster[MultibandTile]]
+  def extentReification(self: A): (Extent, CellSize) => F[ProjectedRaster[MultibandTile]]
 }
 
 object ExtentReification {
-  implicit def contravariantExtentReification[F[_]]
-      : Contravariant[ExtentReification[F, *]] =
+  implicit def contravariantExtentReification[F[_]]: Contravariant[ExtentReification[F, *]] =
     new Contravariant[ExtentReification[F, *]] {
-      def contramap[A, B](
-          fa: ExtentReification[F, A]
-      )(f: B => A): ExtentReification[F, B] =
-        new ExtentReification[F, B] {
-          def extentReification(
-              self: B
-          ): (Extent, CellSize) => F[ProjectedRaster[MultibandTile]] =
-            fa.extentReification(f(self))
-        }
+      def contramap[A, B](fa: ExtentReification[F, A])(f: B => A): ExtentReification[F, B] = { self =>
+        fa.extentReification(f(self))
+      }
     }
 }

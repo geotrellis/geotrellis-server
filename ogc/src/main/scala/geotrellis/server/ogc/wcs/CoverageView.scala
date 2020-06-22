@@ -16,26 +16,8 @@
 
 package geotrellis.server.ogc.wcs
 
-import cats.syntax.option._
 import geotrellis.store.query._
-import geotrellis.server.ogc.{
-  GeoTrellisOgcSource,
-  MapAlgebraSource,
-  OgcSource,
-  OgcTimeEmpty,
-  OgcTimeInterval,
-  OgcTimePositions,
-  RasterOgcSource,
-  SimpleSource,
-  URN
-}
-import geotrellis.server.ogc.{
-  GeoTrellisOgcSource,
-  MapAlgebraSource,
-  OgcSource,
-  RasterOgcSource,
-  URN
-}
+import geotrellis.server.ogc.{MapAlgebraSource, OgcSource, OgcTimeEmpty, OgcTimeInterval, OgcTimePositions, RasterOgcSource, URN}
 import geotrellis.server.ogc.ows.OwsDataRecord
 import geotrellis.server.ogc.gml.GmlDataRecord
 import geotrellis.proj4.LatLng
@@ -49,23 +31,17 @@ import opengis._
 
 import cats.Functor
 import cats.syntax.functor._
+import cats.syntax.option._
+
 import scala.xml.Elem
 import scalaxb._
 import java.net.{URI, URL}
 
-class CoverageView[F[_]: Functor](
-    wcsModel: WcsModel[F],
-    serviceUrl: URL,
-    identifiers: Seq[String]
-) {
+class CoverageView[F[_]: Functor](wcsModel: WcsModel[F], serviceUrl: URL, identifiers: Seq[String]) {
   def toXML: F[Elem] = {
-    val sources =
-      if (identifiers == Nil) wcsModel.sources.store
-      else wcsModel.sources.find(withNames(identifiers.toSet))
-    val sourcesMap: F[Map[String, List[OgcSource]]] =
-      sources.map(_.groupBy(_.name))
-    val coverageTypeMap =
-      sourcesMap.map(_.mapValues(CoverageView.sourceDescription))
+    val sources                                     = if (identifiers == Nil) wcsModel.sources.store else wcsModel.sources.find(withNames(identifiers.toSet))
+    val sourcesMap: F[Map[String, List[OgcSource]]] = sources.map(_.groupBy(_.name))
+    val coverageTypeMap                             = sourcesMap.map(_.mapValues(CoverageView.sourceDescription))
     coverageTypeMap map { coverageType =>
       scalaxb
         .toXML[CoverageDescriptions](
@@ -83,10 +59,10 @@ class CoverageView[F[_]: Functor](
 object CoverageView {
 
   def sourceDescription(sources: List[OgcSource]): CoverageDescriptionType = {
-    val source = sources.head
-    val nativeCrs = source.nativeCrs.head
-    val re = source.nativeRE
-    val llre = source match {
+    val source           = sources.head
+    val nativeCrs        = source.nativeCrs.head
+    val re               = source.nativeRE
+    val llre             = source match {
       case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod, _, _) =>
         rss.values
           .map { rs =>
@@ -97,15 +73,15 @@ object CoverageView {
               Options.DEFAULT.copy(resampleMethod)
             )
           }
-          .reduce({ (re1, re2) =>
-            val e = re1.extent combine re2.extent
+          .reduce { (re1, re2) =>
+            val e  = re1.extent combine re2.extent
             val cs =
               if (re1.cellSize.resolution < re2.cellSize.resolution)
                 re1.cellSize
               else re2.cellSize
             new GridExtent[Long](e, cs)
-          })
-      case rasterOgcLayer: RasterOgcSource =>
+          }
+      case rasterOgcLayer: RasterOgcSource                            =>
         val rs = rasterOgcLayer.source
         ReprojectRasterExtent(
           rs.gridExtent,
@@ -114,8 +90,8 @@ object CoverageView {
           Options.DEFAULT.copy(rasterOgcLayer.resampleMethod)
         )
     }
-    val ex = re.extent
-    val llex = llre.extent
+    val ex               = re.extent
+    val llex             = llre.extent
     val Dimensions(w, h) = re.dimensions
 
     /**
@@ -137,16 +113,16 @@ object CoverageView {
       */
     val temporalDomain: Option[TimeSequenceType] = {
       val records = source.time match {
-        case OgcTimePositions(nel) =>
+        case OgcTimePositions(nel)                          =>
           nel.toList.map { t =>
             GmlDataRecord(TimePositionType(t.toInstant.toString))
           }
         case OgcTimeInterval(start, end, _) if start == end =>
           GmlDataRecord(TimePositionType(start.toInstant.toString)) :: Nil
-        case OgcTimeInterval(start, end, _) =>
+        case OgcTimeInterval(start, end, _)                 =>
           GmlDataRecord(TimePositionType(start.toInstant.toString)) ::
-            GmlDataRecord(TimePositionType(end.toInstant.toString)) :: Nil
-        case OgcTimeEmpty => Nil
+          GmlDataRecord(TimePositionType(end.toInstant.toString)) :: Nil
+        case OgcTimeEmpty                                   => Nil
       }
       if (records.nonEmpty) TimeSequenceType(records).some
       else None
@@ -161,41 +137,41 @@ object CoverageView {
       Domain = CoverageDomainType(
         SpatialDomain = SpatialDomainType(
           BoundingBox = OwsDataRecord(
-            BoundingBoxType(
-              LowerCorner = 0d :: 0d :: Nil,
-              UpperCorner = w.toDouble :: h.toDouble :: Nil,
-              attributes = Map(
-                "@crs" -> DataRecord(new URI("urn:ogc:def:crs:OGC::imageCRS")),
-                "@dimensions" -> DataRecord(BigInt(2))
+              BoundingBoxType(
+                LowerCorner = 0d :: 0d :: Nil,
+                UpperCorner = w.toDouble :: h.toDouble :: Nil,
+                attributes = Map(
+                  "@crs"        -> DataRecord(new URI("urn:ogc:def:crs:OGC::imageCRS")),
+                  "@dimensions" -> DataRecord(BigInt(2))
+                )
               )
-            )
-          ) :: OwsDataRecord(
-            BoundingBoxType(
-              LowerCorner = ex.xmin :: ex.ymin :: Nil,
-              UpperCorner = ex.xmax :: ex.ymax :: Nil,
-              attributes = Map(
-                "@crs" -> DataRecord(new URI(URN.unsafeFromCrs(nativeCrs))),
-                "@dimensions" -> DataRecord(BigInt(2))
+            ) :: OwsDataRecord(
+              BoundingBoxType(
+                LowerCorner = ex.xmin :: ex.ymin :: Nil,
+                UpperCorner = ex.xmax :: ex.ymax :: Nil,
+                attributes = Map(
+                  "@crs"        -> DataRecord(new URI(URN.unsafeFromCrs(nativeCrs))),
+                  "@dimensions" -> DataRecord(BigInt(2))
+                )
               )
-            )
-          ) :: OwsDataRecord(
-            BoundingBoxType(
-              LowerCorner = llex.ymin :: llex.xmin :: Nil,
-              UpperCorner = llex.ymax :: llex.xmax :: Nil,
-              attributes = Map(
-                "@crs" -> DataRecord(new URI(URN.unsafeFromCrs(LatLng))),
-                "@dimensions" -> DataRecord(BigInt(2))
+            ) :: OwsDataRecord(
+              BoundingBoxType(
+                LowerCorner = llex.ymin :: llex.xmin :: Nil,
+                UpperCorner = llex.ymax :: llex.xmax :: Nil,
+                attributes = Map(
+                  "@crs"        -> DataRecord(new URI(URN.unsafeFromCrs(LatLng))),
+                  "@dimensions" -> DataRecord(BigInt(2))
+                )
               )
-            )
-          ) :: OwsDataRecord(
-            WGS84BoundingBoxType(
-              LowerCorner = llex.ymin :: llex.xmin :: Nil,
-              UpperCorner = llex.ymax :: llex.xmax :: Nil,
-              attributes = Map(
-                "@dimensions" -> DataRecord(BigInt(2))
+            ) :: OwsDataRecord(
+              WGS84BoundingBoxType(
+                LowerCorner = llex.ymin :: llex.xmin :: Nil,
+                UpperCorner = llex.ymax :: llex.xmax :: Nil,
+                attributes = Map(
+                  "@dimensions" -> DataRecord(BigInt(2))
+                )
               )
-            )
-          ) :: Nil,
+            ) :: Nil,
           GridCRS = Some(
             GridCrsType(
               GridBaseCRS = new URI(URN.unsafeFromCrs(nativeCrs)),
@@ -210,37 +186,37 @@ object CoverageView {
       ),
       RangeValue = wcs.RangeType(
         Field = FieldType(
-          Identifier = "contents",
-          Definition = UnNamedDomainType(
-            possibleValuesOption1 = OwsDataRecord(AnyValue())
-          ),
-          InterpolationMethods = InterpolationMethods(
-            InterpolationMethod =
-              InterpolationMethodType("nearest neighbor") ::
+            Identifier = "contents",
+            Definition = UnNamedDomainType(
+              possibleValuesOption1 = OwsDataRecord(AnyValue())
+            ),
+            InterpolationMethods = InterpolationMethods(
+              InterpolationMethod =
+                InterpolationMethodType("nearest neighbor") ::
                 InterpolationMethodType("bilinear") ::
                 InterpolationMethodType("bicubic") :: Nil,
-            Default = "nearest neighbor".some
-          )
-        ) :: Nil
+              Default = "nearest neighbor".some
+            )
+          ) :: Nil
       ),
       SupportedCRS =
         new URI(URN.unsafeFromCrs(nativeCrs)) ::
-          new URI(URN.unsafeFromCrs(LatLng)) ::
-          new URI("urn:ogc:def:crs:OGC::imageCRS") :: Nil,
+        new URI(URN.unsafeFromCrs(LatLng)) ::
+        new URI("urn:ogc:def:crs:OGC::imageCRS") :: Nil,
       SupportedFormat = "image/geotiff" :: "image/jpeg" :: "image/png" :: Nil
     )
   }
 
   def apply[F[_]: Functor](
-      wcsModel: WcsModel[F],
-      serviceUrl: URL
+    wcsModel: WcsModel[F],
+    serviceUrl: URL
   ): CoverageView[F] =
     new CoverageView(wcsModel, serviceUrl, Nil)
 
   def apply[F[_]: Functor](
-      wcsModel: WcsModel[F],
-      serviceUrl: URL,
-      params: DescribeCoverageWcsParams
+    wcsModel: WcsModel[F],
+    serviceUrl: URL,
+    params: DescribeCoverageWcsParams
   ): CoverageView[F] =
     new CoverageView[F](wcsModel, serviceUrl, params.identifiers)
 }

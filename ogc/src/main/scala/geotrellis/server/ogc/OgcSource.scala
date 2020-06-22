@@ -34,13 +34,13 @@ import opengis.wms.BoundingBox
 import java.time.ZonedDateTime
 
 /**
- * This trait and its implementing types should be jointly sufficient, along with a WMS 'GetMap'
- *  (or a WMTS 'GetTile' or a WCS 'GetCoverage' etc etc) request to produce a visual layer
- *  (represented more fully by [[OgcLayer]].
- *  This type represents *merely* that there is some backing by which valid OGC layers
- *  can be realized. Its purpose is to provide the appropriate level of abstraction for OGC
- *  services to conveniently reuse the same data about underlying imagery
- */
+  * This trait and its implementing types should be jointly sufficient, along with a WMS 'GetMap'
+  *  (or a WMTS 'GetTile' or a WCS 'GetCoverage' etc etc) request to produce a visual layer
+  *  (represented more fully by [[OgcLayer]].
+  *  This type represents *merely* that there is some backing by which valid OGC layers
+  *  can be realized. Its purpose is to provide the appropriate level of abstraction for OGC
+  *  services to conveniently reuse the same data about underlying imagery
+  */
 trait OgcSource {
   def name: String
   def title: String
@@ -83,8 +83,8 @@ trait RasterOgcSource extends OgcSource {
 }
 
 /**
- * An imagery source with a [[RasterSource]] that defines its capacities
- */
+  * An imagery source with a [[RasterSource]] that defines its capacities
+  */
 case class SimpleSource(
   name: String,
   title: String,
@@ -96,24 +96,20 @@ case class SimpleSource(
   timeMetadataKey: Option[String]
 ) extends RasterOgcSource {
   lazy val time: OgcTime =
-    timeMetadataKey.flatMap { key =>
-      source match {
-        case mrs: MosaicRasterSource =>
-          val times = mrs.metadata.list.toList.flatMap(_.attributes.get(key)).map(ZonedDateTime.parse)
-          times match {
-            case head :: tail => OgcTimePositions(NEL(head, tail)).some
-            case _ => None
-          }
+    timeMetadataKey
+      .flatMap { key =>
+        source match {
+          case mrs: MosaicRasterSource =>
+            val times = mrs.metadata.list.toList.flatMap(_.attributes.get(key)).map(ZonedDateTime.parse)
+            times match {
+              case head :: tail => OgcTimePositions(NEL(head, tail)).some
+              case _            => None
+            }
 
-        case _ =>
-          source
-            .metadata
-            .attributes
-            .get(key)
-            .map(ZonedDateTime.parse)
-            .map(OgcTimePositions(_))
+          case _                       => source.metadata.attributes.get(key).map(ZonedDateTime.parse).map(OgcTimePositions(_))
+        }
       }
-    }.getOrElse(OgcTimeEmpty)
+      .getOrElse(OgcTimeEmpty)
 }
 
 case class GeoTrellisOgcSource(
@@ -135,7 +131,9 @@ case class GeoTrellisOgcSource(
       attributeStore,
       dataPath,
       GeoTrellisRasterSource.getSourceLayersByName(
-        attributeStore, dataPath.layerName, dataPath.bandCount.getOrElse(1)
+        attributeStore,
+        dataPath.layerName,
+        dataPath.bandCount.getOrElse(1)
       ),
       None,
       None,
@@ -148,43 +146,47 @@ case class GeoTrellisOgcSource(
     else OgcTimePositions(source.times)
 
   /**
-   * If temporal, try to match in the following order:
-   *
+    * If temporal, try to match in the following order:
+    *
    * OgcTimeInterval behavior
-   *  1. To the closest time in known valid source times
-   *  2. To time.start
-   *  3. To the passed interval.start
-   *
+    *  1. To the closest time in known valid source times
+    *  2. To time.start
+    *  3. To the passed interval.start
+    *
    *  OgcTimePosition:
-   * 1. finds the exact match
-   *
+    * 1. finds the exact match
+    *
    *  @note If case 3 is matched, read queries to the returned
-   *        RasterSource may return zero results.
-   *
+    *        RasterSource may return zero results.
+    *
    * @param interval
-   * @return
-   */
+    * @return
+    */
   def sourceForTime(interval: OgcTime): GeoTrellisRasterSource =
     if (source.isTemporal) {
       time match {
         case sourceInterval: OgcTimeInterval =>
-          source.times.find { t =>
-            interval match {
-              case OgcTimeInterval(start, end, _) => start <= t && t <= end
-              case OgcTimePositions(list)         => list.exists(_ == t)
-              case OgcTimeEmpty                   => false
+          source.times
+            .find { t =>
+              interval match {
+                case OgcTimeInterval(start, end, _) => start <= t && t <= end
+                case OgcTimePositions(list)         => list.exists(_ == t)
+                case OgcTimeEmpty                   => false
+              }
             }
-          }.fold(sourceForTime(sourceInterval))(sourceForTime)
+            .fold(sourceForTime(sourceInterval))(sourceForTime)
 
-        case OgcTimePositions(NEL(head, _)) =>
-          source.times.find { t =>
-            interval match {
-              case OgcTimeInterval(start, end, _) => start <= t && t <= end
-              case OgcTimePositions(list)         => list.exists(_ == t)
-              case OgcTimeEmpty                   => false
+        case OgcTimePositions(NEL(head, _))  =>
+          source.times
+            .find { t =>
+              interval match {
+                case OgcTimeInterval(start, end, _) => start <= t && t <= end
+                case OgcTimePositions(list)         => list.exists(_ == t)
+                case OgcTimeEmpty                   => false
+              }
             }
-          }.fold(sourceForTime(head))(sourceForTime)
-        case _ => source
+            .fold(sourceForTime(head))(sourceForTime)
+        case _                               => source
       }
     } else source
 
@@ -202,15 +204,16 @@ case class MapAlgebraSourceMetadata(
   resolutions: List[CellSize],
   sources: Map[String, RasterMetadata]
 ) extends RasterMetadata {
+
   /** MapAlgebra metadata usually doesn't contain a metadata that is common for all RasterSources */
-  def attributes: Map[String, String] = Map.empty
+  def attributes: Map[String, String]                   = Map.empty
   def attributesForBand(band: Int): Map[String, String] = Map.empty
 }
 
 /**
- * A complex layer, constructed from an [[Expression]] and one or more [[RasterSource]]
- *  mappings which allow evaluation of said [[Expression]]
- */
+  * A complex layer, constructed from an [[Expression]] and one or more [[RasterSource]]
+  *  mappings which allow evaluation of said [[Expression]]
+  */
 case class MapAlgebraSource(
   name: String,
   title: String,
@@ -223,10 +226,8 @@ case class MapAlgebraSource(
   timeMetadataKey: Option[String]
 ) extends OgcSource {
   def extentIn(crs: CRS): Extent = {
-    val reprojectedSources: NEL[RasterSource] =
-      NEL.fromListUnsafe(sources.values.map(_.reproject(crs)).toList)
-    val extents =
-      reprojectedSources.map(_.extent)
+    val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sources.values.map(_.reproject(crs)).toList)
+    val extents                               = reprojectedSources.map(_.extent)
 
     SampleUtils.intersectExtents(extents).getOrElse {
       throw new Exception("no intersection found among map map algebra sources")
@@ -234,20 +235,14 @@ case class MapAlgebraSource(
   }
 
   def bboxIn(crs: CRS): BoundingBox = {
-    val reprojectedSources: NEL[RasterSource] =
-      NEL.fromListUnsafe(sources.values.map(_.reproject(crs)).toList)
-    val extents =
-      reprojectedSources.map(_.extent)
-    val extentIntersection =
-      SampleUtils.intersectExtents(extents)
-    val cellSize =
-      SampleUtils.chooseLargestCellSize(reprojectedSources.map(_.cellSize))
+    val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sources.values.map(_.reproject(crs)).toList)
+    val extents                               = reprojectedSources.map(_.extent)
+    val extentIntersection                    = SampleUtils.intersectExtents(extents)
+    val cellSize                              = SampleUtils.chooseLargestCellSize(reprojectedSources.map(_.cellSize))
 
     extentIntersection match {
-      case Some(extent) =>
-        CapabilitiesView.boundingBox(crs, extent, cellSize)
-      case None =>
-        throw new Exception("no intersection found among map map algebra sources")
+      case Some(extent) => CapabilitiesView.boundingBox(crs, extent, cellSize)
+      case None         => throw new Exception("no intersection found among map map algebra sources")
     }
   }
 
@@ -263,26 +258,19 @@ case class MapAlgebraSource(
     )
 
   lazy val nativeExtent: Extent = {
-    val reprojectedSources: NEL[RasterSource] =
-      NEL.fromListUnsafe(sources.values.map(_.reproject(nativeCrs.head)).toList)
-    val extents =
-      reprojectedSources.map(_.extent)
-    val extentIntersection =
-      SampleUtils.intersectExtents(extents)
+    val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sources.values.map(_.reproject(nativeCrs.head)).toList)
+    val extents                               = reprojectedSources.map(_.extent)
+    val extentIntersection                    = SampleUtils.intersectExtents(extents)
 
     extentIntersection match {
-      case Some(extent) =>
-        extent
-      case None =>
-        throw new Exception("no intersection found among map algebra sources")
+      case Some(extent) => extent
+      case None         => throw new Exception("no intersection found among map algebra sources")
     }
   }
 
   lazy val nativeRE: GridExtent[Long] = {
-    val reprojectedSources: NEL[RasterSource] =
-      NEL.fromListUnsafe(sources.values.map(_.reproject(nativeCrs.head)).toList)
-    val cellSize =
-      SampleUtils.chooseSmallestCellSize(reprojectedSources.map(_.cellSize))
+    val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sources.values.map(_.reproject(nativeCrs.head)).toList)
+    val cellSize                              = SampleUtils.chooseSmallestCellSize(reprojectedSources.map(_.cellSize))
 
     new GridExtent[Long](nativeExtent, cellSize)
   }
@@ -291,28 +279,24 @@ case class MapAlgebraSource(
   // workaround a Scala 2.11 bug
   // should be _ |+| _
   val time: OgcTime =
-    timeMetadataKey.toList.flatMap { key =>
-      sources.values.toList.flatMap {
-        case mrs: MosaicRasterSource =>
-          val times = mrs.metadata.list.toList.flatMap(_.attributes.get(key)).map(ZonedDateTime.parse)
-          times match {
-            case head :: tail => OgcTimePositions(NEL(head, tail)).some
-            case _ => None
-          }
+    timeMetadataKey.toList
+      .flatMap { key =>
+        sources.values.toList.flatMap {
+          case mrs: MosaicRasterSource =>
+            val times = mrs.metadata.list.toList.flatMap(_.attributes.get(key)).map(ZonedDateTime.parse)
+            times match {
+              case head :: tail => OgcTimePositions(NEL(head, tail)).some
+              case _            => None
+            }
 
-        case source =>
-          source
-            .metadata
-            .attributes
-            .get(key)
-            .map(ZonedDateTime.parse)
-            .map(OgcTimePositions(_))
+          case source                  => source.metadata.attributes.get(key).map(ZonedDateTime.parse).map(OgcTimePositions(_))
+        }
       }
-    }.foldLeft[OgcTime](OgcTimeEmpty)(OgcTime.ogcTimeSemigroup.combine)
+      .foldLeft[OgcTime](OgcTimeEmpty)(OgcTime.ogcTimeSemigroup.combine)
 
-  val attributes: Map[String, String]       = Map.empty
-  lazy val nativeCrs: Set[CRS]              = sources.values.map(_.crs).toSet
-  lazy val minBandCount: Int                = sources.values.map(_.bandCount).min
-  lazy val cellTypes: Set[CellType]         = sources.values.map(_.cellType).toSet
-  lazy val resolutions: List[CellSize]      = sources.values.flatMap(_.resolutions).toList.distinct
+  val attributes: Map[String, String]  = Map.empty
+  lazy val nativeCrs: Set[CRS]         = sources.values.map(_.crs).toSet
+  lazy val minBandCount: Int           = sources.values.map(_.bandCount).min
+  lazy val cellTypes: Set[CellType]    = sources.values.map(_.cellType).toSet
+  lazy val resolutions: List[CellSize] = sources.values.flatMap(_.resolutions).toList.distinct
 }

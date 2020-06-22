@@ -29,13 +29,20 @@ case class EmptyRasterSource(identifier: String, projectedExtent: ProjectedExten
 
   def metadata: RasterMetadata = EmptyMetadata(name, crs, bandCount, cellType, gridExtent, resolutions, attributes)
 
-  def reprojection(targetCRS: CRS, resampleTarget: ResampleTarget, method: ResampleMethod, strategy: OverviewStrategy): RasterSource = throw new UnsupportedOperationException
+  def reprojection(
+    targetCRS: CRS,
+    resampleTarget: ResampleTarget,
+    method: ResampleMethod,
+    strategy: OverviewStrategy
+  ): RasterSource = throw new UnsupportedOperationException
 
-  def resample(resampleTarget: ResampleTarget, method: ResampleMethod, strategy: OverviewStrategy): RasterSource = throw new UnsupportedOperationException
+  def resample(resampleTarget: ResampleTarget, method: ResampleMethod, strategy: OverviewStrategy): RasterSource =
+    throw new UnsupportedOperationException
 
   def read(extent: Extent, bands: Seq[Int]): Option[Raster[MultibandTile]] = throw new UnsupportedOperationException
 
-  def read(bounds: GridBounds[Long], bands: Seq[Int]): Option[Raster[MultibandTile]] = throw new UnsupportedOperationException
+  def read(bounds: GridBounds[Long], bands: Seq[Int]): Option[Raster[MultibandTile]] =
+    throw new UnsupportedOperationException
 
   def convert(targetCellType: TargetCellType): RasterSource = throw new UnsupportedOperationException
 

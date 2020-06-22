@@ -16,14 +16,8 @@
 
 package geotrellis.server.vlm
 
-import geotrellis.proj4.{CRS, WebMercator}
-import geotrellis.raster._
 import geotrellis.raster.resample._
 import geotrellis.raster.io.geotiff._
-import geotrellis.layer._
-
-import cats.effect.IO
-import cats.data.{NonEmptyList => NEL}
 import _root_.io.circe.{Decoder, Encoder}
 
 import java.net.URI
@@ -31,11 +25,8 @@ import java.net.URI
 import scala.util.Try
 
 trait RasterSourceUtils {
-  implicit val uriEncoder: Encoder[URI] =
-    Encoder.encodeString.contramap[URI](_.toString)
-  implicit val uriDecoder: Decoder[URI] = Decoder[String].emap { str =>
-    Right(URI.create(str))
-  }
+  implicit val uriEncoder: Encoder[URI] = Encoder.encodeString.contramap[URI](_.toString)
+  implicit val uriDecoder: Decoder[URI] = Decoder[String].emap { str => Right(URI.create(str)) }
 
   implicit val resampleMethodEncoder: Encoder[ResampleMethod] =
     Encoder.encodeString.contramap[ResampleMethod] {
@@ -79,7 +70,7 @@ trait RasterSourceUtils {
     def parse(strategy: String, input: String): OverviewStrategy =
       Auto(Try { input.split(s"$strategy-").last.toInt }.toOption.getOrElse(0))
 
-    def parseAuto(str: String): OverviewStrategy = parse("auto", str)
+    def parseAuto(str: String): OverviewStrategy  = parse("auto", str)
     def parseLevel(str: String): OverviewStrategy = parse("level", str)
 
     Decoder.decodeString.map {

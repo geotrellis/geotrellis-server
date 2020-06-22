@@ -41,53 +41,48 @@ import cats.Monad
   * @param model Model of layers we can report
   * @param serviceUrl URL where this service can be reached with addition of `?request=` query parameter
   */
-class CapabilitiesView[F[_]: Functor: Apply: Monad](
-    model: WmsModel[F],
-    serviceUrl: URL,
-    extendedCapabilities: List[DataRecord[Elem]] = Nil
-) {
+class CapabilitiesView[F[_]: Functor: Apply: Monad](model: WmsModel[F], serviceUrl: URL, extendedCapabilities: List[DataRecord[Elem]] = Nil) {
   import CapabilitiesView._
 
   def toXML: F[Elem] = {
-
     val getCapabilities = OperationType(
       Format = "text/xml" :: Nil,
       DCPType = DCPType(
-        HTTP(
-          Get = Get(
-            OnlineResource(
-              Map(
-                "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
-                  serviceUrl.toURI
-                ),
-                "@{http://www.w3.org/1999/xlink}type" -> DataRecord(
-                  xlink.Simple: xlink.TypeType
+          HTTP(
+            Get = Get(
+              OnlineResource(
+                Map(
+                  "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
+                    serviceUrl.toURI
+                  ),
+                  "@{http://www.w3.org/1999/xlink}type" -> DataRecord(
+                    xlink.Simple: xlink.TypeType
+                  )
                 )
               )
             )
           )
-        )
-      ) :: Nil
+        ) :: Nil
     )
 
     val getMap = OperationType(
       Format = "image/png" :: "image/jpeg" :: Nil,
       DCPType = DCPType(
-        HTTP(
-          Get = Get(
-            OnlineResource(
-              Map(
-                "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
-                  serviceUrl.toURI
-                ),
-                "@{http://www.w3.org/1999/xlink}type" -> DataRecord(
-                  xlink.Simple: xlink.TypeType
+          HTTP(
+            Get = Get(
+              OnlineResource(
+                Map(
+                  "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
+                    serviceUrl.toURI
+                  ),
+                  "@{http://www.w3.org/1999/xlink}type" -> DataRecord(
+                    xlink.Simple: xlink.TypeType
+                  )
                 )
               )
             )
           )
-        )
-      ) :: Nil
+        ) :: Nil
     )
 
     modelAsLayer(model.parentLayerMeta, model) map { layer =>
@@ -126,7 +121,7 @@ object CapabilitiesView {
     if (crs.isGeographic)
       BoundingBox(
         Map(
-          "@CRS" -> s"EPSG:${crs.epsgCode.get}",
+          "@CRS"  -> s"EPSG:${crs.epsgCode.get}",
           "@minx" -> extent.ymin,
           "@miny" -> extent.xmin,
           "@maxx" -> extent.ymax,
@@ -138,7 +133,7 @@ object CapabilitiesView {
     else
       BoundingBox(
         Map(
-          "@CRS" -> s"EPSG:${crs.epsgCode.get}",
+          "@CRS"  -> s"EPSG:${crs.epsgCode.get}",
           "@minx" -> extent.xmin,
           "@miny" -> extent.ymin,
           "@maxx" -> extent.xmax,
@@ -167,14 +162,8 @@ object CapabilitiesView {
         // extra CRS that is supported by this layer
         CRS = (parentProjections ++ source.nativeCrs).distinct.map { crs =>
           crs.epsgCode
-            .map { code =>
-              s"EPSG:$code"
-            }
-            .getOrElse(
-              throw new java.lang.Exception(
-                s"Unable to construct EPSG code from $crs"
-              )
-            )
+            .map { code => s"EPSG:$code" }
+            .getOrElse(throw new java.lang.Exception(s"Unable to construct EPSG code from $crs"))
         },
         EX_GeographicBoundingBox = {
           val llre = source match {
@@ -188,15 +177,15 @@ object CapabilitiesView {
                     Options.DEFAULT.copy(resampleMethod)
                   )
                 }
-                .reduce({ (re1, re2) =>
-                  val e = re1.extent combine re2.extent
+                .reduce { (re1, re2) =>
+                  val e  = re1.extent combine re2.extent
                   val cs =
                     if (re1.cellSize.resolution < re2.cellSize.resolution)
                       re1.cellSize
                     else re2.cellSize
                   new GridExtent[Long](e, cs)
-                })
-            case rasterOgcLayer: RasterOgcSource =>
+                }
+            case rasterOgcLayer: RasterOgcSource                            =>
               val rs = rasterOgcLayer.source
               ReprojectRasterExtent(
                 rs.gridExtent,
@@ -215,12 +204,12 @@ object CapabilitiesView {
         },
         BoundingBox = Nil,
         Dimension = source.time match {
-          case tp @ OgcTimePositions(nel) =>
+          case tp @ OgcTimePositions(nel)        =>
             Dimension(
               tp.toString,
               Map(
-                "@name" -> DataRecord("time"),
-                "@units" -> DataRecord("ISO8601"),
+                "@name"    -> DataRecord("time"),
+                "@units"   -> DataRecord("ISO8601"),
                 "@default" -> DataRecord(nel.head.toInstant.toString)
               )
             ) :: Nil
@@ -228,12 +217,12 @@ object CapabilitiesView {
             Dimension(
               ti.toString,
               Map(
-                "@name" -> DataRecord("time"),
-                "@units" -> DataRecord("ISO8601"),
+                "@name"    -> DataRecord("time"),
+                "@units"   -> DataRecord("ISO8601"),
                 "@default" -> DataRecord(start.toString)
               )
             ) :: Nil
-          case OgcTimeEmpty => Nil
+          case OgcTimeEmpty                      => Nil
         },
         Attribution = None,
         AuthorityURL = Nil,
@@ -250,39 +239,21 @@ object CapabilitiesView {
     }
   }
 
-  def modelAsLayer[F[_]: Monad](
-      parentLayerMeta: WmsParentLayerMeta,
-      model: WmsModel[F]
-  ): F[Layer] = {
+  def modelAsLayer[F[_]: Monad](parentLayerMeta: WmsParentLayerMeta, model: WmsModel[F]): F[Layer] = {
     val bboxAndLayers = model.sources.store map { sources =>
-      val bboxes = sources map { source =>
+      val bboxes  = sources map { source =>
         val llre = source match {
           case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod, _, _) =>
             rss.values
-              .map { rs =>
-                ReprojectRasterExtent(
-                  rs.gridExtent,
-                  rs.crs,
-                  LatLng,
-                  Options.DEFAULT.copy(resampleMethod)
-                )
-              }
-              .reduce({ (re1, re2) =>
-                val e = re1.extent combine re2.extent
-                val cs =
-                  if (re1.cellSize.resolution < re2.cellSize.resolution)
-                    re1.cellSize
-                  else re2.cellSize
+              .map { rs => ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(resampleMethod)) }
+              .reduce { (re1, re2) =>
+                val e  = re1.extent combine re2.extent
+                val cs = if (re1.cellSize.resolution < re2.cellSize.resolution) re1.cellSize else re2.cellSize
                 new GridExtent[Long](e, cs)
-              })
-          case rasterOgcLayer: RasterOgcSource =>
+              }
+          case rasterOgcLayer: RasterOgcSource                            =>
             val rs = rasterOgcLayer.source
-            ReprojectRasterExtent(
-              rs.gridExtent,
-              rs.crs,
-              LatLng,
-              Options.DEFAULT.copy(rasterOgcLayer.resampleMethod)
-            )
+            ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(rasterOgcLayer.resampleMethod))
         }
 
         /**
@@ -294,13 +265,8 @@ object CapabilitiesView {
         llre.extent
 
       }
-      val bbox = bboxes.tail.fold(bboxes.head)(_ combine _)
-      val ogcBbox = EX_GeographicBoundingBox(
-        bbox.xmin,
-        bbox.xmax,
-        bbox.ymin,
-        bbox.ymax
-      ).some
+      val bbox    = bboxes.tail.fold(bboxes.head)(_ combine _)
+      val ogcBbox = EX_GeographicBoundingBox(bbox.xmin, bbox.xmax, bbox.ymin, bbox.ymax).some
       (ogcBbox, sources.map(_.toLayer(parentLayerMeta.supportedProjections)))
     }
     (bboxAndLayers, model.time).mapN {
@@ -329,12 +295,12 @@ object CapabilitiesView {
           // TODO: bounding box for global layer
           BoundingBox = Nil,
           Dimension = time match {
-            case tp @ OgcTimePositions(nel) =>
+            case tp @ OgcTimePositions(nel)        =>
               Dimension(
                 tp.toString,
                 Map(
-                  "@name" -> DataRecord("time"),
-                  "@units" -> DataRecord("ISO8601"),
+                  "@name"    -> DataRecord("time"),
+                  "@units"   -> DataRecord("ISO8601"),
                   "@default" -> DataRecord(nel.head.toInstant.toString)
                 )
               ) :: Nil
@@ -342,12 +308,12 @@ object CapabilitiesView {
               Dimension(
                 ti.toString,
                 Map(
-                  "@name" -> DataRecord("time"),
-                  "@units" -> DataRecord("ISO8601"),
+                  "@name"    -> DataRecord("time"),
+                  "@units"   -> DataRecord("ISO8601"),
                   "@default" -> DataRecord(start.toString)
                 )
               ) :: Nil
-            case OgcTimeEmpty => Nil
+            case OgcTimeEmpty                      => Nil
           },
           Attribution = None,
           AuthorityURL = Nil,

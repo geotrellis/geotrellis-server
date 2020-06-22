@@ -36,32 +36,27 @@ import cats.data.{NonEmptyList => NEL}
 import java.net.URI
 
 case class GeoTiffNode(
-    uri: URI,
-    band: Int,
-    celltype: Option[CellType],
-    resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-    overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
+  uri: URI,
+  band: Int,
+  celltype: Option[CellType],
+  resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
 )
 
 object GeoTiffNode extends RasterSourceUtils {
   implicit val cogNodeEncoder: Encoder[GeoTiffNode] = deriveEncoder[GeoTiffNode]
   implicit val cogNodeDecoder: Decoder[GeoTiffNode] = deriveDecoder[GeoTiffNode]
 
-  implicit def cogNodeRasterExtents[F[_]: Sync]
-      : HasRasterExtents[F, GeoTiffNode] =
-    new HasRasterExtents[F, GeoTiffNode] {
-      def rasterExtents(
-          self: GeoTiffNode
-      ): F[NEL[RasterExtent]] = Sync[F].delay {
-        val rs = RasterSource(s"${self.uri}")
-        NonEmptyList.fromListUnsafe(rs.resolutions map {
-          RasterExtent(rs.extent, _)
-        })
-      }
+  implicit def cogNodeRasterExtents[F[_]: Sync]: HasRasterExtents[F, GeoTiffNode] = { self =>
+    Sync[F].delay {
+      val rs = RasterSource(s"${self.uri}")
+      NonEmptyList.fromListUnsafe(rs.resolutions map {
+        RasterExtent(rs.extent, _)
+      })
     }
+  }
 
-  implicit def cogNodeTmsReification[F[_]: Sync]
-      : TmsReification[F, GeoTiffNode] =
+  implicit def cogNodeTmsReification[F[_]: Sync]: TmsReification[F, GeoTiffNode] =
     new TmsReification[F, GeoTiffNode] {
       val targetCRS = WebMercator
 
@@ -71,13 +66,13 @@ object GeoTiffNode extends RasterSourceUtils {
       }.toArray
 
       def tmsReification(
-          self: GeoTiffNode,
-          buffer: Int
+        self: GeoTiffNode,
+        buffer: Int
       ): (Int, Int, Int) => F[ProjectedRaster[MultibandTile]] =
         (z: Int, x: Int, y: Int) =>
           Sync[F].delay {
             val layout = tmsLevels(z)
-            val key = SpatialKey(x, y)
+            val key    = SpatialKey(x, y)
             val raster = Raster(
               RasterSource(self.uri.toString)
                 .reproject(targetCRS)
@@ -100,23 +95,17 @@ object GeoTiffNode extends RasterSourceUtils {
           }
     }
 
-  implicit def CogNodeExtentReification[F[_]: Sync]
-      : ExtentReification[F, GeoTiffNode] =
-    new ExtentReification[F, GeoTiffNode] {
-      def extentReification(
-          self: GeoTiffNode
-      ): (Extent, CellSize) => F[ProjectedRaster[MultibandTile]] =
-        (extent: Extent, cs: CellSize) =>
-          Sync[F].delay {
-            RasterSource(self.uri.toString)
-              .resample(
-                TargetRegion(new GridExtent[Long](extent, cs)),
-                self.resampleMethod,
-                self.overviewStrategy
-              )
-              .read(extent, self.band :: Nil)
-              .map { ProjectedRaster(_, WebMercator) }
-              .getOrElse { throw new Exception(s"no data at $extent") }
-          }
+  implicit def CogNodeExtentReification[F[_]: Sync]: ExtentReification[F, GeoTiffNode] = { self => (extent: Extent, cs: CellSize) =>
+    Sync[F].delay {
+      RasterSource(self.uri.toString)
+        .resample(
+          TargetRegion(new GridExtent[Long](extent, cs)),
+          self.resampleMethod,
+          self.overviewStrategy
+        )
+        .read(extent, self.band :: Nil)
+        .map(ProjectedRaster(_, WebMercator))
+        .getOrElse { throw new Exception(s"no data at $extent") }
     }
+  }
 }

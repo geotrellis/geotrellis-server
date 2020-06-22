@@ -22,9 +22,8 @@ import geotrellis.store.query
 import geotrellis.store.query._
 import geotrellis.store.query.QueryF._
 
-import cats.{Applicative, SemigroupK}
+import cats.SemigroupK
 import cats.effect.Sync
-import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.semigroup._
 import cats.syntax.semigroupk._
@@ -33,9 +32,9 @@ import higherkindness.droste.scheme
 import org.http4s.client.Client
 
 case class MapAlgebraStacOgcRepository[F[_]: Sync: SemigroupK](
-    mapAlgebraSourceConf: MapAlgebraSourceConf,
-    stacSourceConfs: List[StacSourceConf],
-    repository: RepositoryM[F, List, OgcSource]
+  mapAlgebraSourceConf: MapAlgebraSourceConf,
+  stacSourceConfs: List[StacSourceConf],
+  repository: RepositoryM[F, List, OgcSource]
 ) extends RepositoryM[F, List, OgcSource] {
   private val names = stacSourceConfs.map(_.name).distinct
 
@@ -55,9 +54,9 @@ case class MapAlgebraStacOgcRepository[F[_]: Sync: SemigroupK](
 }
 
 case class MapAlgebraStacOgcRepositories[F[_]: Sync: SemigroupK](
-    mapAlgebraConfLayers: List[MapAlgebraSourceConf],
-    stacLayers: List[StacSourceConf],
-    client: Client[F]
+  mapAlgebraConfLayers: List[MapAlgebraSourceConf],
+  stacLayers: List[StacSourceConf],
+  client: Client[F]
 ) extends RepositoryM[F, List, OgcSource] {
   def store: F[List[OgcSource]] =
     find(query.withNames(mapAlgebraConfLayers.map(_.name).toSet))

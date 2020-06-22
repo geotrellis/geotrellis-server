@@ -28,7 +28,7 @@ object Dependencies {
     "org.http4s" %% s"http4s-$module" % ver("0.20.15", "0.21.0-M6").value
   }
 
-  val crossScalaVer = List("2.12.11", "2.11.12")
+  val crossScalaVer = List("2.12.11")
   val scalaVer = crossScalaVer.head
 
   val circeVer = "0.11.1"
@@ -95,8 +95,5 @@ object Dependencies {
   val logback = "ch.qos.logback" % "logback-classic" % "1.2.3" % Runtime
   val droste = "io.higherkindness" %% "droste-core" % "0.8.0"
   val stac4s = "com.azavea.stac4s" %% "core" % "0.0.10"
-
-  // This dependency differs between scala 2.11 and 2.12
-  val ansiColors211 = "org.backuity" %% "ansi-interpolator" % "1.1" % Provided
   val ansiColors212 = "org.backuity" %% "ansi-interpolator" % "1.1.0" % Provided
 }

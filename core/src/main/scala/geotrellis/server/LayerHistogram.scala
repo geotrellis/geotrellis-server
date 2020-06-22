@@ -40,59 +40,50 @@ import io.chrisdavenport.log4cats.Logger
 import scala.collection.mutable
 
 object LayerHistogram {
-
   case class NoSuitableHistogramResolution(cells: Int) extends Throwable
-  case class RequireIntersectingSources() extends Throwable
+  case class RequireIntersectingSources()              extends Throwable
 
   // Added so that we can get combine
-  implicit val extentSemigroup: Semigroup[Extent] =
-    new Semigroup[Extent] {
-      def combine(x: Extent, y: Extent): Extent = x.combine(y)
-    }
+  implicit val extentSemigroup: Semigroup[Extent] = { _ combine _ }
 
   // Provide IOs for both expression and params, get back a tile
-  def apply[F[_]: Logger: Parallel: Monad, T: ExtentReification[F, *]: HasRasterExtents[
-    F,
-    *
-  ]](
-      getExpression: F[Expression],
-      getParams: F[Map[String, T]],
-      interpreter: Interpreter[F],
-      maxCells: Int
+  def apply[F[_]: Logger: Parallel: Monad, T: ExtentReification[F, *]: HasRasterExtents[F, *]](
+    getExpression: F[Expression],
+    getParams: F[Map[String, T]],
+    interpreter: Interpreter[F],
+    maxCells: Int
   ): F[Interpreted[List[Histogram[Double]]]] = {
     val logger = Logger[F]
     for {
-      params <- getParams
-      rasterExtents <- NEL
-        .fromListUnsafe(params.values.toList)
-        .traverse(HasRasterExtents[F, T].rasterExtents(_))
-        .map(_.flatten)
-      extents <- NEL
-        .fromListUnsafe(params.values.toList)
-        .traverse(
-          HasRasterExtents[F, T]
-            .rasterExtents(_)
-            .map(z => z.map(_.extent).reduce)
-        )
-      intersectionO = SampleUtils.intersectExtents(extents)
-      _ <- intersectionO traverse { intersection =>
-        logger.trace(
-          s"[LayerHistogram] Intersection of provided layer extents calculated: $intersection"
-        )
-      }
-      cellSize = SampleUtils.chooseLargestCellSize(rasterExtents, maxCells)
-      _ <- logger.trace(
-        s"[LayerHistogram] Largest cell size of provided layers calculated: $cellSize"
-      )
-      mbtileForExtent = LayerExtent(getExpression, getParams, interpreter)
-      _ <- intersectionO traverse { intersection =>
-        logger.trace(
-          s"[LayerHistogram] calculating histogram from (approximately) ${intersection.area / (cellSize.width * cellSize.height)} cells"
-        )
-      }
+      params          <- getParams
+      rasterExtents   <- NEL.fromListUnsafe(params.values.toList)
+                           .traverse(HasRasterExtents[F, T].rasterExtents(_))
+                           .map(_.flatten)
+      extents         <- NEL.fromListUnsafe(params.values.toList)
+                           .traverse(
+                             HasRasterExtents[F, T]
+                               .rasterExtents(_)
+                               .map(z => z.map(_.extent).reduce)
+                           )
+      intersectionO    = SampleUtils.intersectExtents(extents)
+      _               <- intersectionO traverse { intersection =>
+                           logger.trace(
+                             s"[LayerHistogram] Intersection of provided layer extents calculated: $intersection"
+                           )
+                         }
+      cellSize         = SampleUtils.chooseLargestCellSize(rasterExtents, maxCells)
+      _               <- logger.trace(
+                           s"[LayerHistogram] Largest cell size of provided layers calculated: $cellSize"
+                         )
+      mbtileForExtent  = LayerExtent(getExpression, getParams, interpreter)
+      _               <- intersectionO traverse { intersection =>
+                           logger.trace(
+                             s"[LayerHistogram] calculating histogram from (approximately) ${intersection.area / (cellSize.width * cellSize.height)} cells"
+                           )
+                         }
       interpretedTile <- intersectionO traverse { intersection =>
-        mbtileForExtent(intersection, cellSize)
-      }
+                           mbtileForExtent(intersection, cellSize)
+                         }
     } yield {
       interpretedTile.map { mbtileValidated =>
         mbtileValidated.map { mbTile =>
@@ -104,29 +95,20 @@ object LayerHistogram {
     }
   }
 
-  def generateExpression[F[_]: Logger: Parallel: Monad, T: ExtentReification[
-    F,
-    *
-  ]: HasRasterExtents[
-    F,
-    *
-  ]](
-      mkExpr: Map[String, T] => Expression,
-      getParams: F[Map[String, T]],
-      interpreter: Interpreter[F],
-      maxCells: Int
+  def generateExpression[F[_]: Logger: Parallel: Monad, T: ExtentReification[F, *]: HasRasterExtents[F, *]](
+    mkExpr: Map[String, T] => Expression,
+    getParams: F[Map[String, T]],
+    interpreter: Interpreter[F],
+    maxCells: Int
   ): F[Interpreted[List[Histogram[Double]]]] =
     apply[F, T](getParams.map(mkExpr(_)), getParams, interpreter, maxCells)
 
   /** Provide an expression and expect arguments to fulfill its needs */
-  def curried[F[_]: Logger: Parallel: Monad, T: ExtentReification[F, *]: HasRasterExtents[
-    F,
-    *
-  ]](
-      expr: Expression,
-      interpreter: Interpreter[F],
-      maxCells: Int
-  ): (Map[String, T]) => F[Interpreted[List[Histogram[Double]]]] =
+  def curried[F[_]: Logger: Parallel: Monad, T: ExtentReification[F, *]: HasRasterExtents[F, *]](
+    expr: Expression,
+    interpreter: Interpreter[F],
+    maxCells: Int
+  ): Map[String, T] => F[Interpreted[List[Histogram[Double]]]] =
     (paramMap: Map[String, T]) => {
       apply[F, T](
         Monad[F].pure(expr),
@@ -137,15 +119,9 @@ object LayerHistogram {
     }
 
   /** The identity endpoint (for simple display of raster) */
-  def concurrent[F[_]: Logger: Parallel: Monad: Concurrent, T: ExtentReification[
-    F,
-    *
-  ]: HasRasterExtents[
-    F,
-    *
-  ]](
-      param: T,
-      maxCells: Int
+  def concurrent[F[_]: Logger: Parallel: Monad: Concurrent, T: ExtentReification[F, *]: HasRasterExtents[F, *]](
+    param: T,
+    maxCells: Int
   ): F[Interpreted[List[Histogram[Double]]]] = {
     val eval =
       curried[F, T](
@@ -155,5 +131,4 @@ object LayerHistogram {
       )
     eval(Map("identity" -> param))
   }
-
 }

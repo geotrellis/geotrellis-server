@@ -34,33 +34,20 @@ import cats.syntax.flatMap._
 import cats.instances.option._
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
 import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 
 import scala.concurrent.duration._
 
-class GetCoverage[F[_]: Logger: Sync: Concurrent: Parallel](
-    wcsModel: WcsModel[F]
-) {
-
-  def renderLayers(params: GetCoverageWcsParams) = {
+class GetCoverage[F[_]: Logger: Sync: Concurrent: Parallel](wcsModel: WcsModel[F]) {
+  def renderLayers(params: GetCoverageWcsParams): F[Option[Array[Byte]]] = {
     val re = params.gridExtent
     wcsModel
       .getLayers(params)
       .flatMap {
         _.headOption
           .map {
-            case so @ SimpleOgcLayer(_, _, _, _, _, _, _) =>
+            case so @ SimpleOgcLayer(_, _, _, _, _, _, _)                    =>
               LayerExtent.concurrent[F, SimpleOgcLayer](so)
-            case MapAlgebraOgcLayer(
-                _,
-                _,
-                _,
-                simpleLayers,
-                algebra,
-                _,
-                _,
-                _
-                ) =>
+            case MapAlgebraOgcLayer(_, _, _, simpleLayers, algebra, _, _, _) =>
               LayerExtent(
                 Sync[F].pure(algebra),
                 Sync[F].pure(simpleLayers),
@@ -70,8 +57,7 @@ class GetCoverage[F[_]: Logger: Sync: Concurrent: Parallel](
           .traverse { eval =>
             eval(re.extent, re.cellSize) map {
               case Valid(mbtile) =>
-                val bytes =
-                  GeoTiff(Raster(mbtile, re.extent), params.crs).toByteArray
+                val bytes = GeoTiff(Raster(mbtile, re.extent), params.crs).toByteArray
                 requestCache.put(params, bytes)
                 bytes
               case Invalid(errs) => throw MamlException(errs)
@@ -99,12 +85,11 @@ class GetCoverage[F[_]: Logger: Sync: Concurrent: Parallel](
           bytes
         )
 
-      case _ =>
+      case _           =>
         Logger[F].trace(s"GetCoverage cache MISS: $params") >>= { _ =>
           renderLayers(params).flatMap {
-            case Some(bytes) =>
-              Sync[F].pure(bytes)
-            case None =>
+            case Some(bytes) => Sync[F].pure(bytes)
+            case None        =>
               wcsModel.sources
                 .find(withName(params.identifier))
                 .flatMap {
@@ -115,20 +100,8 @@ class GetCoverage[F[_]: Logger: Sync: Concurrent: Parallel](
                       // return the actual tile
                       // TODO: handle it in a proper way, how to get information about the bands amount?
                       val tile = ArrayTile.empty(IntCellType, 1, 1)
-                      Sync[F]
-                        .pure(
-                          GeoTiff(
-                            Raster(
-                              MultibandTile(tile, tile, tile),
-                              params.extent
-                            ),
-                            params.crs
-                          ).toByteArray
-                        )
-                    case _ =>
-                      Logger[F].error(s"No tile found for the $params request.") *> Sync[
-                        F
-                      ].pure(Array())
+                      Sync[F].pure(GeoTiff(Raster(MultibandTile(tile, tile, tile), params.extent), params.crs).toByteArray)
+                    case _       => Logger[F].error(s"No tile found for the $params request.") *> Sync[F].pure(Array())
                   }
                 }
           }

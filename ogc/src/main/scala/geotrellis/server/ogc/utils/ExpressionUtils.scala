@@ -28,10 +28,11 @@ object ExpressionUtils {
     deepMap(expr, fun)
   }
 
-  def targetCell(str: String): Option[TargetCell] = str match {
-    case "nodata" => TargetCell.NoData.some
-    case "data"   => TargetCell.Data.some
-    case "all"    => TargetCell.All.some
-    case _        => None
-  }
+  def targetCell(str: String): Option[TargetCell] =
+    str match {
+      case "nodata" => TargetCell.NoData.some
+      case "data"   => TargetCell.Data.some
+      case "all"    => TargetCell.All.some
+      case _        => None
+    }
 }

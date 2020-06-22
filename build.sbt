@@ -85,14 +85,11 @@ lazy val commonSettings = Seq(
   ),
   headerMappings := Map(
     FileType.scala -> CommentStyle.cStyleBlockComment.copy(
-      commentCreator = new CommentCreator() {
-        def apply(text: String, existingText: Option[String]): String = {
-          // preserve year of old headers
-          val newText = CommentStyle.cStyleBlockComment.commentCreator
-            .apply(text, existingText)
-          existingText.flatMap(_ => existingText.map(_.trim)).getOrElse(newText)
-        }
-      }
+      commentCreator = { (text, existingText) => {
+        // preserve year of old headers
+        val newText = CommentStyle.cStyleBlockComment.commentCreator.apply(text, existingText)
+        existingText.flatMap(_ => existingText.map(_.trim)).getOrElse(newText)
+      } }
     )
   ),
   Global / cancelable := true,
@@ -196,15 +193,6 @@ lazy val core = project
       droste,
       log4cats
     )
-  )
-  .settings(
-    libraryDependencies ++= {
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, scalaMajor)) if scalaMajor == 11 =>
-          Seq(circeJava8.value)
-        case _ => Seq()
-      }
-    }
   )
 
 lazy val example = project
@@ -316,21 +304,15 @@ lazy val `ogc-example` = project
       pureConfig,
       scaffeine,
       scalatest,
-      decline
+      decline,
+      ansiColors212
     ),
     excludeDependencies ++= Seq(
       // log4j brought in via uzaygezen is a pain for us
       ExclusionRule("log4j", "log4j"),
       ExclusionRule("org.slf4j", "slf4j-log4j12"),
       ExclusionRule("org.slf4j", "slf4j-nop")
-    ),
-    libraryDependencies := (CrossVersion
-      .partialVersion(scalaVersion.value) match {
-      case Some((2, scalaMajor)) if scalaMajor >= 12 =>
-        libraryDependencies.value ++ Seq(ansiColors212)
-      case Some((2, scalaMajor)) if scalaMajor >= 11 =>
-        libraryDependencies.value ++ Seq(ansiColors211)
-    })
+    )
   )
 
 lazy val stac = project
@@ -375,7 +357,8 @@ lazy val `stac-example` = project
       scaffeine,
       scalatest,
       decline,
-      stac4s
+      stac4s,
+      ansiColors212
     ),
     excludeDependencies ++= Seq(
       // log4j brought in via uzaygezen is a pain for us
@@ -383,14 +366,7 @@ lazy val `stac-example` = project
       ExclusionRule("org.slf4j", "slf4j-log4j12"),
       ExclusionRule("org.slf4j", "slf4j-nop")
     ),
-    assembly / assemblyJarName := "geotrellis-stac-example.jar",
-    libraryDependencies := (CrossVersion
-      .partialVersion(scalaVersion.value) match {
-      case Some((2, scalaMajor)) if scalaMajor >= 12 =>
-        libraryDependencies.value ++ Seq(ansiColors212)
-      case Some((2, scalaMajor)) if scalaMajor >= 11 =>
-        libraryDependencies.value ++ Seq(ansiColors211)
-    })
+    assembly / assemblyJarName := "geotrellis-stac-example.jar"
   )
 
 lazy val bench = project

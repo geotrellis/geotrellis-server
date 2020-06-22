@@ -30,16 +30,12 @@ import org.http4s.circe._
 import _root_.io.circe.syntax._
 import cats.effect._
 import cats.{Applicative, ApplicativeError, Parallel}
-import cats.data.Validated
-import cats.data.Validated.{Valid, Invalid}
+import cats.data.Validated.{Invalid, Valid}
 import cats.syntax.apply._
 import cats.syntax.flatMap._
-import cats.syntax.functor._
-import cats.syntax.option._
 import cats.syntax.applicativeError._
 import cats.syntax.parallel._
 import io.chrisdavenport.log4cats.Logger
-import org.log4s.getLogger
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
 
@@ -47,11 +43,10 @@ import scala.concurrent.duration._
 
 import java.net._
 
-class WmtsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[
-  *[_],
-  Throwable
-]](wmtsModel: WmtsModel[F], serviceUrl: URL)
-    extends Http4sDsl[F] {
+class WmtsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[*[_], Throwable]](
+  wmtsModel: WmtsModel[F],
+  serviceUrl: URL
+) extends Http4sDsl[F] {
   val logger = Logger[F]
 
   private val tileCache: Cache[GetTile, Array[Byte]] =
@@ -63,18 +58,18 @@ class WmtsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[
 
   def responseFor(req: Request[F]): F[Response[F]] = {
     WmtsParams(req.multiParams) match {
-      case Invalid(errors) =>
+      case Invalid(errors)           =>
         val msg = ParamError.generateErrorMessage(errors.toList)
         logger.warn(msg) *> BadRequest(msg)
 
       case Valid(_: GetCapabilities) =>
         logger.debug(ansi"%bold{GetCapabilities: ${req.uri}}") *>
-          new CapabilitiesView(wmtsModel, serviceUrl).toXML flatMap (Ok(_))
+        new CapabilitiesView(wmtsModel, serviceUrl).toXML flatMap (Ok(_))
 
-      case Valid(wmtsReq: GetTile) =>
+      case Valid(wmtsReq: GetTile)   =>
         logger.debug(ansi"%bold{GetTile: ${req.uri}}")
-        val tileCol = wmtsReq.tileCol
-        val tileRow = wmtsReq.tileRow
+        val tileCol   = wmtsReq.tileCol
+        val tileRow   = wmtsReq.tileRow
         val layerName = wmtsReq.layer
 
         val res = {
@@ -83,76 +78,36 @@ class WmtsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[
             .flatMap {
               _.map { layer =>
                 val evalWmts = layer match {
-                  case sl @ SimpleTiledOgcLayer(_, _, _, _, _, _, _, _) =>
-                    LayerTms.concurrent(sl)
-                  case MapAlgebraTiledOgcLayer(
-                      _,
-                      _,
-                      _,
-                      _,
-                      parameters,
-                      expr,
-                      _,
-                      _,
-                      _
-                      ) =>
-                    LayerTms(
-                      Applicative[F].pure(expr),
-                      Applicative[F].pure(parameters),
-                      ConcurrentInterpreter.DEFAULT[F]
-                    )
+                  case sl @ SimpleTiledOgcLayer(_, _, _, _, _, _, _, _)               => LayerTms.concurrent(sl)
+                  case MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _, _, _) =>
+                    LayerTms(Applicative[F].pure(expr), Applicative[F].pure(parameters), ConcurrentInterpreter.DEFAULT[F])
                 }
 
                 // TODO: remove this once GeoTiffRasterSource would be threadsafe
                 // ETA 6/22/2020: we're pretending everything is fine
                 val evalHisto = layer match {
-                  case sl @ SimpleTiledOgcLayer(_, _, _, _, _, _, _, _) =>
-                    LayerHistogram.concurrent(sl, 512)
-                  case MapAlgebraTiledOgcLayer(
-                      _,
-                      _,
-                      _,
-                      _,
-                      parameters,
-                      expr,
-                      _,
-                      _,
-                      _
-                      ) =>
-                    LayerHistogram(
-                      Applicative[F].pure(expr),
-                      Applicative[F].pure(parameters),
-                      ConcurrentInterpreter.DEFAULT[F],
-                      512
-                    )
+                  case sl @ SimpleTiledOgcLayer(_, _, _, _, _, _, _, _)               => LayerHistogram.concurrent(sl, 512)
+                  case MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _, _, _) =>
+                    LayerHistogram(Applicative[F].pure(expr), Applicative[F].pure(parameters), ConcurrentInterpreter.DEFAULT[F], 512)
                 }
 
                 (evalWmts(0, tileCol, tileRow), evalHisto).parMapN {
-                  case (Valid(mbtile), Valid(hists)) =>
-                    Valid((mbtile, hists))
-                  case (Invalid(errs), _) =>
-                    Invalid(errs)
-                  case (_, Invalid(errs)) =>
-                    Invalid(errs)
+                  case (Valid(mbtile), Valid(hists)) => Valid((mbtile, hists))
+                  case (Invalid(errs), _)            => Invalid(errs)
+                  case (_, Invalid(errs))            => Invalid(errs)
                 }.attempt flatMap {
                   case Right(Valid((mbtile, hists))) => // success
-                    val rendered = Render.singleband(
-                      mbtile,
-                      layer.style,
-                      wmtsReq.format,
-                      hists
-                    )
+                    val rendered = Render.singleband(mbtile, layer.style, wmtsReq.format, hists)
                     tileCache.put(wmtsReq, rendered)
                     Ok(rendered)
-                  case Right(Invalid(errs)) => // maml-specific errors
+                  case Right(Invalid(errs))          => // maml-specific errors
                     logger.debug(errs.toList.toString)
                     BadRequest(errs.asJson)
-                  case Left(err) => // exceptions
+                  case Left(err)                     => // exceptions
                     logger.error(err.stackTraceString)
                     InternalServerError(err.stackTraceString)
                 }
-              }.headOption
-                .getOrElse(BadRequest(s"Layer ($layerName) not found"))
+              }.headOption.getOrElse(BadRequest(s"Layer ($layerName) not found"))
             }
         }
 

@@ -41,10 +41,8 @@ object WmsParams {
 
   object GetCapabilities {
     def build(params: ParamMap): ValidatedNel[ParamError, WmsParams] = {
-      (params.validatedVersion("1.3.0"),
-        params.validatedOptionalParam("format"),
-        params.validatedOptionalParam("updatesequence")
-      ).mapN(GetCapabilities.apply)
+      (params.validatedVersion("1.3.0"), params.validatedOptionalParam("format"), params.validatedOptionalParam("updatesequence"))
+        .mapN(GetCapabilities.apply)
     }
   }
 
@@ -64,11 +62,9 @@ object WmsParams {
       val layer = layers.headOption.map(withName).getOrElse(nothing)
       val query = layer and intersects(ProjectedExtent(boundingBox, crs))
       time match {
-        case timeInterval: OgcTimeInterval =>
-          query and between(timeInterval.start, timeInterval.end)
-        case OgcTimePositions(list) =>
-          query and list.toList.map(at(_)).reduce(_ or _)
-        case OgcTimeEmpty => query
+        case timeInterval: OgcTimeInterval => query and between(timeInterval.start, timeInterval.end)
+        case OgcTimePositions(list)        => query and list.toList.map(at(_)).reduce(_ or _)
+        case OgcTimeEmpty                  => query
       }
     }
   }
@@ -89,23 +85,22 @@ object WmsParams {
           val crs = params.validatedParam("crs", { s => Try(CRS.fromName(s)).toOption })
 
           val bbox = crs.andThen { crs =>
-            params.validatedParam("bbox", {s =>
-              s.split(",").map(_.toDouble) match {
-                case Array(xmin, ymin, xmax, ymax) =>
-                  if (crs == LatLng) Some(Extent(ymin, xmin, ymax, xmax))
-                  else  Some(Extent(xmin, ymin, xmax, ymax))
-                case _ => None
+            params.validatedParam(
+              "bbox",
+              { s =>
+                s.split(",").map(_.toDouble) match {
+                  case Array(xmin, ymin, xmax, ymax) =>
+                    if (crs == LatLng) Some(Extent(ymin, xmin, ymax, xmax))
+                    else Some(Extent(xmin, ymin, xmax, ymax))
+                  case _                             => None
+                }
               }
-            })
+            )
           }
 
-          val width =
-            params.validatedParam[Int]("width", { s => Try(s.toInt).toOption })
-
-          val height =
-            params.validatedParam[Int]("height", { s => Try(s.toInt).toOption })
-
-          val time = params.validatedOgcTime("time")
+          val width  = params.validatedParam[Int]("width", { s => Try(s.toInt).toOption })
+          val height = params.validatedParam[Int]("height", { s => Try(s.toInt).toOption })
+          val time   = params.validatedOgcTime("time")
 
           val format =
             params
@@ -113,9 +108,9 @@ object WmsParams {
               .andThen { f =>
                 OutputFormat.fromString(f) match {
                   case Some(format) => Valid(format).toValidatedNel
-                  case None =>
+                  case None         =>
                     Invalid(ParamError.UnsupportedFormatError(f)).toValidatedNel
-                  }
+                }
               }
 
           (layers, styles, bbox, format, width, height, crs, time).mapN {
@@ -139,10 +134,8 @@ object WmsParams {
       (serviceParam, requestParam).mapN { case (_, b) => b }
 
     firstStageValidation.andThen {
-      case "getcapabilities" =>
-        GetCapabilities.build(params)
-      case "getmap" =>
-        GetMap.build(params)
+      case "getcapabilities" => GetCapabilities.build(params)
+      case "getmap"          => GetMap.build(params)
     }
   }
 }

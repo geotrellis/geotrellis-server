@@ -32,4 +32,3 @@ case class CacheRangeReader(rr: RangeReader, cachedBytes: Array[Byte]) extends R
 
   override def readAll(): Array[Byte] = rr.readAll()
 }
-

@@ -28,9 +28,9 @@ import cats.implicits._
 import cats.data.{NonEmptyList => NEL}
 
 case class ResourceTile(
-    name: String,
-    resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-    overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
+  name: String,
+  resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
 ) {
   def uri: String = s"file://${getClass.getResource(s"/$name").getFile}"
 }
@@ -40,8 +40,9 @@ object ResourceTile extends RasterSourceUtils {
 
   implicit val extentReification: ExtentReification[IO, ResourceTile] =
     new ExtentReification[IO, ResourceTile] {
+
       def extentReification(
-          self: ResourceTile
+        self: ResourceTile
       ): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
         (extent: Extent, cs: CellSize) => {
           val rs = getRasterSource(self.uri.toString)
@@ -64,14 +65,16 @@ object ResourceTile extends RasterSourceUtils {
 
   implicit val nodeRasterExtents: HasRasterExtents[IO, ResourceTile] =
     new HasRasterExtents[IO, ResourceTile] {
+
       def rasterExtents(
-          self: ResourceTile
-      ): IO[NEL[RasterExtent]] = IO {
-        val rs = RasterSource(self.uri.toString)
-        rs.resolutions.map(RasterExtent(rs.extent, _)).toNel getOrElse {
-          throw new Exception("no resolutions")
+        self: ResourceTile
+      ): IO[NEL[RasterExtent]] =
+        IO {
+          val rs = RasterSource(self.uri.toString)
+          rs.resolutions.map(RasterExtent(rs.extent, _)).toNel getOrElse {
+            throw new Exception("no resolutions")
+          }
         }
-      }
     }
 
 }

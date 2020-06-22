@@ -36,6 +36,5 @@ object MamlStore {
     *  This exception should be thrown when a MAML expression can't be
     *   found in a putative MamlStore implementer
    **/
-  case class ExpressionNotFound(key: UUID)
-      extends Exception(s"No expression found at $key")
+  case class ExpressionNotFound(key: UUID) extends Exception(s"No expression found at $key")
 }

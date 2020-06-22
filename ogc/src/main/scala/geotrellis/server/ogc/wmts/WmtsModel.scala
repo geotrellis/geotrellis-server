@@ -31,20 +31,18 @@ import cats.instances.option._
 
 /** This class holds all the information necessary to construct a response to a WMTS request */
 case class WmtsModel[F[_]: Monad](
-    serviceMetadata: ows.ServiceMetadata,
-    matrices: List[GeotrellisTileMatrixSet],
-    sources: RepositoryM[F, List, OgcSource]
+  serviceMetadata: ows.ServiceMetadata,
+  matrices: List[GeotrellisTileMatrixSet],
+  sources: RepositoryM[F, List, OgcSource]
 ) {
 
   val matrixSetLookup: Map[String, GeotrellisTileMatrixSet] =
-    matrices.map { tileMatrixSet =>
-      tileMatrixSet.identifier -> tileMatrixSet
-    }.toMap
+    matrices.map { tileMatrixSet => tileMatrixSet.identifier -> tileMatrixSet }.toMap
 
   /** Take a specific request for a map and combine it with the relevant [[OgcSource]]
     *  to produce a [[TiledOgcLayer]]
     */
-  def getLayer(p: GetTile): F[List[TiledOgcLayer]] = {
+  def getLayer(p: GetTile): F[List[TiledOgcLayer]]          = {
     (
       getMatrixCrs(p.tileMatrixSet),
       getMatrixLayoutDefinition(p.tileMatrixSet, p.tileMatrix)
@@ -54,73 +52,23 @@ case class WmtsModel[F[_]: Monad](
           val style: Option[OgcStyle] = source.styles.find(_.name == p.style)
 
           source match {
-            case MapAlgebraSource(
-                name,
-                title,
-                rasterSources,
-                algebra,
-                _,
-                _,
-                resampleMethod,
-                overviewStrategy,
-                _
-                ) =>
+            case MapAlgebraSource(name, title, rasterSources, algebra, _, _, resampleMethod, overviewStrategy, _) =>
               val simpleLayers = rasterSources.mapValues { rs =>
-                SimpleTiledOgcLayer(
-                  name,
-                  title,
-                  crs,
-                  layout,
-                  rs,
-                  style,
-                  resampleMethod,
-                  overviewStrategy
-                )
+                SimpleTiledOgcLayer(name, title, crs, layout, rs, style, resampleMethod, overviewStrategy)
               }
-              MapAlgebraTiledOgcLayer(
-                name,
-                title,
-                crs,
-                layout,
-                simpleLayers,
-                algebra,
-                style,
-                resampleMethod,
-                overviewStrategy
-              )
-            case SimpleSource(
-                name,
-                title,
-                rasterSource,
-                _,
-                _,
-                resampleMethod,
-                overviewStrategy,
-                _
-                ) =>
-              SimpleTiledOgcLayer(
-                name,
-                title,
-                crs,
-                layout,
-                rasterSource,
-                style,
-                resampleMethod,
-                overviewStrategy
-              )
+              MapAlgebraTiledOgcLayer(name, title, crs, layout, simpleLayers, algebra, style, resampleMethod, overviewStrategy)
+            case SimpleSource(name, title, rasterSource, _, _, resampleMethod, overviewStrategy, _)               =>
+              SimpleTiledOgcLayer(name, title, crs, layout, rasterSource, style, resampleMethod, overviewStrategy)
           }
         }
       }
     }
   } map { _ getOrElse Nil }
 
-  def getMatrixLayoutDefinition(
-      tileMatrixSetId: String,
-      tileMatrixId: String
-  ): Option[LayoutDefinition] =
+  def getMatrixLayoutDefinition(tileMatrixSetId: String, tileMatrixId: String): Option[LayoutDefinition] =
     for {
       matrixSet <- matrixSetLookup.get(tileMatrixSetId)
-      matrix <- matrixSet.tileMatrix.find(_.identifier == tileMatrixId)
+      matrix    <- matrixSet.tileMatrix.find(_.identifier == tileMatrixId)
     } yield matrix.layout
 
   def getMatrixCrs(tileMatrixSetId: String): Option[CRS] =

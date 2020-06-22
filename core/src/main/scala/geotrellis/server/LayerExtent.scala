@@ -31,60 +31,54 @@ import cats.implicits._
 import io.chrisdavenport.log4cats.Logger
 
 object LayerExtent {
-  // Provide IOs for both expression and Ts, get back a tile
   def apply[F[_]: Logger: Parallel: Monad, T: ExtentReification[F, *]](
-      getExpression: F[Expression],
-      getParams: F[Map[String, T]],
-      interpreter: Interpreter[F]
+    getExpression: F[Expression],
+    getParams: F[Map[String, T]],
+    interpreter: Interpreter[F]
   ): (Extent, CellSize) => F[Interpreted[MultibandTile]] = {
     val logger = Logger[F]
     (extent: Extent, cs: CellSize) => {
       for {
-        expr <- getExpression
-        _ <- logger.trace(
-          s"[LayerExtent] Retrieved MAML AST for extent ($extent) and cellsize ($cs): ${expr.toString}"
-        )
+        expr     <- getExpression
+        _        <- logger.trace(
+                      s"[LayerExtent] Retrieved MAML AST for extent ($extent) and cellsize ($cs): ${expr.toString}"
+                    )
         paramMap <- getParams
-        _ <- logger.trace(
-          s"[LayerExtent] Retrieved Teters for extent ($extent) and cellsize ($cs): ${paramMap.toString}"
-        )
-        vars = Vars.varsWithBuffer(expr)
-        params <- vars.toList.parTraverse {
-          case (varName, (_, buffer)) =>
-            val thingify =
-              implicitly[ExtentReification[F, T]]
-                .extentReification(paramMap(varName))
-            thingify(extent, cs).map(varName -> _)
-        } map { _.toMap }
-        reified <- Expression.bindParams(expr, params.mapValues(RasterLit(_))) match {
-          case Valid(expression) => interpreter(expression)
-          case Invalid(errors)   => throw new Exception(errors.map(_.repr).reduce)
+        _        <- logger.trace(
+                      s"[LayerExtent] Retrieved Teters for extent ($extent) and cellsize ($cs): ${paramMap.toString}"
+                    )
+        vars      = Vars.varsWithBuffer(expr)
+        params   <- vars.toList.parTraverse {
+                      case (varName, (_, buffer)) =>
+                        val thingify =
+                          implicitly[ExtentReification[F, T]].extentReification(paramMap(varName))
+                        thingify(extent, cs).map(varName -> _)
+                    } map { _.toMap }
+        reified  <- Expression.bindParams(expr, params.mapValues(RasterLit(_))) match {
+                      case Valid(expression) => interpreter(expression)
+                      case Invalid(errors)   => throw new Exception(errors.map(_.repr).reduce)
+                    }
+      } yield reified
+        .andThen(_.as[MultibandTile])
+        .map {
+          _.crop(
+            RasterExtent(extent, cs)
+              .gridBoundsFor(extent)
+          )
         }
-      } yield
-        reified
-          .andThen(_.as[MultibandTile])
-          .map {
-            _.crop(
-              RasterExtent(extent, cs)
-                .gridBoundsFor(extent)
-            )
-          }
     }
   }
 
-  def generateExpression[F[_]: Logger: Parallel: Monad, T: ExtentReification[
-    F,
-    *
-  ]](
-      mkExpr: Map[String, T] => Expression,
-      getParams: F[Map[String, T]],
-      interpreter: Interpreter[F]
+  def generateExpression[F[_]: Logger: Parallel: Monad, T: ExtentReification[F, *]](
+    mkExpr: Map[String, T] => Expression,
+    getParams: F[Map[String, T]],
+    interpreter: Interpreter[F]
   ) = apply[F, T](getParams.map(mkExpr(_)), getParams, interpreter)
 
   /** Provide an expression and expect arguments to fulfill its needs */
   def curried[F[_]: Logger: Parallel: Monad, T: ExtentReification[F, *]](
-      expr: Expression,
-      interpreter: Interpreter[F]
+    expr: Expression,
+    interpreter: Interpreter[F]
   ): (Map[String, T], Extent, CellSize) => F[Interpreted[MultibandTile]] =
     (paramMap: Map[String, T], extent: Extent, cellsize: CellSize) => {
       val eval =
@@ -93,11 +87,8 @@ object LayerExtent {
     }
 
   /** The identity endpoint (for simple display of raster) */
-  def concurrent[F[_]: Logger: Parallel: Monad: Concurrent, T: ExtentReification[
-    F,
-    *
-  ]](
-      param: T
+  def concurrent[F[_]: Logger: Parallel: Monad: Concurrent, T: ExtentReification[F, *]](
+    param: T
   ): (Extent, CellSize) => F[Interpreted[MultibandTile]] =
     (extent: Extent, cellsize: CellSize) => {
       val eval = curried(RasterVar("identity"), ConcurrentInterpreter.DEFAULT)

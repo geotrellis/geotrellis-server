@@ -17,11 +17,11 @@
 package geotrellis.server.ogc.conf
 
 import cats.SemigroupK
-import cats.effect.{IO, Sync}
+import cats.effect.Sync
 import cats.instances.list._
 import cats.syntax.semigroup._
 import geotrellis.server.ogc
-import geotrellis.server.ogc.{MapAlgebraSource, OgcSource, RasterOgcSource, ows}
+import geotrellis.server.ogc.{ows, MapAlgebraSource, OgcSource, RasterOgcSource}
 import geotrellis.server.ogc.wms.WmsParentLayerMeta
 import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
 import geotrellis.server.ogc.stac._
@@ -35,61 +35,43 @@ import org.http4s.client.Client
   */
 sealed trait OgcServiceConf {
   def layerDefinitions: List[OgcSourceConf]
-  def layerSources(
-      rasterOgcSources: List[RasterOgcSource]
-  ): Repository[List, OgcSource] = {
-    val rasterLayers: List[RasterOgcSource] =
-      layerDefinitions.collect {
-        case rsc @ RasterSourceConf(_, _, _, _, _, _, _) => rsc.toLayer
-      }
-    val mapAlgebraLayers: List[MapAlgebraSource] =
-      layerDefinitions.collect {
-        case masc @ MapAlgebraSourceConf(_, _, _, _, _, _, _) =>
-          masc.modelOpt(rasterOgcSources)
-      }.flatten
+  def layerSources(rasterOgcSources: List[RasterOgcSource]): Repository[OgcSource] = {
+    val rasterLayers: List[RasterOgcSource]      = layerDefinitions.collect { case rsc @ RasterSourceConf(_, _, _, _, _, _, _) => rsc.toLayer }
+    val mapAlgebraLayers: List[MapAlgebraSource] = layerDefinitions.collect {
+      case masc @ MapAlgebraSourceConf(_, _, _, _, _, _, _) => masc.modelOpt(rasterOgcSources)
+    }.flatten
 
     ogc.OgcSourceRepository(rasterLayers ++ mapAlgebraLayers)
   }
 
-  def layerSources[F[_]: Sync: SemigroupK](
-      rasterOgcSources: List[RasterOgcSource],
-      client: Client[F]
-  ): RepositoryM[F, List, OgcSource] = {
-    val stacLayers: List[StacSourceConf] = layerDefinitions.collect {
-      case ssc @ StacSourceConf(_, _, _, _, _, _, _, _, _, _, _) => ssc
-    }
-    val mapAlgebraConfLayers: List[MapAlgebraSourceConf] =
-      layerDefinitions.collect {
-        case masc @ MapAlgebraSourceConf(_, _, _, _, _, _, _) => masc
-      }
+  def layerSources[F[_]: Sync: SemigroupK](rasterOgcSources: List[RasterOgcSource], client: Client[F]): RepositoryM[F, List, OgcSource] = {
+    val stacLayers: List[StacSourceConf]                 = layerDefinitions.collect { case ssc @ StacSourceConf(_, _, _, _, _, _, _, _, _, _, _) => ssc }
+    val mapAlgebraConfLayers: List[MapAlgebraSourceConf] = layerDefinitions.collect { case masc @ MapAlgebraSourceConf(_, _, _, _, _, _, _) => masc }
 
-    // RepositoryM[Id, List, RasterSource] ~> RepositoryM[F, List, RasterSource]
-    val idRepositories: RepositoryM[F, List, OgcSource] = layerSources(
-      rasterOgcSources
-    )
+    val idRepositories: RepositoryM[F, List, OgcSource] = layerSources(rasterOgcSources)
 
     idRepositories |+|
-      StacOgcRepositories[F](stacLayers, client) |+|
-      MapAlgebraStacOgcRepositories[F](mapAlgebraConfLayers, stacLayers, client)
+    StacOgcRepositories[F](stacLayers, client) |+|
+    MapAlgebraStacOgcRepositories[F](mapAlgebraConfLayers, stacLayers, client)
   }
 }
 
 /** WMS Service configuration */
 case class WmsConf(
-    parentLayerMeta: WmsParentLayerMeta,
-    serviceMetadata: opengis.wms.Service,
-    layerDefinitions: List[OgcSourceConf]
+  parentLayerMeta: WmsParentLayerMeta,
+  serviceMetadata: opengis.wms.Service,
+  layerDefinitions: List[OgcSourceConf]
 ) extends OgcServiceConf
 
 /** WMTS Service configuration */
 case class WmtsConf(
-    serviceMetadata: ows.ServiceMetadata,
-    layerDefinitions: List[OgcSourceConf],
-    tileMatrixSets: List[GeotrellisTileMatrixSet]
+  serviceMetadata: ows.ServiceMetadata,
+  layerDefinitions: List[OgcSourceConf],
+  tileMatrixSets: List[GeotrellisTileMatrixSet]
 ) extends OgcServiceConf
 
 /** WCS Service configuration */
 case class WcsConf(
-    serviceMetadata: ows.ServiceMetadata,
-    layerDefinitions: List[OgcSourceConf]
+  serviceMetadata: ows.ServiceMetadata,
+  layerDefinitions: List[OgcSourceConf]
 ) extends OgcServiceConf

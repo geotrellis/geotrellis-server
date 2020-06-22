@@ -20,26 +20,19 @@ import geotrellis.raster.RasterExtent
 
 import cats.Contravariant
 import cats.data.{NonEmptyList => NEL}
-import cats.effect._
 
 trait HasRasterExtents[F[_], A] {
   def rasterExtents(self: A): F[NEL[RasterExtent]]
 }
 
 object HasRasterExtents {
-  def apply[F[_], A](implicit ev: HasRasterExtents[F, A]) = ev
+  def apply[F[_], A](implicit ev: HasRasterExtents[F, A]): HasRasterExtents[F, A] = ev
 
-  implicit def contravariantHasRasterExtents[F[_]]
-      : Contravariant[HasRasterExtents[F, *]] =
+  implicit def contravariantHasRasterExtents[F[_]]: Contravariant[HasRasterExtents[F, *]] =
     new Contravariant[HasRasterExtents[F, *]] {
-      def contramap[A, B](
-          fa: HasRasterExtents[F, A]
-      )(f: B => A): HasRasterExtents[F, B] =
-        new HasRasterExtents[F, B] {
-          def rasterExtents(
-              self: B
-          ): F[NEL[RasterExtent]] =
-            fa.rasterExtents(f(self))
-        }
+
+      def contramap[A, B](fa: HasRasterExtents[F, A])(f: B => A): HasRasterExtents[F, B] = { self =>
+        fa.rasterExtents(f(self))
+      }
     }
 }

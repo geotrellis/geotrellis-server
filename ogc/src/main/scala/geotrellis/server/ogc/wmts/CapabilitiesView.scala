@@ -38,26 +38,22 @@ import scala.xml.Elem
   * @param wmtsModel WmtsModel of layers and tile matrices we can report
   * @param serviceUrl URL where this service can be reached with addition of `?request=` query parameter
   */
-class CapabilitiesView[F[_]: Monad](
-    wmtsModel: WmtsModel[F],
-    serviceUrl: URL
-) {
+class CapabilitiesView[F[_]: Monad](wmtsModel: WmtsModel[F], serviceUrl: URL) {
   import CapabilitiesView._
 
   def toXML: F[Elem] = {
     val serviceIdentification =
       ServiceIdentification(
         Title = LanguageStringType(
-          wmtsModel.serviceMetadata.identification.title
-        ) :: Nil,
+            wmtsModel.serviceMetadata.identification.title
+          ) :: Nil,
         Abstract = LanguageStringType(
-          wmtsModel.serviceMetadata.identification.description
-        ) :: Nil,
+            wmtsModel.serviceMetadata.identification.description
+          ) :: Nil,
         Keywords = KeywordsType(
-          wmtsModel.serviceMetadata.identification.keywords
-            .map(LanguageStringType(_)),
-          None
-        ) :: Nil,
+            wmtsModel.serviceMetadata.identification.keywords.map(LanguageStringType(_)),
+            None
+          ) :: Nil,
         ServiceType = CodeType("OGC WMTS"),
         ServiceTypeVersion = "1.0.0" :: Nil
       )
@@ -73,89 +69,83 @@ class CapabilitiesView[F[_]: Monad](
       }
       .getOrElse(ResponsiblePartySubsetType())
 
-    val serviceProvider =
-      ServiceProvider(
-        ProviderName = wmtsModel.serviceMetadata.provider.name,
-        ServiceContact = contact
-      )
+    val serviceProvider = ServiceProvider(ProviderName = wmtsModel.serviceMetadata.provider.name, ServiceContact = contact)
 
     val operationsMetadata = {
       val getCapabilities = Operation(
         DCP = DCP(
-          OwsDataRecord(
-            HTTP(
-              OwsDataRecord(
-                "Get",
-                RequestMethodType(
-                  Constraint = DomainType(
-                    possibleValuesOption1 = OwsDataRecord(
-                      AllowedValues(
-                        OwsDataRecord(
-                          ValueType("KVP")
-                        ) :: Nil
+            OwsDataRecord(
+              HTTP(
+                OwsDataRecord(
+                  "Get",
+                  RequestMethodType(
+                    Constraint = DomainType(
+                        possibleValuesOption1 = OwsDataRecord(
+                          AllowedValues(
+                            OwsDataRecord(
+                              ValueType("KVP")
+                            ) :: Nil
+                          )
+                        ),
+                        attributes = Map("@name" -> DataRecord("GetEncoding"))
+                      ) :: Nil,
+                    attributes = Map(
+                      "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
+                        serviceUrl.toURI
                       )
-                    ),
-                    attributes = Map("@name" -> DataRecord("GetEncoding"))
-                  ) :: Nil,
-                  attributes = Map(
-                    "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
-                      serviceUrl.toURI
                     )
                   )
-                )
-              ) :: Nil
+                ) :: Nil
+              )
             )
-          )
-        ) :: Nil,
+          ) :: Nil,
         attributes = Map("@name" -> DataRecord("GetCapabilities"))
       )
 
       val getTile = Operation(
         DCP = DCP(
-          OwsDataRecord(
-            HTTP(
-              OwsDataRecord(
-                "Get",
-                RequestMethodType(
-                  attributes = Map(
-                    "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
-                      serviceUrl.toURI
+            OwsDataRecord(
+              HTTP(
+                OwsDataRecord(
+                  "Get",
+                  RequestMethodType(
+                    attributes = Map(
+                      "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
+                        serviceUrl.toURI
+                      )
                     )
                   )
-                )
-              ) :: Nil
+                ) :: Nil
+              )
             )
-          )
-        ) :: Nil,
+          ) :: Nil,
         attributes = Map("@name" -> DataRecord("GetTile"))
       )
 
       val getFeatureInfo = Operation(
         DCP = DCP(
-          OwsDataRecord(
-            HTTP(
-              OwsDataRecord(
-                "Get",
-                RequestMethodType(
-                  attributes = Map(
-                    "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
-                      serviceUrl.toURI
+            OwsDataRecord(
+              HTTP(
+                OwsDataRecord(
+                  "Get",
+                  RequestMethodType(
+                    attributes = Map(
+                      "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
+                        serviceUrl.toURI
+                      )
                     )
                   )
-                )
-              ) :: Nil
+                ) :: Nil
+              )
             )
-          )
-        ) :: Nil,
+          ) :: Nil,
         attributes = Map("@name" -> DataRecord("GetFeatureInfo"))
       )
 
-      OperationsMetadata(
-        Operation = getCapabilities :: getTile :: getFeatureInfo :: Nil
-      )
+      OperationsMetadata(Operation = getCapabilities :: getTile :: getFeatureInfo :: Nil)
     }
 
-    val layers = modelAsLayers(wmtsModel)
+    val layers         = modelAsLayers(wmtsModel)
     val tileMatrixSets = wmtsModel.matrices.map(_.toXml)
 
     // that's how layers metadata is generated
@@ -191,32 +181,23 @@ object CapabilitiesView {
     WGS84BoundingBoxType(
       LowerCorner = extent.xmin :: extent.ymin :: Nil,
       UpperCorner = extent.xmax :: extent.ymax :: Nil,
-      attributes =
-        Map("@crs" -> DataRecord(new URI("urn:ogc:def:crs:OGC:2:84")))
+      attributes = Map("@crs" -> DataRecord(new URI("urn:ogc:def:crs:OGC:2:84")))
     )
 
   implicit class OgcSourceMethods(val self: OgcSource) {
     def toLayerType(tileMatrixSet: List[GeotrellisTileMatrixSet]): LayerType = {
-      val wgs84extent: Extent =
-        ReprojectRasterExtent(self.nativeRE, self.nativeCrs.head, LatLng).extent
-      val tileMatrixLimits: List[TileMatrixLimits] = tileMatrixSet.flatMap {
-        tms =>
-          tms.tileMatrix.map { tm =>
-            val gridBounds = tm.layout.mapTransform(
-              ReprojectRasterExtent(
-                self.nativeRE,
-                self.nativeCrs.head,
-                tms.supportedCrs
-              ).extent
-            )
-            TileMatrixLimits(
-              TileMatrix = tm.identifier,
-              MinTileRow = gridBounds.rowMin,
-              MaxTileRow = gridBounds.rowMax,
-              MinTileCol = gridBounds.colMin,
-              MaxTileCol = gridBounds.colMax
-            )
-          }
+      val wgs84extent: Extent                      = ReprojectRasterExtent(self.nativeRE, self.nativeCrs.head, LatLng).extent
+      val tileMatrixLimits: List[TileMatrixLimits] = tileMatrixSet.flatMap { tms =>
+        tms.tileMatrix.map { tm =>
+          val gridBounds = tm.layout.mapTransform(ReprojectRasterExtent(self.nativeRE, self.nativeCrs.head, tms.supportedCrs).extent)
+          TileMatrixLimits(
+            TileMatrix = tm.identifier,
+            MinTileRow = gridBounds.rowMin,
+            MaxTileRow = gridBounds.rowMax,
+            MinTileCol = gridBounds.colMin,
+            MaxTileCol = gridBounds.colMax
+          )
+        }
       }
 
       LayerType(
@@ -246,15 +227,13 @@ object CapabilitiesView {
             TileMatrixSet = "GoogleMapsCompatible",
             TileMatrixSetLimits = TileMatrixSetLimits(tileMatrixLimits).some
           )
-            :: Nil,
+          :: Nil,
         ResourceURL = Nil
       )
     }
   }
 
-  def modelAsLayers[F[_]: Monad](
-      wmtsModel: WmtsModel[F]
-  ): F[List[DataRecord[LayerType]]] =
+  def modelAsLayers[F[_]: Monad](wmtsModel: WmtsModel[F]): F[List[DataRecord[LayerType]]] =
     wmtsModel.sources.store
       .map { sources =>
         sources map { src =>

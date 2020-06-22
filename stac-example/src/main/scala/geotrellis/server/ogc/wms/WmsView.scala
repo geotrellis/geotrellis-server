@@ -35,7 +35,6 @@ import org.http4s.dsl.Http4sDsl
 import _root_.io.circe.syntax._
 import cats.effect._
 import cats.{Applicative, ApplicativeError, Parallel}
-import cats.data.Validated
 import cats.syntax.apply._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
@@ -55,11 +54,10 @@ import scala.concurrent.duration._
 import scala.xml.Elem
 import cats.Monad
 
-class WmsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[
-  *[_],
-  Throwable
-]](wmsModel: WmsModel[F], serviceUrl: URL)
-    extends Http4sDsl[F] {
+class WmsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[*[_], Throwable]](
+  wmsModel: WmsModel[F],
+  serviceUrl: URL
+) extends Http4sDsl[F] {
   val logger = Logger[F]
 
   val extendedCapabilities: List[DataRecord[Elem]] = {
@@ -67,9 +65,9 @@ class WmsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[
       None,
       "target".some,
       DataRecord("all").toXML ++
-        DataRecord("data").toXML ++
-        DataRecord("nodata").toXML ++
-        DataRecord(None, "default".some, "all").toXML
+      DataRecord("data").toXML ++
+      DataRecord("nodata").toXML ++
+      DataRecord(None, "default".some, "all").toXML
     )
 
     val focalHillshade: Elem = ExtendedElement(
@@ -86,29 +84,32 @@ class WmsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[
       targetCells
     )
 
-    val channels = "Red" :: "Green" :: "Blue" :: Nil
-    def clamp(band: String) = DataRecord(
-      None,
-      s"Clamp$band".some,
-      DataRecord(s"clampMin$band").toXML ++
+    val channels            = "Red" :: "Green" :: "Blue" :: Nil
+    def clamp(band: String) =
+      DataRecord(
+        None,
+        s"Clamp$band".some,
+        DataRecord(s"clampMin$band").toXML ++
         DataRecord(s"clampMax$band").toXML
-    )
+      )
 
-    def normalize(band: String) = DataRecord(
-      None,
-      s"Normalize$band".some,
-      DataRecord(s"normalizeOldMin$band").toXML ++
+    def normalize(band: String) =
+      DataRecord(
+        None,
+        s"Normalize$band".some,
+        DataRecord(s"normalizeOldMin$band").toXML ++
         DataRecord(s"normalizeOldMax$band").toXML ++
         DataRecord(s"normalizeNewMin$band").toXML ++
         DataRecord(s"normalizeNewMax$band").toXML
-    )
+      )
 
-    def rescale(band: String) = DataRecord(
-      None,
-      s"Rescale$band".some,
-      DataRecord(s"rescaleNewMin$band").toXML ++
+    def rescale(band: String) =
+      DataRecord(
+        None,
+        s"Rescale$band".some,
+        DataRecord(s"rescaleNewMin$band").toXML ++
         DataRecord(s"rescaleNewMax$band").toXML
-    )
+      )
 
     val rgbOps = channels.flatMap { b =>
       clamp(b) :: normalize(b) :: rescale(b) :: Nil
@@ -119,8 +120,7 @@ class WmsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[
     ExtendedCapabilities(focalHillshade, focalSlope, rgb)
   }
 
-  private val histoCache
-      : Cache[OgcLayer, Interpreted[List[Histogram[Double]]]] =
+  private val histoCache: Cache[OgcLayer, Interpreted[List[Histogram[Double]]]] =
     Scaffeine()
       .recordStats()
       .expireAfterWrite(1.hour)
@@ -136,98 +136,60 @@ class WmsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[
 
   def responseFor(req: Request[F]): F[Response[F]] = {
     WmsParams(req.multiParams) match {
-      case Invalid(errors) =>
+      case Invalid(errors)           =>
         val msg = ParamError.generateErrorMessage(errors.toList)
         logger.warn(msg) *> BadRequest(msg)
 
       case Valid(_: GetCapabilities) =>
         logger.debug(ansi"%bold{GetCapabilities: ${req.uri}}") *>
-          new CapabilitiesView[F](wmsModel, serviceUrl, extendedCapabilities).toXML flatMap {
+        new CapabilitiesView[F](wmsModel, serviceUrl, extendedCapabilities).toXML flatMap {
           Ok(_)
         }
 
-      case Valid(wmsReq: GetMap) =>
+      case Valid(wmsReq: GetMap)     =>
         logger.debug(ansi"%bold{GetMap: ${req.uri}}") *> {
-          val re = RasterExtent(wmsReq.boundingBox, wmsReq.width, wmsReq.height)
+          val re  = RasterExtent(wmsReq.boundingBox, wmsReq.width, wmsReq.height)
           val res = wmsModel
             .getLayer(wmsReq)
             .flatMap { layers =>
               layers
                 .map { layer =>
                   val evalExtent = layer match {
-                    case sl @ SimpleOgcLayer(_, _, _, _, _, _, _) =>
-                      LayerExtent.concurrent(sl)
-                    case MapAlgebraOgcLayer(
-                        _,
-                        _,
-                        _,
-                        parameters,
-                        expr,
-                        _,
-                        _,
-                        _
-                        ) =>
-                      LayerExtent(
-                        Applicative[F].pure(expr),
-                        Applicative[F].pure(parameters),
-                        ConcurrentInterpreter.DEFAULT[F]
-                      )
+                    case sl @ SimpleOgcLayer(_, _, _, _, _, _, _)               => LayerExtent.concurrent(sl)
+                    case MapAlgebraOgcLayer(_, _, _, parameters, expr, _, _, _) =>
+                      LayerExtent(Applicative[F].pure(expr), Applicative[F].pure(parameters), ConcurrentInterpreter.DEFAULT[F])
                   }
 
                   val evalHisto = layer match {
-                    case sl @ SimpleOgcLayer(_, _, _, _, _, _, _) =>
-                      LayerHistogram.concurrent(sl, 512)
-                    case MapAlgebraOgcLayer(
-                        _,
-                        _,
-                        _,
-                        parameters,
-                        expr,
-                        _,
-                        _,
-                        _
-                        ) =>
-                      LayerHistogram(
-                        Applicative[F].pure(expr),
-                        Applicative[F].pure(parameters),
-                        ConcurrentInterpreter.DEFAULT[F],
-                        512
-                      )
+                    case sl @ SimpleOgcLayer(_, _, _, _, _, _, _)               => LayerHistogram.concurrent(sl, 512)
+                    case MapAlgebraOgcLayer(_, _, _, parameters, expr, _, _, _) =>
+                      LayerHistogram(Applicative[F].pure(expr), Applicative[F].pure(parameters), ConcurrentInterpreter.DEFAULT[F], 512)
                   }
 
                   // TODO: remove this once GeoTiffRasterSource would be threadsafe
                   // ETA 6/22/2020: we're pretending everything is fine
                   val histIO = for {
                     cached <- Sync[F].delay { histoCache.getIfPresent(layer) }
-                    hist <- cached match {
-                      case Some(h) => Applicative[F].pure(h)
-                      case None    => evalHisto
-                    }
-                    _ <- Sync[F].delay { histoCache.put(layer, hist) }
+                    hist   <- cached match {
+                                case Some(h) => Applicative[F].pure(h)
+                                case None    => evalHisto
+                              }
+                    _      <- Sync[F].delay { histoCache.put(layer, hist) }
                   } yield hist
 
                   (evalExtent(re.extent, re.cellSize), histIO).parMapN {
-                    case (Valid(mbtile), Valid(hists)) =>
-                      Valid((mbtile, hists))
-                    case (Invalid(errs), _) =>
-                      Invalid(errs)
-                    case (_, Invalid(errs)) =>
-                      Invalid(errs)
+                    case (Valid(mbtile), Valid(hists)) => Valid((mbtile, hists))
+                    case (Invalid(errs), _)            => Invalid(errs)
+                    case (_, Invalid(errs))            => Invalid(errs)
                   }.attempt flatMap {
                     case Right(Valid((mbtile, hists))) => // success
-                      val rendered =
-                        Render.singleband(
-                          mbtile,
-                          layer.style,
-                          wmsReq.format,
-                          hists
-                        )
+                      val rendered = Render.singleband(mbtile, layer.style, wmsReq.format, hists)
                       tileCache.put(wmsReq, rendered)
                       Ok(rendered)
-                    case Right(Invalid(errs)) => // maml-specific errors
+                    case Right(Invalid(errs))          => // maml-specific errors
                       logger.debug(errs.toList.toString)
                       BadRequest(errs.asJson)
-                    case Left(err) => // exceptions
+                    case Left(err)                     => // exceptions
                       logger.error(err.stackTraceString)
                       InternalServerError(err.stackTraceString)
                   }
@@ -244,22 +206,13 @@ class WmsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[
                       .flatMap {
                         _.headOption match {
                           case Some(_) =>
-                            val tile = ArrayTile(Array(0, 0), 1, 1)
+                            val tile   = ArrayTile(Array(0, 0), 1, 1)
                             val mbtile = MultibandTile(tile, tile, tile)
-                            Ok(
-                              Render
-                                .singleband(mbtile, None, wmsReq.format, Nil)
-                            )
-                          case _ =>
-                            BadRequest(
-                              s"Layer ($layerName) not found or CRS (${wmsReq.crs}) not supported"
-                            )
+                            Ok(Render.singleband(mbtile, None, wmsReq.format, Nil))
+                          case _       => BadRequest(s"Layer ($layerName) not found or CRS (${wmsReq.crs}) not supported")
                         }
                       }
-                  case None =>
-                    BadRequest(
-                      s"Layer not found (no layer name provided in request)"
-                    )
+                  case None            => BadRequest(s"Layer not found (no layer name provided in request)")
                 })
             }
 

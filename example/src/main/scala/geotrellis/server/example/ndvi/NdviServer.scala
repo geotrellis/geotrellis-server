@@ -44,29 +44,28 @@ object NdviServer extends IOApp {
     maxAge = 1.day.toSeconds
   )
 
-  private val commonMiddleware: HttpMiddleware[IO] = {
-    (routes: HttpRoutes[IO]) =>
-      CORS(routes)
+  private val commonMiddleware: HttpMiddleware[IO] = { (routes: HttpRoutes[IO]) =>
+    CORS(routes)
   }
 
   val createServer: Resource[IO, Server[IO]] = {
     for {
-      conf <- ExampleConf.loadResourceF[IO](None)
-      _ <- Resource.liftF {
-        logger.info(
-          s"Initializing NDVI service at ${conf.http.interface}:${conf.http.port}/"
-        )
-      }
+      conf             <- ExampleConf.loadResourceF[IO](None)
+      _                <- Resource.liftF {
+                            logger.info(
+                              s"Initializing NDVI service at ${conf.http.interface}:${conf.http.port}/"
+                            )
+                          }
       mamlNdviRendering = new NdviService[IO, GeoTiffNode](
-        ConcurrentInterpreter.DEFAULT
-      )
-      server <- BlazeServerBuilder[IO]
-        .enableHttp2(true)
-        .bindHttp(conf.http.port, conf.http.interface)
-        .withHttpApp(
-          Router("/" -> commonMiddleware(mamlNdviRendering.routes)).orNotFound
-        )
-        .resource
+                            ConcurrentInterpreter.DEFAULT
+                          )
+      server           <- BlazeServerBuilder[IO]
+                            .enableHttp2(true)
+                            .bindHttp(conf.http.port, conf.http.interface)
+                            .withHttpApp(
+                              Router("/" -> commonMiddleware(mamlNdviRendering.routes)).orNotFound
+                            )
+                            .resource
     } yield server
   }
 

@@ -39,12 +39,9 @@ import scalaxb._
 
 import java.net._
 
-class WcsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[
-  *[_],
-  Throwable
-]](
-    wcsModel: WcsModel[F],
-    serviceUrl: URL
+class WcsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[*[_], Throwable]](
+  wcsModel: WcsModel[F],
+  serviceUrl: URL
 ) extends Http4sDsl[F] {
   val logger = Logger[F]
 
@@ -106,54 +103,53 @@ class WcsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[
   }
 
   val extendedParameters: List[DomainType] = DomainType(
-    possibleValuesOption1 = OwsDataRecord(
-      AllowedValues(
-        OwsDataRecord(
-          ValueType("all")
-        ) :: OwsDataRecord(
-          ValueType("data")
-        ) :: OwsDataRecord(
-          ValueType("nodata")
-        ) :: Nil
+      possibleValuesOption1 = OwsDataRecord(
+        AllowedValues(
+          OwsDataRecord(
+            ValueType("all")
+          ) :: OwsDataRecord(
+            ValueType("data")
+          ) :: OwsDataRecord(
+            ValueType("nodata")
+          ) :: Nil
+        )
+      ),
+      DefaultValue = ValueType("all").some,
+      attributes = Map(
+        "@name" -> DataRecord("target")
       )
-    ),
-    DefaultValue = ValueType("all").some,
-    attributes = Map(
-      "@name" -> DataRecord("target")
-    )
-  ) :: DomainType(
-    possibleValuesOption1 = OwsDataRecord(AnyValue()),
-    attributes = Map(
-      "@name" -> DataRecord("zFactor")
-    )
-  ) :: DomainType(
-    possibleValuesOption1 = OwsDataRecord(AnyValue()),
-    attributes = Map(
-      "@name" -> DataRecord("azimuth")
-    )
-  ) :: DomainType(
-    possibleValuesOption1 = OwsDataRecord(AnyValue()),
-    attributes = Map(
-      "@name" -> DataRecord("altitude")
-    )
-  ) :: Nil
+    ) :: DomainType(
+      possibleValuesOption1 = OwsDataRecord(AnyValue()),
+      attributes = Map(
+        "@name" -> DataRecord("zFactor")
+      )
+    ) :: DomainType(
+      possibleValuesOption1 = OwsDataRecord(AnyValue()),
+      attributes = Map(
+        "@name" -> DataRecord("azimuth")
+      )
+    ) :: DomainType(
+      possibleValuesOption1 = OwsDataRecord(AnyValue()),
+      attributes = Map(
+        "@name" -> DataRecord("altitude")
+      )
+    ) :: Nil
 
-  private def handleError[Result: EntityEncoder[F, *]](
-      result: Either[Throwable, Result]
-  ): F[Response[F]] = result match {
-    case Right(res) =>
-      logger.info(s"response ${res.toString}")
-      Ok(res)
-    case Left(err) =>
-      logger.error(err.stackTraceString)
-      InternalServerError(err.stackTraceString)
-  }
+  private def handleError[Result: EntityEncoder[F, *]](result: Either[Throwable, Result]): F[Response[F]] =
+    result match {
+      case Right(res) =>
+        logger.info(s"response ${res.toString}")
+        Ok(res)
+      case Left(err)  =>
+        logger.error(err.stackTraceString)
+        InternalServerError(err.stackTraceString)
+    }
 
   private val getCoverage = new GetCoverage(wcsModel)
 
   def responseFor(req: Request[F]): F[Response[F]] = {
     WcsParams(req.multiParams) match {
-      case Validated.Invalid(errors) =>
+      case Validated.Invalid(errors)  =>
         val msg = ParamError.generateErrorMessage(errors.toList)
         logger.warn(s"""Error parsing parameters: ${msg}""") *> BadRequest(
           s"""Error parsing parameters: ${msg}"""
@@ -161,24 +157,24 @@ class WcsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[
 
       case Validated.Valid(wcsParams) =>
         wcsParams match {
-          case _: GetCapabilitiesWcsParams =>
+          case _: GetCapabilitiesWcsParams  =>
             logger.debug(ansi"%bold{GetCapabilities: $serviceUrl}") *>
-              new CapabilitiesView[F](
-                wcsModel,
-                serviceUrl,
-                extendedParameters ::: extendedRGBParameters
-              ).toXML flatMap { Ok(_) }
+            new CapabilitiesView[F](
+              wcsModel,
+              serviceUrl,
+              extendedParameters ::: extendedRGBParameters
+            ).toXML flatMap { Ok(_) }
 
           case p: DescribeCoverageWcsParams =>
             logger.debug(ansi"%bold{DescribeCoverage: ${req.uri}}") *>
-              Ok(CoverageView(wcsModel, serviceUrl, p).toXML)
+            Ok(CoverageView(wcsModel, serviceUrl, p).toXML)
 
-          case p: GetCoverageWcsParams =>
+          case p: GetCoverageWcsParams      =>
             for {
-              _ <- logger.debug(ansi"%bold{GetCoverage: ${req.uri}}")
+              _           <- logger.debug(ansi"%bold{GetCoverage: ${req.uri}}")
               getCoverage <- getCoverage.build(p).attempt
-              result <- handleError(getCoverage)
-              _ <- logger.debug(s"getcoverage result: $result")
+              result      <- handleError(getCoverage)
+              _           <- logger.debug(s"getcoverage result: $result")
             } yield {
               result
             }
