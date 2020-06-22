@@ -23,25 +23,30 @@ import geotrellis.server.utils._
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
 import org.http4s.scalaxml._
 import org.http4s._
-import org.http4s.dsl.io._
+import org.http4s.dsl.Http4sDsl
 import cats.effect._
-import cats.Parallel
+import cats.{ApplicativeError, Parallel}
 import cats.data.Validated
+import cats.syntax.apply._
 import cats.syntax.flatMap._
+import cats.syntax.functor._
 import cats.syntax.option._
+import cats.syntax.applicativeError._
 import io.chrisdavenport.log4cats.Logger
 import opengis.ows.{AllowedValues, AnyValue, DomainType, ValueType}
-import org.log4s.getLogger
 import opengis._
 import scalaxb._
 
 import java.net._
 
-class WcsView[F[_]: Sync: Logger: Concurrent: Parallel](
+class WcsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[
+  *[_],
+  Throwable
+]](
     wcsModel: WcsModel[F],
     serviceUrl: URL
-) {
-  val logger = getLogger
+) extends Http4sDsl[F] {
+  val logger = Logger[F]
 
   val extendedRGBParameters: List[DomainType] = {
     val channels = "Red" :: "Green" :: "Blue" :: Nil
@@ -133,9 +138,9 @@ class WcsView[F[_]: Sync: Logger: Concurrent: Parallel](
     )
   ) :: Nil
 
-  private def handleError[Result: EntityEncoder[IO, *]](
+  private def handleError[Result: EntityEncoder[F, *]](
       result: Either[Throwable, Result]
-  ): IO[Response[IO]] = result match {
+  ): F[Response[F]] = result match {
     case Right(res) =>
       logger.info(s"response ${res.toString}")
       Ok(res)
@@ -146,36 +151,35 @@ class WcsView[F[_]: Sync: Logger: Concurrent: Parallel](
 
   private val getCoverage = new GetCoverage(wcsModel)
 
-  def responseFor(
-      req: Request[IO]
-  )(implicit cs: ContextShift[IO]): IO[Response[IO]] = {
+  def responseFor(req: Request[F]): F[Response[F]] = {
     WcsParams(req.multiParams) match {
       case Validated.Invalid(errors) =>
         val msg = ParamError.generateErrorMessage(errors.toList)
-        logger.warn(s"""Error parsing parameters: ${msg}""")
-        BadRequest(s"""Error parsing parameters: ${msg}""")
+        logger.warn(s"""Error parsing parameters: ${msg}""") *> BadRequest(
+          s"""Error parsing parameters: ${msg}"""
+        )
 
       case Validated.Valid(wcsParams) =>
         wcsParams match {
           case _: GetCapabilitiesWcsParams =>
-            logger.debug(ansi"%bold{GetCapabilities: $serviceUrl}")
-            new CapabilitiesView(
-              wcsModel,
-              serviceUrl,
-              extendedParameters ::: extendedRGBParameters
-            ).toXML flatMap { Ok(_) }
+            logger.debug(ansi"%bold{GetCapabilities: $serviceUrl}") *>
+              new CapabilitiesView[F](
+                wcsModel,
+                serviceUrl,
+                extendedParameters ::: extendedRGBParameters
+              ).toXML flatMap { Ok(_) }
 
           case p: DescribeCoverageWcsParams =>
-            logger.debug(ansi"%bold{DescribeCoverage: ${req.uri}}")
-            Ok(CoverageView(wcsModel, serviceUrl, p).toXML)
+            logger.debug(ansi"%bold{DescribeCoverage: ${req.uri}}") *>
+              Ok(CoverageView(wcsModel, serviceUrl, p).toXML)
 
           case p: GetCoverageWcsParams =>
-            logger.debug(ansi"%bold{GetCoverage: ${req.uri}}")
             for {
+              _ <- logger.debug(ansi"%bold{GetCoverage: ${req.uri}}")
               getCoverage <- getCoverage.build(p).attempt
               result <- handleError(getCoverage)
+              _ <- logger.debug(s"getcoverage result: $result")
             } yield {
-              logger.debug(s"getcoverage result: $result")
               result
             }
         }

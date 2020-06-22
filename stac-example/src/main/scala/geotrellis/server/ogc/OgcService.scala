@@ -22,18 +22,19 @@ import geotrellis.server.ogc.wmts._
 
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
+import cats.Parallel
 import cats.effect._
 import io.chrisdavenport.log4cats.Logger
 import org.log4s.getLogger
 
 import java.net.URL
 
-class OgcService[F[_]: Sync: Concurrent: Logger](
+class OgcService[F[_]: Sync: Parallel: Concurrent: Logger](
     wmsModel: Option[WmsModel[F]],
     wcsModel: Option[WcsModel[F]],
     wmtsModel: Option[WmtsModel],
     serviceUrl: URL
-)(implicit contextShift: ContextShift[IO])
+)(implicit contextShift: ContextShift[F])
     extends Http4sDsl[F] {
   val logger = getLogger
 
@@ -51,7 +52,7 @@ class OgcService[F[_]: Sync: Concurrent: Logger](
   def isWmtsReq(key: String, value: String) =
     key.toLowerCase == "service" && value.toLowerCase == "wmts"
 
-  def routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
+  def routes: HttpRoutes[F] = HttpRoutes.of[F] {
     case req @ GET -> Root if req.params.exists((isWcsReq _).tupled) =>
       logger.trace(s"WCS: $req")
       wcsView
