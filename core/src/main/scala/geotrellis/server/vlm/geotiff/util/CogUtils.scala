@@ -24,7 +24,6 @@ import geotrellis.raster.reproject._
 import geotrellis.raster.io.geotiff._
 import geotrellis.raster.io.geotiff.reader.GeoTiffReader
 import geotrellis.proj4._
-import geotrellis.spark.tiling._
 
 import cats.effect.IO
 
@@ -60,18 +59,12 @@ object CogUtils {
         cols = 256, rows = 256
       )
       val tiffTileRE = ReprojectRasterExtent(tmsTileRE, inverseTransform)
-      val overview = closestTiffOverview(tiff, tiffTileRE.cellSize, Auto(0))
+      val overview = tiff.getClosestOverview(tiffTileRE.cellSize, Auto(0))
 
       cropGeoTiff(overview, tiffTileRE.extent).map { raster =>
         raster.reproject(tmsTileRE, transform, inverseTransform)
       }
     }
-
-    /** Work around GeoTiff.closestTiffOverview being private to geotrellis */
-  def closestTiffOverview[T <: CellGrid[Int]](tiff: GeoTiff[T], cs: CellSize, strategy: OverviewStrategy): GeoTiff[T] = {
-    geotrellis.hack.GTHack.closestTiffOverview(tiff, cs, strategy)
-  }
-
 
   def getTiff(uri: String): IO[GeoTiff[MultibandTile]] =
     RangeReaderUtils.fromUri(uri).map { rr =>
@@ -85,7 +78,6 @@ object CogUtils {
       val clip = tiff.crop(List(bounds)).next._2
       Raster(clip, clipExtent)
     } else {
-      import geotrellis.vector.io._
       throw new java.lang.IllegalArgumentException(s"no intersection with geotiff extent (${tiff.extent.toPolygon.toGeoJson}) and extent (${extent.toPolygon.toGeoJson})")
     }
   }

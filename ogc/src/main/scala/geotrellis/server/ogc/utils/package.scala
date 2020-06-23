@@ -14,9 +14,6 @@
  * limitations under the License.
  */
 
-package geotrellis.store.query
+package geotrellis.server.ogc
 
-trait Repository[G[_]] {
-  def store: G[_]
-  def find(query: Query): G[_]
-}
+package object utils extends utils.Implicits

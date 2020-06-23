@@ -32,7 +32,8 @@ import java.net.{URI, URL}
 
 class CapabilitiesView(
   wcsModel: WcsModel,
-  serviceUrl: URL
+  serviceUrl: URL,
+  extendedParameters: List[DomainType] = Nil
 ) {
   def toXML: Elem = {
     val serviceIdentification = ServiceIdentification(
@@ -132,7 +133,7 @@ class CapabilitiesView(
               )) :: Nil)
           )
         ) :: Nil,
-        Parameter = DomainType(
+        Parameter = (DomainType(
           possibleValuesOption1 = OwsDataRecord(
             AllowedValues(
               OwsDataRecord(
@@ -161,7 +162,7 @@ class CapabilitiesView(
           ),
           DefaultValue = ValueType("nearest neighbor").some,
           attributes = Map("@name" -> DataRecord("InterpolationType"))
-        ) :: Nil,
+        ) :: Nil) ::: extendedParameters,
         attributes = Map("@name" -> DataRecord("GetCoverage"))
       )
 

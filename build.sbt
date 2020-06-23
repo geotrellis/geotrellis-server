@@ -14,8 +14,10 @@ lazy val commonSettings = Seq(
   // only appends the `-SNAPSHOT` suffix if there are uncommitted
   // changes in the workspace.
   version := {
-    // Avoid Cyclic reference involving error
-    if (git.gitCurrentTags.value.isEmpty || git.gitUncommittedChanges.value)
+    if (git.gitHeadCommit.value.isEmpty) "0.0.1-SNAPSHOT"
+    else if (git.gitDescribedVersion.value.isEmpty)
+      git.gitHeadCommit.value.get.substring(0, 7) + "-SNAPSHOT"
+    else if (git.gitCurrentTags.value.isEmpty || git.gitUncommittedChanges.value)
       git.gitDescribedVersion.value.get + "-SNAPSHOT"
     else
       git.gitDescribedVersion.value.get
@@ -43,9 +45,10 @@ lazy val commonSettings = Seq(
     Resolver.bintrayRepo("azavea", "geotrellis"),
     Resolver.sonatypeRepo("releases"),
     Resolver.sonatypeRepo("snapshots"),
-    "osgeo" at "https://download.osgeo.org/webdav/geotools/",
-    "locationtech-releases" at "https://repo.locationtech.org/content/groups/releases",
-    "locationtech-snapshots" at "https://repo.locationtech.org/content/groups/snapshots"
+    "osgeo-snapshots" at "https://repo.osgeo.org/repository/snapshot/",
+    "osgeo-releases" at "https://repo.osgeo.org/repository/release/",
+    "eclipse-releases" at "https://repo.eclipse.org/content/groups/releases",
+    "eclipse-snapshots" at "https://repo.eclipse.org/content/groups/snapshots"
   ),
   addCompilerPlugin(kindProjector cross CrossVersion.full),
   addCompilerPlugin(macrosParadise cross CrossVersion.full),
@@ -77,11 +80,6 @@ lazy val commonSettings = Seq(
   headerLicense := Some(HeaderLicense.ALv2(java.time.Year.now.getValue.toString, "Azavea")),
   headerMappings := Map(
     FileType.scala -> CommentStyle.cStyleBlockComment.copy(commentCreator = new CommentCreator() {
-      val Pattern = "(?s).*?(\\d{4}(-\\d{4})?).*".r
-      def findYear(header: String): Option[String] = header match {
-        case Pattern(years, _) => Some(years)
-        case _                 => None
-      }
       def apply(text: String, existingText: Option[String]): String = {
         // preserve year of old headers
         val newText = CommentStyle.cStyleBlockComment.commentCreator.apply(text, existingText)
@@ -165,7 +163,7 @@ lazy val root = project
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(noPublishSettings)
-  .aggregate(core, example, ogc, ogcExample, opengis, stac)
+  .aggregate(core, example, ogc, `ogc-example`, opengis, stac)
 
 lazy val core = project
   .settings(moduleName := "geotrellis-server-core")
@@ -180,8 +178,7 @@ lazy val core = project
       circeOptics.value,
       circeShapes.value,
       geotrellisS3,
-      geotrellisSpark,
-      spark,
+      geotrellisStore,
       cats.value,
       catsEffect.value,
       mamlJvm,
@@ -215,9 +212,8 @@ lazy val example = project
       http4sXml.value,
       scalaXml,
       geotrellisS3,
-      geotrellisSpark,
+      geotrellisStore,
       geotrellisGdal,
-      spark,
       decline,
       commonsIO,
       concHashMap,
@@ -275,9 +271,8 @@ lazy val ogc = project
   .settings(
     assembly / assemblyJarName := "geotrellis-server-ogc.jar",
     libraryDependencies ++= Seq(
-      spark,
       geotrellisS3,
-      geotrellisSpark,
+      geotrellisStore,
       commonsIo, // to make GeoTiffRasterSources work
       scaffeine,
       scalatest,
@@ -285,7 +280,7 @@ lazy val ogc = project
     )
   )
 
-lazy val ogcExample = (project in file("ogc-example"))
+lazy val `ogc-example` = project
   .dependsOn(ogc)
   .enablePlugins(DockerPlugin)
   .settings(moduleName := "geotrellis-server-ogc-example")
@@ -294,9 +289,8 @@ lazy val ogcExample = (project in file("ogc-example"))
   .settings(
     assembly / assemblyJarName := "geotrellis-server-ogc-services.jar",
     libraryDependencies ++= Seq(
-      spark,
       geotrellisS3,
-      geotrellisSpark,
+      geotrellisStore,
       geotrellisCassandra,
       geotrellisHBase,
       geotrellisAccumulo,
@@ -348,6 +342,42 @@ lazy val stac = project
       spdxChecker
     )
   )
+
+lazy val `stac-example` = project
+  .dependsOn(ogc)
+  .settings(moduleName := "geotrellis-stac-example")
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(crossScalaVersions := Seq(scalaVer))
+  .settings(libraryDependencies ++= Seq(
+    geotrellisGdal,
+    http4sDsl.value,
+    http4sBlazeServer.value,
+    http4sBlazeClient.value,
+    http4sCirce.value,
+    http4sXml.value,
+    logback,
+    pureConfig,
+    pureConfigCatsEffect,
+    scaffeine,
+    scalatest,
+    decline,
+    stac4s
+  ),
+  excludeDependencies ++= Seq(
+    // log4j brought in via uzaygezen is a pain for us
+    ExclusionRule("log4j", "log4j"),
+    ExclusionRule("org.slf4j", "slf4j-log4j12"),
+    ExclusionRule("org.slf4j", "slf4j-nop")
+  ),
+  assembly / assemblyJarName := "geotrellis-stac-example.jar",
+  libraryDependencies := (CrossVersion
+    .partialVersion(scalaVersion.value) match {
+    case Some((2, scalaMajor)) if scalaMajor >= 12 =>
+      libraryDependencies.value ++ Seq(ansiColors212)
+    case Some((2, scalaMajor)) if scalaMajor >= 11 =>
+      libraryDependencies.value ++ Seq(ansiColors211)
+  }))
 
 lazy val bench = project
   .dependsOn(core)

@@ -16,21 +16,9 @@
 
 package geotrellis.server
 
-import geotrellis.server.extent.SampleUtils
-
-import geotrellis.raster._
-import geotrellis.vector._
-import com.azavea.maml.error._
-import cats._
-import cats.implicits._
-import cats.effect._
-import cats.data.{NonEmptyList => NEL}
-
 import org.scalatest._
 
-import scala.util.Random
 import scala.concurrent.ExecutionContext
-
 
 class LayerHistogramTest extends FunSuite with Matchers {
   implicit val cs = cats.effect.IO.contextShift(ExecutionContext.global)

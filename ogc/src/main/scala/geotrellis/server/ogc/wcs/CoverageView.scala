@@ -16,15 +16,15 @@
 
 package geotrellis.server.ogc.wcs
 
+import cats.syntax.option._
 import geotrellis.store.query._
+import geotrellis.server.ogc.{GeoTrellisOgcSource, MapAlgebraSource, OgcSource, OgcTimeEmpty, OgcTimeInterval, OgcTimePositions, RasterOgcSource, SimpleSource, URN}
 import geotrellis.server.ogc.ows.OwsDataRecord
 import geotrellis.server.ogc.gml.GmlDataRecord
 import geotrellis.proj4.LatLng
 import geotrellis.raster.reproject.ReprojectRasterExtent
+import geotrellis.raster.reproject.Reproject.Options
 import geotrellis.raster.{Dimensions, GridExtent}
-import geotrellis.server.ogc.{MapAlgebraSource, OgcSource, SimpleSource, URN}
-import cats.syntax.option._
-
 import opengis.gml._
 import opengis.ows._
 import opengis.wcs._
@@ -32,7 +32,6 @@ import opengis._
 
 import scala.xml.Elem
 import scalaxb._
-
 import java.net.{URI, URL}
 
 class CoverageView(
@@ -61,16 +60,17 @@ object CoverageView {
     val nativeCrs = source.nativeCrs.head
     val re = source.nativeRE
     val llre = source match {
-      case SimpleSource(_, _, rs, _, _) =>
-        ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng)
-      case MapAlgebraSource(_, _, rss, _, _, _) =>
+      case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod, _, _) =>
         rss.values.map { rs =>
-          ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng)
+          ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(resampleMethod))
         }.reduce({ (re1, re2) =>
           val e = re1.extent combine re2.extent
           val cs = if (re1.cellSize.resolution < re2.cellSize.resolution) re1.cellSize else re2.cellSize
           new GridExtent[Long](e, cs)
         })
+      case rasterOgcLayer: RasterOgcSource =>
+        val rs = rasterOgcLayer.source
+        ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(rasterOgcLayer.resampleMethod))
     }
     val ex = re.extent
     val llex = llre.extent
@@ -93,8 +93,20 @@ object CoverageView {
      * This was excerpted from "WCS Implementation Standard 1.1" available at:
      * https://portal.ogc.org/files/07-067r5
      */
-    val temporalInstants = sources.flatMap { _.time.map(t => GmlDataRecord(TimePositionType(t.toInstant.toString))) }
-    val temporalDomain: Option[TimeSequenceType] = if (temporalInstants.nonEmpty) TimeSequenceType(temporalInstants).some else None
+    val temporalDomain: Option[TimeSequenceType] = {
+      val records = source.time match {
+        case OgcTimePositions(nel) =>
+          nel.toList.map { t => GmlDataRecord(TimePositionType(t.toInstant.toString)) }
+        case OgcTimeInterval(start, end, _) if start == end =>
+          GmlDataRecord(TimePositionType(start.toInstant.toString)) :: Nil
+        case OgcTimeInterval(start, end, _) =>
+          GmlDataRecord(TimePositionType(start.toInstant.toString)) ::
+            GmlDataRecord(TimePositionType(end.toInstant.toString)) :: Nil
+        case OgcTimeEmpty => Nil
+      }
+      if(records.nonEmpty) TimeSequenceType(records).some
+      else None
+    }
 
     CoverageDescriptionType(
       Title      = LanguageStringType(source.title) :: Nil,

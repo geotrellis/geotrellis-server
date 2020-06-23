@@ -16,16 +16,17 @@
 
 package geotrellis.store
 
+import cats.Id
 import geotrellis.raster.RasterSource
 import geotrellis.vector.ProjectedExtent
-
-import io.circe.{Decoder, Encoder}
 import higherkindness.droste.data.Fix
+import io.circe.{Decoder, Encoder}
 
 import java.time.ZonedDateTime
 
 package object query {
   type Query = Fix[QueryF]
+  type Repository[G[_], T] = RepositoryM[Id, G, T]
 
   implicit val queryEncoder: Encoder[Query] = Encoder.encodeJson.contramap(QueryF.asJson)
   implicit val querDecoder: Decoder[Query]  = Decoder.decodeJson.map(QueryF.fromJson)

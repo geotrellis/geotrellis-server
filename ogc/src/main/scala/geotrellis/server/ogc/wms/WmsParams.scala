@@ -16,13 +16,12 @@
 
 package geotrellis.server.ogc.wms
 
-import geotrellis.server.ogc.OutputFormat
+import geotrellis.server.ogc.{OgcTime, OgcTimeEmpty, OgcTimeInterval, OgcTimePositions, OutputFormat}
 import geotrellis.server.ogc.params._
 import geotrellis.proj4.LatLng
 import geotrellis.proj4.CRS
 import geotrellis.store.query._
 import geotrellis.vector.{Extent, ProjectedExtent}
-
 import cats.implicits._
 import cats.data.{Validated, ValidatedNel}
 import Validated._
@@ -57,9 +56,21 @@ object WmsParams {
     format: OutputFormat,
     width: Int,
     height: Int,
-    crs: CRS
+    crs: CRS,
+    time: OgcTime,
+    params: ParamMap
   ) extends WmsParams {
-    def toQuery: Query = layers.headOption.map(withName).getOrElse(nothing) and intersects(ProjectedExtent(boundingBox, crs))
+    def toQuery: Query = {
+      val layer = layers.headOption.map(withName).getOrElse(nothing)
+      val query = layer and intersects(ProjectedExtent(boundingBox, crs))
+      time match {
+        case timeInterval: OgcTimeInterval =>
+          query and between(timeInterval.start, timeInterval.end)
+        case OgcTimePositions(list) =>
+          query and list.toList.map(at(_)).reduce(_ or _)
+        case OgcTimeEmpty => query
+      }
+    }
   }
 
   object GetMap {
@@ -94,9 +105,11 @@ object WmsParams {
           val height =
             params.validatedParam[Int]("height", { s => Try(s.toInt).toOption })
 
+          val time = params.validatedOgcTime("time")
 
           val format =
-            params.validatedParam("format")
+            params
+              .validatedParam("format")
               .andThen { f =>
                 OutputFormat.fromString(f) match {
                   case Some(format) => Valid(format).toValidatedNel
@@ -105,25 +118,25 @@ object WmsParams {
                   }
               }
 
-          (layers, styles, bbox, format, width, height, crs).mapN {
-            case (layers, styles, bbox, format, width, height, crs) =>
-              GetMap(version, layers, styles, bbox, format = format, width = width, height = height, crs = crs)
+          (layers, styles, bbox, format, width, height, crs, time).mapN {
+            case (layers, styles, bbox, format, width, height, crs, time) =>
+              GetMap(version, layers, styles, bbox, format = format, width = width, height = height, crs = crs, time = time, params)
           }
         }
     }
   }
 
   def apply(queryParams: Map[String, Seq[String]]): ValidatedNel[ParamError, WmsParams] = {
-    val params = new ParamMap(queryParams)
+    val params = ParamMap(queryParams)
 
     val serviceParam =
-      params.validatedParam("service", validValues=Set("wms"))
+      params.validatedParam("service", validValues = Set("wms"))
 
     val requestParam =
-      params.validatedParam("request", validValues=Set("getcapabilities", "getmap"))
+      params.validatedParam("request", validValues = Set("getcapabilities", "getmap"))
 
     val firstStageValidation =
-      (serviceParam, requestParam).mapN { case (a, b) => b }
+      (serviceParam, requestParam).mapN { case (_, b) => b }
 
     firstStageValidation.andThen {
       case "getcapabilities" =>

@@ -16,6 +16,7 @@
 
 package geotrellis.server.ogc.wcs
 
+import geotrellis.store.query._
 import geotrellis.raster._
 import geotrellis.raster.io.geotiff._
 import geotrellis.server._
@@ -54,26 +55,48 @@ class GetCoverage(wcsModel: WcsModel) {
 
       case _ =>
         logger.trace(s"GetCoverage cache MISS: $params")
-        val re = params.gridExtent
 
-        wcsModel
-          .getLayers(params)
-          .headOption
-          .map {
-            case so @ SimpleOgcLayer(_, _, _, _, _) => LayerExtent.identity(so)
-            case MapAlgebraOgcLayer(_, _, _, simpleLayers, algebra, _) =>
-              LayerExtent(IO.pure(algebra), IO.pure(simpleLayers), ConcurrentInterpreter.DEFAULT)
-          }
-          .traverse { eval =>
-            eval(re.extent, re.cellSize) map {
-              case Valid(mbtile) =>
-                val bytes = GeoTiff(Raster(mbtile, re.extent), params.crs).toByteArray
-                requestCache.put(params, bytes)
-                bytes
-              case Invalid(errs) => throw MamlException(errs)
+        def renderLayers(params: GetCoverageWcsParams) = {
+          val re = params.gridExtent
+          wcsModel
+            .getLayers(params)
+            .headOption
+            .map {
+              case so @ SimpleOgcLayer(_, _, _, _, _, _, _) => LayerExtent.identity(so)
+              case MapAlgebraOgcLayer(_, _, _, simpleLayers, algebra, _, _, _) =>
+                LayerExtent(IO.pure(algebra), IO.pure(simpleLayers), ConcurrentInterpreter.DEFAULT)
             }
-          }
-          .map(_.getOrElse(Array()))
+            .traverse { eval =>
+              eval(re.extent, re.cellSize) map {
+                case Valid(mbtile) =>
+                  val bytes = GeoTiff(Raster(mbtile, re.extent), params.crs).toByteArray
+                  requestCache.put(params, bytes)
+                  bytes
+                case Invalid(errs) => throw MamlException(errs)
+              }
+            }
+        }
+
+       renderLayers(params).map { _.getOrElse {
+         wcsModel.sources.find(withName(params.identifier)).headOption match {
+           case Some(_) =>
+             // Handle the case where the STAC item was requested for some area between the tiles.
+             // STAC search will return an empty list, however QGIS may expect a test pixel to
+             // return the actual tile
+             // TODO: handle it in a proper way, how to get information about the bands amount?
+             val tile = ArrayTile.empty(IntCellType, 1, 1)
+             GeoTiff(
+               Raster(
+                 MultibandTile(tile, tile, tile),
+                 params.extent
+               ),
+               params.crs
+             ).toByteArray
+           case _ =>
+             logger.error(s"No tile found for the $params request.")
+             Array()
+         }
+       } }
     }
   }
 }

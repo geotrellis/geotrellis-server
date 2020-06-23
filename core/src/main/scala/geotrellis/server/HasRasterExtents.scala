@@ -16,7 +16,6 @@
 
 package geotrellis.server
 
-import geotrellis.proj4.CRS
 import geotrellis.raster.RasterExtent
 
 import cats.data.{NonEmptyList => NEL}

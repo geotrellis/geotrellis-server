@@ -60,16 +60,16 @@ class WmtsView(wmtsModel: WmtsModel, serviceUrl: URL) {
           val layerName = wmtsReq.layer
           wmtsModel.getLayer(wmtsReq).map { layer =>
             val evalWmts = layer match {
-              case sl @ SimpleTiledOgcLayer(_, _, _, _, _, _) =>
+              case sl @ SimpleTiledOgcLayer(_, _, _, _, _, _, _, _) =>
                 LayerTms.identity(sl)
-              case MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _) =>
+              case MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _, _, _) =>
                 LayerTms(IO.pure(expr), IO.pure(parameters), ConcurrentInterpreter.DEFAULT[IO])
             }
 
             val evalHisto = layer match {
-              case sl@SimpleTiledOgcLayer(_, _, _, _, _, _) =>
+              case sl@SimpleTiledOgcLayer(_, _, _, _, _, _, _, _) =>
                 LayerHistogram.identity(sl, 512)
-              case MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _) =>
+              case MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _, _, _) =>
                 LayerHistogram(IO.pure(expr), IO.pure(parameters), ConcurrentInterpreter.DEFAULT[IO], 512)
             }
 

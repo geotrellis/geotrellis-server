@@ -19,15 +19,15 @@ package geotrellis.server.ogc.wmts
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.style._
 import geotrellis.server.ogc.wmts.WmtsParams.GetTile
-
 import geotrellis.layer._
 import geotrellis.proj4._
+import geotrellis.store.query.Repository
 
 /** This class holds all the information necessary to construct a response to a WMTS request */
 case class WmtsModel(
   serviceMetadata: ows.ServiceMetadata,
   matrices: List[GeotrellisTileMatrixSet],
-  sources: OgcSourceRepository
+  sources: Repository[List, OgcSource]
 ) {
 
   val matrixSetLookup: Map[String, GeotrellisTileMatrixSet] =
@@ -44,13 +44,13 @@ case class WmtsModel(
     } yield {
       val style: Option[OgcStyle] = source.styles.find(_.name == p.style)
       source match {
-        case MapAlgebraSource(name, title, rasterSources, algebra, _, styles) =>
+        case MapAlgebraSource(name, title, rasterSources, algebra, _, _, resampleMethod, overviewStrategy, _) =>
           val simpleLayers = rasterSources.mapValues { rs =>
-            SimpleTiledOgcLayer(name, title, crs, layout, rs, style)
+            SimpleTiledOgcLayer(name, title, crs, layout, rs, style, resampleMethod, overviewStrategy)
           }
-          MapAlgebraTiledOgcLayer(name, title, crs, layout, simpleLayers, algebra, style)
-        case SimpleSource(name, title, rasterSource, _, styles) =>
-          SimpleTiledOgcLayer(name, title, crs, layout, rasterSource, style)
+          MapAlgebraTiledOgcLayer(name, title, crs, layout, simpleLayers, algebra, style, resampleMethod, overviewStrategy)
+        case SimpleSource(name, title, rasterSource, _, _, resampleMethod, overviewStrategy, _) =>
+          SimpleTiledOgcLayer(name, title, crs, layout, rasterSource, style, resampleMethod, overviewStrategy)
       }
     }
   }

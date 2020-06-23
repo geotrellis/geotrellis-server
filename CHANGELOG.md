@@ -6,6 +6,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.2.0] - 2020-06-23
+
+### Added
+- Configurable ResampleMethod in source definitions [#229](https://github.com/geotrellis/geotrellis-server/issues/229)
+- Enable TargetCell parameter for focal operations [#212](https://github.com/geotrellis/geotrellis-server/issues/212)
+- WMS Extended capabilities and operations [#235](https://github.com/geotrellis/geotrellis-server/issues/235)
+- WCS GetCapabilities user defined parameters [#237](https://github.com/geotrellis/geotrellis-server/issues/237)
+- WMS GetMap support of extended parameters [#236](https://github.com/geotrellis/geotrellis-server/issues/236)
+- WCS GetCoverage support of extended parameters [#238](https://github.com/geotrellis/geotrellis-server/issues/238)
+- ColorRampStyle.clampWithColor option to render colors outside the requested render range as colors in the ramp instead of as transparent pixels [#220](https://github.com/geotrellis/geotrellis-server/issues/220)
+- Expose overview strategy into the layers configuration [#252](https://github.com/geotrellis/geotrellis-server/pull/252)
+- RGB styling configuration [#249](https://github.com/geotrellis/geotrellis-server/issues/249)
+- Add STAC Support [#263](https://github.com/geotrellis/geotrellis-server/pull/263)
+- Fix ExtentRefication, wcs and wms default behavior when time is not specified for temporal layers [#278](https://github.com/geotrellis/geotrellis-server/pull/278)
+- Expose STAC temporal metadata [#279](https://github.com/geotrellis/geotrellis-server/pull/279)
+- Support for Time lists in WMS GetCapabilities [#259](https://github.com/geotrellis/geotrellis-server/issues/259)
+- Default attribute should not be used to serve response inside Time extent [#260](https://github.com/geotrellis/geotrellis-server/issues/260)
+- Enabling Time Dimension for mapalgebrasourceconf on Temporal Layers [#262](https://github.com/geotrellis/geotrellis-server/issues/262)
+
+### Changed
+ 
+- The `layers.layer-name.sources` field in application.conf is renamed to `source` and now supports a single RasterSource URI string. See `ogc-example/src/main/resources/application.conf` for examples. 
+- `type = "simplesourceconf"` should be changed to `type = "rastersourceconf"` in application.conf
+- Remove GeoTrellisRasterSourceLegacy [#197](https://github.com/geotrellis/geotrellis-server/issues/197)
+- Receive GPG key while publishing artifacts [#271](https://github.com/geotrellis/geotrellis-server/pull/271)
+
+### Fixed
+
+- Addressed GeoTrellisRasterSourceLegacy issues and minimized number of RasterSource instances constructed for GeoTrellis Layers [#219](https://github.com/geotrellis/geotrellis-server/issues/219)
+- Some source resolutions are sometimes skipped leading to reading too much tiles [#215](https://github.com/geotrellis/geotrellis-server/issues/215)
+- LayerHistogram should select the CellSize large enough to compute the histogram [#261](https://github.com/geotrellis/geotrellis-server/pull/261)
+
 ## [4.1.0] - 2020-03-03
 
 ### Added
@@ -15,8 +47,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RasterSource Catalog [#162](https://github.com/geotrellis/geotrellis-server/issues/162)
 - {WCS|WMTS|WMS}Model uses RasterSource catalog [#163](https://github.com/geotrellis/geotrellis-server/issues/163)
 - WCS DescribeCoverage may include time TemporalDomain [#211](https://github.com/geotrellis/geotrellis-server/issues/211)
+- WCS GetCoverage may include time param `TIMESEQUENCE` [#157](https://github.com/geotrellis/geotrellis-server/issues/157)
+- WMS GetCapabilities may include time TemporalDomain [#185](https://github.com/geotrellis/geotrellis-server/issues/185)
+- WMS GetMap may include time param `TIME` [#175](https://github.com/geotrellis/geotrellis-server/issues/175)
 
 ### Changed
+- GT Server sources are now loaded via the GeoTrellis RasterSource SPI API. Each `sources` definition in your application.conf should be migrated to a list of [valid RasterSource SPI URIs](https://github.com/geotrellis/geotrellis-server/pull/222/commits/5937bf6022ba192eb8ab3a7cf28c6b08738fc56a) [#222](https://github.com/geotrellis/geotrellis-server/pull/222) 
 - Included split dependencies a la GeoTrellis 3.2 for cats ecosystem libraries [\#184](https://github.com/geotrellis/geotrellis-server/pull/184)
 - Dropped WCS 1.0.0 support
 - Updated MAML up to 0.6.0 [#199](https://github.com/geotrellis/geotrellis-server/pull/199)
@@ -64,7 +100,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Update geotrellis-contrib [#135](https://github.com/geotrellis/geotrellis-server/pull/135)
 
-[Unreleased]: https://github.com/geotrellis/geotrellis-server/compare/4.1.0...HEAD
+[Unreleased]: https://github.com/geotrellis/geotrellis-server/compare/4.2.0...HEAD
+[4.2.0]: https://github.com/geotrellis/geotrellis-server/compare/4.2.0...4.1.0
 [4.1.0]: https://github.com/geotrellis/geotrellis-server/compare/4.0.1...4.1.0
 [4.0.1]: https://github.com/geotrellis/geotrellis-server/compare/4.0.0...4.0.1
 [4.0.0]: https://github.com/geotrellis/geotrellis-server/compare/3.4.0...4.0.0

@@ -1,0 +1,215 @@
+{
+  "type": "Feature",
+  "stac_version" : "0.9.0",
+  "stac_extensions" : [
+    "eo",
+    "view",
+    "layers",
+    "https://example.com/stac/landsat-extension/1.0/schema.json"
+  ],
+  "id": "LC80300332018166LGN00",
+  "bbox": [
+    -101.40793,
+    37.81084,
+    -98.6721,
+    39.97469
+  ],
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          -100.84368079413701,
+          39.97210491033466
+        ],
+        [
+          -98.67492641719046,
+          39.54833037653145
+        ],
+        [
+          -99.23946071016417,
+          37.81370881408165
+        ],
+        [
+          -101.40560438472555,
+          38.24476872678675
+        ],
+        [
+          -100.84368079413701,
+          39.97210491033466
+        ]
+      ]
+    ]
+  },
+  "collection": "landsat-8-l1",
+  "properties": {
+    "collection": "landsat-8-l1",
+    "layer:ids" : ["layer-us"],
+    "datetime": "2018-06-15T17:18:03Z",
+    "eo:sun_azimuth": 125.5799919,
+    "eo:sun_elevation": 66.54407242,
+    "eo:cloud_cover": 0,
+    "eo:row": "033",
+    "eo:column": "030",
+    "landsat:product_id": "LC08_L1TP_030033_20180615_20180703_01_T1",
+    "landsat:scene_id": "LC80300332018166LGN00",
+    "landsat:processing_level": "L1TP",
+    "landsat:tier": "T1",
+    "eo:epsg": 32614,
+    "eo:instrument": "OLI_TIRS",
+    "eo:off_nadir": 0,
+    "eo:platform": "landsat-8",
+    "eo:gsd": 15
+  },
+  "assets": {
+    "index": {
+      "type": "text/html",
+      "title": "HTML index page",
+      "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/c1/L8/030/033/LC08_L1TP_030033_20180615_20180703_01_T1/index.html",
+      "roles" : []
+    },
+    "thumbnail": {
+      "title": "Thumbnail image",
+      "type": "image/jpeg",
+      "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/c1/L8/030/033/LC08_L1TP_030033_20180615_20180703_01_T1/LC08_L1TP_030033_20180615_20180703_01_T1_thumb_large.jpg",
+      "roles" : [
+        "thumbnail"
+      ]
+    },
+    "B1": {
+      "type": "image/tiff",
+      "eo:bands": [
+        0
+      ],
+      "title": "Band 1 (coastal)",
+      "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/c1/L8/030/033/LC08_L1TP_030033_20180615_20180703_01_T1/LC08_L1TP_030033_20180615_20180703_01_T1_B1.TIF",
+      "roles": []
+    },
+    "B2": {
+      "type": "image/tiff",
+      "eo:bands": [
+        1
+      ],
+      "title": "Band 2 (blue)",
+      "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/c1/L8/030/033/LC08_L1TP_030033_20180615_20180703_01_T1/LC08_L1TP_030033_20180615_20180703_01_T1_B2.TIF",
+      "roles": []
+    },
+    "B3": {
+      "type": "image/tiff",
+      "eo:bands": [
+        2
+      ],
+      "title": "Band 3 (green)",
+      "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/c1/L8/030/033/LC08_L1TP_030033_20180615_20180703_01_T1/LC08_L1TP_030033_20180615_20180703_01_T1_B3.TIF",
+      "roles": []
+    },
+    "B4": {
+      "type": "image/tiff",
+      "eo:bands": [
+        3
+      ],
+      "title": "Band 4 (red)",
+      "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/c1/L8/030/033/LC08_L1TP_030033_20180615_20180703_01_T1/LC08_L1TP_030033_20180615_20180703_01_T1_B4.TIF",
+      "roles": []
+    },
+    "B5": {
+      "type": "image/tiff",
+      "eo:bands": [
+        4
+      ],
+      "title": "Band 5 (nir)",
+      "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/c1/L8/030/033/LC08_L1TP_030033_20180615_20180703_01_T1/LC08_L1TP_030033_20180615_20180703_01_T1_B5.TIF",
+      "roles": []
+    },
+    "B6": {
+      "type": "image/tiff",
+      "eo:bands": [
+        5
+      ],
+      "title": "Band 6 (swir16)",
+      "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/c1/L8/030/033/LC08_L1TP_030033_20180615_20180703_01_T1/LC08_L1TP_030033_20180615_20180703_01_T1_B6.TIF",
+      "roles": []
+    },
+    "B7": {
+      "type": "image/tiff",
+      "eo:bands": [
+        6
+      ],
+      "title": "Band 7 (swir22)",
+      "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/c1/L8/030/033/LC08_L1TP_030033_20180615_20180703_01_T1/LC08_L1TP_030033_20180615_20180703_01_T1_B7.TIF",
+      "roles": []
+    },
+    "B8": {
+      "type": "image/tiff",
+      "eo:bands": [
+        7
+      ],
+      "title": "Band 8 (pan)",
+      "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/c1/L8/030/033/LC08_L1TP_030033_20180615_20180703_01_T1/LC08_L1TP_030033_20180615_20180703_01_T1_B8.TIF",
+      "roles": []
+    },
+    "B9": {
+      "type": "image/tiff",
+      "eo:bands": [
+        8
+      ],
+      "title": "Band 9 (cirrus)",
+      "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/c1/L8/030/033/LC08_L1TP_030033_20180615_20180703_01_T1/LC08_L1TP_030033_20180615_20180703_01_T1_B9.TIF",
+      "roles": []
+    },
+    "B10": {
+      "type": "image/tiff",
+      "eo:bands": [
+        9
+      ],
+      "title": "Band 10 (lwir)",
+      "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/c1/L8/030/033/LC08_L1TP_030033_20180615_20180703_01_T1/LC08_L1TP_030033_20180615_20180703_01_T1_B10.TIF",
+      "roles": []
+    },
+    "B11": {
+      "type": "image/tiff",
+      "eo:bands": [
+        10
+      ],
+      "title": "Band 11 (lwir)",
+      "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/c1/L8/030/033/LC08_L1TP_030033_20180615_20180703_01_T1/LC08_L1TP_030033_20180615_20180703_01_T1_B11.TIF",
+      "roles": []
+    },
+    "ANG": {
+      "title": "Angle coefficients file",
+      "type": "text/plain",
+      "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/c1/L8/030/033/LC08_L1TP_030033_20180615_20180703_01_T1/LC08_L1TP_030033_20180615_20180703_01_T1_ANG.txt",
+      "roles": []
+    },
+    "MTL": {
+      "title": "original metadata file",
+      "type": "text/plain",
+      "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/c1/L8/030/033/LC08_L1TP_030033_20180615_20180703_01_T1/LC08_L1TP_030033_20180615_20180703_01_T1_MTL.txt",
+      "roles": []
+    },
+    "BQA": {
+      "title": "Band quality data",
+      "type": "image/tiff",
+      "href": "https://s3-us-west-2.amazonaws.com/landsat-pds/c1/L8/030/033/LC08_L1TP_030033_20180615_20180703_01_T1/LC08_L1TP_030033_20180615_20180703_01_T1_BQA.TIF",
+      "roles": []
+    }
+  },
+  "links": [
+    {
+      "rel": "self",
+      "href": "./LC80300332018166LGN00.json"
+    },
+    {
+      "rel": "parent",
+      "href": "../catalog.json"
+    },
+    {
+      "rel": "collection",
+      "href": "../catalog.json"
+    },
+    {
+      "rel": "root",
+      "href": "../../catalog.json"
+    }
+  ]
+}

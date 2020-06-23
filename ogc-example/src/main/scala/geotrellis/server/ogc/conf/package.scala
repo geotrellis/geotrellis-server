@@ -18,15 +18,14 @@ package geotrellis.server.ogc
 
 import geotrellis.server.ogc.wms.wmsScope
 import geotrellis.server.ogc.style._
-
 import geotrellis.proj4.CRS
 import geotrellis.vector.Extent
-import geotrellis.raster.TileLayout
+import geotrellis.raster.{ResampleMethod, TileLayout, resample}
 import geotrellis.raster.render.{ColorMap, ColorRamp}
-
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
 import com.typesafe.config._
+import geotrellis.raster.io.geotiff.{Auto, AutoHigherResolution, Base, OverviewStrategy}
 import io.circe._
 import io.circe.parser._
 import pureconfig._
@@ -152,6 +151,37 @@ package object conf {
         case None => throw new Exception(s"Invalid layout: $layout. Should be (layoutCols, layoutRows, tileCols, tileRows)")
       }
     }
+
+  implicit val resampleMethodReader: ConfigReader[ResampleMethod] =
+    ConfigReader[String].map {
+      case "nearest-neighbor"  => resample.NearestNeighbor
+      case "bilinear"          => resample.Bilinear
+      case "cubic-convolution" => resample.CubicConvolution
+      case "cubic-spline"      => resample.CubicSpline
+      case "lanczos"           => resample.Lanczos
+      case "average"           => resample.Average
+      case "mode"              => resample.Mode
+      case "median"            => resample.Median
+      case "max"               => resample.Max
+      case "min"               => resample.Min
+      case "sum"               => resample.Sum
+    }
+
+  implicit val overviewStrategyReader: ConfigReader[OverviewStrategy] = {
+    def parse(strategy: String, input: String): OverviewStrategy =
+      Auto(Try { input.split(s"$strategy-").last.toInt }.toOption.getOrElse(0))
+
+    def parseAuto(str: String): OverviewStrategy  = parse("auto", str)
+    def parseLevel(str: String): OverviewStrategy = parse("level", str)
+
+    ConfigReader[String].map {
+      case "auto-higher-resolution"       => AutoHigherResolution
+      case "base"                         => Base
+      case str if str.startsWith("auto")  => parseAuto(str)
+      case str if str.startsWith("level") => parseLevel(str)
+      case _                              => OverviewStrategy.DEFAULT
+    }
+  }
 
   /** An alternative AST reading strategy that uses a separate json file */
   //private lazy val s3client = AmazonS3ClientBuilder.defaultClient()

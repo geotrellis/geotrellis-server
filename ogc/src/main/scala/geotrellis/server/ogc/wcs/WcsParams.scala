@@ -18,14 +18,13 @@ package geotrellis.server.ogc.wcs
 
 import geotrellis.proj4.CRS
 import geotrellis.raster.{CellSize, GridExtent}
-import geotrellis.server.ogc.OutputFormat
+import geotrellis.server.ogc.{OgcTime, OgcTimeInterval, OgcTimePositions, OutputFormat}
 import geotrellis.server.ogc.params.ParamError.UnsupportedFormatError
 import geotrellis.server.ogc.params._
 import geotrellis.store.query._
 import geotrellis.vector.{Extent, ProjectedExtent}
-
 import cats.data.Validated._
-import cats.data.{NonEmptyList, Validated, ValidatedNel}
+import cats.data.{Validated, ValidatedNel, NonEmptyList => NEL}
 import cats.syntax.apply._
 import cats.syntax.option._
 
@@ -56,6 +55,7 @@ case class GetCoverageWcsParams(
   version: String,
   identifier: String,
   boundingBox: Extent,
+  temporalSequence: List[OgcTime],
   format: OutputFormat,
   gridBaseCRS: CRS,
   gridCS: URI,
@@ -64,9 +64,23 @@ case class GetCoverageWcsParams(
   gridOrigin: (Double, Double),
   // GridOffsets is xres, yres // swapped in case of a geographic projection
   gridOffsets: (Double, Double),
-  crs: CRS
+  crs: CRS,
+  params: ParamMap
 ) extends WcsParams {
-  def toQuery: Query = withName(identifier) and intersects(ProjectedExtent(extent, crs))
+
+  def toQuery: Query = {
+    val query = withName(identifier) and intersects(ProjectedExtent(extent, crs))
+    temporalSequence.headOption match {
+      // For now, since a RasterSource maps 1 to 1 to OgcSource, we only create a
+      // temporal filter on the first TimeInterval in the list. Revisit when we are
+      // able to utilize all requested TimeIntervals.
+      case Some(timeInterval: OgcTimeInterval) =>
+        query and between(timeInterval.start, timeInterval.end)
+      case Some(OgcTimePositions(list)) =>
+        query and list.toList.map(at(_)).reduce(_ or _)
+      case _ => query
+    }
+  }
 
   val changeXY: Boolean = crs.isGeographic
 
@@ -168,15 +182,16 @@ object GetCoverageWcsParams {
           val bboxAndCrsOption =
             getBboxAndCrsOption(params, "boundingbox")
 
-          (identifier, bboxAndCrsOption).mapN { case (id, (bbox, crsOption)) =>
-            (id, bbox, crsOption)
+
+          (identifier, bboxAndCrsOption).mapN {
+            case (id, (bbox, crsOption)) => (id, bbox, crsOption)
           }
         }
 
         val gridBaseCRS = params.validatedParam("gridbasecrs").andThen(CRSUtils.ogcToCRS)
 
         // Transform the OGC urn CRS code into a CRS.
-        val idAndBboxAndCrs: Validated[NonEmptyList[ParamError], (String, Vector[Double], CRS)] =
+        val idAndBboxAndCrs: Validated[NEL[ParamError], (String, Vector[Double], CRS)] =
           idAndBboxAndCrsOption
             .andThen { case (id, bbox, crsOption) =>
               // If the CRS wasn't in the boundingbox parameter, pull it out of the CRS field.
@@ -185,6 +200,8 @@ object GetCoverageWcsParams {
                 case None => gridBaseCRS.map { crs => (id, bbox, crs) }
               }
             }
+
+        val temporalSequenceOption = params.validatedOgcTimeSequence("timesequence")
 
         val format =
           params.validatedParam("format")
@@ -213,10 +230,10 @@ object GetCoverageWcsParams {
           }.toOption
         })
 
-        (idAndBboxAndCrs, format, gridBaseCRS, gridCS, gridType, gridOrigin, gridOffsets).mapN {
-          case ((id, bbox, crs), format, gridBaseCRS, gridCS, gridType, gridOrigin, gridOffsets) =>
+        (idAndBboxAndCrs, format, gridBaseCRS, gridCS, gridType, gridOrigin, gridOffsets, temporalSequenceOption).mapN {
+          case ((id, bbox, crs), format, gridBaseCRS, gridCS, gridType, gridOrigin, gridOffsets, temporalSeqOpt) =>
           val extent = Extent(bbox(0), bbox(1), bbox(2), bbox(3))
-          GetCoverageWcsParams(version, id, extent, format, gridBaseCRS, gridCS, gridType, gridOrigin, gridOffsets, crs)
+          GetCoverageWcsParams(version, id, extent, temporalSeqOpt, format, gridBaseCRS, gridCS, gridType, gridOrigin, gridOffsets, crs, params)
         }
       }
   }
