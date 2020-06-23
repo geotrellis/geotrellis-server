@@ -72,7 +72,7 @@ object Dependencies {
   val http4sXml = http4sVer("scala-xml")
   val jaxbApi = "javax.xml.bind" % "jaxb-api" % jaxbApiVer
   val kindProjector = "org.typelevel" %% "kind-projector" % "0.11.0"
-  val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % "0.6.0-8-g035e114-SNAPSHOT"
+  val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % "0.6.1"
   val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.12.2"
   val pureConfigCatsEffect = "com.github.pureconfig" %% "pureconfig-cats-effect" % "0.12.2"
   val refined = "eu.timepit" %% "refined" % refinedVer
