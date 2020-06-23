@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.2.0] - 2020-06-23
+
 ### Added
 - Configurable ResampleMethod in source definitions [#229](https://github.com/geotrellis/geotrellis-server/issues/229)
 - Enable TargetCell parameter for focal operations [#212](https://github.com/geotrellis/geotrellis-server/issues/212)
@@ -98,7 +100,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Update geotrellis-contrib [#135](https://github.com/geotrellis/geotrellis-server/pull/135)
 
-[Unreleased]: https://github.com/geotrellis/geotrellis-server/compare/4.1.0...HEAD
+[Unreleased]: https://github.com/geotrellis/geotrellis-server/compare/4.2.0...HEAD
+[4.2.0]: https://github.com/geotrellis/geotrellis-server/compare/4.2.0...4.1.0
 [4.1.0]: https://github.com/geotrellis/geotrellis-server/compare/4.0.1...4.1.0
 [4.0.1]: https://github.com/geotrellis/geotrellis-server/compare/4.0.0...4.0.1
 [4.0.0]: https://github.com/geotrellis/geotrellis-server/compare/3.4.0...4.0.0
