@@ -22,16 +22,15 @@ import geotrellis.store.query
 import geotrellis.store.query._
 import geotrellis.store.query.QueryF._
 
-import cats.SemigroupK
 import cats.effect.Sync
 import cats.syntax.functor._
 import cats.syntax.semigroup._
-import cats.syntax.semigroupk._
+import cats.syntax.traverse._
 import cats.instances.list._
 import higherkindness.droste.scheme
 import org.http4s.client.Client
 
-case class MapAlgebraStacOgcRepository[F[_]: Sync: SemigroupK](
+case class MapAlgebraStacOgcRepository[F[_]: Sync](
   mapAlgebraSourceConf: MapAlgebraSourceConf,
   stacSourceConfs: List[StacSourceConf],
   repository: RepositoryM[F, List, OgcSource]
@@ -47,13 +46,14 @@ case class MapAlgebraStacOgcRepository[F[_]: Sync: SemigroupK](
   def find(query: Query): F[List[OgcSource]] =
     names
       .map(queryWithName(query))
-      .map(repository.find)
-      .reduce[F[List[OgcSource]]](_ <+> _)
+      .traverse(repository.find)
+      .map(_.flatten)
       .map(_.collect { case ss: SimpleSource => ss })
       .map(mapAlgebraSourceConf.modelOpt(_).toList)
+      .widen
 }
 
-case class MapAlgebraStacOgcRepositories[F[_]: Sync: SemigroupK](
+case class MapAlgebraStacOgcRepositories[F[_]: Sync](
   mapAlgebraConfLayers: List[MapAlgebraSourceConf],
   stacLayers: List[StacSourceConf],
   client: Client[F]
@@ -76,8 +76,8 @@ case class MapAlgebraStacOgcRepositories[F[_]: Sync: SemigroupK](
 
         /** Get all ogc layers that are required for the MAML expression evaluation */
         val stacLayersFiltered = stacLayers.filter(l => layerNames.contains(l.name))
-        MapAlgebraStacOgcRepository[F](conf, stacLayersFiltered, StacOgcRepositories[F](stacLayersFiltered, client)): RepositoryM[F, List, OgcSource]
+        MapAlgebraStacOgcRepository[F](conf, stacLayersFiltered, StacOgcRepositories[F](stacLayersFiltered, client))
       }
-      .reduce(_ |+| _)
+      .fold(RepositoryM.empty[F, List, OgcSource])(_ |+| _)
       .find(query)
 }

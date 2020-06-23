@@ -50,31 +50,28 @@ case class StacOgcRepository[F[_]: Sync](
 
     /** Replace the actual conf name with the STAC Layer name */
     val filters = SearchFilters.eval(queryWithName(query))
-
-    filters match {
-      case Some(filter) =>
-        client
-          .search(filter.copy(limit = stacSourceConf.assetLimit))
-          .map { items =>
-            val rasterSources =
-              items.flatMap { item =>
-                item.assets
-                  .get(stacSourceConf.asset)
-                  .map(StacAssetRasterSource(_, item.properties))
-              }
-
-            val source: Option[RasterSource] = rasterSources match {
-              case head :: Nil => head.some
-              case head :: _   =>
-                val commonCrs          = if (rasterSources.map(_.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
-                val reprojectedSources = rasterSources.map(_.reproject(commonCrs))
-                MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs).some
-              case _           => None
+    filters.fold(Applicative[F].pure(List.empty[OgcSource])) { filter =>
+      client
+        .search(filter.copy(limit = stacSourceConf.assetLimit))
+        .map { items =>
+          val rasterSources =
+            items.flatMap { item =>
+              item.assets
+                .get(stacSourceConf.asset)
+                .map(StacAssetRasterSource(_, item.properties))
             }
 
-            source.map(stacSourceConf.toLayer).toList
+          val source: Option[RasterSource] = rasterSources match {
+            case head :: Nil => head.some
+            case head :: _   =>
+              val commonCrs          = if (rasterSources.map(_.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
+              val reprojectedSources = rasterSources.map(_.reproject(commonCrs))
+              MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs).some
+            case _           => None
           }
-      case _            => Applicative[F].pure(Nil)
+
+          source.map(stacSourceConf.toLayer).toList
+        }
     }
   }
 }
@@ -94,8 +91,8 @@ case class StacOgcRepositories[F[_]: Sync](
   def find(query: Query): F[List[OgcSource]] =
     StacOgcRepositories
       .eval(query)(stacLayers)
-      .map { conf => StacOgcRepository(conf, Http4sStacClient[F](client, Uri.unsafeFromString(conf.source))): RepositoryM[F, List, OgcSource] }
-      .reduce(_ |+| _)
+      .map { conf => StacOgcRepository(conf, Http4sStacClient[F](client, Uri.unsafeFromString(conf.source))) }
+      .fold(RepositoryM.empty[F, List, OgcSource])(_ |+| _)
       .find(query)
 }
 
