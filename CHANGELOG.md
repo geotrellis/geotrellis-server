@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- *BREAKING* Typeclasses no longer bind the effect type to IO [#284](https://github.com/geotrellis/geotrellis-server/pull/284)
+
 ## [4.2.0] - 2020-06-23
 
 ### Added
@@ -31,7 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `type = "simplesourceconf"` should be changed to `type = "rastersourceconf"` in application.conf
 - Remove GeoTrellisRasterSourceLegacy [#197](https://github.com/geotrellis/geotrellis-server/issues/197)
 - Receive GPG key while publishing artifacts [#271](https://github.com/geotrellis/geotrellis-server/pull/271)
-- *BREAKING* Typeclasses no longer bind the effect type to IO [#284](https://github.com/geotrellis/geotrellis-server/pull/284)
 
 ### Fixed
 
