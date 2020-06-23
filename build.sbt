@@ -94,8 +94,7 @@ lazy val commonSettings = Seq(
   ),
   Global / cancelable := true,
   useCoursier := false,
-  javaOptions ++= Seq("-Djava.library.path=/usr/local/lib"),
-  updateOptions := updateOptions.value.withLatestSnapshots(false)
+  javaOptions ++= Seq("-Djava.library.path=/usr/local/lib")
 )
 
 lazy val noPublishSettings = Seq(

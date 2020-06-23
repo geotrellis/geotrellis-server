@@ -38,7 +38,7 @@ object RepositoryM {
       def find(query: Query): M[G[T]] = store
     }
 
-  implicit def monoidRepositoryM[M[_]: Applicative, G[_]: MonoidK: SemigroupK, T]: Monoid[RepositoryM[M, G, T]] =
+  implicit def repositoryMMonoid[M[_]: Applicative, G[_]: MonoidK: SemigroupK, T]: Monoid[RepositoryM[M, G, T]] =
     new Monoid[RepositoryM[M, G, T]] {
       def empty: RepositoryM[M, G, T]                                                     = RepositoryM.empty[M, G, T]
       def combine(l: RepositoryM[M, G, T], r: RepositoryM[M, G, T]): RepositoryM[M, G, T] =
@@ -48,6 +48,6 @@ object RepositoryM {
         }
     }
 
-  implicit def idToApplicative[M[_]: Applicative, G[_], T](repository: RepositoryM[Id, G, T]): RepositoryM[M, G, T] =
+  implicit def repositoryMIdToApplicative[M[_]: Applicative, G[_], T](repository: RepositoryM[Id, G, T]): RepositoryM[M, G, T] =
     repository.mapK(λ[Id ~> M](Applicative[M].pure(_)))
 }
