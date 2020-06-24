@@ -48,7 +48,7 @@ sealed trait OgcServiceConf {
     val stacLayers: List[StacSourceConf]                 = layerDefinitions.collect { case ssc @ StacSourceConf(_, _, _, _, _, _, _, _, _, _, _) => ssc }
     val mapAlgebraConfLayers: List[MapAlgebraSourceConf] = layerDefinitions.collect { case masc @ MapAlgebraSourceConf(_, _, _, _, _, _, _) => masc }
 
-    (layerSources(rasterOgcSources): RepositoryM[F, List, OgcSource]) |+|
+    layerSources(rasterOgcSources).toF[F] |+|
     StacOgcRepositories[F](stacLayers, client) |+|
     MapAlgebraStacOgcRepositories[F](mapAlgebraConfLayers, stacLayers, client)
   }
