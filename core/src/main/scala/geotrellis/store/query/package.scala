@@ -31,7 +31,7 @@ package object query {
   implicit val queryEncoder: Encoder[Query] = Encoder.encodeJson.contramap(QueryF.asJson)
   implicit val queryDecoder: Decoder[Query] = Decoder.decodeJson.map(QueryF.fromJson)
 
-  implicit class QueryOps(self: Query) {
+  implicit class QueryOps(val self: Query) extends AnyVal {
     def or(right: Query): Query  = QueryF.or(self, right)
     def and(right: Query): Query = QueryF.and(self, right)
   }
@@ -54,9 +54,13 @@ package object query {
     def projectedExtent: ProjectedExtent = ProjectedExtent(self.extent, self.crs)
   }
 
-  implicit class ProjectedExtentOps(self: ProjectedExtent) {
+  implicit class ProjectedExtentOps(val self: ProjectedExtent) extends AnyVal {
     def intersects(projectedExtent: ProjectedExtent): Boolean = self.extent.intersects(projectedExtent.reproject(self.crs))
     def covers(projectedExtent: ProjectedExtent): Boolean     = self.extent.covers(projectedExtent.reproject(self.crs))
     def contains(projectedExtent: ProjectedExtent): Boolean   = self.extent.contains(projectedExtent.reproject(self.crs))
+  }
+
+  implicit class RepositoryMOps[M[_], G[_], T](val self: RepositoryM[M, G, T]) extends AnyVal {
+    def toF[F[_]](implicit ev: RepositoryM[M, G, T] => RepositoryM[F, G, T]): RepositoryM[F, G, T] = ev(self)
   }
 }
