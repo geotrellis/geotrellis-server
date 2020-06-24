@@ -14,67 +14,63 @@
  * limitations under the License.
  */
 
-// package geotrellis.server
+package geotrellis.server
 
-// import geotrellis.server.vlm.geotiff._
-// import geotrellis.server.vlm.gdal._
+import geotrellis.server.vlm.geotiff._
+import geotrellis.raster.MultibandTile
+import com.azavea.maml.ast._
+import com.azavea.maml.error._
+import com.azavea.maml.eval.ConcurrentInterpreter
+import cats.effect._
+import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 
-// import geotrellis.raster.MultibandTile
-// import com.azavea.maml.ast._
-// import com.azavea.maml.error._
-// import com.azavea.maml.util.Square
-// import com.azavea.maml.eval.BufferingInterpreter
-// import cats.effect._
-// import org.openjdk.jmh.annotations._
-// import org.gdal.gdal.gdalJNI
+import org.openjdk.jmh.annotations._
 
-// import scala.concurrent.ExecutionContext
-// import java.net.URI
+import scala.concurrent.ExecutionContext
+import java.net.URI
 
+@BenchmarkMode(Array(Mode.AverageTime))
+@State(Scope.Thread)
+class TmsReificationBench {
 
-// @BenchmarkMode(Array(Mode.AverageTime))
-// @State(Scope.Thread)
-// class TmsReificationBench {
+  implicit val logger = Slf4jLogger.getLogger[IO]
+  implicit var contextShift = IO.contextShift(ExecutionContext.global)
 
-//   // gdal performance will be obscured by the caching it attempts
-//   gdalJNI.SetConfigOption("GDAL_CACHEMAX", "0")
+  // NDVI
+  val ast: Expression =
+    Division(List(
+      Subtraction(List(
+        RasterVar("red"),
+        RasterVar("nir"))),
+      Addition(List(
+        RasterVar("red"),
+        RasterVar("nir"))
+      ))
+    )
 
-//   implicit var contextShift = IO.contextShift(ExecutionContext.global)
+  // red, green, NIR bands which should have data for z/x/y 9/454/200
+  val geotiffVars = Map(
+    "red" -> GeoTiffNode(new URI("https://s3.amazonaws.com/geotrellis-test/daunnc/r-g-nir-with-ovrs.tif"), 0, None),
+    "nir" -> GeoTiffNode(new URI("https://s3.amazonaws.com/geotrellis-test/daunnc/r-g-nir-with-ovrs.tif"), 2, None)
+  )
 
-//   // NDVI
-//   val ast =
-//     Division(List(
-//       Subtraction(List(
-//         RasterVar("red"),
-//         RasterVar("nir"))),
-//       Addition(List(
-//         RasterVar("red"),
-//         RasterVar("nir"))
-//       ))
-//     )
+  val gdalVars = Map(
+    "red" -> GeoTiffNode(new URI("gdal+https://s3.amazonaws.com/geotrellis-test/daunnc/r-g-nir-with-ovrs.tif"), 0, None),
+    "nir" -> GeoTiffNode(new URI("gdal+https://s3.amazonaws.com/geotrellis-test/daunnc/r-g-nir-with-ovrs.tif"), 2, None)
+  )
 
-//   // red, green, NIR bands which should have data for z/x/y 9/454/200
-//   val geotiffVars = Map(
-//     "red" -> GeoTiffNode(new URI("https://s3.amazonaws.com/geotrellis-test/daunnc/r-g-nir-with-ovrs.tif"), 0, None),
-//     "nir" -> GeoTiffNode(new URI("https://s3.amazonaws.com/geotrellis-test/daunnc/r-g-nir-with-ovrs.tif"), 2, None)
-//   )
-//   val gdalVars = Map(
-//     "red" -> GDALNode(new URI("https://s3.amazonaws.com/geotrellis-test/daunnc/r-g-nir-with-ovrs.tif"), 0, None),
-//     "nir" -> GDALNode(new URI("https://s3.amazonaws.com/geotrellis-test/daunnc/r-g-nir-with-ovrs.tif"), 2, None)
-//   )
+  @Setup(Level.Trial)
+  def setup(): Unit = {}
 
-//   @Setup(Level.Trial)
-//   def setup(): Unit = {}
+  @Benchmark
+  def geotiffLayerTms: Interpreted[MultibandTile] = {
+    val eval = LayerTms(IO(ast), IO(geotiffVars), ConcurrentInterpreter.DEFAULT[IO])
+    eval(9, 454, 200).unsafeRunSync
+  }
 
-//   @Benchmark
-//   def geotiffLayerTms: Interpreted[MultibandTile] = {
-//     val eval = LayerTms(IO(ast), IO(geotiffVars), BufferingInterpreter.DEFAULT)
-//     eval(9, 454, 200).unsafeRunSync
-//   }
-
-//   @Benchmark
-//   def gdalLayerTms: Interpreted[MultibandTile] = {
-//     val eval = LayerTms(IO(ast), IO(gdalVars), BufferingInterpreter.DEFAULT)
-//     eval(9, 454, 200).unsafeRunSync
-//   }
-// }
+  @Benchmark
+  def gdalLayerTms: Interpreted[MultibandTile] = {
+    val eval = LayerTms(IO(ast), IO(gdalVars), ConcurrentInterpreter.DEFAULT[IO])
+    eval(9, 454, 200).unsafeRunSync
+  }
+}
