@@ -183,6 +183,7 @@ lazy val core = project
       circeOptics.value,
       circeShapes.value,
       geotrellisS3,
+      geotrellisGdal,
       geotrellisStore,
       cats.value,
       catsEffect.value,
