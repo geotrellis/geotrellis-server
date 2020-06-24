@@ -36,19 +36,16 @@ case class GeotrellisTileMatrixSet(
   tileMatrix: List[GeotrellisTileMatrix]
 ) {
   def toXml: TileMatrixSet = {
-    val ret        =  TileMatrixSet(
-      Title        = title.map(LanguageStringType(_)).toList,
-      Abstract     = `abstract`.map(LanguageStringType(_)).toList,
-      Keywords     = Nil,
-      Identifier   = CodeType(identifier),
-      TileMatrix   = tileMatrix.map(_.toXml(supportedCrs)),
+    val ret = TileMatrixSet(
+      Title = title.map(LanguageStringType(_)).toList,
+      Abstract = `abstract`.map(LanguageStringType(_)).toList,
+      Keywords = Nil,
+      Identifier = CodeType(identifier),
+      TileMatrix = tileMatrix.map(_.toXml(supportedCrs)),
       SupportedCRS = new URI(URN.unsafeFromCrs(supportedCrs))
     )
 
-    if (wellKnownScaleSet.isDefined) {
-      ret.copy(WellKnownScaleSet = wellKnownScaleSet.map(new URI(_)))
-    } else {
-      ret.copy(BoundingBox = ???)
-    }
+    if (wellKnownScaleSet.isDefined) ret.copy(WellKnownScaleSet = wellKnownScaleSet.map(new URI(_)))
+    else ret.copy(BoundingBox = ???)
   }
 }

@@ -22,52 +22,49 @@ import geotrellis.server.ogc.wmts._
 
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
-import cats.implicits._
+import cats.Parallel
 import cats.effect._
+import io.chrisdavenport.log4cats.Logger
+import org.log4s.getLogger
 
 import java.net.URL
 
-
-class OgcService(
-  wmsModel: Option[WmsModel],
-  wcsModel: Option[WcsModel],
-  wmtsModel: Option[WmtsModel],
+class OgcService[F[_]: Sync: Parallel: Concurrent: Logger](
+  wmsModel: Option[WmsModel[F]],
+  wcsModel: Option[WcsModel[F]],
+  wmtsModel: Option[WmtsModel[F]],
   serviceUrl: URL
-)(implicit contextShift: ContextShift[IO]) extends Http4sDsl[IO] {
-  val logger = org.log4s.getLogger
+) extends Http4sDsl[F] {
+  val logger = getLogger
 
-  val wcsView = wcsModel.map(new WcsView(_, serviceUrl))
-  val wmsView = wmsModel.map(new WmsView(_, serviceUrl))
+  val wcsView  = wcsModel.map(new WcsView(_, serviceUrl))
+  val wmsView  = wmsModel.map(new WmsView(_, serviceUrl))
   val wmtsView = wmtsModel.map(new WmtsView(_, serviceUrl))
 
   // Predicates for choosing a service
-  def isWcsReq(key: String, value: String) =
-    key.toLowerCase == "service" && value.toLowerCase == "wcs"
+  def isWcsReq(key: String, value: String)  = key.toLowerCase == "service" && value.toLowerCase == "wcs"
+  def isWmsReq(key: String, value: String)  = key.toLowerCase == "service" && value.toLowerCase == "wms"
+  def isWmtsReq(key: String, value: String) = key.toLowerCase == "service" && value.toLowerCase == "wmts"
 
-  def isWmsReq(key: String, value: String) =
-    key.toLowerCase == "service" && value.toLowerCase == "wms"
-
-  def isWmtsReq(key: String, value: String) =
-    key.toLowerCase == "service" && value.toLowerCase == "wmts"
-
-  def routes: HttpRoutes[IO] = HttpRoutes.of[IO] {
-    case req @ GET -> Root if req.params.exists((isWcsReq _).tupled) =>
-      logger.trace(s"WCS: $req")
-      wcsView
-        .map(_.responseFor(req))
-        .getOrElse(NotFound())
-    case req @ GET -> Root if req.params.exists((isWmsReq _).tupled) =>
-      logger.trace(s"WMS: $req")
-      wmsView
-        .map(_.responseFor(req))
-        .getOrElse(NotFound())
-    case req @ GET -> Root if req.params.exists((isWmtsReq _).tupled) =>
-      logger.trace(s"WMTS: $req")
-      wmtsView
-        .map(_.responseFor(req))
-        .getOrElse(NotFound())
-    case req =>
-      logger.warn(s"""Recv'd UNHANDLED request: $req""")
-      NotFound()
-  }
+  def routes: HttpRoutes[F] =
+    HttpRoutes.of[F] {
+      case req @ GET -> Root if req.params.exists((isWcsReq _).tupled)  =>
+        logger.trace(s"WCS: $req")
+        wcsView
+          .map(_.responseFor(req))
+          .getOrElse(NotFound())
+      case req @ GET -> Root if req.params.exists((isWmsReq _).tupled)  =>
+        logger.trace(s"WMS: $req")
+        wmsView
+          .map(_.responseFor(req))
+          .getOrElse(NotFound())
+      case req @ GET -> Root if req.params.exists((isWmtsReq _).tupled) =>
+        logger.trace(s"WMTS: $req")
+        wmtsView
+          .map(_.responseFor(req))
+          .getOrElse(NotFound())
+      case req                                                          =>
+        logger.warn(s"""Recv'd UNHANDLED request: $req""")
+        NotFound()
+    }
 }

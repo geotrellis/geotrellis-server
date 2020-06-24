@@ -36,11 +36,11 @@ lazy val commonSettings = Seq(
     "-language:experimental.macros",
     "-feature",
     "-Ypartial-unification",
-    "-Ypatmat-exhaust-depth", "100",
     "-Xmacro-settings:materialize-derivations"
   ),
   resolvers ++= Seq(
-    Resolver.bintrayRepo("bkirwi", "maven"), // Required for `decline` dependency
+    Resolver
+      .bintrayRepo("bkirwi", "maven"), // Required for `decline` dependency
     Resolver.bintrayRepo("azavea", "maven"),
     Resolver.bintrayRepo("azavea", "geotrellis"),
     Resolver.sonatypeRepo("releases"),
@@ -68,24 +68,29 @@ lazy val commonSettings = Seq(
           MergeStrategy.discard
         case ("services" :: _ :: Nil) =>
           MergeStrategy.concat
-        case ("javax.media.jai.registryFile.jai" :: Nil) | ("registryFile.jai" :: Nil) | ("registryFile.jaiext" :: Nil) =>
+        case ("javax.media.jai.registryFile.jai" :: Nil) |
+            ("registryFile.jai" :: Nil) | ("registryFile.jaiext" :: Nil) =>
           MergeStrategy.concat
-        case (name :: Nil) if name.endsWith(".RSA") || name.endsWith(".DSA") || name.endsWith(".SF") =>
+        case (name :: Nil)
+            if name.endsWith(".RSA") || name.endsWith(".DSA") || name
+              .endsWith(".SF") =>
           MergeStrategy.discard
         case _ =>
           MergeStrategy.first
       }
     case _ => MergeStrategy.first
   },
-  headerLicense := Some(HeaderLicense.ALv2(java.time.Year.now.getValue.toString, "Azavea")),
+  headerLicense := Some(
+    HeaderLicense.ALv2(java.time.Year.now.getValue.toString, "Azavea")
+  ),
   headerMappings := Map(
-    FileType.scala -> CommentStyle.cStyleBlockComment.copy(commentCreator = new CommentCreator() {
-      def apply(text: String, existingText: Option[String]): String = {
+    FileType.scala -> CommentStyle.cStyleBlockComment.copy(
+      commentCreator = { (text, existingText) => {
         // preserve year of old headers
         val newText = CommentStyle.cStyleBlockComment.commentCreator.apply(text, existingText)
         existingText.flatMap(_ => existingText.map(_.trim)).getOrElse(newText)
-      }
-    })
+      } }
+    )
   ),
   Global / cancelable := true,
   useCoursier := false,
@@ -163,7 +168,7 @@ lazy val root = project
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(noPublishSettings)
-  .aggregate(core, example, ogc, `ogc-example`, opengis, stac)
+  .aggregate(core, example, ogc, opengis, `ogc-example`, `stac-example`)
 
 lazy val core = project
   .settings(moduleName := "geotrellis-server-core")
@@ -184,23 +189,15 @@ lazy val core = project
       mamlJvm,
       simulacrum,
       scalatest,
-      droste
+      droste,
+      log4cats
     )
-  )
-  .settings(
-    libraryDependencies ++= {
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, scalaMajor)) if scalaMajor == 11 =>
-          Seq(circeJava8.value)
-        case _ => Seq()
-      }
-    }
   )
 
 lazy val example = project
   .settings(commonSettings)
   .settings(noPublishSettings)
-  .dependsOn(core, stac)
+  .dependsOn(core)
   .settings(
     moduleName := "geotrellis-server-example",
     assembly / assemblyJarName := "geotrellis-server-example.jar",
@@ -218,11 +215,13 @@ lazy val example = project
       commonsIO,
       concHashMap,
       pureConfig,
+      pureConfigCatsEffect,
       sttp,
       sttpCats,
       sttpCirce,
       scalatest,
-      jaxbApi
+      jaxbApi,
+      log4cats
     )
   )
   .settings(
@@ -245,20 +244,20 @@ lazy val opengis = project
     Compile / scalaxb / scalaxbDispatchVersion := dispatchVer,
     Compile / scalaxb / scalaxbPackageName := "generated",
     Compile / scalaxb / scalaxbProtocolPackageName := Some("opengis"),
-    Compile / scalaxb /  scalaxbPackageNames := Map(
-      uri("http://www.w3.org/1999/xlink")           -> "xlink",
-      uri("http://www.opengis.net/wms")             -> "opengis.wms",
-      uri("http://www.opengis.net/ogc")             -> "opengis.ogc",
-      uri("http://www.opengis.net/wmts/1.0")        -> "opengis.wmts",
-      uri("http://www.opengis.net/ows/1.1")         -> "opengis.ows",
-      uri("http://www.opengis.net/ows")             -> "opengis.sld.ows",
-      uri("http://www.opengis.net/wcs/1.1.1")       -> "opengis.wcs",
-      uri("http://www.opengis.net/gml")             -> "opengis.gml",
-      uri("http://www.opengis.net/filter")          -> "opengis.filter",
-      uri("http://www.opengis.net/se")              -> "opengis.se",
-      uri("http://www.opengis.net/sld")             -> "opengis.sld",
-      uri("http://www.opengis.net/wfs")             -> "opengis.wfs",
-      uri("http://www.w3.org/2001/SMIL20/")         -> "opengis.gml.smil",
+    Compile / scalaxb / scalaxbPackageNames := Map(
+      uri("http://www.w3.org/1999/xlink") -> "xlink",
+      uri("http://www.opengis.net/wms") -> "opengis.wms",
+      uri("http://www.opengis.net/ogc") -> "opengis.ogc",
+      uri("http://www.opengis.net/wmts/1.0") -> "opengis.wmts",
+      uri("http://www.opengis.net/ows/1.1") -> "opengis.ows",
+      uri("http://www.opengis.net/ows") -> "opengis.sld.ows",
+      uri("http://www.opengis.net/wcs/1.1.1") -> "opengis.wcs",
+      uri("http://www.opengis.net/gml") -> "opengis.gml",
+      uri("http://www.opengis.net/filter") -> "opengis.filter",
+      uri("http://www.opengis.net/se") -> "opengis.se",
+      uri("http://www.opengis.net/sld") -> "opengis.sld",
+      uri("http://www.opengis.net/wfs") -> "opengis.wfs",
+      uri("http://www.w3.org/2001/SMIL20/") -> "opengis.gml.smil",
       uri("http://www.w3.org/2001/SMIL20/Language") -> "opengis.gml.smil"
     )
   )
@@ -302,44 +301,17 @@ lazy val `ogc-example` = project
       http4sXml.value,
       logback,
       pureConfig,
+      pureConfigCatsEffect,
       scaffeine,
       scalatest,
-      decline
+      decline,
+      ansiColors212
     ),
     excludeDependencies ++= Seq(
       // log4j brought in via uzaygezen is a pain for us
       ExclusionRule("log4j", "log4j"),
       ExclusionRule("org.slf4j", "slf4j-log4j12"),
       ExclusionRule("org.slf4j", "slf4j-nop")
-    ),
-    libraryDependencies := (CrossVersion
-      .partialVersion(scalaVersion.value) match {
-      case Some((2, scalaMajor)) if scalaMajor >= 12 =>
-        libraryDependencies.value ++ Seq(ansiColors212)
-      case Some((2, scalaMajor)) if scalaMajor >= 11 =>
-        libraryDependencies.value ++ Seq(ansiColors211)
-    })
-  )
-
-lazy val stac = project
-  .settings(moduleName := "geotrellis-server-stac")
-  .settings(commonSettings)
-  .settings(publishSettings)
-  .settings(
-    libraryDependencies ++= Seq(
-      cats.value,
-      circeCore.value,
-      circeGeneric.value,
-      circeParser.value,
-      circeRefined.value,
-      circeShapes.value,
-      geotrellisS3,
-      refined,
-      shapeless,
-      scalacheck,
-      scalacheckCats,
-      scalatest,
-      spdxChecker
     )
   )
 
@@ -349,35 +321,31 @@ lazy val `stac-example` = project
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(crossScalaVersions := Seq(scalaVer))
-  .settings(libraryDependencies ++= Seq(
-    geotrellisGdal,
-    http4sDsl.value,
-    http4sBlazeServer.value,
-    http4sBlazeClient.value,
-    http4sCirce.value,
-    http4sXml.value,
-    logback,
-    pureConfig,
-    pureConfigCatsEffect,
-    scaffeine,
-    scalatest,
-    decline,
-    stac4s
-  ),
-  excludeDependencies ++= Seq(
-    // log4j brought in via uzaygezen is a pain for us
-    ExclusionRule("log4j", "log4j"),
-    ExclusionRule("org.slf4j", "slf4j-log4j12"),
-    ExclusionRule("org.slf4j", "slf4j-nop")
-  ),
-  assembly / assemblyJarName := "geotrellis-stac-example.jar",
-  libraryDependencies := (CrossVersion
-    .partialVersion(scalaVersion.value) match {
-    case Some((2, scalaMajor)) if scalaMajor >= 12 =>
-      libraryDependencies.value ++ Seq(ansiColors212)
-    case Some((2, scalaMajor)) if scalaMajor >= 11 =>
-      libraryDependencies.value ++ Seq(ansiColors211)
-  }))
+  .settings(
+    libraryDependencies ++= Seq(
+      geotrellisGdal,
+      http4sDsl.value,
+      http4sBlazeServer.value,
+      http4sBlazeClient.value,
+      http4sCirce.value,
+      http4sXml.value,
+      logback,
+      pureConfig,
+      pureConfigCatsEffect,
+      scaffeine,
+      scalatest,
+      decline,
+      stac4s,
+      ansiColors212
+    ),
+    excludeDependencies ++= Seq(
+      // log4j brought in via uzaygezen is a pain for us
+      ExclusionRule("log4j", "log4j"),
+      ExclusionRule("org.slf4j", "slf4j-log4j12"),
+      ExclusionRule("org.slf4j", "slf4j-nop")
+    ),
+    assembly / assemblyJarName := "geotrellis-stac-example.jar"
+  )
 
 lazy val bench = project
   .dependsOn(core)

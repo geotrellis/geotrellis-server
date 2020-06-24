@@ -18,6 +18,7 @@ package geotrellis.server.vlm.geotiff
 
 import geotrellis.server._
 import geotrellis.server.vlm._
+import geotrellis.layer._
 import geotrellis.proj4.WebMercator
 import geotrellis.raster._
 import geotrellis.raster.resample.ResampleMethod
@@ -27,7 +28,9 @@ import geotrellis.vector.Extent
 
 import _root_.io.circe._
 import _root_.io.circe.generic.semiauto._
+import cats.data.NonEmptyList
 import cats.effect._
+import cats.syntax.functor._
 import cats.data.{NonEmptyList => NEL}
 
 import java.net.URI
@@ -41,37 +44,68 @@ case class GeoTiffNode(
 )
 
 object GeoTiffNode extends RasterSourceUtils {
-  def getRasterSource(uri: String): GeoTiffRasterSource = GeoTiffRasterSource(uri)
-
   implicit val cogNodeEncoder: Encoder[GeoTiffNode] = deriveEncoder[GeoTiffNode]
   implicit val cogNodeDecoder: Decoder[GeoTiffNode] = deriveDecoder[GeoTiffNode]
 
-  implicit val cogNodeRasterExtents: HasRasterExtents[GeoTiffNode] = new HasRasterExtents[GeoTiffNode] {
-    def rasterExtents(self: GeoTiffNode)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] =
-      getRasterExtents(self.uri.toString)
-  }
-
-  implicit val cogNodeTmsReification: TmsReification[GeoTiffNode] = new TmsReification[GeoTiffNode] {
-    def tmsReification(self: GeoTiffNode, buffer: Int)(implicit contextShift: ContextShift[IO]): (Int, Int, Int) => IO[ProjectedRaster[MultibandTile]] = (z: Int, x: Int, y: Int) => {
-      def fetch(xCoord: Int, yCoord: Int) =
-        fetchTile(self.uri.toString, z, xCoord, yCoord, WebMercator, method = self.resampleMethod, overviewStrategy = self.overviewStrategy)
-          .map(_.tile)
-          .map(_.band(self.band))
-
-      fetch(x, y).map { tile =>
-        val extent = tmsLevels(z).mapTransform.keyToExtent(x, y)
-        ProjectedRaster(MultibandTile(tile), extent, WebMercator)
-      }
+  implicit def cogNodeRasterExtents[F[_]: Sync]: HasRasterExtents[F, GeoTiffNode] = { self =>
+    Sync[F].delay {
+      val rs = RasterSource(s"${self.uri}")
+      NonEmptyList.fromListUnsafe(rs.resolutions map {
+        RasterExtent(rs.extent, _)
+      })
     }
   }
 
-  implicit val CogNodeExtentReification: ExtentReification[GeoTiffNode] = new ExtentReification[GeoTiffNode] {
-    def extentReification(self: GeoTiffNode)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] = (extent: Extent, cs: CellSize) => {
-      getRasterSource(self.uri.toString)
-        .resample(TargetRegion(new GridExtent[Long](extent, cs)), self.resampleMethod, self.overviewStrategy)
+  implicit def cogNodeTmsReification[F[_]: Sync]: TmsReification[F, GeoTiffNode] =
+    new TmsReification[F, GeoTiffNode] {
+      val targetCRS = WebMercator
+
+      val tmsLevels: Array[LayoutDefinition] = {
+        val scheme = ZoomedLayoutScheme(targetCRS, 256)
+        for (zoom <- 0 to 64) yield scheme.levelForZoom(zoom).layout
+      }.toArray
+
+      def tmsReification(
+        self: GeoTiffNode,
+        buffer: Int
+      ): (Int, Int, Int) => F[ProjectedRaster[MultibandTile]] =
+        (z: Int, x: Int, y: Int) =>
+          Sync[F].delay {
+            val layout = tmsLevels(z)
+            val key    = SpatialKey(x, y)
+            val raster = Raster(
+              RasterSource(self.uri.toString)
+                .reproject(targetCRS)
+                .tileToLayout(
+                  layout,
+                  identity,
+                  self.resampleMethod,
+                  self.overviewStrategy
+                )
+                .read(key)
+                .getOrElse(
+                  throw new Exception(
+                    s"Unable to retrieve layer $self at XY of ($x, $y)"
+                  )
+                ),
+              layout.mapTransform(key)
+            )
+
+            ProjectedRaster(raster, targetCRS)
+          }
+    }
+
+  implicit def CogNodeExtentReification[F[_]: Sync]: ExtentReification[F, GeoTiffNode] = { self => (extent: Extent, cs: CellSize) =>
+    Sync[F].delay {
+      RasterSource(self.uri.toString)
+        .resample(
+          TargetRegion(new GridExtent[Long](extent, cs)),
+          self.resampleMethod,
+          self.overviewStrategy
+        )
         .read(extent, self.band :: Nil)
-        .map { ProjectedRaster(_, WebMercator) }
-        .toIO { new Exception(s"No tile avail for RasterExtent: ${RasterExtent(extent, cs)}") }
+        .map(ProjectedRaster(_, WebMercator))
+        .getOrElse { throw new Exception(s"no data at $extent") }
     }
   }
 }

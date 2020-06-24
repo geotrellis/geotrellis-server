@@ -16,40 +16,41 @@
 
 package geotrellis.server.ogc.conf
 
-import cats.effect.IO
+import cats.SemigroupK
+import cats.effect.Sync
 import cats.instances.list._
 import cats.syntax.semigroup._
 import geotrellis.server.ogc
-import geotrellis.server.ogc.{MapAlgebraSource, OgcSource, RasterOgcSource, ows}
+import geotrellis.server.ogc.{ows, MapAlgebraSource, OgcSource, RasterOgcSource}
 import geotrellis.server.ogc.wms.WmsParentLayerMeta
 import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
 import geotrellis.server.ogc.stac._
-import geotrellis.store.query.Repository
+import geotrellis.store.query.{Repository, RepositoryM}
 import org.http4s.client.Client
 
 /**
- * Each service has its own unique configuration requirements (see the below instances)
- *  but share certain basic behaviors related to layer management. This trait encodes
- *  those expectations
- */
+  * Each service has its own unique configuration requirements (see the below instances)
+  *  but share certain basic behaviors related to layer management. This trait encodes
+  *  those expectations
+  */
 sealed trait OgcServiceConf {
   def layerDefinitions: List[OgcSourceConf]
-  def layerSources(rasterOgcSources: List[RasterOgcSource]): Repository[List, OgcSource] = {
-    val rasterLayers: List[RasterOgcSource] =
-      layerDefinitions.collect { case rsc @ RasterSourceConf(_, _, _, _, _, _, _) => rsc.toLayer }
-    val mapAlgebraLayers: List[MapAlgebraSource] =
-      layerDefinitions.collect { case masc @ MapAlgebraSourceConf(_, _, _, _, _, _, _) => masc.modelOpt(rasterOgcSources) }.flatten
+  def layerSources(rasterOgcSources: List[RasterOgcSource]): Repository[OgcSource] = {
+    val rasterLayers: List[RasterOgcSource]      = layerDefinitions.collect { case rsc @ RasterSourceConf(_, _, _, _, _, _, _) => rsc.toLayer }
+    val mapAlgebraLayers: List[MapAlgebraSource] = layerDefinitions.collect {
+      case masc @ MapAlgebraSourceConf(_, _, _, _, _, _, _) => masc.modelOpt(rasterOgcSources)
+    }.flatten
 
     ogc.OgcSourceRepository(rasterLayers ++ mapAlgebraLayers)
   }
 
-  def layerSources(rasterOgcSources: List[RasterOgcSource], client: Client[IO]): Repository[List, OgcSource] = {
-    val stacLayers: List[StacSourceConf] = layerDefinitions.collect { case ssc @ StacSourceConf(_, _, _, _, _, _, _, _, _, _, _) => ssc }
+  def layerSources[F[_]: Sync: SemigroupK](rasterOgcSources: List[RasterOgcSource], client: Client[F]): RepositoryM[F, List, OgcSource] = {
+    val stacLayers: List[StacSourceConf]                 = layerDefinitions.collect { case ssc @ StacSourceConf(_, _, _, _, _, _, _, _, _, _, _) => ssc }
     val mapAlgebraConfLayers: List[MapAlgebraSourceConf] = layerDefinitions.collect { case masc @ MapAlgebraSourceConf(_, _, _, _, _, _, _) => masc }
 
-    layerSources(rasterOgcSources) |+|
-    StacOgcRepositories(stacLayers, client) |+|
-    MapAlgebraStacOgcRepositories(mapAlgebraConfLayers, stacLayers, client)
+    (layerSources(rasterOgcSources): RepositoryM[F, List, OgcSource]) |+|
+    StacOgcRepositories[F](stacLayers, client) |+|
+    MapAlgebraStacOgcRepositories[F](mapAlgebraConfLayers, stacLayers, client)
   }
 }
 

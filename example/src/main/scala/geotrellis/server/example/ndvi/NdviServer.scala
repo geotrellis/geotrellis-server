@@ -21,7 +21,7 @@ import geotrellis.server.vlm.geotiff.GeoTiffNode
 
 import cats.effect._
 import cats.implicits._
-import fs2._
+import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import org.http4s._
 import org.http4s.server._
 import org.http4s.server.blaze.BlazeServerBuilder
@@ -33,7 +33,8 @@ import com.azavea.maml.eval._
 import scala.concurrent.duration._
 
 object NdviServer extends IOApp {
-  val logger = org.log4s.getLogger
+
+  implicit val logger = Slf4jLogger.getLogger[IO]
 
   private val corsConfig = CORSConfig(
     anyOrigin = true,
@@ -47,20 +48,28 @@ object NdviServer extends IOApp {
     CORS(routes)
   }
 
-  val stream: Stream[IO, ExitCode] = {
+  val createServer: Resource[IO, Server[IO]] = {
     for {
-      conf       <- Stream.eval(LoadConf().as[ExampleConf])
-      _          <- Stream.eval(IO { logger.info(s"Initializing NDVI service at ${conf.http.interface}:${conf.http.port}/") } )
-      mamlNdviRendering = new NdviService[GeoTiffNode](ConcurrentInterpreter.DEFAULT)
-      exitCode   <- BlazeServerBuilder[IO]
-        .enableHttp2(true)
-        .bindHttp(conf.http.port, conf.http.interface)
-        .withHttpApp(Router("/" -> commonMiddleware(mamlNdviRendering.routes)).orNotFound)
-        .serve
-    } yield exitCode
+      conf             <- ExampleConf.loadResourceF[IO](None)
+      _                <- Resource.liftF {
+                            logger.info(
+                              s"Initializing NDVI service at ${conf.http.interface}:${conf.http.port}/"
+                            )
+                          }
+      mamlNdviRendering = new NdviService[IO, GeoTiffNode](
+                            ConcurrentInterpreter.DEFAULT
+                          )
+      server           <- BlazeServerBuilder[IO]
+                            .enableHttp2(true)
+                            .bindHttp(conf.http.port, conf.http.interface)
+                            .withHttpApp(
+                              Router("/" -> commonMiddleware(mamlNdviRendering.routes)).orNotFound
+                            )
+                            .resource
+    } yield server
   }
 
   /** The 'main' method for a cats-effect IOApp */
   override def run(args: List[String]): IO[ExitCode] =
-    stream.compile.drain.as(ExitCode.Success)
+    createServer.use(_ => IO.never).as(ExitCode.Success)
 }

@@ -19,7 +19,7 @@ package geotrellis.server.ogc.gml
 import cats.syntax.option._
 import scalaxb.{CanWriteXML, DataRecord}
 
-import scala.reflect.{ClassTag, classTag}
+import scala.reflect.{classTag, ClassTag}
 
 object GmlDataRecord {
   def apply[T: CanWriteXML: ClassTag](value: T): DataRecord[T] =

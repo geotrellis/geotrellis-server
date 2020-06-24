@@ -35,9 +35,9 @@ case class Http4sStacClient[F[_]: Sync](
   baseUri: Uri
 ) extends StacClient[F] {
   private def postRequest: Request[F] = Request[F]().withMethod(POST)
-  private def getRequest: Request[F] = Request[F]().withMethod(GET)
+  private def getRequest: Request[F]  = Request[F]().withMethod(GET)
 
-  def search(filter: SearchFilters = SearchFilters()): F[List[StacItem]] = 
+  def search(filter: SearchFilters = SearchFilters()): F[List[StacItem]] =
     client
       .expect(postRequest.withUri(baseUri.withPath("/search")).withEntity(filter.asJson.noSpaces))
       .map(_.hcursor.downField("features").as[List[StacItem]].bimap(_ => Nil, identity).merge)

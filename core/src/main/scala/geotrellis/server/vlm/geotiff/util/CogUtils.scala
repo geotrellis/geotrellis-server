@@ -37,7 +37,7 @@ object CogUtils {
 
   /** Read GeoTiff from URI while caching the header bytes in memcache */
   def fromUri(uri: String): IO[GeoTiff[MultibandTile]] = {
-    val cacheSize = 1<<18
+    val cacheSize = 1 << 18
     for {
       headerBytes <- RangeReaderUtils.fromUri(uri).map(_.readRange(0, cacheSize))
       rr          <- RangeReaderUtils.fromUri(uri)
@@ -52,14 +52,15 @@ object CogUtils {
 
   def fetch(uri: String, zoom: Int, x: Int, y: Int, crs: CRS = WebMercator): IO[Raster[MultibandTile]] =
     CogUtils.fromUri(uri).flatMap { tiff =>
-      val transform = Proj4Transform(tiff.crs, crs)
+      val transform        = Proj4Transform(tiff.crs, crs)
       val inverseTransform = Proj4Transform(crs, tiff.crs)
-      val tmsTileRE = RasterExtent(
+      val tmsTileRE        = RasterExtent(
         extent = tmsLevels(zoom).mapTransform.keyToExtent(x, y),
-        cols = 256, rows = 256
+        cols = 256,
+        rows = 256
       )
-      val tiffTileRE = ReprojectRasterExtent(tmsTileRE, inverseTransform)
-      val overview = tiff.getClosestOverview(tiffTileRE.cellSize, Auto(0))
+      val tiffTileRE       = ReprojectRasterExtent(tmsTileRE, inverseTransform)
+      val overview         = tiff.getClosestOverview(tiffTileRE.cellSize, Auto(0))
 
       cropGeoTiff(overview, tiffTileRE.extent).map { raster =>
         raster.reproject(tmsTileRE, transform, inverseTransform)
@@ -71,16 +72,19 @@ object CogUtils {
       GeoTiffReader.readMultiband(rr, streaming = true)
     }
 
-  def cropGeoTiff[T <: CellGrid[Int]](tiff: GeoTiff[T], extent: Extent): IO[Raster[T]] = IO {
-    if (extent.intersects(tiff.extent)) {
-      val bounds = tiff.rasterExtent.gridBoundsFor(extent)
-      val clipExtent = tiff.rasterExtent.extentFor(bounds)
-      val clip = tiff.crop(List(bounds)).next._2
-      Raster(clip, clipExtent)
-    } else {
-      throw new java.lang.IllegalArgumentException(s"no intersection with geotiff extent (${tiff.extent.toPolygon.toGeoJson}) and extent (${extent.toPolygon.toGeoJson})")
+  def cropGeoTiff[T <: CellGrid[Int]](tiff: GeoTiff[T], extent: Extent): IO[Raster[T]] =
+    IO {
+      if (extent.intersects(tiff.extent)) {
+        val bounds     = tiff.rasterExtent.gridBoundsFor(extent)
+        val clipExtent = tiff.rasterExtent.extentFor(bounds)
+        val clip       = tiff.crop(List(bounds)).next._2
+        Raster(clip, clipExtent)
+      } else {
+        throw new java.lang.IllegalArgumentException(
+          s"no intersection with geotiff extent (${tiff.extent.toPolygon.toGeoJson}) and extent (${extent.toPolygon.toGeoJson})"
+        )
+      }
     }
-  }
 
   def cropGeoTiffToTile(tiff: GeoTiff[MultibandTile], extent: Extent, cs: CellSize, targetBand: Int): Tile =
     tiff
@@ -89,6 +93,5 @@ object CogUtils {
       .tile
       .band(targetBand)
       .resample(extent, RasterExtent(extent, cs))
-
 
 }

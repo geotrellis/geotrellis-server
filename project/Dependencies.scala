@@ -14,9 +14,9 @@ object Dependencies {
   def catsVersion(module: String) = Def.setting {
     module match {
       case "core" =>
-        "org.typelevel" %% s"cats-$module" % ver("1.6.1", "2.0.0").value force()
+        "org.typelevel" %% s"cats-$module" % ver("1.6.1", "2.0.0").value force ()
       case "effect" =>
-        "org.typelevel" %% s"cats-$module" % ver("1.4.0", "2.0.0").value force()
+        "org.typelevel" %% s"cats-$module" % ver("1.4.0", "2.0.0").value force ()
     }
   }
 
@@ -28,12 +28,12 @@ object Dependencies {
     "org.http4s" %% s"http4s-$module" % ver("0.20.15", "0.21.0-M6").value
   }
 
-  val crossScalaVer = List("2.12.11", "2.11.12")
+  val crossScalaVer = List("2.12.11")
   val scalaVer = crossScalaVer.head
 
   val circeVer = "0.11.1"
   val dispatchVer = "0.11.3"
-  val gtVer = "3.4.0"
+  val gtVer = "3.4.1-SNAPSHOT"
   val jaxbApiVer = "2.3.1"
   val refinedVer = "0.9.9"
   val shapelessVer = "2.3.3"
@@ -72,6 +72,7 @@ object Dependencies {
   val http4sXml = http4sVer("scala-xml")
   val jaxbApi = "javax.xml.bind" % "jaxb-api" % jaxbApiVer
   val kindProjector = "org.typelevel" %% "kind-projector" % "0.11.0"
+  val log4cats = "io.chrisdavenport" %% "log4cats-slf4j" % "1.1.1"
   val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % "0.6.1"
   val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.12.2"
   val pureConfigCatsEffect = "com.github.pureconfig" %% "pureconfig-cats-effect" % "0.12.2"
@@ -94,8 +95,5 @@ object Dependencies {
   val logback = "ch.qos.logback" % "logback-classic" % "1.2.3" % Runtime
   val droste = "io.higherkindness" %% "droste-core" % "0.8.0"
   val stac4s = "com.azavea.stac4s" %% "core" % "0.0.10"
-
-  // This dependency differs between scala 2.11 and 2.12
-  val ansiColors211 = "org.backuity" %% "ansi-interpolator" % "1.1" % Provided
   val ansiColors212 = "org.backuity" %% "ansi-interpolator" % "1.1.0" % Provided
 }

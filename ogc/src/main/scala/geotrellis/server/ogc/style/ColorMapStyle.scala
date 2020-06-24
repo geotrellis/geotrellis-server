@@ -24,26 +24,16 @@ import geotrellis.raster.render.{ColorMap, ColorRamp}
 import geotrellis.raster.render.jpg.JpgEncoder
 import geotrellis.util.np.linspace
 
-
-case class ColorMapStyle(
-  name: String,
-  title: String,
-  colorMap: ColorMap,
-  legends: List[LegendModel] = Nil
-) extends OgcStyle {
+case class ColorMapStyle(name: String, title: String, colorMap: ColorMap, legends: List[LegendModel] = Nil) extends OgcStyle {
   def renderImage(
     mbtile: MultibandTile,
     format: OutputFormat,
     hists: List[Histogram[Double]]
   ): Array[Byte] = {
     format match {
-      case format: OutputFormat.Png =>
-        format.render(mbtile.band(bandIndex = 0), colorMap)
-
-      case OutputFormat.Jpg =>
-        mbtile.band(bandIndex = 0).renderJpg(colorMap).bytes
-
-      case OutputFormat.GeoTiff => ??? // Implementation necessary
+      case format: OutputFormat.Png => format.render(mbtile.band(bandIndex = 0), colorMap)
+      case OutputFormat.Jpg         => mbtile.band(bandIndex = 0).renderJpg(colorMap).bytes
+      case OutputFormat.GeoTiff     => ??? // Implementation necessary
     }
   }
 }

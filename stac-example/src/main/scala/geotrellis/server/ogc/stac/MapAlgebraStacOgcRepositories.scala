@@ -22,51 +22,62 @@ import geotrellis.store.query
 import geotrellis.store.query._
 import geotrellis.store.query.QueryF._
 
-import cats.effect.IO
+import cats.effect.Sync
+import cats.syntax.functor._
+import cats.syntax.semigroup._
+import cats.syntax.traverse._
+import cats.instances.list._
 import higherkindness.droste.scheme
 import org.http4s.client.Client
 
-case class MapAlgebraStacOgcRepository(
+case class MapAlgebraStacOgcRepository[F[_]: Sync](
   mapAlgebraSourceConf: MapAlgebraSourceConf,
   stacSourceConfs: List[StacSourceConf],
-  repository: Repository[List, OgcSource]
-) extends Repository[List, OgcSource] {
+  repository: RepositoryM[F, List, OgcSource]
+) extends RepositoryM[F, List, OgcSource] {
   private val names = stacSourceConfs.map(_.name).distinct
 
-  def store: List[OgcSource] = find(query.all)
+  def store: F[List[OgcSource]] = find(query.all)
 
   /** Replace the OGC layer name with its STAC Layer name */
   private def queryWithName(query: Query)(name: String): Query =
     scheme.ana(QueryF.coalgebraWithName(name)).apply(query)
 
-  def find(query: Query): List[OgcSource] =
-    mapAlgebraSourceConf.modelOpt(
-      names
-        .map(queryWithName(query))
-        .flatMap(repository.find)
-        .collect { case ss @ SimpleSource(_, _, _, _, _, _, _, _) => ss }
-    ).toList
+  def find(query: Query): F[List[OgcSource]] =
+    names
+      .map(queryWithName(query))
+      .traverse(repository.find)
+      .map(_.flatten)
+      .map(_.collect { case ss: SimpleSource => ss })
+      .map(mapAlgebraSourceConf.modelOpt(_).toList)
+      .widen
 }
 
-case class MapAlgebraStacOgcRepositories(mapAlgebraConfLayers: List[MapAlgebraSourceConf], stacLayers: List[StacSourceConf], client: Client[IO]) extends Repository[List, OgcSource] {
-  def store: List[OgcSource] = find(query.withNames(mapAlgebraConfLayers.map(_.name).toSet))
+case class MapAlgebraStacOgcRepositories[F[_]: Sync](
+  mapAlgebraConfLayers: List[MapAlgebraSourceConf],
+  stacLayers: List[StacSourceConf],
+  client: Client[F]
+) extends RepositoryM[F, List, OgcSource] {
+  def store: F[List[OgcSource]] =
+    find(query.withNames(mapAlgebraConfLayers.map(_.name).toSet))
 
   /**
-   * At first, choose stacLayers that fit the query, because after that we'll erase their name.
-   * GT Server layer conf names != the STAC Layer name
-   * conf names can be different for the same STAC Layer name.
-   * A name is unique per the STAC layer and an asset.
-   */
-  def find(query: Query): List[OgcSource] =
+    * At first, choose stacLayers that fit the query, because after that we'll erase their name.
+    * GT Server layer conf names != the STAC Layer name
+    * conf names can be different for the same STAC Layer name.
+    * A name is unique per the STAC layer and an asset.
+    */
+  def find(query: Query): F[List[OgcSource]] =
     StacOgcRepositories
       .eval(query)(mapAlgebraConfLayers)
       .map { conf =>
         /** Extract layerNames from the MAML expression */
         val layerNames = conf.listParams(conf.algebra)
+
         /** Get all ogc layers that are required for the MAML expression evaluation */
         val stacLayersFiltered = stacLayers.filter(l => layerNames.contains(l.name))
-        MapAlgebraStacOgcRepository(conf, stacLayersFiltered, StacOgcRepositories(stacLayersFiltered, client))
+        MapAlgebraStacOgcRepository[F](conf, stacLayersFiltered, StacOgcRepositories[F](stacLayersFiltered, client))
       }
-      .flatMap(_.find(query))
+      .fold(RepositoryM.empty[F, List, OgcSource])(_ |+| _)
+      .find(query)
 }
-
