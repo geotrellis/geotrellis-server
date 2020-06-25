@@ -20,12 +20,10 @@ import geotrellis.server.ogc.{OgcSource, SimpleSource}
 import geotrellis.server.ogc.conf.{MapAlgebraSourceConf, StacSourceConf}
 import geotrellis.store.query
 import geotrellis.store.query._
-import geotrellis.store.query.QueryF._
 
 import cats.effect.Sync
 import cats.syntax.functor._
 import cats.syntax.semigroup._
-import cats.syntax.traverse._
 import cats.instances.list._
 import higherkindness.droste.scheme
 import org.http4s.client.Client
@@ -44,10 +42,8 @@ case class MapAlgebraStacOgcRepository[F[_]: Sync](
     scheme.ana(QueryF.coalgebraWithName(name)).apply(query)
 
   def find(query: Query): F[List[OgcSource]] =
-    names
-      .map(queryWithName(query))
-      .traverse(repository.find)
-      .map(_.flatten)
+    repository
+      .find(names.map(queryWithName(query)).fold(nothing)(_ or _))
       .map(_.collect { case ss: SimpleSource => ss })
       .map(mapAlgebraSourceConf.modelOpt(_).toList)
       .widen
