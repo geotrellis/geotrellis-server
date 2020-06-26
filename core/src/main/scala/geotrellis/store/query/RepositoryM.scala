@@ -16,7 +16,7 @@
 
 package geotrellis.store.query
 
-import cats.{~>, Applicative, Id, Monoid, MonoidK, SemigroupK}
+import cats.{~>, Applicative, Id, Monoid, MonoidK}
 import cats.syntax.apply._
 import cats.syntax.semigroupk._
 
@@ -38,7 +38,7 @@ object RepositoryM {
       def find(query: Query): M[G[T]] = store
     }
 
-  implicit def repositoryMMonoid[M[_]: Applicative, G[_]: MonoidK: SemigroupK, T]: Monoid[RepositoryM[M, G, T]] =
+  implicit def repositoryMMonoid[M[_]: Applicative, G[_]: MonoidK, T]: Monoid[RepositoryM[M, G, T]] =
     new Monoid[RepositoryM[M, G, T]] {
       def empty: RepositoryM[M, G, T]                                                     = RepositoryM.empty[M, G, T]
       def combine(l: RepositoryM[M, G, T], r: RepositoryM[M, G, T]): RepositoryM[M, G, T] =
