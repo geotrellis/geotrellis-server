@@ -21,3 +21,4 @@ pc.stdout.log
 .bloop
 .metals
 metals.sbt
+.history
