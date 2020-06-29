@@ -22,11 +22,13 @@ import geotrellis.raster.io.geotiff.OverviewStrategy
 import geotrellis.server.extent.SampleUtils
 import geotrellis.server.ogc.style._
 import geotrellis.server.ogc.wms.CapabilitiesView
+import geotrellis.server.ogc.utils._
 import geotrellis.store.{AttributeStore, GeoTrellisPath, GeoTrellisRasterSource}
 import geotrellis.vector.{Extent, ProjectedExtent}
 
 import cats.data.{NonEmptyList => NEL}
 import cats.syntax.option._
+import cats.syntax.semigroup._
 import com.azavea.maml.ast.Expression
 import jp.ne.opt.chronoscala.Imports._
 import opengis.wms.BoundingBox
@@ -95,21 +97,7 @@ case class SimpleSource(
   overviewStrategy: OverviewStrategy,
   timeMetadataKey: Option[String]
 ) extends RasterOgcSource {
-  lazy val time: OgcTime =
-    timeMetadataKey
-      .flatMap { key =>
-        source match {
-          case mrs: MosaicRasterSource =>
-            val times = mrs.metadata.list.toList.flatMap(_.attributes.get(key)).map(ZonedDateTime.parse)
-            times match {
-              case head :: tail => OgcTimePositions(NEL(head, tail)).some
-              case _            => None
-            }
-
-          case _                       => source.metadata.attributes.get(key).map(ZonedDateTime.parse).map(OgcTimePositions(_))
-        }
-      }
-      .getOrElse(OgcTimeEmpty)
+  lazy val time: OgcTime = source.time(timeMetadataKey)
 }
 
 case class GeoTrellisOgcSource(
@@ -275,9 +263,6 @@ case class MapAlgebraSource(
     new GridExtent[Long](nativeExtent, cellSize)
   }
 
-  // TODO: remove once Scala 2.11 is dropped
-  // workaround a Scala 2.11 bug
-  // should be _ |+| _
   val time: OgcTime =
     timeMetadataKey.toList
       .flatMap { key =>
@@ -292,7 +277,7 @@ case class MapAlgebraSource(
           case source                  => source.metadata.attributes.get(key).map(ZonedDateTime.parse).map(OgcTimePositions(_))
         }
       }
-      .foldLeft[OgcTime](OgcTimeEmpty)(OgcTime.ogcTimeSemigroup.combine)
+      .foldLeft[OgcTime](OgcTimeEmpty)(_ |+| _)
 
   val attributes: Map[String, String]  = Map.empty
   lazy val nativeCrs: Set[CRS]         = sources.values.map(_.crs).toSet

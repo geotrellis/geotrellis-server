@@ -16,11 +16,11 @@
 
 package geotrellis.server.ogc
 
-import jp.ne.opt.chronoscala.Imports._
 import cats.data.NonEmptyList
-import cats.{Order, Semigroup}
+import cats.{Monoid, Order, Semigroup}
 import cats.syntax.option._
 import cats.syntax.semigroup._
+import jp.ne.opt.chronoscala.Imports._
 
 import java.time.ZonedDateTime
 
@@ -30,15 +30,26 @@ sealed trait OgcTime {
 }
 
 object OgcTime {
-  implicit val ogcTimeSemigroup: Semigroup[OgcTime] = {
-    case (l: OgcTimePositions, r: OgcTimePositions)  => l |+| r
-    case (l: OgcTimeInterval, r: OgcTimeInterval)    => l |+| r
-    case (l: OgcTimePositions, _: OgcTimeEmpty.type) => l
-    case (l: OgcTimeInterval, _: OgcTimeEmpty.type)  => l
-    case (_: OgcTimeEmpty.type, r: OgcTimePositions) => r
-    case (_: OgcTimeEmpty.type, r: OgcTimeInterval)  => r
-    case (l, _)                                      => l
+  implicit val ogcTimeMonoid: Monoid[OgcTime] = new Monoid[OgcTime] {
+    def empty: OgcTime                           = OgcTimeEmpty
+    def combine(l: OgcTime, r: OgcTime): OgcTime =
+      (l, r) match {
+        case (l: OgcTimePositions, r: OgcTimePositions)  => l |+| r
+        case (l: OgcTimeInterval, r: OgcTimeInterval)    => l |+| r
+        case (l: OgcTimePositions, _: OgcTimeEmpty.type) => l
+        case (l: OgcTimeInterval, _: OgcTimeEmpty.type)  => l
+        case (_: OgcTimeEmpty.type, r: OgcTimePositions) => r
+        case (_: OgcTimeEmpty.type, r: OgcTimeInterval)  => r
+        case (l, _)                                      => l
+      }
   }
+
+  def strictTimeMatch(time: OgcTime, dt: ZonedDateTime): Boolean =
+    time match {
+      case OgcTimePositions(list)       => list.head == dt
+      case OgcTimeInterval(start, _, _) => start == dt
+      case OgcTimeEmpty                 => true
+    }
 }
 
 case object OgcTimeEmpty extends OgcTime {
@@ -50,9 +61,11 @@ case object OgcTimeEmpty extends OgcTime {
 
 /** Represents the TimePosition used in TimeSequence requests */
 final case class OgcTimePositions(list: NonEmptyList[ZonedDateTime]) extends OgcTime {
+  import OgcTimePositions._
+
   def toOgcTimeInterval: OgcTimeInterval = {
-    val l = list.toList.sorted
-    OgcTimeInterval(l.min, l.max, None)
+    val times = list.sorted
+    OgcTimeInterval(times.head, times.last, None)
   }
   override def toString: String = list.toList.map(_.toInstant.toString).mkString(", ")
 }
@@ -61,7 +74,7 @@ object OgcTimePositions {
   implicit val timeOrder: Order[ZonedDateTime] = Order.fromOrdering
 
   implicit val ogcTimePositionsSemigroup: Semigroup[OgcTimePositions] = { (l, r) =>
-    OgcTimePositions((l.list ::: r.list).distinct)
+    OgcTimePositions((l.list ::: r.list).distinct.sorted)
   }
 
   def apply(timePeriod: ZonedDateTime): OgcTimePositions             = OgcTimePositions(NonEmptyList(timePeriod, Nil))
@@ -107,8 +120,8 @@ object OgcTimeInterval {
     *  instances, perform this operation yourself.
     */
   implicit val ogcTimeIntervalSemigroup: Semigroup[OgcTimeInterval] = { (l, r) =>
-    val times = List(l.start, l.end, r.start, r.end)
-    OgcTimeInterval(times.min, times.max, None)
+    val times = List(l.start, l.end, r.start, r.end).sorted
+    OgcTimeInterval(times.head, times.last, None)
   }
 
   def apply(timePeriod: ZonedDateTime): OgcTimeInterval = OgcTimeInterval(timePeriod, timePeriod, None)

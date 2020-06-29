@@ -16,11 +16,15 @@
 
 package geotrellis.server.ogc.utils
 
+import geotrellis.server.ogc._
 import com.azavea.maml.ast.Expression
+import geotrellis.raster.{MosaicRasterSource, RasterSource}
 
+import cats.data.{NonEmptyList => NEL}
 import cats.syntax.option._
 import scalaxb.DataRecord
 
+import java.time.ZonedDateTime
 import scala.xml.Elem
 
 trait Implicits {
@@ -34,6 +38,24 @@ trait Implicits {
 
     def bindExtendedParameters(fun: Option[Expression => Expression]): Expression =
       fun.fold(expr)(ExpressionUtils.bindExpression(expr, _))
+  }
+
+  implicit class OgcRasterSourceOps(val source: RasterSource) {
+    def time(timeMetadataKey: Option[String]): OgcTime =
+      timeMetadataKey
+        .flatMap { key =>
+          source match {
+            case mrs: MosaicRasterSource =>
+              val times = mrs.metadata.list.toList.flatMap(_.attributes.get(key)).map(ZonedDateTime.parse)
+              times match {
+                case head :: tail => OgcTimePositions(NEL(head, tail)).some
+                case _            => None
+              }
+
+            case _                       => source.metadata.attributes.get(key).map(ZonedDateTime.parse).map(OgcTimePositions(_))
+          }
+        }
+        .getOrElse(OgcTimeEmpty)
   }
 }
 

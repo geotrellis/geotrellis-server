@@ -96,19 +96,44 @@ object QueryF {
   val coalgebraJson: Coalgebra[QueryF, Json] = Coalgebra(_.foldWith(unfolder))
 
   /** Coalgebras that replace certain nodes */
-  def coalgebraWithName(name: String): Coalgebra[QueryF, Query] =
+  def coalgebraOverrideName(name: String): Coalgebra[QueryF, Query] =
     Coalgebra {
       case WithName(_)  => WithName(name)
       case WithNames(_) => WithNames(Set(name))
       case e            => e.unfix
     }
 
-  def coalgebraWithNames(names: NonEmptySet[String]): Coalgebra[QueryF, Query] =
+  def coalgebraOverrideNames(names: NonEmptySet[String]): Coalgebra[QueryF, Query] =
     Coalgebra {
       case WithNames(_) => WithNames(names.toSortedSet)
       case e            => e.unfix
     }
 
-  def asJson(query: Query): Json  = scheme.cata(algebraJson).apply(query)
-  def fromJson(json: Json): Query = scheme.ana(coalgebraJson).apply(json)
+  val algebraIsTemporal: Algebra[QueryF, Boolean] =
+    Algebra {
+      case At(_, _)         => true
+      case Between(_, _, _) => true
+      case And(e1, e2)      => e1 || e2
+      case Or(e1, e2)       => e1 || e2
+      case _                => false
+    }
+
+  val algebraIsUniversal: Algebra[QueryF, Boolean] =
+    Algebra {
+      case At(_, _)         => false
+      case Between(_, _, _) => false
+      case Intersects(_)    => false
+      case Contains(_)      => false
+      case Covers(_)        => false
+      case Nothing()        => false
+      case And(e1, e2)      => e1 && e2
+      case Or(e1, e2)       => e1 || e2
+      case _                => true
+    }
+
+  def asJson(query: Query): Json                      = scheme.cata(algebraJson).apply(query)
+  def fromJson(json: Json): Query                     = scheme.ana(coalgebraJson).apply(json)
+  def isTemporal(query: Query): Boolean               = scheme.cata(algebraIsTemporal).apply(query)
+  def isUniversal(query: Query): Boolean              = scheme.cata(algebraIsUniversal).apply(query)
+  def overrideName(query: Query, name: String): Query = scheme.ana(coalgebraOverrideName(name)).apply(query)
 }
