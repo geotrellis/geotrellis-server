@@ -65,10 +65,10 @@ case class StacOgcRepository[F[_]: Sync: Logger](
             case head :: Nil => head.some
             case head :: _   =>
               /**
-                * By default STAC API returns all temporal items even though the time was not specified.
+                * By default STAC API returns all temporal items even though the time is not specified.
                 * If defaultTime configuration is set to true and the query is not temporal and not universal
-                * (meaning that it bounds by temporal or spatial extent),
-                * we can try to select the first time position of the temporal layer.
+                * (meaning that it is bounded by temporal or spatial extent),
+                * we can select the first time position of the temporal layer in this case.
                 *
                 * If the layer is not temporal, no extra filtering would be applied.
                 * All non temporal items would be included into the result.
