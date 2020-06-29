@@ -47,9 +47,10 @@ case class StacSourceConf(
   styles: List[StyleConf],
   commonCrs: CRS = WebMercator,
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
+  defaultTime: Boolean = false,
+  datetimeField: String = "datetime"
 ) extends OgcSourceConf {
-  private val datetimeField                   = "datetime"
   def toLayer(rs: RasterSource): SimpleSource =
     SimpleSource(name, title, rs, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, datetimeField.some)
 }

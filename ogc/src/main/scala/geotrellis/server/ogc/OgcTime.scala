@@ -39,6 +39,13 @@ object OgcTime {
     case (_: OgcTimeEmpty.type, r: OgcTimeInterval)  => r
     case (l, _)                                      => l
   }
+
+  def strictTimeMatch(time: OgcTime, dt: ZonedDateTime): Boolean =
+    time match {
+      case OgcTimePositions(list)       => list.head == dt
+      case OgcTimeInterval(start, _, _) => start == dt
+      case OgcTimeEmpty                 => true
+    }
 }
 
 case object OgcTimeEmpty extends OgcTime {

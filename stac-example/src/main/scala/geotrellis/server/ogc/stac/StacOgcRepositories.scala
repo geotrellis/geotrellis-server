@@ -19,10 +19,12 @@ package geotrellis.server.ogc.stac
 import geotrellis.store.query._
 import geotrellis.store.query.QueryF._
 import geotrellis.raster.{MosaicRasterSource, RasterSource}
-import geotrellis.server.ogc.OgcSource
+import geotrellis.server.ogc.{OgcSource, OgcTime, OgcTimeEmpty, OgcTimeInterval, OgcTimePositions}
 import geotrellis.server.ogc.conf.{OgcSourceConf, StacSourceConf}
+import geotrellis.server.ogc.utils._
 import geotrellis.stac.api.{Http4sStacClient, SearchFilters, StacClient}
 import geotrellis.store.query
+import geotrellis.stac.raster.StacAssetRasterSource
 
 import cats.Applicative
 import cats.data.NonEmptyList
@@ -31,11 +33,12 @@ import cats.syntax.option._
 import cats.syntax.semigroup._
 import cats.effect.Sync
 import cats.instances.list._
-import geotrellis.stac.raster.StacAssetRasterSource
 import higherkindness.droste.{scheme, Algebra}
 import org.http4s.Uri
 import org.http4s.client.Client
 import io.chrisdavenport.log4cats.Logger
+import jp.ne.opt.chronoscala.Imports._
+import org.checkerframework.checker.units.qual.s
 
 case class StacOgcRepository[F[_]: Sync: Logger](
   stacSourceConf: StacSourceConf,
@@ -43,14 +46,10 @@ case class StacOgcRepository[F[_]: Sync: Logger](
 ) extends RepositoryM[F, List, OgcSource] {
   def store: F[List[OgcSource]] = find(query.all)
 
-  /** Replace the OGC layer name with its STAC Layer name */
-  private def queryWithName(query: Query): Query =
-    scheme.ana(QueryF.coalgebraWithName(stacSourceConf.layer)).apply(query)
-
   def find(query: Query): F[List[OgcSource]] = {
 
     /** Replace the actual conf name with the STAC Layer name */
-    val filters = SearchFilters.eval(queryWithName(query))
+    val filters = SearchFilters.eval(query.overrideName(stacSourceConf.layer))
     filters.fold(Applicative[F].pure(List.empty[OgcSource])) { filter =>
       client
         .search(filter.copy(limit = stacSourceConf.assetLimit))
@@ -65,8 +64,29 @@ case class StacOgcRepository[F[_]: Sync: Logger](
           val source: Option[RasterSource] = rasterSources match {
             case head :: Nil => head.some
             case head :: _   =>
-              val commonCrs          = if (rasterSources.map(_.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
-              val reprojectedSources = rasterSources.map(_.reproject(commonCrs))
+              /**
+                * By default STAC API returns all temporal items even though the time was not specified.
+                * If defaultTime configuration is set to true and the query is not temporal and not universal
+                * (meaning that it bounds by temporal or spatial extent),
+                * we can try to select the first time position of the temporal layer.
+                *
+                * If the layer is not temporal, no extra filtering would be applied.
+                * All non temporal items would be included into the result.
+                * Otherwise, only items that match the first time position would be returned.
+                */
+              val sources            = if (stacSourceConf.defaultTime && !query.isTemporal && !query.isUniversal) {
+                val datetimeField = stacSourceConf.datetimeField.some
+                rasterSources.map(_.time(datetimeField)).reduce(_ |+| _) match {
+                  case OgcTimePositions(list)       =>
+                    val start = list.head
+                    rasterSources.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), start))
+                  case OgcTimeInterval(start, _, _) =>
+                    rasterSources.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), start))
+                  case OgcTimeEmpty                 => rasterSources
+                }
+              } else rasterSources
+              val commonCrs          = if (sources.map(_.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
+              val reprojectedSources = sources.map(_.reproject(commonCrs))
               MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs).some
             case _           => None
           }

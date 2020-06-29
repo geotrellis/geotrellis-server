@@ -38,13 +38,10 @@ case class MapAlgebraStacOgcRepository[F[_]: Sync](
 
   def store: F[List[OgcSource]] = find(query.all)
 
-  /** Replace the OGC layer name with its STAC Layer name */
-  private def queryWithName(query: Query)(name: String): Query =
-    scheme.ana(QueryF.coalgebraWithName(name)).apply(query)
-
   def find(query: Query): F[List[OgcSource]] =
+    /** Replace the OGC layer name with its STAC Layer name */
     repository
-      .find(names.map(queryWithName(query)).fold(nothing)(_ or _))
+      .find(names.map(query.overrideName).fold(nothing)(_ or _))
       .map(_.collect { case ss: SimpleSource => ss })
       .map(mapAlgebraSourceConf.modelOpt(_).toList)
       .widen
