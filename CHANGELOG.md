@@ -6,9 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Added
+- Logging into STAC API Client [#293](https://github.com/geotrellis/geotrellis-server/pull/293)
+
 ### Changed
 - *BREAKING* Typeclasses no longer bind the effect type to IO [#284](https://github.com/geotrellis/geotrellis-server/pull/284)
 - Optimize MapAlgebraStacOgcRepositories [#291](https://github.com/geotrellis/geotrellis-server/pull/291)
+
+## Fixed
+- Fix STAC API TemporalExtent JSON representation [#293](https://github.com/geotrellis/geotrellis-server/pull/293)
 
 ## [4.2.0] - 2020-06-23
 
@@ -30,14 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enabling Time Dimension for mapalgebrasourceconf on Temporal Layers [#262](https://github.com/geotrellis/geotrellis-server/issues/262)
 
 ### Changed
- 
 - The `layers.layer-name.sources` field in application.conf is renamed to `source` and now supports a single RasterSource URI string. See `ogc-example/src/main/resources/application.conf` for examples. 
 - `type = "simplesourceconf"` should be changed to `type = "rastersourceconf"` in application.conf
 - Remove GeoTrellisRasterSourceLegacy [#197](https://github.com/geotrellis/geotrellis-server/issues/197)
 - Receive GPG key while publishing artifacts [#271](https://github.com/geotrellis/geotrellis-server/pull/271)
 
 ### Fixed
-
 - Addressed GeoTrellisRasterSourceLegacy issues and minimized number of RasterSource instances constructed for GeoTrellis Layers [#219](https://github.com/geotrellis/geotrellis-server/issues/219)
 - Some source resolutions are sometimes skipped leading to reading too much tiles [#215](https://github.com/geotrellis/geotrellis-server/issues/215)
 - LayerHistogram should select the CellSize large enough to compute the histogram [#261](https://github.com/geotrellis/geotrellis-server/pull/261)

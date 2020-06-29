@@ -27,6 +27,7 @@ import cats.syntax.semigroup._
 import cats.instances.list._
 import higherkindness.droste.scheme
 import org.http4s.client.Client
+import io.chrisdavenport.log4cats.Logger
 
 case class MapAlgebraStacOgcRepository[F[_]: Sync](
   mapAlgebraSourceConf: MapAlgebraSourceConf,
@@ -49,7 +50,7 @@ case class MapAlgebraStacOgcRepository[F[_]: Sync](
       .widen
 }
 
-case class MapAlgebraStacOgcRepositories[F[_]: Sync](
+case class MapAlgebraStacOgcRepositories[F[_]: Sync: Logger](
   mapAlgebraConfLayers: List[MapAlgebraSourceConf],
   stacLayers: List[StacSourceConf],
   client: Client[F]

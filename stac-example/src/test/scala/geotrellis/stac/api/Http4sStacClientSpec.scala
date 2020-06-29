@@ -30,12 +30,13 @@ import cats.syntax.either._
 import geotrellis.proj4.CRS
 import geotrellis.stac.raster.StacRepository
 import geotrellis.vector.{Extent, ProjectedExtent}
+import io.chrisdavenport.log4cats.{Logger => Logger4Cats}
 
 import scala.concurrent.ExecutionContext
 import scala.language.reflectiveCalls
 
 class Http4sStacClientSpec extends IOSpec {
-  def withClient[F[_]: ConcurrentEffect](implicit ec: ExecutionContext) =
+  def withClient[F[_]: ConcurrentEffect: Logger4Cats](implicit ec: ExecutionContext) =
     new {
       def apply[T](f: StacClient[F] => F[T]): F[T] = {
         // Http4sStacClient[F](Uri.fromString("http://localhost:9090/"))

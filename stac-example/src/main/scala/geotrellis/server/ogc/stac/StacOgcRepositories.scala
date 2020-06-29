@@ -35,8 +35,9 @@ import geotrellis.stac.raster.StacAssetRasterSource
 import higherkindness.droste.{scheme, Algebra}
 import org.http4s.Uri
 import org.http4s.client.Client
+import io.chrisdavenport.log4cats.Logger
 
-case class StacOgcRepository[F[_]: Sync](
+case class StacOgcRepository[F[_]: Sync: Logger](
   stacSourceConf: StacSourceConf,
   client: StacClient[F]
 ) extends RepositoryM[F, List, OgcSource] {
@@ -76,7 +77,7 @@ case class StacOgcRepository[F[_]: Sync](
   }
 }
 
-case class StacOgcRepositories[F[_]: Sync](
+case class StacOgcRepositories[F[_]: Sync: Logger](
   stacLayers: List[StacSourceConf],
   client: Client[F]
 ) extends RepositoryM[F, List, OgcSource] {
