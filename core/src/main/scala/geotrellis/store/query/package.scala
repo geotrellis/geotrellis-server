@@ -35,7 +35,9 @@ package object query {
     def or(right: Query): Query           = QueryF.or(self, right)
     def and(right: Query): Query          = QueryF.and(self, right)
     def isTemporal: Boolean               = QueryF.isTemporal(self)
+    def nonTemporal: Boolean              = !isTemporal
     def isUniversal: Boolean              = QueryF.isUniversal(self)
+    def nonUniversal: Boolean             = !isUniversal
     def overrideName(name: String): Query = QueryF.overrideName(self, name)
   }
 

@@ -74,7 +74,7 @@ case class StacOgcRepository[F[_]: Sync: Logger](
                 * All non temporal items would be included into the result.
                 * Otherwise, only items that match the first time position would be returned.
                 */
-              val sources            = if (stacSourceConf.defaultTime && !query.isTemporal && !query.isUniversal) {
+              val sources            = if (stacSourceConf.defaultTime && query.nonTemporal && query.nonUniversal) {
                 val datetimeField = stacSourceConf.datetimeField.some
                 rasterSources.map(_.time(datetimeField)).reduce(_ |+| _) match {
                   case OgcTimePositions(list)       =>
