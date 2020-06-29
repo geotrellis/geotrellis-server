@@ -25,7 +25,6 @@ import cats.effect.Sync
 import cats.syntax.functor._
 import cats.syntax.semigroup._
 import cats.instances.list._
-import higherkindness.droste.scheme
 import org.http4s.client.Client
 import io.chrisdavenport.log4cats.Logger
 

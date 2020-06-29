@@ -37,8 +37,6 @@ import higherkindness.droste.{scheme, Algebra}
 import org.http4s.Uri
 import org.http4s.client.Client
 import io.chrisdavenport.log4cats.Logger
-import jp.ne.opt.chronoscala.Imports._
-import org.checkerframework.checker.units.qual.s
 
 case class StacOgcRepository[F[_]: Sync: Logger](
   stacSourceConf: StacSourceConf,

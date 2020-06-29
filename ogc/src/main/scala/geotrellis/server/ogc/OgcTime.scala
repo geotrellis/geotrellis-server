@@ -16,11 +16,11 @@
 
 package geotrellis.server.ogc
 
-import jp.ne.opt.chronoscala.Imports._
 import cats.data.NonEmptyList
 import cats.{Monoid, Order, Semigroup}
 import cats.syntax.option._
 import cats.syntax.semigroup._
+import jp.ne.opt.chronoscala.Imports._
 
 import java.time.ZonedDateTime
 
