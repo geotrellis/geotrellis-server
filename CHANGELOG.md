@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - *BREAKING* Typeclasses no longer bind the effect type to IO [#284](https://github.com/geotrellis/geotrellis-server/pull/284)
 - Optimize MapAlgebraStacOgcRepositories [#291](https://github.com/geotrellis/geotrellis-server/pull/291)
+- Update STAC4s up to 0.0.11 with STAC 1.0.0-beta.1 support [#295](https://github.com/geotrellis/geotrellis-server/pull/295)
 
 ## Fixed
 - Fix STAC API TemporalExtent JSON representation [#293](https://github.com/geotrellis/geotrellis-server/pull/293)

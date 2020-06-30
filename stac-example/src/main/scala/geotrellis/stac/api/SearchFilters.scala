@@ -119,7 +119,7 @@ object SearchFilters {
       )
     }
 
-    implicit val geometryIntersectionSemigroup: Semigroup[Geometry] = { (left, right) => left.intersection(right) }
+    implicit val geometryIntersectionSemigroup: Semigroup[Geometry] = { _ intersection _ }
 
     implicit val searchFiltersSemigroup: Semigroup[SearchFilters] = { (left, right) =>
       SearchFilters(
@@ -159,7 +159,7 @@ object SearchFilters {
       )
     }
 
-    implicit val geometryUnionSemigroup: Semigroup[Geometry] = { (left, right) => left.union(right) }
+    implicit val geometryUnionSemigroup: Semigroup[Geometry] = { _ union _ }
 
     implicit val searchFiltersSemigroup: Semigroup[SearchFilters] = { (left, right) =>
       SearchFilters(
