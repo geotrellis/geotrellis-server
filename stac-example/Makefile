@@ -10,7 +10,7 @@ postgres:
 migrations:
 	docker run \
       --network stac-example_default \
-      quay.io/azavea/franklin:25aa7b5 \
+      quay.io/azavea/franklin:538d079 \
       migrate \
       --db-user franklin \
       --db-name franklin \
@@ -22,7 +22,7 @@ import-test-catalog:
       --network stac-example_default \
       -e AWS_REGION=us-east-1 \
       -v ${PWD}/catalog:/opt/data/ \
-      quay.io/azavea/franklin:25aa7b5 \
+      quay.io/azavea/franklin:538d079 \
       import \
       --db-user franklin \
       --db-name franklin \
@@ -35,7 +35,7 @@ run-franklin:
       --network stac-example_default \
       -p 9090:9090 \
       -d \
-      quay.io/azavea/franklin:25aa7b5 \
+      quay.io/azavea/franklin:538d079 \
       serve \
       --db-user franklin \
       --db-name franklin \

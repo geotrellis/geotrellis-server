@@ -94,6 +94,6 @@ object Dependencies {
   val shapeless = "com.chuusai" %% "shapeless" % shapelessVer
   val logback = "ch.qos.logback" % "logback-classic" % "1.2.3" % Runtime
   val droste = "io.higherkindness" %% "droste-core" % "0.8.0"
-  val stac4s = "com.azavea.stac4s" %% "core" % "0.0.10"
+  val stac4s = "com.azavea.stac4s" %% "core" % "0.0.11"
   val ansiColors212 = "org.backuity" %% "ansi-interpolator" % "1.1.0" % Provided
 }
