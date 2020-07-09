@@ -1,29 +1,25 @@
 {
-  "stac_version" : "1.0.0-beta.1",
-  "stac_extensions" : [],
-  "id" : "landsat-stac-layers",
-  "title" : "STAC for Landsat data",
-  "description" : "STAC for Landsat data",
-  "links" : [
+  "stac_version": "1.0.0-beta.1",
+  "stac_extensions": [],
+  "id": "landsat-stac-layers",
+  "title": "STAC for Landsat data",
+  "description": "STAC for Landsat data",
+  "links": [
     {
-      "href" : "./catalog.json",
-      "rel" : "self"
+      "href": "./catalog.json",
+      "rel": "self"
     },
     {
-      "href" : "./catalog.json",
-      "rel" : "root"
+      "href": "./catalog.json",
+      "rel": "root"
     },
     {
-      "href" : "./landsat-8-l1/catalog.json",
-      "rel" : "child"
+      "href": "./landsat-8-l1/catalog.json",
+      "rel": "child"
     },
     {
-      "href" : "./layers/pa/catalog.json",
-      "rel" : "child"
-    },
-    {
-      "href" : "./layers/us/catalog.json",
-      "rel" : "child"
+      "href": "./layers/catalog.json",
+      "rel": "child"
     }
   ]
 }
