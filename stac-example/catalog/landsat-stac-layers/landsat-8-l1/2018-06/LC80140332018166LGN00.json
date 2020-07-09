@@ -6,7 +6,7 @@
     "eo",
     "view",
     "proj",
-    "layers",
+    "layer",
     "https://example.com/stac/landsat-extension/1.0/schema.json"
   ],
   "bbox": [
