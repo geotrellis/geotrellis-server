@@ -4,7 +4,7 @@ This project allows to use [STAC API](https://github.com/radiantearth/stac-api-s
 GeoTrellis server translates input OGC queries into STAC queries and reads
 requested items assets respectively.
 
-GeoTrellis server requires the [STAC Layer extension](#stac-layer-extension) usage. 
+GeoTrellis server requires the [STAC Layer extension](https://github.com/azavea/stac4s/tree/master/docs/stac-spec/extensions/layer) usage. 
 
 ### Project description
 
@@ -47,50 +47,3 @@ stac-lc8-red-us = {
 ```
 
 Such layer can be used within the MAML expression.
-
-### STAC Layer extension
-
-- **Title: Layer**
-- **Identifier: layer**
-- **Field Name Prefix: layer**
-- **Scope: Item**
-
-This document explains the fields of the STAC Layer (layer) Extension to a STAC Item. STAC Items may
-have references only to a single collection (through the `properties.collection` field).  
-
-This extension allows items to have references to multiple named catalog which 
-can be used to group items by the same layer name.
-
-- Examples:
-  - [Landsat 8 Layer catalog](catalog/landsat-stac-layers/catalog.json)
-  - [Layer static representation](catalog/landsat-stac-layers/layers)
-
-### Item fields
-
-| Field Name     | Type     | Description |
-| -------------- | ---------| ----------- |
-| layer:ids      | [string] | A list of catalog identifiers which would be considered as layers |
-
-### Item properties example
-
-```javascript
-"properties": {
-  "collection": "landsat-8-l1",
-  "layer:ids" : ["layer-us", "layer-pa"],
-  "datetime": "2018-05-21T15:44:59.159086+00:00",
-  "eo:sun_azimuth": 134.8082647,
-  "eo:sun_elevation": 64.00406717,
-  "eo:cloud_cover": 4,
-  "eo:row": "032",
-  "eo:column": "015",
-  "landsat:product_id": "LC08_L1TP_015032_20180521_20180605_01_T1",
-  "landsat:scene_id": "LC80150322018141LGN00",
-  "landsat:processing_level": "L1TP",
-  "landsat:tier": "T1",
-  "eo:epsg": 32618,
-  "eo:instrument": "OLI_TIRS",
-  "eo:off_nadir": 0,
-  "eo:platform": "landsat-8",
-  "eo:gsd": 15
-}
-```
