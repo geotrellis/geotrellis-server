@@ -20,8 +20,6 @@ import cats.effect.IO
 import geotrellis.raster._
 import geotrellis.vector._
 
-import scala.concurrent.ExecutionContext
-
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 

@@ -19,7 +19,6 @@ package geotrellis.server
 import geotrellis.raster.{CellSize, MultibandTile, ProjectedRaster}
 import geotrellis.vector.Extent
 import cats.Contravariant
-import cats.effect._
 
 trait ExtentReification[F[_], A] {
   def extentReification(self: A): (Extent, CellSize) => F[ProjectedRaster[MultibandTile]]

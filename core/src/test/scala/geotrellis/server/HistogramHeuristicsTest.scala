@@ -20,7 +20,6 @@ import geotrellis.server.extent.SampleUtils
 
 import geotrellis.raster._
 import geotrellis.vector._
-import cats.implicits._
 
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers

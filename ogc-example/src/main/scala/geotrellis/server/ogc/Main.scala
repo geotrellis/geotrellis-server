@@ -28,7 +28,6 @@ import org.http4s.server._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.CORS
 import org.http4s.syntax.kleisli._
-import org.http4s.client.blaze.BlazeClientBuilder
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import io.chrisdavenport.log4cats.Logger

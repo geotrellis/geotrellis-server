@@ -20,21 +20,17 @@ import geotrellis.server._
 
 import cats.effect._
 import cats.data.{NonEmptyList => NEL}
-import cats.syntax.all._
 import cats.implicits._
 import com.azavea.maml.eval.tile._
 import io.circe._
-import io.circe.generic.semiauto._
 
 import geotrellis.store._
 import geotrellis.layer._
-import geotrellis.proj4._
 import geotrellis.raster._
 import geotrellis.vector._
 
 import java.net.URI
 import scala.util.Try
-import cats.Applicative
 
 case class GTLayerNode(catalog: URI, layer: String) {
   lazy val collectionReader = CollectionLayerReader(catalog)

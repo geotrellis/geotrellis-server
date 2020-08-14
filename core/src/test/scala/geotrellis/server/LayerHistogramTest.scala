@@ -18,8 +18,6 @@ package geotrellis.server
 
 import cats.effect.IO
 
-import scala.concurrent.ExecutionContext
-
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 

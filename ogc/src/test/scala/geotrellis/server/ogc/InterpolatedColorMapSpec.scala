@@ -18,8 +18,7 @@ package geotrellis.server.ogc
 
 import geotrellis.server.ogc.style._
 
-import geotrellis.raster.render.{ColorRamp, RGBA}
-import geotrellis.raster.histogram.DoubleHistogram
+import geotrellis.raster.render.RGBA
 
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
