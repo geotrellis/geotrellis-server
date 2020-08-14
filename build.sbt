@@ -92,8 +92,8 @@ lazy val commonSettings = Seq(
       } }
     )
   ),
-  Global / cancelable := true,
   useCoursier := false,
+  Global / cancelable := true,
   javaOptions ++= Seq("-Djava.library.path=/usr/local/lib")
 )
 
@@ -188,7 +188,6 @@ lazy val core = project
       cats.value,
       catsEffect.value,
       mamlJvm,
-      simulacrum,
       scalatest,
       droste,
       log4cats
@@ -273,7 +272,7 @@ lazy val ogc = project
     libraryDependencies ++= Seq(
       geotrellisS3,
       geotrellisStore,
-      commonsIo, // to make GeoTiffRasterSources work
+      commonsIO, // to make GeoTiffRasterSources work
       scaffeine,
       scalatest,
       jaxbApi

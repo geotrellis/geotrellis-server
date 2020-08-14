@@ -30,10 +30,10 @@ import cats.data.Validated.{Invalid, Valid}
 
 import scala.reflect.ClassTag
 
-import org.scalatest.FunSpec
-import org.scalatest._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class HillshadeSpec extends FunSpec with Matchers {
+class HillshadeSpec extends AnyFunSpec with Matchers {
   implicit class TypeRefinement(self: Interpreted[Result]) {
     def as[T: ClassTag]: Interpreted[T] =
       self match {

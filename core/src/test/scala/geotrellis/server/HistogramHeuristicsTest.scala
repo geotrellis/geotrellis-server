@@ -22,11 +22,12 @@ import geotrellis.raster._
 import geotrellis.vector._
 import cats.implicits._
 
-import org.scalatest._
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
 import scala.util.Random
 
-class HistogramHeuristicsTest extends FunSuite with Matchers {
+class HistogramHeuristicsTest extends AnyFunSuite with Matchers {
   test("extents sampled from within overall extent") {
     val random = new Random(1337)
     for (x <- 0 to 1000) {

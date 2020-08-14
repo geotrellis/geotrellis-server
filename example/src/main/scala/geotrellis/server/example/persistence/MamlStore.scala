@@ -20,7 +20,6 @@ import com.azavea.maml.ast.{Expression, Literal}
 import cats._
 import cats.data.EitherT
 import cats.effect.IO
-import simulacrum._
 
 import java.util.UUID
 

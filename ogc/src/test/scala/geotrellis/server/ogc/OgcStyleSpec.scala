@@ -21,11 +21,10 @@ import geotrellis.server.ogc.style._
 import geotrellis.raster.render.ColorRamp
 import geotrellis.raster.histogram.DoubleHistogram
 
-import org.scalatest.FunSpec
-import org.scalatest._
-import org.scalatest.Matchers._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class OgcStyleSpec extends FunSpec {
+class OgcStyleSpec extends AnyFunSpec with Matchers {
 
   describe("ColorRampStyle") {
     it("should interpolate breaks") {

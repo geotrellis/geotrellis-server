@@ -21,11 +21,10 @@ import geotrellis.server.ogc.style._
 import geotrellis.raster.render.{ColorRamp, RGBA}
 import geotrellis.raster.histogram.DoubleHistogram
 
-import org.scalatest.FunSpec
-import org.scalatest._
-import org.scalatest.Matchers._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class InterpolatedColorMapSpec extends FunSpec {
+class InterpolatedColorMapSpec extends AnyFunSpec with Matchers {
   describe("InterpolatedColorMap") {
     val minColor     = RGBA(255, 0, 0, 100)
     val medColor     = RGBA(0, 255, 0, 100)

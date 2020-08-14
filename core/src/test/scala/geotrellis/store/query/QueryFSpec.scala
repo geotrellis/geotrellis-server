@@ -26,9 +26,10 @@ import _root_.io.circe.syntax._
 
 import java.time.{ZoneOffset, ZonedDateTime}
 
-import org.scalatest._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class QueryFSpec extends FunSpec with Matchers {
+class QueryFSpec extends AnyFunSpec with Matchers {
   describe("QueryF evaluation specs") {
     def dtFromMonth(month: Int): ZonedDateTime = ZonedDateTime.of(2020, month, 1, 0, 0, 1, 0, ZoneOffset.UTC)
 
