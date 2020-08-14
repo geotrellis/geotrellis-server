@@ -18,6 +18,6 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         usage
     else
         echo "Executing Scala test suite"
-        ./sbt "++${SCALA_VERSION:-2.12.11}" scalafmtCheck test
+        ./sbt "++${SCALA_VERSION:-2.12.12}" scalafmtCheck test
     fi
 fi
