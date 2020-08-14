@@ -18,9 +18,12 @@ package geotrellis.stac
 
 import cats.effect.{ContextShift, IO, Timer}
 import geotrellis.store.util.BlockingThreadPool
-import org.scalatest._
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+
+import org.scalatest.{Assertion, Assertions}
+import org.scalatest.funspec.AsyncFunSpec
+import org.scalatest.matchers.should.Matchers
 
 trait IOSpec extends AsyncFunSpec with Assertions with Matchers {
   override implicit val executionContext      = BlockingThreadPool.executionContext

@@ -21,11 +21,13 @@ import geotrellis.raster._
 import cats.effect.IO
 import com.azavea.maml.ast._
 import com.azavea.maml.eval._
-import org.scalatest._
 
 import scala.concurrent.ExecutionContext
 
-class NoDataHandlingTest extends FunSuite with Matchers with TileAsSourceImplicits {
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
+
+class NoDataHandlingTest extends AnyFunSuite with Matchers with TileAsSourceImplicits {
   implicit val cs = cats.effect.IO.contextShift(ExecutionContext.global)
 
   val expr = Addition(List(RasterVar("t1"), RasterVar("t2")))

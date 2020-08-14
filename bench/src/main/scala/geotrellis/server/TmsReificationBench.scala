@@ -33,20 +33,12 @@ import java.net.URI
 @State(Scope.Thread)
 class TmsReificationBench {
 
-  implicit val logger = Slf4jLogger.getLogger[IO]
+  implicit val logger       = Slf4jLogger.getLogger[IO]
   implicit var contextShift = IO.contextShift(ExecutionContext.global)
 
   // NDVI
   val ast: Expression =
-    Division(List(
-      Subtraction(List(
-        RasterVar("red"),
-        RasterVar("nir"))),
-      Addition(List(
-        RasterVar("red"),
-        RasterVar("nir"))
-      ))
-    )
+    Division(List(Subtraction(List(RasterVar("red"), RasterVar("nir"))), Addition(List(RasterVar("red"), RasterVar("nir")))))
 
   // red, green, NIR bands which should have data for z/x/y 9/454/200
   val geotiffVars = Map(

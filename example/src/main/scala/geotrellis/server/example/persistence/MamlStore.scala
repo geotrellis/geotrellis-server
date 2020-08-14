@@ -16,11 +16,7 @@
 
 package geotrellis.server.example.persistence
 
-import com.azavea.maml.ast.{Expression, Literal}
-import cats._
-import cats.data.EitherT
-import cats.effect.IO
-import simulacrum._
+import com.azavea.maml.ast.Expression
 
 import java.util.UUID
 

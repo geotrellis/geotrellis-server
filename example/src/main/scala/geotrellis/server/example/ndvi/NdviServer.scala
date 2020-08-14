@@ -20,14 +20,12 @@ import geotrellis.server.example._
 import geotrellis.server.vlm.geotiff.GeoTiffNode
 
 import cats.effect._
-import cats.implicits._
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import org.http4s._
 import org.http4s.server._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.{CORS, CORSConfig}
 import org.http4s.syntax.kleisli._
-import pureconfig.generic.auto._
 import com.azavea.maml.eval._
 
 import scala.concurrent.duration._

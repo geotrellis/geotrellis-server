@@ -20,11 +20,10 @@ import cats.effect.IO
 import geotrellis.raster._
 import geotrellis.vector._
 
-import scala.concurrent.ExecutionContext
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-import org.scalatest._
-
-class LayerExtentTest extends FunSuite with Matchers {
+class LayerExtentTest extends AnyFunSuite with Matchers {
 
   test("ability to read a selected extent") {
     val rt        = ResourceTile("8x8.tif")

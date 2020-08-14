@@ -17,11 +17,11 @@
 package geotrellis.server
 
 import cats.effect.IO
-import org.scalatest._
 
-import scala.concurrent.ExecutionContext
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
-class LayerHistogramTest extends FunSuite with Matchers {
+class LayerHistogramTest extends AnyFunSuite with Matchers {
 
   // This test works when the chosen sampling strategy is to work from the corners
   ignore("extents sampled from within overall extent") {

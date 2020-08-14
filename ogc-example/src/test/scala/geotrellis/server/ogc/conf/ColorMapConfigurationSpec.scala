@@ -21,11 +21,10 @@ import geotrellis.raster.render.ColorMap
 
 import pureconfig.ConfigSource
 
-import org.scalatest.FunSpec
-import org.scalatest._
-import org.scalatest.Matchers._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class ColorMapConfigurationSpec extends FunSpec {
+class ColorMapConfigurationSpec extends AnyFunSpec with Matchers {
 
   describe("ColorMap Configuration") {
     it("should produce the same colormap regardless of key type") {

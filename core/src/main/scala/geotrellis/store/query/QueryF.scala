@@ -21,7 +21,6 @@ import io.circe._
 import io.circe.syntax._
 import io.circe.generic.JsonCodec
 import cats.Functor
-import cats.syntax.either._
 import cats.data.NonEmptySet
 import higherkindness.droste.scheme
 import higherkindness.droste.{Algebra, Coalgebra}

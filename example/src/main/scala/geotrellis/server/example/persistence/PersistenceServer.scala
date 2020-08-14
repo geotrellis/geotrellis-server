@@ -16,22 +16,18 @@
 
 package geotrellis.server.example.persistence
 
-import geotrellis.server._
 import geotrellis.server.example._
 import geotrellis.server.vlm.geotiff._
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
 import com.azavea.maml.ast.Expression
-import cats.data._
 import cats.effect._
-import cats.implicits._
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import org.http4s._
 import org.http4s.server._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.{CORS, CORSConfig}
 import org.http4s.syntax.kleisli._
-import pureconfig.generic.auto._
 
 import java.util.UUID
 import scala.concurrent.duration._

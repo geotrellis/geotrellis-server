@@ -22,7 +22,6 @@ import geotrellis.layer._
 import geotrellis.proj4.WebMercator
 import geotrellis.raster._
 import geotrellis.raster.resample.ResampleMethod
-import geotrellis.raster.geotiff.GeoTiffRasterSource
 import geotrellis.raster.io.geotiff.OverviewStrategy
 import geotrellis.vector.Extent
 
@@ -30,8 +29,6 @@ import _root_.io.circe._
 import _root_.io.circe.generic.semiauto._
 import cats.data.NonEmptyList
 import cats.effect._
-import cats.syntax.functor._
-import cats.data.{NonEmptyList => NEL}
 
 import java.net.URI
 

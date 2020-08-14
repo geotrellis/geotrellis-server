@@ -20,7 +20,8 @@ import geotrellis.server.extent.SampleUtils
 import geotrellis.vector._
 import cats.data.{NonEmptyList => NEL}
 
-import org.scalatest._
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatest.matchers.should.Matchers
 
 /**
   * There are various possible relationships between extents of raster, we need to have union and
@@ -30,7 +31,7 @@ import org.scalatest._
   * case 2: some intersections exist among the extents but no single shared extent
   * case 3: no intersection among the extents
   */
-class ExtentMergeStrategyTest extends FunSuite with Matchers {
+class ExtentMergeStrategyTest extends AnyFunSuite with Matchers {
 
   test("total overlap - intersection") {
     val e1      = Extent(0, 0, 100, 100)

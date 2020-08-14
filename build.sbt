@@ -37,6 +37,8 @@ lazy val commonSettings = Seq(
     "-feature",
     "-Ypartial-unification",
     "-Xmacro-settings:materialize-derivations"
+    // "-Yrangepos",            // required by SemanticDB compiler plugin
+    //"-Ywarn-unused-import",  // required by `RemoveUnused` rule
   ),
   resolvers ++= Seq(
     Resolver
@@ -52,6 +54,7 @@ lazy val commonSettings = Seq(
   ),
   addCompilerPlugin(kindProjector cross CrossVersion.full),
   addCompilerPlugin(macrosParadise cross CrossVersion.full),
+  addCompilerPlugin(semanticdbScalac cross CrossVersion.full),
   shellPrompt := { s =>
     Project.extract(s).currentProject.id + " > "
   },
@@ -92,8 +95,8 @@ lazy val commonSettings = Seq(
       } }
     )
   ),
-  Global / cancelable := true,
   useCoursier := false,
+  Global / cancelable := true,
   javaOptions ++= Seq("-Djava.library.path=/usr/local/lib")
 )
 
@@ -188,7 +191,6 @@ lazy val core = project
       cats.value,
       catsEffect.value,
       mamlJvm,
-      simulacrum,
       scalatest,
       droste,
       log4cats
@@ -273,7 +275,7 @@ lazy val ogc = project
     libraryDependencies ++= Seq(
       geotrellisS3,
       geotrellisStore,
-      commonsIo, // to make GeoTiffRasterSources work
+      commonsIO, // to make GeoTiffRasterSources work
       scaffeine,
       scalatest,
       jaxbApi

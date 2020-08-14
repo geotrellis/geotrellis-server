@@ -26,18 +26,12 @@ import geotrellis.raster.{io => _, _}
 
 import cats._
 import cats.data.{NonEmptyList => NEL}
-import cats.data.Validated.Invalid
 import cats.effect._
 import cats.syntax.functor._
 import cats.syntax.flatMap._
 import cats.syntax.traverse._
-import cats.syntax.either._
 import cats.instances.option._
-import cats.instances.list._
-import cats.instances.map._
 import io.chrisdavenport.log4cats.Logger
-
-import scala.collection.mutable
 
 object LayerHistogram {
   case class NoSuitableHistogramResolution(cells: Int) extends Throwable

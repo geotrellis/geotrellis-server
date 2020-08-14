@@ -22,7 +22,6 @@ import geotrellis.raster.{io => _, _}
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
 import com.azavea.maml.eval._
-import com.azavea.maml.error._
 
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
@@ -34,7 +33,6 @@ import io.chrisdavenport.log4cats.Logger
 import cats.data._
 import Validated._
 import cats._
-import cats.data.{NonEmptyList => NEL}
 import cats.effect._
 import cats.implicits._
 
