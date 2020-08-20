@@ -38,6 +38,7 @@ import cats.{Applicative, ApplicativeError, Parallel}
 import cats.syntax.apply._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
+import cats.syntax.applicative._
 import cats.syntax.option._
 import cats.syntax.applicativeError._
 import cats.syntax.parallel._
@@ -156,13 +157,13 @@ class WmsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[*[_], T
                   val evalExtent = layer match {
                     case sl @ SimpleOgcLayer(_, _, _, _, _, _, _)               => LayerExtent.concurrent(sl)
                     case MapAlgebraOgcLayer(_, _, _, parameters, expr, _, _, _) =>
-                      LayerExtent(Applicative[F].pure(expr), Applicative[F].pure(parameters), ConcurrentInterpreter.DEFAULT[F])
+                      LayerExtent(expr.pure[F], parameters.pure[F], ConcurrentInterpreter.DEFAULT[F])
                   }
 
                   val evalHisto = layer match {
                     case sl @ SimpleOgcLayer(_, _, _, _, _, _, _)               => LayerHistogram.concurrent(sl, 512)
                     case MapAlgebraOgcLayer(_, _, _, parameters, expr, _, _, _) =>
-                      LayerHistogram(Applicative[F].pure(expr), Applicative[F].pure(parameters), ConcurrentInterpreter.DEFAULT[F], 512)
+                      LayerHistogram(expr.pure[F], parameters.pure[F], ConcurrentInterpreter.DEFAULT[F], 512)
                   }
 
                   // TODO: remove this once GeoTiffRasterSource would be threadsafe
@@ -170,7 +171,7 @@ class WmsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[*[_], T
                   val histIO = for {
                     cached <- Sync[F].delay { histoCache.getIfPresent(layer) }
                     hist   <- cached match {
-                                case Some(h) => Applicative[F].pure(h)
+                                case Some(h) => h.pure[F]
                                 case None    => evalHisto
                               }
                     _      <- Sync[F].delay { histoCache.put(layer, hist) }

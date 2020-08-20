@@ -32,6 +32,7 @@ import cats.effect._
 import cats.{Applicative, ApplicativeError, Parallel}
 import cats.data.Validated.{Invalid, Valid}
 import cats.syntax.apply._
+import cats.syntax.applicative._
 import cats.syntax.flatMap._
 import cats.syntax.applicativeError._
 import cats.syntax.parallel._
@@ -80,7 +81,7 @@ class WmtsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[*[_], 
                 val evalWmts = layer match {
                   case sl @ SimpleTiledOgcLayer(_, _, _, _, _, _, _, _)               => LayerTms.concurrent(sl)
                   case MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _, _, _) =>
-                    LayerTms(Applicative[F].pure(expr), Applicative[F].pure(parameters), ConcurrentInterpreter.DEFAULT[F])
+                    LayerTms(expr.pure[F], parameters.pure[F], ConcurrentInterpreter.DEFAULT[F])
                 }
 
                 // TODO: remove this once GeoTiffRasterSource would be threadsafe
@@ -88,7 +89,7 @@ class WmtsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[*[_], 
                 val evalHisto = layer match {
                   case sl @ SimpleTiledOgcLayer(_, _, _, _, _, _, _, _)               => LayerHistogram.concurrent(sl, 512)
                   case MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _, _, _) =>
-                    LayerHistogram(Applicative[F].pure(expr), Applicative[F].pure(parameters), ConcurrentInterpreter.DEFAULT[F], 512)
+                    LayerHistogram(expr.pure[F], parameters.pure[F], ConcurrentInterpreter.DEFAULT[F], 512)
                 }
 
                 (evalWmts(0, tileCol, tileRow), evalHisto).parMapN {

@@ -28,6 +28,7 @@ import cats.Parallel
 import cats.data.Validated._
 import cats.effect._
 import cats.syntax.apply._
+import cats.syntax.applicative._
 import cats.syntax.functor._
 import cats.syntax.traverse._
 import cats.syntax.flatMap._
@@ -49,8 +50,8 @@ class GetCoverage[F[_]: Logger: Sync: Concurrent: Parallel](wcsModel: WcsModel[F
               LayerExtent.concurrent[F, SimpleOgcLayer](so)
             case MapAlgebraOgcLayer(_, _, _, simpleLayers, algebra, _, _, _) =>
               LayerExtent(
-                Sync[F].pure(algebra),
-                Sync[F].pure(simpleLayers),
+                algebra.pure[F],
+                simpleLayers.pure[F],
                 ConcurrentInterpreter.DEFAULT[F]
               )
           }
@@ -81,14 +82,12 @@ class GetCoverage[F[_]: Logger: Sync: Concurrent: Parallel](wcsModel: WcsModel[F
   def build(params: GetCoverageWcsParams): F[Array[Byte]] = {
     Sync[F].delay { requestCache.getIfPresent(params) } >>= {
       case Some(bytes) =>
-        Logger[F].trace(s"GetCoverage cache HIT: $params") *> Sync[F].pure(
-          bytes
-        )
+        Logger[F].trace(s"GetCoverage cache HIT: $params") *> bytes.pure[F]
 
       case _           =>
         Logger[F].trace(s"GetCoverage cache MISS: $params") >>= { _ =>
           renderLayers(params).flatMap {
-            case Some(bytes) => Sync[F].pure(bytes)
+            case Some(bytes) => bytes.pure[F]
             case None        =>
               wcsModel.sources
                 .find(withName(params.identifier))
@@ -100,8 +99,8 @@ class GetCoverage[F[_]: Logger: Sync: Concurrent: Parallel](wcsModel: WcsModel[F
                       // return the actual tile
                       // TODO: handle it in a proper way, how to get information about the bands amount?
                       val tile = ArrayTile.empty(IntCellType, 1, 1)
-                      Sync[F].pure(GeoTiff(Raster(MultibandTile(tile, tile, tile), params.extent), params.crs).toByteArray)
-                    case _       => Logger[F].error(s"No tile found for the $params request.") *> Sync[F].pure(Array())
+                      GeoTiff(Raster(MultibandTile(tile, tile, tile), params.extent), params.crs).toByteArray.pure[F]
+                    case _       => Logger[F].error(s"No tile found for the $params request.") *> Array[Byte]().pure[F]
                   }
                 }
           }

@@ -28,6 +28,7 @@ import cats._
 import cats.data.{NonEmptyList => NEL}
 import cats.effect._
 import cats.syntax.functor._
+import cats.syntax.applicative._
 import cats.syntax.flatMap._
 import cats.syntax.traverse._
 import cats.instances.option._
@@ -107,8 +108,8 @@ object LayerHistogram {
   ): Map[String, T] => F[Interpreted[List[Histogram[Double]]]] =
     (paramMap: Map[String, T]) => {
       apply[F, T](
-        Monad[F].pure(expr),
-        Monad[F].pure(paramMap),
+        expr.pure[F],
+        paramMap.pure[F],
         interpreter,
         maxCells
       )

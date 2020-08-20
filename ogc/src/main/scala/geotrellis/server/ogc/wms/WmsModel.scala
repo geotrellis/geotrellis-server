@@ -25,6 +25,7 @@ import com.azavea.maml.ast.Expression
 import geotrellis.store.query.RepositoryM
 import cats.Monad
 import cats.syntax.functor._
+import cats.syntax.applicative._
 import cats.syntax.semigroup._
 
 /** This class holds all the information necessary to construct a response to a WMS request */
@@ -42,7 +43,7 @@ case class WmsModel[F[_]: Monad](
   def getLayer(p: GetMap): F[List[OgcLayer]] = {
     parentLayerMeta.supportedProjections
       .find(_ == p.crs)
-      .fold[F[List[OgcLayer]]](Monad[F].pure(List())) { supportedCrs =>
+      .fold[F[List[OgcLayer]]](List.empty[OgcLayer].pure[F]) { supportedCrs =>
         sources.find(p.toQuery).map { sources =>
           sources map { source =>
             val styleName: Option[String] = p.styles.headOption.filterNot(_.isEmpty).orElse(source.defaultStyle)
