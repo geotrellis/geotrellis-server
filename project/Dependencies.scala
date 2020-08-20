@@ -17,7 +17,7 @@ object Dependencies {
   val scalaVer = crossScalaVer.head
 
   val dispatchVer = "0.11.3"
-  val gtVer = "3.4.2-SNAPSHOT"
+  val gtVer = "3.5.0"
   val jaxbApiVer = "2.3.1"
   val refinedVer = "0.9.9"
   val shapelessVer = "2.3.3"
