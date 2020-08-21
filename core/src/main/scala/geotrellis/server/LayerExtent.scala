@@ -82,7 +82,7 @@ object LayerExtent {
   ): (Map[String, T], Extent, CellSize) => F[Interpreted[MultibandTile]] =
     (paramMap: Map[String, T], extent: Extent, cellsize: CellSize) => {
       val eval =
-        apply[F, T](Monad[F].pure(expr), Monad[F].pure(paramMap), interpreter)
+        apply[F, T](expr.pure[F], paramMap.pure[F], interpreter)
       eval(extent, cellsize)
     }
 

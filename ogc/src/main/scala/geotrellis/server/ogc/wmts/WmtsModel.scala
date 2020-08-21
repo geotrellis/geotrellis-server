@@ -23,9 +23,8 @@ import geotrellis.layer._
 import geotrellis.proj4._
 import geotrellis.store.query.RepositoryM
 
-import cats.{Applicative, Monad}
+import cats.Monad
 import cats.syntax.functor._
-import cats.syntax.flatMap._
 import cats.syntax.apply._
 import cats.instances.option._
 

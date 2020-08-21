@@ -18,6 +18,7 @@ package geotrellis.store.query
 
 import cats.{~>, Applicative, Id, Monoid, MonoidK}
 import cats.syntax.apply._
+import cats.syntax.applicative._
 import cats.syntax.semigroupk._
 
 trait RepositoryM[M[_], G[_], T] { self =>
@@ -34,7 +35,7 @@ trait RepositoryM[M[_], G[_], T] { self =>
 object RepositoryM {
   def empty[M[_]: Applicative, G[_]: MonoidK, T]: RepositoryM[M, G, T] =
     new RepositoryM[M, G, T] {
-      def store: M[G[T]]              = Applicative[M].pure(MonoidK[G].empty)
+      def store: M[G[T]]              = MonoidK[G].empty[T].pure[M]
       def find(query: Query): M[G[T]] = store
     }
 
@@ -49,5 +50,5 @@ object RepositoryM {
     }
 
   implicit def repositoryMIdToApplicative[M[_]: Applicative, G[_], T](repository: RepositoryM[Id, G, T]): RepositoryM[M, G, T] =
-    repository.mapK(λ[Id ~> M](Applicative[M].pure(_)))
+    repository.mapK(λ[Id ~> M](_.pure[M]))
 }

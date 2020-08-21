@@ -89,7 +89,7 @@ object LayerTms {
     interpreter: Interpreter[F]
   ): (Map[String, T], Int, Int, Int) => F[Interpreted[MultibandTile]] =
     (paramMap: Map[String, T], z: Int, x: Int, y: Int) => {
-      val eval = apply[F, T](Monad[F].pure(expr), Monad[F].pure(paramMap), interpreter)
+      val eval = apply[F, T](expr.pure[F], paramMap.pure[F], interpreter)
       eval(z, x, y)
     }
 

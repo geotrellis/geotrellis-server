@@ -26,9 +26,9 @@ import geotrellis.stac.api.{Http4sStacClient, SearchFilters, StacClient}
 import geotrellis.store.query
 import geotrellis.stac.raster.StacAssetRasterSource
 
-import cats.Applicative
 import cats.data.NonEmptyList
 import cats.syntax.functor._
+import cats.syntax.applicative._
 import cats.syntax.option._
 import cats.syntax.semigroup._
 import cats.effect.Sync
@@ -48,7 +48,7 @@ case class StacOgcRepository[F[_]: Sync: Logger](
 
     /** Replace the actual conf name with the STAC Layer name */
     val filters = SearchFilters.eval(query.overrideName(stacSourceConf.layer))
-    filters.fold(Applicative[F].pure(List.empty[OgcSource])) { filter =>
+    filters.fold(List.empty[OgcSource].pure[F]) { filter =>
       client
         .search(filter.copy(limit = stacSourceConf.assetLimit))
         .map { items =>
