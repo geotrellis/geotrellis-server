@@ -52,7 +52,7 @@ class NdviService[F[_]: Sync: Logger: Parallel, T: Encoder: Decoder: TmsReificat
   }
 
   implicit val redQueryParamDecoder: QueryParamDecoder[T] =
-    QueryParamDecoder[String].map { str => println(str); decode[T](URLDecoder.decode(str, "UTF-8")).right.get }
+    QueryParamDecoder[String].map { str => decode[T](URLDecoder.decode(str, "UTF-8")).right.get }
   object RedQueryParamMatcher extends QueryParamDecoderMatcher[T]("red")
   object NirQueryParamMatcher extends QueryParamDecoderMatcher[T]("nir")
 
