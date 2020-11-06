@@ -52,7 +52,7 @@ class NdviService[F[_]: Sync: Logger: Parallel, T: Encoder: Decoder: TmsReificat
   }
 
   implicit val redQueryParamDecoder: QueryParamDecoder[T] =
-    QueryParamDecoder[String].map { str => decode[T](URLDecoder.decode(str, "UTF-8")).right.get }
+    QueryParamDecoder[String].map { str => println(str); decode[T](URLDecoder.decode(str, "UTF-8")).right.get }
   object RedQueryParamMatcher extends QueryParamDecoderMatcher[T]("red")
   object NirQueryParamMatcher extends QueryParamDecoderMatcher[T]("nir")
 
@@ -68,7 +68,7 @@ class NdviService[F[_]: Sync: Logger: Parallel, T: Encoder: Decoder: TmsReificat
 
   final val eval = LayerTms.curried(ndvi, interpreter)
 
-  // http://0.0.0.0:9000/{z}/{x}/{y}.png
+  // http://0.0.0.0:9000/{z}/{x}/{y}.png?red=geotiffnodeojson&nir=geotiffnodejson
   def routes: HttpRoutes[F] =
     HttpRoutes.of {
       // Matching json in the query parameter is a bad idea.

@@ -211,6 +211,7 @@ lazy val example = project
       http4sCirce.value,
       http4sXml.value,
       scalaXml,
+      logback,
       geotrellisS3,
       geotrellisStore,
       geotrellisGdal,
@@ -225,6 +226,12 @@ lazy val example = project
       scalatest,
       jaxbApi,
       log4cats
+    ),
+    excludeDependencies ++= Seq(
+      // log4j brought in via uzaygezen is a pain for us
+      ExclusionRule("log4j", "log4j"),
+      ExclusionRule("org.slf4j", "slf4j-log4j12"),
+      ExclusionRule("org.slf4j", "slf4j-nop")
     )
   )
   .settings(
