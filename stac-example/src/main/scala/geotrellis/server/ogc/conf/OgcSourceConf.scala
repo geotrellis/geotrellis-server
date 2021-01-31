@@ -49,7 +49,8 @@ case class StacSourceConf(
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
   overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
   defaultTime: Boolean = false,
-  datetimeField: String = "datetime"
+  datetimeField: String = "datetime",
+  withGDAL: Boolean = false
 ) extends OgcSourceConf {
   def toLayer(rs: RasterSource): SimpleSource =
     SimpleSource(name, title, rs, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, datetimeField.some)

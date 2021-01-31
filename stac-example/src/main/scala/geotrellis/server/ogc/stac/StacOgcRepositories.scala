@@ -56,7 +56,12 @@ case class StacOgcRepository[F[_]: Sync: Logger](
             items.flatMap { item =>
               item.assets
                 .get(stacSourceConf.asset)
-                .map(StacAssetRasterSource(_, item.properties))
+                .map { itemAsset =>
+                  StacAssetRasterSource(
+                    itemAsset.withGDAL(stacSourceConf.withGDAL),
+                    item.properties
+                  )
+                }
             }
 
           val source: Option[RasterSource] = rasterSources match {
