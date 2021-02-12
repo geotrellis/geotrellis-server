@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.3.0] - 2021-02-12
+
 ## Added
 - Logging into STAC API Client [#293](https://github.com/geotrellis/geotrellis-server/pull/293)
 
