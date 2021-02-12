@@ -29,8 +29,8 @@ import scala.xml.{Elem, NamespaceBinding, NodeSeq}
 
 package object wms {
   val wmsScope: NamespaceBinding = scalaxb.toScope(
+    None          -> "http://www.opengis.net/wms",
     Some("ogc")   -> "http://www.opengis.net/ogc",
-    Some("wms")   -> "http://www.opengis.net/wms",
     Some("xlink") -> "http://www.w3.org/1999/xlink",
     Some("xs")    -> "http://www.w3.org/2001/XMLSchema",
     Some("xsi")   -> "http://www.w3.org/2001/XMLSchema-instance"
@@ -46,6 +46,7 @@ package object wms {
     * Some("xsi") -> "http://www.w3.org/2001/XMLSchema-instance")
     */
   val constrainedWMSScope: NamespaceBinding = scalaxb.toScope(
+    None          -> "http://www.opengis.net/wms",
     Some("ogc")   -> "http://www.opengis.net/ogc",
     Some("xlink") -> "http://www.w3.org/1999/xlink",
     Some("xs")    -> "http://www.w3.org/2001/XMLSchema",
