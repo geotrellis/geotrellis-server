@@ -30,19 +30,21 @@ import cats.syntax.either._
 import geotrellis.proj4.CRS
 import geotrellis.stac.raster.StacRepository
 import geotrellis.vector.{Extent, ProjectedExtent}
+import io.chrisdavenport.log4cats.{Logger => Logger4Cats}
 
 import scala.concurrent.ExecutionContext
 import scala.language.reflectiveCalls
 
 class Http4sStacClientSpec extends IOSpec {
-  def withClient[F[_]: ConcurrentEffect](implicit ec: ExecutionContext) = new {
-    def apply[T](f: StacClient[F] => F[T]): F[T] = {
-      // Http4sStacClient[F](Uri.fromString("http://localhost:9090/"))
-      BlazeClientBuilder[F](executionContext).resource.use { client =>
-        f(new Http4sStacClient[F](Logger(logBody = false, logHeaders = false)(client), Uri.fromString("http://localhost:9090/").valueOr(throw _)))
+  def withClient[F[_]: ConcurrentEffect: Logger4Cats](implicit ec: ExecutionContext) =
+    new {
+      def apply[T](f: StacClient[F] => F[T]): F[T] = {
+        // Http4sStacClient[F](Uri.fromString("http://localhost:9090/"))
+        BlazeClientBuilder[F](executionContext).resource.use { client =>
+          f(new Http4sStacClient[F](Logger(logBody = false, logHeaders = false)(client), Uri.fromString("http://localhost:9090/").valueOr(throw _)))
+        }
       }
     }
-  }
 
   describe("Http4sStacClientSpec") {
     ignore("should handle the search query") {
@@ -51,11 +53,9 @@ class Http4sStacClientSpec extends IOSpec {
           .search()
           .map(_.map(_.getExtensionFields[LayerItemExtension]))
           .map { list =>
-            list shouldBe List(Valid(
-              LayerItemExtension(
-                NonEmptyList(NonEmptyString.unsafeFrom("layer-us"), NonEmptyString.unsafeFrom("layer-ca") :: Nil)
-              )
-            ))
+            list shouldBe List(
+              Valid(LayerItemExtension(NonEmptyList(NonEmptyString.unsafeFrom("layer-us"), NonEmptyString.unsafeFrom("layer-ca") :: Nil)))
+            )
           }
       }
     }
@@ -69,18 +69,22 @@ class Http4sStacClientSpec extends IOSpec {
     ignore("repository") {
       import geotrellis.store.query._
       withClient[IO].apply { client =>
-        StacRepository[IO](client).find {
-          and(
-            withName("layer-us"),
-            intersects(ProjectedExtent(
-              Extent(73.99023507871507, 50.266557802094795, 73.99281921403175, 50.267377974106765),
-              CRS.fromEpsgCode(4326)
-            ))
-          )
-        }.map { list =>
-          println(list)
-          true shouldBe true
-        }
+        StacRepository[IO](client)
+          .find {
+            and(
+              withName("layer-us"),
+              intersects(
+                ProjectedExtent(
+                  Extent(73.99023507871507, 50.266557802094795, 73.99281921403175, 50.267377974106765),
+                  CRS.fromEpsgCode(4326)
+                )
+              )
+            )
+          }
+          .map { list =>
+            println(list)
+            true shouldBe true
+          }
       }
     }
   }

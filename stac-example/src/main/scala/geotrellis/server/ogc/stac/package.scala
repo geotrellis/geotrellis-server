@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Azavea
+ * Copyright 2021 Azavea
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,14 @@
  * limitations under the License.
  */
 
-package geotrellis.server.stac
+package geotrellis.server.ogc
 
-import io.circe._
-import io.circe.generic.semiauto._
+import com.azavea.stac4s.StacItemAsset
+import geotrellis.raster.geotiff.GeoTiffPath
 
-case class StacProvider(
-  name: String,
-  description: Option[String],
-  roles: List[StacProviderRole],
-  url: Option[String]
-)
-
-object StacProvider {
-  implicit val encStacProvider: Encoder[StacProvider] = deriveEncoder
-  implicit val decStacProvider: Decoder[StacProvider] = deriveDecoder
+package object stac {
+  implicit class StacItemAssetOps(val self: StacItemAsset) extends AnyVal {
+    def hrefGDAL(withGDAL: Boolean): String        = if (withGDAL) s"gdal+${self.href}" else s"${GeoTiffPath.PREFIX}${self.href}"
+    def withGDAL(withGDAL: Boolean): StacItemAsset = self.copy(href = hrefGDAL(withGDAL))
+  }
 }

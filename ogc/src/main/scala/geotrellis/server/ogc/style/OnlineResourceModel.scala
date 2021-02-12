@@ -16,7 +16,6 @@
 
 package geotrellis.server.ogc.style
 
-
 case class OnlineResourceModel(
   `type`: String,
   href: String,

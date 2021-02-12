@@ -17,48 +17,54 @@
 package geotrellis.server.ogc
 
 import geotrellis.store.query._
-import higherkindness.droste.{Algebra, scheme}
+import higherkindness.droste.{scheme, Algebra}
 import io.circe.Json
 import jp.ne.opt.chronoscala.Imports._
 
-case class OgcSourceRepository(store: List[OgcSource]) extends Repository[List, OgcSource] {
+case class OgcSourceRepository(store: List[OgcSource]) extends Repository[OgcSource] {
   def find(query: Query): List[OgcSource] = OgcSourceRepository.eval(query)(store)
 }
 
 object OgcSourceRepository {
   import geotrellis.store.query.QueryF._
 
-  def algebra: Algebra[QueryF, List[OgcSource] => List[OgcSource]] = Algebra {
-    case Nothing()           => _ => Nil
-    case All()               => identity
-    case WithName(name)      => _.filter(_.name == name)
-    case WithNames(names)    => _.filter(rs => names.contains(rs.name))
-    case At(t, _)           => _.filter(_.time match {
-      case OgcTimePositions(list) => list.exists(_ == t)
-      case OgcTimeInterval(start, end, _) => start <= t && t <= end
-      // Assume valid OgcLayers with no explicit temporal component are valid
-      // at all times so they aren't excluded when optional TIME param is null
-      case OgcTimeEmpty => true
-    })
-    case Between(t1, t2, _) => _.filter { _.time match {
-      case OgcTimePositions(list) =>
-        val sorted = list.toList.sorted
-        val start = sorted.head
-        val end = sorted.last
-        t1 <= start && start <= t2 || t1 <= end && end <= t2
-      case OgcTimeInterval(start, end, _) =>
-        t1 <= start && start <= t2 || t1 <= end && end <= t2
-      // Assume valid OgcLayers with no explicit temporal component are valid
-      // at all times so they aren't excluded when optional TIME param is null
-      case OgcTimeEmpty => true
-      }
+  def algebra: Algebra[QueryF, List[OgcSource] => List[OgcSource]] =
+    Algebra {
+      case Nothing()          => _ => Nil
+      case All()              => identity
+      case WithName(name)     => _.filter(_.name == name)
+      case WithNames(names)   => _.filter(rs => names.contains(rs.name))
+      case At(t, _)           =>
+        _.filter(_.time match {
+          case OgcTimePositions(list)         => list.exists(_ == t)
+          case OgcTimeInterval(start, end, _) => start <= t && t <= end
+          // Assume valid OgcLayers with no explicit temporal component are valid
+          // at all times so they aren't excluded when optional TIME param is null
+          case OgcTimeEmpty                   => true
+        })
+      case Between(t1, t2, _) =>
+        _.filter {
+          _.time match {
+            case OgcTimePositions(list)         =>
+              val sorted = list.toList.sorted
+              val start  = sorted.head
+              val end    = sorted.last
+              t1 <= start && start <= t2 || t1 <= end && end <= t2
+            case OgcTimeInterval(start, end, _) =>
+              t1 <= start && start <= t2 || t1 <= end && end <= t2
+            // Assume valid OgcLayers with no explicit temporal component are valid
+            // at all times so they aren't excluded when optional TIME param is null
+            case OgcTimeEmpty                   => true
+          }
+        }
+      case Intersects(e)      => _.filter(_.nativeProjectedExtent.intersects(e))
+      case Covers(e)          => _.filter(_.nativeProjectedExtent.covers(e))
+      case Contains(e)        => _.filter(_.nativeProjectedExtent.covers(e))
+      case And(e1, e2)        =>
+        list =>
+          val left = e1(list); left intersect e2(left)
+      case Or(e1, e2)         => list => e1(list) ++ e2(list)
     }
-    case Intersects(e) => _.filter(_.nativeProjectedExtent.intersects(e))
-    case Covers(e)     => _.filter(_.nativeProjectedExtent.covers(e))
-    case Contains(e)   => _.filter(_.nativeProjectedExtent.covers(e))
-    case And(e1, e2)   => list => val left = e1(list); left intersect e2(left)
-    case Or(e1, e2)    => list => e1(list) ++ e2(list)
-  }
 
   /** An alias for [[scheme.cata]] since it can confuse people */
   def eval(query: Query)(list: List[OgcSource]): List[OgcSource] =

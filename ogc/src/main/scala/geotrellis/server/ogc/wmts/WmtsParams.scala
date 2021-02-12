@@ -42,10 +42,8 @@ object WmtsParams {
 
   object GetCapabilities {
     def build(params: ParamMap): ValidatedNel[ParamError, WmtsParams] = {
-      (params.validatedVersion("1.0.0"),
-        params.validatedOptionalParam("format"),
-        params.validatedOptionalParam("updatesequence")
-      ).mapN(GetCapabilities.apply)
+      (params.validatedVersion("1.0.0"), params.validatedOptionalParam("format"), params.validatedOptionalParam("updatesequence"))
+        .mapN(GetCapabilities.apply)
     }
   }
 
@@ -85,13 +83,14 @@ object WmtsParams {
             params.validatedParam[Int]("tilecol", { s => Try(s.toInt).toOption })
 
           val format =
-            params.validatedParam("format")
+            params
+              .validatedParam("format")
               .andThen { f =>
                 OutputFormat.fromString(f) match {
                   case Some(format) => Valid(format).toValidatedNel
-                  case None =>
+                  case None         =>
                     Invalid(ParamError.UnsupportedFormatError(f)).toValidatedNel
-                  }
+                }
               }
 
           (layer, style, tileMatrixSet, tileMatrix, format, tileRow, tileCol).mapN {
@@ -103,22 +102,15 @@ object WmtsParams {
   }
 
   def apply(queryParams: Map[String, Seq[String]]): ValidatedNel[ParamError, WmtsParams] = {
-    val params = new ParamMap(queryParams)
+    val params       = ParamMap(queryParams)
+    val serviceParam = params.validatedParam("service", validValues = Set("wmts"))
+    val requestParam = params.validatedParam("request", validValues = Set("getcapabilities", "gettile"))
 
-    val serviceParam =
-      params.validatedParam("service", validValues=Set("wmts"))
-
-    val requestParam =
-      params.validatedParam("request", validValues=Set("getcapabilities", "gettile"))
-
-    val firstStageValidation =
-      (serviceParam, requestParam).mapN { case (a, b) => b }
+    val firstStageValidation = (serviceParam, requestParam).mapN { case (_, b) => b }
 
     firstStageValidation.andThen {
-      case "getcapabilities" =>
-        GetCapabilities.build(params)
-      case "gettile" =>
-        GetTile.build(params)
+      case "getcapabilities" => GetCapabilities.build(params)
+      case "gettile"         => GetTile.build(params)
     }
   }
 }

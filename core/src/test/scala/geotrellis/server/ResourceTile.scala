@@ -24,6 +24,7 @@ import geotrellis.raster.resample._
 import geotrellis.vector.Extent
 
 import cats.effect._
+import cats.implicits._
 import cats.data.{NonEmptyList => NEL}
 
 case class ResourceTile(
@@ -37,20 +38,42 @@ case class ResourceTile(
 object ResourceTile extends RasterSourceUtils {
   def getRasterSource(uri: String): RasterSource = GeoTiffRasterSource(uri)
 
-  implicit val extentReification: ExtentReification[ResourceTile] = new ExtentReification[ResourceTile] {
-    def extentReification(self: ResourceTile)(implicit contextShift: ContextShift[IO]): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
-      (extent: Extent, cs: CellSize) => {
-        val rs = getRasterSource(self.uri.toString)
-        rs.resample(TargetRegion(new GridExtent[Long](extent, cs)), self.resampleMethod, self.overviewStrategy)
-          .read(extent)
-          .map { raster => ProjectedRaster(raster, rs.crs) }
-          .toIO { new Exception(s"No tile avail for RasterExtent: ${RasterExtent(extent, cs)}") }
-      }
-  }
+  implicit val extentReification: ExtentReification[IO, ResourceTile] =
+    new ExtentReification[IO, ResourceTile] {
 
-  implicit val nodeRasterExtents: HasRasterExtents[ResourceTile] = new HasRasterExtents[ResourceTile] {
-    def rasterExtents(self: ResourceTile)(implicit contextShift: ContextShift[IO]): IO[NEL[RasterExtent]] =
-      getRasterExtents(self.uri.toString)
-  }
+      def extentReification(
+        self: ResourceTile
+      ): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
+        (extent: Extent, cs: CellSize) => {
+          val rs = getRasterSource(self.uri.toString)
+          rs.resample(
+            TargetRegion(new GridExtent[Long](extent, cs)),
+            self.resampleMethod,
+            self.overviewStrategy
+          ).read(extent)
+            .map { raster =>
+              ProjectedRaster(raster, rs.crs)
+            }
+            .toIO {
+              new Exception(
+                s"No tile avail for RasterExtent: ${RasterExtent(extent, cs)}"
+              )
+            }
+        }
+    }
+
+  implicit val nodeRasterExtents: HasRasterExtents[IO, ResourceTile] =
+    new HasRasterExtents[IO, ResourceTile] {
+
+      def rasterExtents(
+        self: ResourceTile
+      ): IO[NEL[RasterExtent]] =
+        IO {
+          val rs = RasterSource(self.uri.toString)
+          rs.resolutions.map(RasterExtent(rs.extent, _)).toNel getOrElse {
+            throw new Exception("no resolutions")
+          }
+        }
+    }
 
 }

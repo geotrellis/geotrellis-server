@@ -1,0 +1,76 @@
+{
+    "type": "Feature",
+    "id": "layer-us",
+    "stac_version": "1.0.0-beta.1",
+    "stac_extensions": [
+        "layer"
+    ],
+    "bbox": [
+        -101.40824987104652,
+        37.79718802132125,
+        -73.94863288954222,
+        41.41061537114088
+    ],
+    "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+            [
+                [
+                    -101.40824987104652,
+                    37.79718802132125
+                ],
+                [
+                    -101.40824987104652,
+                    41.41061537114088
+                ],
+                [
+                    -73.94863288954222,
+                    41.41061537114088
+                ],
+                [
+                    -73.94863288954222,
+                    37.79718802132125
+                ],
+                [
+                    -101.40824987104652,
+                    37.79718802132125
+                ]
+            ]
+        ]
+    },
+    "properties": {
+        "datetime": null,
+        "start_datetime": "2018-05-01T00:00:00Z",
+        "end_datetime": "2018-08-01T00:00:00Z"
+    },
+    "links": [
+        {
+            "rel": "self",
+            "href": "./us.json"
+        },
+        {
+            "rel": "parent",
+            "href": "../catalog.json"
+        },
+        {
+            "rel": "root",
+            "href": "../catalog.json"
+        },
+        {
+            "href": "../landsat-8-l1/2018-06/LC80140332018166LGN00.json",
+            "rel": "item"
+        },
+        {
+            "href": "../landsat-8-l1/2018-05/LC80150322018141LGN00.json",
+            "rel": "item"
+        },
+        {
+            "href": "../landsat-8-l1/2018-07/LC80150332018189LGN00.json",
+            "rel": "item"
+        },
+        {
+            "href": "../landsat-8-l1/2018-06/LC80300332018166LGN00.json",
+            "rel": "item"
+        }
+    ]
+}

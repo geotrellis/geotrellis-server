@@ -20,7 +20,7 @@ import geotrellis.server.ogc.wms.wmsScope
 import geotrellis.server.ogc.style._
 import geotrellis.proj4.CRS
 import geotrellis.vector.Extent
-import geotrellis.raster.{ResampleMethod, TileLayout, resample}
+import geotrellis.raster.{resample, ResampleMethod, TileLayout}
 import geotrellis.raster.render.{ColorMap, ColorRamp}
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
@@ -38,21 +38,23 @@ import scala.collection.JavaConverters._
 
 /** A grab bag of [[ConfigReader]] instances necessary to read the configuration */
 package object conf {
+
   /** Starting 0.11.0 https://github.com/pureconfig/pureconfig/blob/bfc74ce436297b2a9da091e04d362be61108a3cf/CHANGELOG.md#0110-may-9-2019
-   * The default transformation in FieldCoproductHint changed
-   * from converting class names to lower case to converting them to kebab case.
-   */
-  implicit def coproductHint[T] = new FieldCoproductHint[T]("type") {
-    override def fieldValue(name: String): String = name.toLowerCase
-  }
+    * The default transformation in FieldCoproductHint changed
+    * from converting class names to lower case to converting them to kebab case.
+    */
+  implicit def coproductHint[T] =
+    new FieldCoproductHint[T]("type") {
+      override def fieldValue(name: String): String = name.toLowerCase
+    }
 
   implicit val circeJsonReader: ConfigReader[Json] =
     ConfigReader[ConfigValue].emap { cv =>
       val renderOptions = ConfigRenderOptions.concise().setJson(true)
-      val jsonString = cv.render(renderOptions)
+      val jsonString    = cv.render(renderOptions)
       parse(jsonString) match {
-        case Left(parsingFailure) => Left(CannotConvert(jsonString, "json",  parsingFailure.getMessage))
-        case Right(json) => Right(json)
+        case Left(parsingFailure) => Left(CannotConvert(jsonString, "json", parsingFailure.getMessage))
+        case Right(json)          => Right(json)
       }
     }
 
@@ -60,7 +62,7 @@ package object conf {
     ConfigReader[Json].map { expressionJson =>
       expressionJson.as[Expression] match {
         case Right(success) => success
-        case Left(err) => throw err
+        case Left(err)      => throw err
       }
     }
 
@@ -70,35 +72,41 @@ package object conf {
     }
 
   /**
-   * HOCON doesn't naturally handle unquoted strings which contain decimals ('.') very well.
-   *  As a result, some special configuration handling is required here to allow unquoted
-   *  strings specifically when we know we're trying to decode a ColorMap.
-   * 
-   * @note It is currently difficult to handle double-keyed maps. A workaround
-   * has been provided, but it only works with doubles that explicitly decimal
-   * pad to tenths (0.0 is OK, 0 is to be avoided)
-   */
+    * HOCON doesn't naturally handle unquoted strings which contain decimals ('.') very well.
+    *  As a result, some special configuration handling is required here to allow unquoted
+    *  strings specifically when we know we're trying to decode a ColorMap.
+    *
+    * @note It is currently difficult to handle double-keyed maps. A workaround
+    * has been provided, but it only works with doubles that explicitly decimal
+    * pad to tenths (0.0 is OK, 0 is to be avoided)
+    */
   implicit val mapDoubleIntReader: ConfigReader[Map[Double, Int]] =
     ConfigReader[Map[String, ConfigValue]].map { cmap =>
-      val numericMap = cmap.flatMap({ case (k, v) =>
-        v.valueType match {
-          case ConfigValueType.OBJECT =>
-            val confmap = v.asInstanceOf[ConfigObject].asScala
-            confmap.map { case (ck, cv) =>
-              val key = k + "." + ck
-              val value = cv.unwrapped.asInstanceOf[String]
-              key -> value
+      val numericMap = cmap
+        .flatMap({
+          case (k, v) =>
+            v.valueType match {
+              case ConfigValueType.OBJECT =>
+                val confmap = v.asInstanceOf[ConfigObject].asScala
+                confmap.map {
+                  case (ck, cv) =>
+                    val key   = k + "." + ck
+                    val value = cv.unwrapped.asInstanceOf[String]
+                    key -> value
+                }
+              case ConfigValueType.STRING =>
+                List(k -> v.unwrapped.asInstanceOf[String])
+              case _                      =>
+                List(k -> v.toString)
             }
-          case ConfigValueType.STRING => 
-            List(k -> v.unwrapped.asInstanceOf[String])
-          case _ =>
-            List(k -> v.toString)
-        }
-      }).map({ case (k, v) =>
-        val key = k.toDouble
-        val value = java.lang.Long.decode(v).toInt
-        key -> value 
-      }).toMap
+        })
+        .map({
+          case (k, v) =>
+            val key   = k.toDouble
+            val value = java.lang.Long.decode(v).toInt
+            key -> value
+        })
+        .toMap
       numericMap
     }
 
@@ -112,7 +120,7 @@ package object conf {
       ClipDefinition.fromString(str) match {
         case Some(cd) =>
           Right(cd)
-        case None =>
+        case None     =>
           Left(CannotConvert(str, "ClipDefinition", s"$str is not a valid ClipDefinition"))
       }
     }
@@ -131,24 +139,26 @@ package object conf {
     ConfigReader[Int].map { epsgCode =>
       Try(CRS.fromEpsgCode(epsgCode)).toOption match {
         case Some(crs) => crs
-        case None => throw new Exception(s"Invalid EPSG code: ${epsgCode}")
+        case None      => throw new Exception(s"Invalid EPSG code: ${epsgCode}")
       }
     }
 
   implicit val extentReader: ConfigReader[Extent] =
-    ConfigReader[(Double, Double, Double, Double)].map { case extent @ (xmin, ymin, xmax, ymax) =>
-      Try(Extent(xmin, ymin, xmax, ymax)).toOption match {
-        case Some(extent) => extent
-        case None => throw new Exception(s"Invalid extent: $extent. Should be (xmin, ymin, xmax, ymax)")
-      }
+    ConfigReader[(Double, Double, Double, Double)].map {
+      case extent @ (xmin, ymin, xmax, ymax) =>
+        Try(Extent(xmin, ymin, xmax, ymax)).toOption match {
+          case Some(extent) => extent
+          case None         => throw new Exception(s"Invalid extent: $extent. Should be (xmin, ymin, xmax, ymax)")
+        }
     }
 
   implicit val tileLayoutReader: ConfigReader[TileLayout] =
-    ConfigReader[(Int, Int, Int, Int)].map { case layout @ (layoutCols, layoutRows, tileCols, tileRows) =>
-      Try(TileLayout(layoutCols, layoutRows, tileCols, tileRows)).toOption match {
-        case Some(layout) => layout
-        case None => throw new Exception(s"Invalid layout: $layout. Should be (layoutCols, layoutRows, tileCols, tileRows)")
-      }
+    ConfigReader[(Int, Int, Int, Int)].map {
+      case layout @ (layoutCols, layoutRows, tileCols, tileRows) =>
+        Try(TileLayout(layoutCols, layoutRows, tileCols, tileRows)).toOption match {
+          case Some(layout) => layout
+          case None         => throw new Exception(s"Invalid layout: $layout. Should be (layoutCols, layoutRows, tileCols, tileRows)")
+        }
     }
 
   implicit val resampleMethodReader: ConfigReader[ResampleMethod] =

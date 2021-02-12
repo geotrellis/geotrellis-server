@@ -30,45 +30,46 @@ import cats.data.Validated.{Invalid, Valid}
 
 import scala.reflect.ClassTag
 
-import org.scalatest.FunSpec
-import org.scalatest._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-class HillshadeSpec extends FunSpec with Matchers {
+class HillshadeSpec extends AnyFunSpec with Matchers {
   implicit class TypeRefinement(self: Interpreted[Result]) {
-    def as[T: ClassTag]: Interpreted[T] = self match {
-      case Valid(r) => r.as[T]
-      case i @ Invalid(_) => i
-    }
+    def as[T: ClassTag]: Interpreted[T] =
+      self match {
+        case Valid(r)       => r.as[T]
+        case i @ Invalid(_) => i
+      }
   }
 
   // https://github.com/geotrellis/geotrellis-server/issues/150
   describe("HillshadeSpec") {
     ignore("RasterSource reproject hillshade") {
-      val uri = "gt+s3://azavea-datahub/catalog?layer=us-ned-tms-epsg3857&zoom=14&band_count=1"
-      val rs = new GeoTrellisRasterSource(uri)
+      val uri    = "gt+s3://azavea-datahub/catalog?layer=us-ned-tms-epsg3857&zoom=14&band_count=1"
+      val rs     = new GeoTrellisRasterSource(uri)
       val raster =
-        rs
-          .reprojectToRegion(
-            LatLng,
-            RasterExtent(
-              Extent(-120.2952713630537, 39.13161870369179, -120.1235160949708, 39.25813307365495),
-              2.0018096513158E-4,2.0018096513159E-4,
-              858, 632
-            ),
-            Bilinear,
-            AutoHigherResolution
-          )
-          .read(Extent(-120.2952713630537, 39.13161870369179, -120.1235160949708, 39.25813307365495))
+        rs.reprojectToRegion(
+          LatLng,
+          RasterExtent(
+            Extent(-120.2952713630537, 39.13161870369179, -120.1235160949708, 39.25813307365495),
+            2.0018096513158e-4,
+            2.0018096513159e-4,
+            858,
+            632
+          ),
+          Bilinear,
+          AutoHigherResolution
+        ).read(Extent(-120.2952713630537, 39.13161870369179, -120.1235160949708, 39.25813307365495))
           .get
 
       val hillshadeProjectedRaster = ProjectedRaster(raster, LatLng)
 
       val interpreter = Interpreter.DEFAULT
-      val res = interpreter(FocalHillshade(List(RasterLit(hillshadeProjectedRaster)), 315, 45)).as[MultibandTile]
+      val res         = interpreter(FocalHillshade(List(RasterLit(hillshadeProjectedRaster)), 315, 45)).as[MultibandTile]
 
       res match {
-        case Valid(t) => GeoTiff(Raster(t, raster.extent), LatLng).write("/tmp/rs-reproject-hillshade.tiff")
-        case i@Invalid(_) => fail(s"$i")
+        case Valid(t)       => GeoTiff(Raster(t, raster.extent), LatLng).write("/tmp/rs-reproject-hillshade.tiff")
+        case i @ Invalid(_) => fail(s"$i")
       }
     }
   }

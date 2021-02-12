@@ -20,3 +20,5 @@ pc.stdout.log
 .DS_Store
 .bloop
 .metals
+metals.sbt
+.history

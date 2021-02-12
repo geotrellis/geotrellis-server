@@ -27,10 +27,12 @@ object ScalaxbUtils {
       case (None, Some(k), _)    => XML.loadString(s"<$k>${record.value}</$k>")
       case (Some(n), Some(k), _) => XML.loadString(s"<$n:$k>${record.value}</$n:$k>")
       case _                     => XML.loadString(s"<${record.value}/>")
-    } else (record.namespace, record.key, record.value) match {
-      case (None, Some(k), _)    => XML.loadString(s"<$k/>")
-      case (Some(n), Some(k), _) => XML.loadString(s"<$n:$k/>")
-      case _                     => throw new IllegalArgumentException(s"The passed record $record should contain namespace or key.")
     }
+    else
+      (record.namespace, record.key, record.value) match {
+        case (None, Some(k), _)    => XML.loadString(s"<$k/>")
+        case (Some(n), Some(k), _) => XML.loadString(s"<$n:$k/>")
+        case _                     => throw new IllegalArgumentException(s"The passed record $record should contain namespace or key.")
+      }
   }
 }

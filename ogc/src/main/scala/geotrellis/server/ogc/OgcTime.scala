@@ -16,45 +16,56 @@
 
 package geotrellis.server.ogc
 
-import jp.ne.opt.chronoscala.Imports._
 import cats.data.NonEmptyList
-import cats.{Order, Semigroup}
+import cats.{Monoid, Order, Semigroup}
 import cats.syntax.option._
+import cats.syntax.semigroup._
+import jp.ne.opt.chronoscala.Imports._
 
 import java.time.ZonedDateTime
 
 sealed trait OgcTime {
-  def isEmpty: Boolean = false
+  def isEmpty: Boolean  = false
   def nonEmpty: Boolean = !isEmpty
 }
 
 object OgcTime {
-  implicit val ogcTimeSemigroup: Semigroup[OgcTime] = Semigroup.instance {
-    // TODO: remove once Scala 2.11 is dropped
-    // workaround a Scala 2.11 bug
-    // should be l |+| r
-    case (l: OgcTimePositions, r: OgcTimePositions) => OgcTimePositions.ogcTimePositionsSemigroup.combine(l, r)
-    case (l: OgcTimeInterval, r: OgcTimeInterval) => OgcTimeInterval.ogcTimeIntervalSemigroup.combine(l, r)
-    case (l: OgcTimePositions, _: OgcTimeEmpty.type) => l
-    case (l: OgcTimeInterval, _: OgcTimeEmpty.type) => l
-    case (_: OgcTimeEmpty.type, r: OgcTimePositions) => r
-    case (_: OgcTimeEmpty.type, r: OgcTimeInterval) => r
-    case (l, _) => l
+  implicit val ogcTimeMonoid: Monoid[OgcTime] = new Monoid[OgcTime] {
+    def empty: OgcTime                           = OgcTimeEmpty
+    def combine(l: OgcTime, r: OgcTime): OgcTime =
+      (l, r) match {
+        case (l: OgcTimePositions, r: OgcTimePositions)  => l |+| r
+        case (l: OgcTimeInterval, r: OgcTimeInterval)    => l |+| r
+        case (l: OgcTimePositions, _: OgcTimeEmpty.type) => l
+        case (l: OgcTimeInterval, _: OgcTimeEmpty.type)  => l
+        case (_: OgcTimeEmpty.type, r: OgcTimePositions) => r
+        case (_: OgcTimeEmpty.type, r: OgcTimeInterval)  => r
+        case (l, _)                                      => l
+      }
   }
+
+  def strictTimeMatch(time: OgcTime, dt: ZonedDateTime): Boolean =
+    time match {
+      case OgcTimePositions(list)       => list.head == dt
+      case OgcTimeInterval(start, _, _) => start == dt
+      case OgcTimeEmpty                 => true
+    }
 }
 
 case object OgcTimeEmpty extends OgcTime {
-  override val isEmpty: Boolean = true
+  override val isEmpty: Boolean  = true
   override val nonEmpty: Boolean = !isEmpty
 
-  implicit val ogcTimeEmptySemigroup: Semigroup[OgcTimeEmpty.type] = Semigroup.instance { (l, _) => l }
+  implicit val ogcTimeEmptySemigroup: Semigroup[OgcTimeEmpty.type] = { (l, _) => l }
 }
 
 /** Represents the TimePosition used in TimeSequence requests */
 final case class OgcTimePositions(list: NonEmptyList[ZonedDateTime]) extends OgcTime {
+  import OgcTimePositions._
+
   def toOgcTimeInterval: OgcTimeInterval = {
-    val l = list.toList.sorted
-    OgcTimeInterval(l.min, l.max, None)
+    val times = list.sorted
+    OgcTimeInterval(times.head, times.last, None)
   }
   override def toString: String = list.toList.map(_.toInstant.toString).mkString(", ")
 }
@@ -62,16 +73,16 @@ final case class OgcTimePositions(list: NonEmptyList[ZonedDateTime]) extends Ogc
 object OgcTimePositions {
   implicit val timeOrder: Order[ZonedDateTime] = Order.fromOrdering
 
-  implicit val ogcTimePositionsSemigroup: Semigroup[OgcTimePositions] = Semigroup.instance { (l, r) =>
-    OgcTimePositions((l.list ::: r.list).distinct)
+  implicit val ogcTimePositionsSemigroup: Semigroup[OgcTimePositions] = { (l, r) =>
+    OgcTimePositions((l.list ::: r.list).distinct.sorted)
   }
 
-  def apply(timePeriod: ZonedDateTime): OgcTimePositions = OgcTimePositions(NonEmptyList(timePeriod, Nil))
-  def apply(timeString: String): OgcTimePositions = apply(ZonedDateTime.parse(timeString))
-  def apply(times: List[ZonedDateTime]): OgcTime =
+  def apply(timePeriod: ZonedDateTime): OgcTimePositions             = OgcTimePositions(NonEmptyList(timePeriod, Nil))
+  def apply(timeString: String): OgcTimePositions                    = apply(ZonedDateTime.parse(timeString))
+  def apply(times: List[ZonedDateTime]): OgcTime                     =
     times match {
       case head :: tail => OgcTimePositions(NonEmptyList(head, tail))
-      case _ => OgcTimeEmpty
+      case _            => OgcTimeEmpty
     }
   def apply(times: List[String])(implicit d: DummyImplicit): OgcTime = apply(times.map(ZonedDateTime.parse))
 }
@@ -97,19 +108,20 @@ object OgcTimePositions {
   */
 final case class OgcTimeInterval(start: ZonedDateTime, end: ZonedDateTime, interval: Option[String]) extends OgcTime {
   override def toString: String =
-    if(start != end) s"${start.toInstant.toString}/${end.toInstant.toString}${interval.map("/" + _).getOrElse("")}"
+    if (start != end) s"${start.toInstant.toString}/${end.toInstant.toString}${interval.map("/" + _).getOrElse("")}"
     else start.toInstant.toString
 }
 
 object OgcTimeInterval {
+
   /**
-   * Merge two OgcTimeInterval instances
-   * This semigroup instance destroys the interval. If you need to retain interval when combining
-   *  instances, perform this operation yourself.
-   */
-  implicit val ogcTimeIntervalSemigroup: Semigroup[OgcTimeInterval] = Semigroup.instance { (l, r) =>
-    val times = List(l.start, l.end, r.start, r.end)
-    OgcTimeInterval(times.min, times.max, None)
+    * Merge two OgcTimeInterval instances
+    * This semigroup instance destroys the interval. If you need to retain interval when combining
+    *  instances, perform this operation yourself.
+    */
+  implicit val ogcTimeIntervalSemigroup: Semigroup[OgcTimeInterval] = { (l, r) =>
+    val times = List(l.start, l.end, r.start, r.end).sorted
+    OgcTimeInterval(times.head, times.last, None)
   }
 
   def apply(timePeriod: ZonedDateTime): OgcTimeInterval = OgcTimeInterval(timePeriod, timePeriod, None)
@@ -119,12 +131,10 @@ object OgcTimeInterval {
   def fromString(timeString: String): OgcTimeInterval = {
     val timeParts = timeString.split("/")
     timeParts match {
-      case Array(start, end, interval) =>
-        OgcTimeInterval(ZonedDateTime.parse(start), ZonedDateTime.parse(end), interval.some)
-      case Array(start, end) =>
-        OgcTimeInterval(ZonedDateTime.parse(start), ZonedDateTime.parse(end), None)
-      case Array(start) => OgcTimeInterval(ZonedDateTime.parse(start))
-      case _ => throw new UnsupportedOperationException("Unsupported string format for OgcTimeInterval")
+      case Array(start, end, interval) => OgcTimeInterval(ZonedDateTime.parse(start), ZonedDateTime.parse(end), interval.some)
+      case Array(start, end)           => OgcTimeInterval(ZonedDateTime.parse(start), ZonedDateTime.parse(end), None)
+      case Array(start)                => OgcTimeInterval(ZonedDateTime.parse(start))
+      case _                           => throw new UnsupportedOperationException("Unsupported string format for OgcTimeInterval")
     }
   }
 }

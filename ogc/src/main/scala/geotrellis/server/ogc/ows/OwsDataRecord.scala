@@ -19,7 +19,7 @@ package geotrellis.server.ogc.ows
 import cats.syntax.option._
 import scalaxb.{CanWriteXML, DataRecord}
 
-import scala.reflect.{ClassTag, classTag}
+import scala.reflect.{classTag, ClassTag}
 
 /** A function that reduces boilerplate by generating a namespace and a key for a common ows [[DataRecord]] */
 object OwsDataRecord {

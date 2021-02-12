@@ -17,86 +17,95 @@
 package geotrellis.server.ogc.wcs
 
 import geotrellis.store.query._
-import geotrellis.raster._
+import geotrellis.raster.{io => _, _}
 import geotrellis.raster.io.geotiff._
 import geotrellis.server._
 import geotrellis.server.ogc._
 
 import com.azavea.maml.error._
 import com.azavea.maml.eval._
+import cats.Parallel
 import cats.data.Validated._
 import cats.effect._
+import cats.syntax.apply._
+import cats.syntax.applicative._
+import cats.syntax.functor._
 import cats.syntax.traverse._
 import cats.syntax.flatMap._
 import cats.instances.option._
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
+import io.chrisdavenport.log4cats.Logger
 
 import scala.concurrent.duration._
 
-class GetCoverage(wcsModel: WcsModel) {
-  val logger = org.log4s.getLogger
+class GetCoverage[F[_]: Logger: Sync: Concurrent: Parallel](wcsModel: WcsModel[F]) {
+  def renderLayers(params: GetCoverageWcsParams): F[Option[Array[Byte]]] = {
+    val re = params.gridExtent
+    wcsModel
+      .getLayers(params)
+      .flatMap {
+        _.headOption
+          .map {
+            case so @ SimpleOgcLayer(_, _, _, _, _, _, _)                    =>
+              LayerExtent.concurrent[F, SimpleOgcLayer](so)
+            case MapAlgebraOgcLayer(_, _, _, simpleLayers, algebra, _, _, _) =>
+              LayerExtent(
+                algebra.pure[F],
+                simpleLayers.pure[F],
+                ConcurrentInterpreter.DEFAULT[F]
+              )
+          }
+          .traverse { eval =>
+            eval(re.extent, re.cellSize) map {
+              case Valid(mbtile) =>
+                val bytes = GeoTiff(Raster(mbtile, re.extent), params.crs).toByteArray
+                requestCache.put(params, bytes)
+                bytes
+              case Invalid(errs) => throw MamlException(errs)
+            }
+          }
+      }
+
+  }
 
   /**
-   * QGIS appears to sample WCS service by placing low and high resolution requests at coverage center.
-   * These sampling requests happen for every actual WCS request, we can get really great cache hit rates.
-   */
+    * QGIS appears to sample WCS service by placing low and high resolution requests at coverage center.
+    * These sampling requests happen for every actual WCS request, we can get really great cache hit rates.
+    */
   lazy val requestCache: Cache[GetCoverageWcsParams, Array[Byte]] =
-      Scaffeine()
-        .recordStats()
-        .expireAfterWrite(1.hour)
-        .maximumSize(32)
-        .build()
+    Scaffeine()
+      .recordStats()
+      .expireAfterWrite(1.hour)
+      .maximumSize(32)
+      .build()
 
-  def build(params: GetCoverageWcsParams)(implicit cs: ContextShift[IO]): IO[Array[Byte]] = {
-    IO { requestCache.getIfPresent(params) } >>= {
+  def build(params: GetCoverageWcsParams): F[Array[Byte]] = {
+    Sync[F].delay { requestCache.getIfPresent(params) } >>= {
       case Some(bytes) =>
-        logger.trace(s"GetCoverage cache HIT: $params")
-        IO.pure(bytes)
+        Logger[F].trace(s"GetCoverage cache HIT: $params") *> bytes.pure[F]
 
-      case _ =>
-        logger.trace(s"GetCoverage cache MISS: $params")
-
-        def renderLayers(params: GetCoverageWcsParams) = {
-          val re = params.gridExtent
-          wcsModel
-            .getLayers(params)
-            .headOption
-            .map {
-              case so @ SimpleOgcLayer(_, _, _, _, _, _, _) => LayerExtent.identity(so)
-              case MapAlgebraOgcLayer(_, _, _, simpleLayers, algebra, _, _, _) =>
-                LayerExtent(IO.pure(algebra), IO.pure(simpleLayers), ConcurrentInterpreter.DEFAULT)
-            }
-            .traverse { eval =>
-              eval(re.extent, re.cellSize) map {
-                case Valid(mbtile) =>
-                  val bytes = GeoTiff(Raster(mbtile, re.extent), params.crs).toByteArray
-                  requestCache.put(params, bytes)
-                  bytes
-                case Invalid(errs) => throw MamlException(errs)
-              }
-            }
+      case _           =>
+        Logger[F].trace(s"GetCoverage cache MISS: $params") >>= { _ =>
+          renderLayers(params).flatMap {
+            case Some(bytes) => bytes.pure[F]
+            case None        =>
+              wcsModel.sources
+                .find(withName(params.identifier))
+                .flatMap {
+                  _.headOption match {
+                    case Some(_) =>
+                      // Handle the case where the STAC item was requested for some area between the tiles.
+                      // STAC search will return an empty list, however QGIS may expect a test pixel to
+                      // return the actual tile
+                      // TODO: handle it in a proper way, how to get information about the bands amount?
+                      val tile = ArrayTile.empty(IntCellType, 1, 1)
+                      GeoTiff(Raster(MultibandTile(tile, tile, tile), params.extent), params.crs).toByteArray.pure[F]
+                    case _       => Logger[F].error(s"No tile found for the $params request.") *> Array[Byte]().pure[F]
+                  }
+                }
+          }
         }
 
-       renderLayers(params).map { _.getOrElse {
-         wcsModel.sources.find(withName(params.identifier)).headOption match {
-           case Some(_) =>
-             // Handle the case where the STAC item was requested for some area between the tiles.
-             // STAC search will return an empty list, however QGIS may expect a test pixel to
-             // return the actual tile
-             // TODO: handle it in a proper way, how to get information about the bands amount?
-             val tile = ArrayTile.empty(IntCellType, 1, 1)
-             GeoTiff(
-               Raster(
-                 MultibandTile(tile, tile, tile),
-                 params.extent
-               ),
-               params.crs
-             ).toByteArray
-           case _ =>
-             logger.error(s"No tile found for the $params request.")
-             Array()
-         }
-       } }
     }
   }
 }

@@ -33,12 +33,12 @@ case class StacAssetRasterSource(
   def convert(targetCellType: TargetCellType): StacAssetRasterSource =
     StacAssetRasterSource(asset, itemProperties, underlying.convert(targetCellType).some, targetCellType.some)
 
-  val name: SourceName = asset.href
-  def crs: CRS = underlying.crs
-  def bandCount: Int = underlying.bandCount
-  def cellType: CellType = underlying.cellType
-  def gridExtent: GridExtent[Long] = underlying.gridExtent
-  def resolutions: List[CellSize] = underlying.resolutions
-  def attributes: Map[String, String] = itemProperties.toMap.mapValues(_.as[String].toOption).collect { case (k, v) if v.nonEmpty => k -> v.get }
+  val name: SourceName                                  = asset.href
+  def crs: CRS                                          = underlying.crs
+  def bandCount: Int                                    = underlying.bandCount
+  def cellType: CellType                                = underlying.cellType
+  def gridExtent: GridExtent[Long]                      = underlying.gridExtent
+  def resolutions: List[CellSize]                       = underlying.resolutions
+  def attributes: Map[String, String]                   = itemProperties.toMap.mapValues(_.as[String].toOption).collect { case (k, v) if v.nonEmpty => k -> v.get }
   def attributesForBand(band: Int): Map[String, String] = Map.empty
 }

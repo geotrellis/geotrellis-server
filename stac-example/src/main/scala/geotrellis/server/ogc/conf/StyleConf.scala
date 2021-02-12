@@ -16,7 +16,6 @@
 
 package geotrellis.server.ogc.conf
 
-import geotrellis.server.ogc._
 import geotrellis.server.ogc.style._
 
 import geotrellis.raster.render.{ColorMap, ColorRamp}

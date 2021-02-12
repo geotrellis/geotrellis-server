@@ -13,6 +13,6 @@ case class StacAssetMetadata(
   resolutions: List[CellSize],
   itemProperties: JsonObject = JsonObject.empty
 ) extends RasterMetadata {
-  def attributes: Map[String, String] = itemProperties.toMap.mapValues(_.as[String].toOption).collect { case (k, v) if v.nonEmpty => k -> v.get }
+  def attributes: Map[String, String]                   = itemProperties.toMap.mapValues(_.as[String].toOption).collect { case (k, v) if v.nonEmpty => k -> v.get }
   def attributesForBand(band: Int): Map[String, String] = Map.empty
 }

@@ -1,34 +1,34 @@
 version: '3'
 services:
   overlay-example:
-    image: quay.io/azavea/openjdk-gdal:2.3-jdk8-slim
+    image: daunnc/openjdk-gdal:3.1-jdk8-slim
     command: /bin/sh -c "java -cp /opt/geotrellis-server-example.jar geotrellis.server.example.overlay.WeightedOverlayServer"
     ports:
       - "9000:9000"
     volumes:
       - $HOME/.aws:/root/.aws
-      - ./example/target/scala-2.11/geotrellis-server-example.jar:/opt/geotrellis-server-example.jar
+      - ./example/target/scala-2.12/geotrellis-server-example.jar:/opt/geotrellis-server-example.jar
   persistence-example:
-    image: quay.io/azavea/openjdk-gdal:2.3-jdk8-slim
+    image: daunnc/openjdk-gdal:3.1-jdk8-slim
     command: /bin/sh -c "java -cp /opt/geotrellis-server-example.jar geotrellis.server.example.persistence.PersistenceServer"
     ports:
       - "9000:9000"
     volumes:
       - $HOME/.aws:/root/.aws
-      - ./example/target/scala-2.11/geotrellis-server-example.jar:/opt/geotrellis-server-example.jar
+      - ./example/target/scala-2.12/geotrellis-server-example.jar:/opt/geotrellis-server-example.jar
   ndvi-example:
-    image: quay.io/azavea/openjdk-gdal:2.3-jdk8-slim
+    image: daunnc/openjdk-gdal:3.1-jdk8-slim
     command: /bin/sh -c "java -cp /opt/geotrellis-server-example.jar geotrellis.server.example.ndvi.NdviServer"
     ports:
       - "9000:9000"
     volumes:
       - $HOME/.aws:/root/.aws
-      - ./example/target/scala-2.11/geotrellis-server-example.jar:/opt/geotrellis-server-example.jar
+      - ./example/target/scala-2.12/geotrellis-server-example.jar:/opt/geotrellis-server-example.jar
   gdal-ndvi-example:
-    image: quay.io/azavea/openjdk-gdal:2.3-jdk8-slim
+    image: daunnc/openjdk-gdal:3.1-jdk8-slim
     command: /bin/sh -c "java -Djava.library.path=/usr/local/lib -cp /opt/geotrellis-server-example.jar geotrellis.server.example.ndvi.GdalNdviServer"
     ports:
       - "9000:9000"
     volumes:
       - $HOME/.aws:/root/.aws
-      - ./example/target/scala-2.11/geotrellis-server-example.jar:/opt/geotrellis-server-example.jar
+      - ./example/target/scala-2.12/geotrellis-server-example.jar:/opt/geotrellis-server-example.jar

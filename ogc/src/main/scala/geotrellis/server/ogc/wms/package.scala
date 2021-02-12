@@ -29,11 +29,11 @@ import scala.xml.{Elem, NamespaceBinding, NodeSeq}
 
 package object wms {
   val wmsScope: NamespaceBinding = scalaxb.toScope(
-    Some("ogc") -> "http://www.opengis.net/ogc",
-    Some("wms") -> "http://www.opengis.net/wms",
+    Some("ogc")   -> "http://www.opengis.net/ogc",
+    Some("wms")   -> "http://www.opengis.net/wms",
     Some("xlink") -> "http://www.w3.org/1999/xlink",
-    Some("xs") -> "http://www.w3.org/2001/XMLSchema",
-    Some("xsi") -> "http://www.w3.org/2001/XMLSchema-instance"
+    Some("xs")    -> "http://www.w3.org/2001/XMLSchema",
+    Some("xsi")   -> "http://www.w3.org/2001/XMLSchema-instance"
   )
 
   /**
@@ -46,10 +46,10 @@ package object wms {
     * Some("xsi") -> "http://www.w3.org/2001/XMLSchema-instance")
     */
   val constrainedWMSScope: NamespaceBinding = scalaxb.toScope(
-    Some("ogc") -> "http://www.opengis.net/ogc",
+    Some("ogc")   -> "http://www.opengis.net/ogc",
     Some("xlink") -> "http://www.w3.org/1999/xlink",
-    Some("xs") -> "http://www.w3.org/2001/XMLSchema",
-    Some("xsi") -> "http://www.w3.org/2001/XMLSchema-instance"
+    Some("xs")    -> "http://www.w3.org/2001/XMLSchema",
+    Some("xsi")   -> "http://www.w3.org/2001/XMLSchema-instance"
   )
 
   implicit class withLegendModelMethods(that: LegendModel) {
@@ -63,19 +63,33 @@ package object wms {
 
   implicit class withOnlineResourceModelMethods(that: OnlineResourceModel) {
     def toOnlineResource: OnlineResource =
-      OnlineResource(Map(
-        "@{http://www.w3.org/1999/xlink}type" -> Option(DataRecord(xlink.TypeType.fromString(that.`type`, scope = toScope(Some("xlink") -> "http://www.w3.org/1999/xlink")))),
-        "@{http://www.w3.org/1999/xlink}href" -> Option(DataRecord(new URI(that.href))),
-        "@{http://www.w3.org/1999/xlink}role" -> that.role.map(v => DataRecord(new URI(v))),
-        "@{http://www.w3.org/1999/xlink}title" -> that.title.map(v => DataRecord(v)),
-        "@{http://www.w3.org/1999/xlink}show" -> that.show.map(v => DataRecord(xlink.ShowType.fromString(v, scope = scalaxb.toScope(Some("xlink") -> "http://www.w3.org/1999/xlink")))),
-        "@{http://www.w3.org/1999/xlink}actuate" -> that.actuate.map(v => DataRecord(xlink.ActuateType.fromString(v, scope = scalaxb.toScope(Some("xlink") -> "http://www.w3.org/1999/xlink"))))
-      ).collect { case (k, Some(v)) => k -> v })
+      OnlineResource(
+        Map(
+          "@{http://www.w3.org/1999/xlink}type"    -> Option(
+            DataRecord(xlink.TypeType.fromString(that.`type`, scope = toScope(Some("xlink") -> "http://www.w3.org/1999/xlink")))
+          ),
+          "@{http://www.w3.org/1999/xlink}href"    -> Option(DataRecord(new URI(that.href))),
+          "@{http://www.w3.org/1999/xlink}role"    -> that.role.map(v => DataRecord(new URI(v))),
+          "@{http://www.w3.org/1999/xlink}title"   -> that.title.map(v => DataRecord(v)),
+          "@{http://www.w3.org/1999/xlink}show"    -> that.show.map(v =>
+            DataRecord(xlink.ShowType.fromString(v, scope = scalaxb.toScope(Some("xlink") -> "http://www.w3.org/1999/xlink")))
+          ),
+          "@{http://www.w3.org/1999/xlink}actuate" -> that.actuate.map(v =>
+            DataRecord(xlink.ActuateType.fromString(v, scope = scalaxb.toScope(Some("xlink") -> "http://www.w3.org/1999/xlink")))
+          )
+        ).collect { case (k, Some(v)) => k -> v }
+      )
   }
 
   def ExtendedElement[A](key: String, records: DataRecord[A]*): Elem =
     DataRecord(None, key.some, records.map(_.toXML).foldLeft(NodeSeq.Empty)((acc, e) => acc ++ e)).toXML
 
   def ExtendedCapabilities[A](records: Elem*): List[DataRecord[Elem]] =
-    DataRecord(DataRecord(None, "ExtendedCapabilities".some, DataRecord(None, "GetMap".some, records.foldLeft(NodeSeq.Empty)((acc, e) => acc ++ e)).toXML).toXML) :: Nil
+    DataRecord(
+      DataRecord(
+        None,
+        "ExtendedCapabilities".some,
+        DataRecord(None, "GetMap".some, records.foldLeft(NodeSeq.Empty)((acc, e) => acc ++ e)).toXML
+      ).toXML
+    ) :: Nil
 }

@@ -40,17 +40,17 @@ case class GetCapabilitiesWcsParams(version: String) extends WcsParams
 case class DescribeCoverageWcsParams(version: String, identifiers: Seq[String]) extends WcsParams
 
 /**
- * “EPSG:4326” or “WGS84” use the latitude first, longitude second axis order.
- * According to the WCS spec for 1.1, some CRS have inverted axis
- * box:
- *  1.0.0: minx,miny,maxx,maxy
- *  1.1.0, 1.1.2: OGC 07-067r5 (WCS 1.1.2) referes to OGC 06-121r3 which says
- *  "The number of axes included, and the order of these axes, shall be as specified
- *  by the referenced CRS." That means inverted for geographic.
- *
- * Reference to QGIS: https://github.com/qgis/QGIS/blob/final-3_10_2/src/providers/wcs/qgswcsprovider.cpp#L674
- * Parameters descriptions can be also found here: https://mapserver.org/ogc/wcs_server.html
- */
+  * “EPSG:4326” or “WGS84” use the latitude first, longitude second axis order.
+  * According to the WCS spec for 1.1, some CRS have inverted axis
+  * box:
+  *  1.0.0: minx,miny,maxx,maxy
+  *  1.1.0, 1.1.2: OGC 07-067r5 (WCS 1.1.2) referes to OGC 06-121r3 which says
+  *  "The number of axes included, and the order of these axes, shall be as specified
+  *  by the referenced CRS." That means inverted for geographic.
+  *
+  * Reference to QGIS: https://github.com/qgis/QGIS/blob/final-3_10_2/src/providers/wcs/qgswcsprovider.cpp#L674
+  * Parameters descriptions can be also found here: https://mapserver.org/ogc/wcs_server.html
+  */
 case class GetCoverageWcsParams(
   version: String,
   identifier: String,
@@ -74,23 +74,21 @@ case class GetCoverageWcsParams(
       // For now, since a RasterSource maps 1 to 1 to OgcSource, we only create a
       // temporal filter on the first TimeInterval in the list. Revisit when we are
       // able to utilize all requested TimeIntervals.
-      case Some(timeInterval: OgcTimeInterval) =>
-        query and between(timeInterval.start, timeInterval.end)
-      case Some(OgcTimePositions(list)) =>
-        query and list.toList.map(at(_)).reduce(_ or _)
-      case _ => query
+      case Some(timeInterval: OgcTimeInterval) => query and between(timeInterval.start, timeInterval.end)
+      case Some(OgcTimePositions(list))        => query and list.toList.map(at(_)).reduce(_ or _)
+      case _                                   => query
     }
   }
 
   val changeXY: Boolean = crs.isGeographic
 
   def cellSize: CellSize =
-    if(changeXY) CellSize(-gridOffsets._1, gridOffsets._2)
+    if (changeXY) CellSize(-gridOffsets._1, gridOffsets._2)
     else CellSize(gridOffsets._1, -gridOffsets._2)
 
   // shrink the extent to border cells centers by half cell size
   def extent: Extent =
-    if(changeXY)
+    if (changeXY)
       Extent(
         boundingBox.xmin,
         gridOrigin._2,
@@ -109,6 +107,7 @@ case class GetCoverageWcsParams(
 }
 
 object WcsParams {
+
   /** Defines valid request types, and the WcsParams to build from them. */
   private val requestMap: Map[String, ParamMap => ValidatedNel[ParamError, WcsParams]] =
     Map(
@@ -122,12 +121,12 @@ object WcsParams {
   def apply(queryParams: Map[String, Seq[String]]): ValidatedNel[ParamError, WcsParams] = {
     val params = ParamMap(queryParams)
 
-    val serviceParam = params.validatedParam("service", validValues = Set("wcs"))
-    val requestParam = params.validatedParam("request", validValues = validRequests)
+    val serviceParam         = params.validatedParam("service", validValues = Set("wcs"))
+    val requestParam         = params.validatedParam("request", validValues = validRequests)
     val firstStageValidation = (serviceParam, requestParam).mapN { case (_, b) => b }
 
     firstStageValidation
-      // Further validation and building based on request type.
+    // Further validation and building based on request type.
       .andThen { request => requestMap(request)(params) }
   }
 }
@@ -156,17 +155,20 @@ object DescribeCoverageWcsParams {
 
 object GetCoverageWcsParams {
   private def getBboxAndCrsOption(params: ParamMap, field: String): ValidatedNel[ParamError, (Vector[Double], Option[String])] =
-    params.validatedParam[(Vector[Double], Option[String])](field, { bboxStr =>
-      // Usually the CRS is the 5th element in the bbox param.
-      try {
-        val v = bboxStr.split(",").toVector
-        if(v.length == 4) (v.map(_.toDouble), None).some
-        else if(v.length == 5) (v.take(4).map(_.toDouble), v.last.some).some
-        else None
-      } catch {
-        case _: Throwable => None
+    params.validatedParam[(Vector[Double], Option[String])](
+      field,
+      { bboxStr =>
+        // Usually the CRS is the 5th element in the bbox param.
+        try {
+          val v = bboxStr.split(",").toVector
+          if (v.length == 4) (v.map(_.toDouble), None).some
+          else if (v.length == 5) (v.take(4).map(_.toDouble), v.last.some).some
+          else None
+        } catch {
+          case _: Throwable => None
+        }
       }
-    })
+    )
 
   def build(params: ParamMap): ValidatedNel[ParamError, WcsParams] = {
     val versionParam = params.validatedVersion("1.1.1")
@@ -182,7 +184,6 @@ object GetCoverageWcsParams {
           val bboxAndCrsOption =
             getBboxAndCrsOption(params, "boundingbox")
 
-
           (identifier, bboxAndCrsOption).mapN {
             case (id, (bbox, crsOption)) => (id, bbox, crsOption)
           }
@@ -193,47 +194,55 @@ object GetCoverageWcsParams {
         // Transform the OGC urn CRS code into a CRS.
         val idAndBboxAndCrs: Validated[NEL[ParamError], (String, Vector[Double], CRS)] =
           idAndBboxAndCrsOption
-            .andThen { case (id, bbox, crsOption) =>
-              // If the CRS wasn't in the boundingbox parameter, pull it out of the CRS field.
-              crsOption match {
-                case Some(crsDesc) => CRSUtils.ogcToCRS(crsDesc).map { crs => (id, bbox, crs) }
-                case None => gridBaseCRS.map { crs => (id, bbox, crs) }
-              }
+            .andThen {
+              case (id, bbox, crsOption) =>
+                // If the CRS wasn't in the boundingbox parameter, pull it out of the CRS field.
+                crsOption match {
+                  case Some(crsDesc) => CRSUtils.ogcToCRS(crsDesc).map { crs => (id, bbox, crs) }
+                  case None          => gridBaseCRS.map { crs => (id, bbox, crs) }
+                }
             }
 
         val temporalSequenceOption = params.validatedOgcTimeSequence("timesequence")
 
         val format =
-          params.validatedParam("format")
+          params
+            .validatedParam("format")
             .andThen { f =>
               OutputFormat.fromString(f) match {
                 case Some(format) => Valid(format).toValidatedNel
-                case None =>
+                case None         =>
                   Invalid(UnsupportedFormatError(f)).toValidatedNel
-                }
+              }
             }
 
-        val gridCS = params.validatedParam[URI]("gridcs", { s => Try(new URI(s)).toOption })
-        val gridType = params.validatedParam[URI]("gridtype", { s => Try(new URI(s)).toOption })
-        val gridOrigin = params.validatedParam[(Double, Double)]("gridorigin", { s =>
-          Try {
-            val List(fst, snd) = s.split(",").map(_.toDouble).toList
-            (fst, snd)
-          }.toOption
-        })
+        val gridCS     = params.validatedParam[URI]("gridcs", { s => Try(new URI(s)).toOption })
+        val gridType   = params.validatedParam[URI]("gridtype", { s => Try(new URI(s)).toOption })
+        val gridOrigin = params.validatedParam[(Double, Double)](
+          "gridorigin",
+          { s =>
+            Try {
+              val List(fst, snd) = s.split(",").map(_.toDouble).toList
+              (fst, snd)
+            }.toOption
+          }
+        )
 
-        val gridOffsets = params.validatedParam[(Double, Double)]("gridoffsets", { s =>
-          Try {
-            // in case 4 parameters would be passed, we care only about the first and the last only
-            val list = s.split(",").map(_.toDouble).toList
-            (list.head, list.last)
-          }.toOption
-        })
+        val gridOffsets = params.validatedParam[(Double, Double)](
+          "gridoffsets",
+          { s =>
+            Try {
+              // in case 4 parameters would be passed, we care only about the first and the last only
+              val list = s.split(",").map(_.toDouble).toList
+              (list.head, list.last)
+            }.toOption
+          }
+        )
 
         (idAndBboxAndCrs, format, gridBaseCRS, gridCS, gridType, gridOrigin, gridOffsets, temporalSequenceOption).mapN {
           case ((id, bbox, crs), format, gridBaseCRS, gridCS, gridType, gridOrigin, gridOffsets, temporalSeqOpt) =>
-          val extent = Extent(bbox(0), bbox(1), bbox(2), bbox(3))
-          GetCoverageWcsParams(version, id, extent, temporalSeqOpt, format, gridBaseCRS, gridCS, gridType, gridOrigin, gridOffsets, crs, params)
+            val extent = Extent(bbox(0), bbox(1), bbox(2), bbox(3))
+            GetCoverageWcsParams(version, id, extent, temporalSeqOpt, format, gridBaseCRS, gridCS, gridType, gridOrigin, gridOffsets, crs, params)
         }
       }
   }

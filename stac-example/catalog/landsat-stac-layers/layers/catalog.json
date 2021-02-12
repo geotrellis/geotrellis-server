@@ -1,0 +1,29 @@
+{
+    "stac_version": "1.0.0-beta.1",
+    "stac_extensions": [],
+    "id": "layer-us-global",
+    "title": "Landsat 8 L1",
+    "description": "US STAC Layers, a STAC Catalog that represents a list of STAC Layers",
+    "links": [
+        {
+            "href": "../catalog.json",
+            "rel": "root"
+        },
+        {
+            "href": "../catalog.json",
+            "rel": "parent"
+        },
+        {
+            "href": "./catalog.json",
+            "rel": "self"
+        },
+        {
+            "href": "./pa.json",
+            "rel": "item"
+        },
+        {
+            "href": "./us.json",
+            "rel": "item"
+        }
+    ]
+}

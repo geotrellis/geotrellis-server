@@ -24,7 +24,6 @@ import geotrellis.raster.render.{ColorMap, ColorRamp}
 import geotrellis.raster.render.jpg.JpgEncoder
 import geotrellis.util.np.linspace
 
-
 case class InterpolatedColorMapStyle(
   name: String,
   title: String,
@@ -37,13 +36,9 @@ case class InterpolatedColorMapStyle(
     hists: List[Histogram[Double]]
   ): Array[Byte] = {
     format match {
-      case format: OutputFormat.Png =>
-        format.render(mbtile.band(bandIndex = 0), colorMap)
-
-      case OutputFormat.Jpg =>
-        colorMap.render(mbtile.band(bandIndex = 0)).renderJpg().bytes
-
-      case OutputFormat.GeoTiff => ??? // Implementation necessary
+      case format: OutputFormat.Png => format.render(mbtile.band(bandIndex = 0), colorMap)
+      case OutputFormat.Jpg         => colorMap.render(mbtile.band(bandIndex = 0)).renderJpg().bytes
+      case OutputFormat.GeoTiff     => ??? // Implementation necessary
     }
   }
 }

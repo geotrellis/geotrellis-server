@@ -18,35 +18,32 @@ package geotrellis.server.ogc
 
 import geotrellis.server.ogc.style._
 
-import geotrellis.raster.render.{ColorRamp, RGBA}
-import geotrellis.raster.histogram.DoubleHistogram
+import geotrellis.raster.render.RGBA
 
-import org.scalatest.FunSpec
-import org.scalatest._
-import org.scalatest.Matchers._
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
 
-
-class InterpolatedColorMapSpec extends FunSpec {
+class InterpolatedColorMapSpec extends AnyFunSpec with Matchers {
   describe("InterpolatedColorMap") {
-    val minColor = RGBA(255, 0, 0, 100)
-    val medColor = RGBA(0, 255, 0, 100)
-    val maxColor = RGBA(0, 0, 255, 100)
+    val minColor     = RGBA(255, 0, 0, 100)
+    val medColor     = RGBA(0, 255, 0, 100)
+    val maxColor     = RGBA(0, 0, 255, 100)
     val clippedColor = RGBA(0, 0, 0, 0)
-    val poles =
+    val poles        =
       Map[Double, Int](
         -100.0 -> minColor,
-        0.0 -> medColor,
-        100.0 -> maxColor
+        0.0    -> medColor,
+        100.0  -> maxColor
       )
 
     it("should interpolate based based on the two nearest poles") {
       val clipDefinition = ClipNone
-      val interpolate =
+      val interpolate    =
         InterpolatedColorMap.interpolation(poles, clipDefinition)
-      val interpolated = interpolate(50.0)
-      val expected = RGBA(0, 127, 127, 100)
+      val interpolated   = interpolate(50.0)
+      val expected       = RGBA(0, 127, 127, 100)
 
-      interpolated shouldBe (expected)
+      interpolated shouldBe expected
       interpolated.red shouldBe (expected.red)
       interpolated.blue shouldBe (expected.blue)
       interpolated.green shouldBe (expected.green)
@@ -54,35 +51,35 @@ class InterpolatedColorMapSpec extends FunSpec {
 
     it("should respect clip definition: none") {
       val clipDefinition = ClipNone
-      val interpolate =
+      val interpolate    =
         InterpolatedColorMap.interpolation(poles, clipDefinition)
-      val i = interpolate(Double.MinValue)
-      interpolate(Double.MinValue) shouldBe (minColor)
-      interpolate(Double.MaxValue) shouldBe (maxColor)
+      val i              = interpolate(Double.MinValue)
+      interpolate(Double.MinValue) shouldBe minColor
+      interpolate(Double.MaxValue) shouldBe maxColor
     }
 
     it("should respect clip definition: left") {
       val clipDefinition = ClipLeft
-      val interpolate =
+      val interpolate    =
         InterpolatedColorMap.interpolation(poles, clipDefinition)
-      interpolate(Double.MinValue) shouldBe (clippedColor)
-      interpolate(Double.MaxValue) shouldBe (maxColor)
+      interpolate(Double.MinValue) shouldBe clippedColor
+      interpolate(Double.MaxValue) shouldBe maxColor
     }
 
     it("should respect clip definition: right") {
       val clipDefinition = ClipRight
-      val interpolate =
+      val interpolate    =
         InterpolatedColorMap.interpolation(poles, clipDefinition)
-      interpolate(Double.MinValue) shouldBe (minColor)
-      interpolate(Double.MaxValue) shouldBe (clippedColor)
+      interpolate(Double.MinValue) shouldBe minColor
+      interpolate(Double.MaxValue) shouldBe clippedColor
     }
 
     it("should respect clip definition: both") {
       val clipDefinition = ClipBoth
-      val interpolate =
+      val interpolate    =
         InterpolatedColorMap.interpolation(poles, clipDefinition)
-      interpolate(Double.MinValue) shouldBe (clippedColor)
-      interpolate(Double.MaxValue) shouldBe (clippedColor)
+      interpolate(Double.MinValue) shouldBe clippedColor
+      interpolate(Double.MaxValue) shouldBe clippedColor
     }
   }
 }

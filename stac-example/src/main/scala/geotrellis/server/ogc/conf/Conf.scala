@@ -26,16 +26,16 @@ import scalaxb.DataRecord
 import java.io.File
 
 /**
- * The top level configuration object for all layers and styles.
- * This object should be supplied by the various sections in the provided configuration. If
- * the application won't start because of a bad configuration, start here and recursively
- * descend through properties verifying that the configuration file provides sufficient
- * information.
- *
- * Complex types can be read with the help of [[ConfigReader]] instances. See package.scala
- *  and https://pureconfig.github.io/docs/supporting-new-types.html for more examples and
- *  explanation of ConfigReader instances.
- */
+  * The top level configuration object for all layers and styles.
+  * This object should be supplied by the various sections in the provided configuration. If
+  * the application won't start because of a bad configuration, start here and recursively
+  * descend through properties verifying that the configuration file provides sufficient
+  * information.
+  *
+  * Complex types can be read with the help of [[ConfigReader]] instances. See package.scala
+  *  and https://pureconfig.github.io/docs/supporting-new-types.html for more examples and
+  *  explanation of ConfigReader instances.
+  */
 case class Conf(
   layers: Map[String, OgcSourceConf],
   wms: Option[WmsConf],
@@ -44,11 +44,11 @@ case class Conf(
 )
 
 object Conf {
-  lazy val load: Conf = ConfigSource.default.loadOrThrow[Conf]
+  lazy val load: Conf                                        = ConfigSource.default.loadOrThrow[Conf]
   def loadF[F[_]: Sync](configPath: Option[String]): F[Conf] =
     configPath match {
       case Some(path) => ConfigSource.fromConfig(ConfigFactory.parseFile(new File(path))).loadF[F, Conf]
-      case _ => ConfigSource.default.loadF[F, Conf]
+      case _          => ConfigSource.default.loadF[F, Conf]
     }
 
   def loadResourceF[F[_]: Sync](configPath: Option[String]): Resource[F, Conf] =

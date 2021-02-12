@@ -47,9 +47,11 @@ case class StacSourceConf(
   styles: List[StyleConf],
   commonCrs: CRS = WebMercator,
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
+  defaultTime: Boolean = false,
+  datetimeField: String = "datetime",
+  withGDAL: Boolean = false
 ) extends OgcSourceConf {
-  private val datetimeField = "datetime"
   def toLayer(rs: RasterSource): SimpleSource =
     SimpleSource(name, title, rs, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, datetimeField.some)
 }
@@ -59,7 +61,7 @@ object StacSourceConf {
     ConfigReader[String].map { str =>
       Try(CRS.fromName(str)).toOption orElse Try(CRS.fromString(str)).toOption match {
         case Some(crs) => crs
-        case None => throw new Exception(s"Invalid Proj4 String: $str")
+        case None      => throw new Exception(s"Invalid Proj4 String: $str")
       }
     }
 }
@@ -76,7 +78,7 @@ case class RasterSourceConf(
   def toLayer: RasterOgcSource = {
     GeoTrellisPath.parseOption(source) match {
       case Some(_) => GeoTrellisOgcSource(name, title, source, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy)
-      case None => SimpleSource(name, title, RasterSource(source), defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, None)
+      case None    => SimpleSource(name, title, RasterSource(source), defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, None)
     }
   }
 }
@@ -91,38 +93,63 @@ case class MapAlgebraSourceConf(
   overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
 ) extends OgcSourceConf {
   def listParams(expr: Expression): List[String] = {
-    def eval(subExpr: Expression): List[String] = subExpr match {
-      case v: Variable => List(v.name)
-      case _ => subExpr.children.flatMap(eval)
-    }
+    def eval(subExpr: Expression): List[String] =
+      subExpr match {
+        case v: Variable => List(v.name)
+        case _           => subExpr.children.flatMap(eval)
+      }
     eval(expr)
   }
 
   /**
-   * Given a list of all available `SimpleSourceConf` instances in the global [[Conf]] object,
-   *  attempt to produce the parameter bindings necessary for evaluating the MAML [[Expression]]
-   *  in the algebra field
-   */
+    * Given a list of all available `SimpleSourceConf` instances in the global [[Conf]] object,
+    *  attempt to produce the parameter bindings necessary for evaluating the MAML [[Expression]]
+    *  in the algebra field
+    */
   def model(possibleSources: List[RasterOgcSource]): MapAlgebraSource = {
-    val layerNames = listParams(algebra)
-    val sourceList = layerNames.map { name =>
+    val layerNames      = listParams(algebra)
+    val sourceList      = layerNames.map { name =>
       val layerSrc = possibleSources.find(_.name == name).getOrElse {
         throw new Exception(
-          s"MAML Layer expected but was unable to find the simple layer '$name', make sure all required layers are in the server configuration and are correctly spelled there and in all provided MAML")
+          s"MAML Layer expected but was unable to find the simple layer '$name', make sure all required layers are in the server configuration and are correctly spelled there and in all provided MAML"
+        )
       }
       (layerSrc.timeMetadataKey, name -> layerSrc.source)
     }
     val timeMetadataKey = sourceList.flatMap(_._1).headOption
-    MapAlgebraSource(name, title, sourceList.map(_._2).toMap, algebra, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, timeMetadataKey)
+    MapAlgebraSource(
+      name,
+      title,
+      sourceList.map(_._2).toMap,
+      algebra,
+      defaultStyle,
+      styles.map(_.toStyle),
+      resampleMethod,
+      overviewStrategy,
+      timeMetadataKey
+    )
   }
 
   def modelOpt(possibleSources: List[RasterOgcSource]): Option[MapAlgebraSource] = {
-    val layerNames = listParams(algebra)
-    val sourceList = layerNames.flatMap { name =>
-      possibleSources.find(_.name == name).map { layerSrc => (layerSrc.timeMetadataKey, name -> layerSrc.source) }
+    val layerNames      = listParams(algebra)
+    val sourceList      = layerNames.flatMap { name =>
+      possibleSources.find(_.name == name).map { layerSrc =>
+        (layerSrc.timeMetadataKey, name -> layerSrc.source)
+      }
     }
     val timeMetadataKey = sourceList.flatMap(_._1).headOption
-    if(sourceList.nonEmpty) MapAlgebraSource(name, title, sourceList.map(_._2).toMap, algebra, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, timeMetadataKey).some
+    if (sourceList.nonEmpty)
+      MapAlgebraSource(
+        name,
+        title,
+        sourceList.map(_._2).toMap,
+        algebra,
+        defaultStyle,
+        styles.map(_.toStyle),
+        resampleMethod,
+        overviewStrategy,
+        timeMetadataKey
+      ).some
     else None
   }
 }
