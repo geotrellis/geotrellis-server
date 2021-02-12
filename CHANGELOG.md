@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Fixed
 - Fix STAC API TemporalExtent JSON representation [#293](https://github.com/geotrellis/geotrellis-server/pull/293)
+- XML responses in OGC services include a default namespace [#311](https://github.com/geotrellis/geotrellis-server/pull/311)
 
 ## [4.2.0] - 2020-06-23
 
