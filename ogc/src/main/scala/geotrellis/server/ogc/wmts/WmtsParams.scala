@@ -34,6 +34,8 @@ abstract sealed class WmtsParams {
 object WmtsParams {
   lazy val logger = org.log4s.getLogger
 
+  val wmtsVersion = "1.0.0"
+
   final case class GetCapabilities(
     version: String,
     format: Option[String],
@@ -42,7 +44,7 @@ object WmtsParams {
 
   object GetCapabilities {
     def build(params: ParamMap): ValidatedNel[ParamError, WmtsParams] = {
-      (params.validatedVersion("1.0.0"), params.validatedOptionalParam("format"), params.validatedOptionalParam("updatesequence"))
+      (params.validatedVersion(wmtsVersion, Set(wmtsVersion)), params.validatedOptionalParam("format"), params.validatedOptionalParam("updatesequence"))
         .mapN(GetCapabilities.apply)
     }
   }
@@ -64,7 +66,7 @@ object WmtsParams {
     def build(params: ParamMap): ValidatedNel[ParamError, WmtsParams] = {
       logger.trace(s"PARAM MAP: ${params.params}")
       val versionParam =
-        params.validatedVersion("1.0.0")
+        params.validatedVersion(wmtsVersion, Set(wmtsVersion))
 
       versionParam
         .andThen { version: String =>

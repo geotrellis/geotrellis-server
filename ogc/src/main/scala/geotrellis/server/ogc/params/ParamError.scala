@@ -58,6 +58,11 @@ object ParamError {
       s"""Unsupported format: '$format'"""
   }
 
+  final case class NoSupportedVersionError(requestedVersions: List[String], supportedVersions: List[String]) extends ParamError {
+    def errorMessage =
+      s"""No available version in ${supportedVersions.mkString(", ")}: ${requestedVersions.mkString(", ")}"""
+  }
+
   def generateErrorMessage(errors: List[ParamError]): String =
     errors.map(_.errorMessage).mkString("; ")
 }
