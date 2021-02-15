@@ -77,6 +77,9 @@ case class ParamMap(params: Map[String, Seq[String]]) {
       case None                                                  => Invalid(ParamError.MissingParam(field))
     }).toValidatedNel
 
+  def validatedVersion(default: String): ValidatedNel[ParamError, String] =
+    validatedVersion(default, Set(default))
+
   def validatedVersion(default: String, supportedVersions: Set[String]): ValidatedNel[ParamError, String] =
     (getParams("version") match {
       case Some(version :: Nil) if supportedVersions.contains(version) => Valid(version)

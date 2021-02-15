@@ -138,14 +138,14 @@ object WcsParams {
 
 object GetCapabilitiesWcsParams {
   def build(params: ParamMap): ValidatedNel[ParamError, WcsParams] = {
-    val versionParam = params.validatedVersion(WcsParams.wcsVersion, Set(WcsParams.wcsVersion))
+    val versionParam = params.validatedVersion(WcsParams.wcsVersion)
     versionParam.map { version: String => GetCapabilitiesWcsParams(version) }
   }
 }
 
 object DescribeCoverageWcsParams {
   def build(params: ParamMap): ValidatedNel[ParamError, WcsParams] = {
-    val versionParam = params.validatedVersion(WcsParams.wcsVersion, Set(WcsParams.wcsVersion))
+    val versionParam = params.validatedVersion(WcsParams.wcsVersion)
 
     versionParam
       .andThen { version: String =>
@@ -176,7 +176,7 @@ object GetCoverageWcsParams {
     )
 
   def build(params: ParamMap): ValidatedNel[ParamError, WcsParams] = {
-    val versionParam = params.validatedVersion(WcsParams.wcsVersion, Set(WcsParams.wcsVersion))
+    val versionParam = params.validatedVersion(WcsParams.wcsVersion)
 
     versionParam
       .andThen { version: String =>

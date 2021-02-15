@@ -44,7 +44,7 @@ object WmsParams {
 
   object GetCapabilities {
     def build(params: ParamMap): ValidatedNel[ParamError, WmsParams] = {
-      (params.validatedVersion(wmsVersion, Set(wmsVersion)), params.validatedOptionalParam("format"), params.validatedOptionalParam("updatesequence"))
+      (params.validatedVersion(wmsVersion), params.validatedOptionalParam("format"), params.validatedOptionalParam("updatesequence"))
         .mapN(GetCapabilities.apply)
     }
   }
@@ -75,7 +75,7 @@ object WmsParams {
   object GetMap {
     def build(params: ParamMap): ValidatedNel[ParamError, WmsParams] = {
       val versionParam =
-        params.validatedVersion(wmsVersion, Set(wmsVersion))
+        params.validatedVersion(wmsVersion)
 
       versionParam
         .andThen { version: String =>
