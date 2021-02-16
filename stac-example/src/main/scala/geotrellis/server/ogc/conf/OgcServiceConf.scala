@@ -20,6 +20,7 @@ import cats.SemigroupK
 import cats.effect.Sync
 import cats.instances.list._
 import cats.syntax.semigroup._
+import geotrellis.proj4.CRS
 import geotrellis.server.ogc
 import geotrellis.server.ogc.{ows, MapAlgebraSource, OgcSource, RasterOgcSource}
 import geotrellis.server.ogc.wms.WmsParentLayerMeta
@@ -72,5 +73,6 @@ case class WmtsConf(
 /** WCS Service configuration */
 case class WcsConf(
   serviceMetadata: ows.ServiceMetadata,
-  layerDefinitions: List[OgcSourceConf]
+  layerDefinitions: List[OgcSourceConf],
+  supportedProjections: List[CRS]
 ) extends OgcServiceConf

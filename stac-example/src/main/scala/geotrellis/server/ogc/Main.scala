@@ -157,6 +157,7 @@ object Main
                                     WcsModel[IO](
                                       svc.serviceMetadata,
                                       svc.layerSources(simpleSources, http4sClient),
+                                      svc.supportedProjections,
                                       ExtendedParameters.extendedParametersBinding
                                     )
                                   }
