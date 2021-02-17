@@ -48,7 +48,7 @@ class CoverageView[F[_]: Functor](wcsModel: WcsModel[F], serviceUrl: URL, identi
           obj = CoverageDescriptions(coverageType.values.toList),
           namespace = None,
           elementLabel = "CoverageDescriptions".some,
-          scope = constrainedWCSScope,
+          scope = wcsScope,
           typeAttribute = false
         )
         .asInstanceOf[Elem]
