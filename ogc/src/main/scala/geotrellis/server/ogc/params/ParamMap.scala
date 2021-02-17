@@ -78,17 +78,26 @@ case class ParamMap(params: Map[String, Seq[String]]) {
     }).toValidatedNel
 
   def validatedVersion(default: String): ValidatedNel[ParamError, String] =
+    validatedVersion(default, Set(default))
+
+  def validatedVersion(default: String, supportedVersions: Set[String]): ValidatedNel[ParamError, String] =
     (getParams("version") match {
-      case Some(Nil)            => Valid(default)
-      case Some(version :: Nil) => Valid(version)
-      case Some(_)              => Invalid(ParamError.RepeatedParam("version"))
-      case None                 =>
+      case Some(version :: Nil) if supportedVersions.contains(version) => Valid(version)
+      case Some(Nil)                                                   => Valid(default)
+      case Some(i :: Nil)                                              => Invalid(ParamError.InvalidValue("version", i, supportedVersions.toList))
+      case None                                                        =>
         // Can send "acceptversions" instead
         getParams("acceptversions") match {
           case Some(Nil)             =>
             Valid(default)
           case Some(versions :: Nil) =>
-            Valid(versions.split(",").max)
+            val requestedVersions = versions.split(",")
+            val intersection      = requestedVersions.toSet & supportedVersions
+            if (intersection.isEmpty) {
+              Invalid(ParamError.NoSupportedVersionError(requestedVersions.toList, supportedVersions.toList))
+            } else {
+              Valid(intersection.max)
+            }
           case Some(_)               =>
             Invalid(ParamError.RepeatedParam("acceptversions"))
           case None                  =>

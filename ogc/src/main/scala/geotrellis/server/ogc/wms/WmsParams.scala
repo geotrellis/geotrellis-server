@@ -33,6 +33,9 @@ abstract sealed class WmsParams {
 }
 
 object WmsParams {
+
+  val wmsVersion = "1.3.0"
+
   final case class GetCapabilities(
     version: String,
     format: Option[String],
@@ -41,7 +44,7 @@ object WmsParams {
 
   object GetCapabilities {
     def build(params: ParamMap): ValidatedNel[ParamError, WmsParams] = {
-      (params.validatedVersion("1.3.0"), params.validatedOptionalParam("format"), params.validatedOptionalParam("updatesequence"))
+      (params.validatedVersion(wmsVersion), params.validatedOptionalParam("format"), params.validatedOptionalParam("updatesequence"))
         .mapN(GetCapabilities.apply)
     }
   }
@@ -72,7 +75,7 @@ object WmsParams {
   object GetMap {
     def build(params: ParamMap): ValidatedNel[ParamError, WmsParams] = {
       val versionParam =
-        params.validatedVersion("1.3.0")
+        params.validatedVersion(wmsVersion)
 
       versionParam
         .andThen { version: String =>

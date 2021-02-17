@@ -26,10 +26,13 @@ import geotrellis.vector.{Extent, ProjectedExtent}
 import cats.data.Validated._
 import cats.data.{Validated, ValidatedNel, NonEmptyList => NEL}
 import cats.syntax.apply._
+import cats.syntax.applicativeError._
 import cats.syntax.option._
+import cats.syntax.validated._
 
 import scala.util.Try
 import java.net.URI
+import geotrellis.server.ogc.params.ParamError.MissingParam
 
 abstract sealed class WcsParams {
   val version: String
@@ -108,6 +111,8 @@ case class GetCoverageWcsParams(
 
 object WcsParams {
 
+  val wcsVersion = "1.1.1"
+
   /** Defines valid request types, and the WcsParams to build from them. */
   private val requestMap: Map[String, ParamMap => ValidatedNel[ParamError, WcsParams]] =
     Map(
@@ -133,14 +138,14 @@ object WcsParams {
 
 object GetCapabilitiesWcsParams {
   def build(params: ParamMap): ValidatedNel[ParamError, WcsParams] = {
-    val versionParam = params.validatedVersion("1.1.1")
+    val versionParam = params.validatedVersion(WcsParams.wcsVersion)
     versionParam.map { version: String => GetCapabilitiesWcsParams(version) }
   }
 }
 
 object DescribeCoverageWcsParams {
   def build(params: ParamMap): ValidatedNel[ParamError, WcsParams] = {
-    val versionParam = params.validatedVersion("1.1.1")
+    val versionParam = params.validatedVersion(WcsParams.wcsVersion)
 
     versionParam
       .andThen { version: String =>
@@ -171,7 +176,7 @@ object GetCoverageWcsParams {
     )
 
   def build(params: ParamMap): ValidatedNel[ParamError, WcsParams] = {
-    val versionParam = params.validatedVersion("1.1.1")
+    val versionParam = params.validatedVersion(WcsParams.wcsVersion)
 
     versionParam
       .andThen { version: String =>
