@@ -105,7 +105,7 @@ class CapabilitiesView[F[_]: Functor: Apply: Monad](model: WmsModel[F], serviceU
           ),
           namespace = None,
           elementLabel = "WMS_Capabilities".some,
-          scope = constrainedWMSScope,
+          scope = wmsScope,
           typeAttribute = false
         )
         .asInstanceOf[scala.xml.Elem]

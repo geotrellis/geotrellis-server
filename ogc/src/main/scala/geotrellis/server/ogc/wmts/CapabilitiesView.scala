@@ -165,7 +165,7 @@ class CapabilitiesView[F[_]: Monad](wmtsModel: WmtsModel[F], serviceUrl: URL) {
           ),
           namespace = None,
           elementLabel = "Capabilities".some,
-          scope = constrainedWMTSScope,
+          scope = wmtsScope,
           typeAttribute = false
         )
         .asInstanceOf[scala.xml.Elem]
