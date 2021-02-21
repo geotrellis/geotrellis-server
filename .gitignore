@@ -22,3 +22,4 @@ pc.stdout.log
 .metals
 metals.sbt
 .history
+.bsp

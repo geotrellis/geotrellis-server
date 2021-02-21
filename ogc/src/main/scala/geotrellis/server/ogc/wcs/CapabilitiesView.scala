@@ -218,7 +218,7 @@ class CapabilitiesView[F[_]: Functor](wcsModel: WcsModel[F], serviceUrl: URL, ex
           ),
           namespace = None,
           elementLabel = "Capabilities".some,
-          scope = constrainedWCSScope,
+          scope = wcsScope,
           typeAttribute = false
         )
         .asInstanceOf[Elem]

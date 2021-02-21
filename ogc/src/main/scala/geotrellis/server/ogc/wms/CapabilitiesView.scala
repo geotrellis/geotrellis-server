@@ -105,7 +105,7 @@ class CapabilitiesView[F[_]: Functor: Apply: Monad](model: WmsModel[F], serviceU
           ),
           namespace = None,
           elementLabel = "WMS_Capabilities".some,
-          scope = constrainedWMSScope,
+          scope = wmsScope,
           typeAttribute = false
         )
         .asInstanceOf[scala.xml.Elem]
@@ -233,7 +233,7 @@ object CapabilitiesView {
         MinScaleDenominator = None,
         MaxScaleDenominator = None,
         Layer = Nil,
-        attributes = Map("@queryable" -> DataRecord(false))
+        attributes = Map.empty
       )
     }
   }
@@ -324,7 +324,7 @@ object CapabilitiesView {
           MinScaleDenominator = None,
           MaxScaleDenominator = None,
           Layer = layers,
-          attributes = Map("@queryable" -> DataRecord(false))
+          attributes = Map.empty
         )
     }
   }

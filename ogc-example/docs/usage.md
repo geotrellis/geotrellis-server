@@ -23,9 +23,9 @@ Start SBT
 > ./sbt
 ```
 
-Navigate to the `ogcExample` project
+Navigate to the `ogc-example` project
 ```sh
-root > project ogcExample
+root > project ogc-example
 ```
 
 Fire up the server with some sane defaults for local clients (using 127.0.0.1
