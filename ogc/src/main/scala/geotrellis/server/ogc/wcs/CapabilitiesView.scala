@@ -31,6 +31,7 @@ import scalaxb._
 
 import scala.xml.Elem
 import java.net.{URI, URL}
+import geotrellis.proj4.CRS
 
 class CapabilitiesView[F[_]: Functor](wcsModel: WcsModel[F], serviceUrl: URL, extendedParameters: List[DomainType] = Nil) {
   def toXML: F[Elem] = {
@@ -233,6 +234,10 @@ object CapabilitiesView {
       val crs         = src.nativeCrs.head
       val wgs84extent = ReprojectRasterExtent(src.nativeRE, crs, LatLng).extent
 
+      val uniqueCrs: List[CRS] = (
+        crs :: LatLng :: wcsModel.supportedProjections
+      ).distinct
+
       CoverageSummaryType(
         Title = LanguageStringType(src.title) :: Nil,
         Abstract = Nil,
@@ -242,9 +247,7 @@ object CapabilitiesView {
             UpperCorner = wgs84extent.ymax :: wgs84extent.xmax :: Nil
           ) :: Nil,
         SupportedCRS =
-          new URI(URN.unsafeFromCrs(crs)) ::
-          new URI(URN.unsafeFromCrs(LatLng)) ::
-          new URI("urn:ogc:def:crs:OGC::imageCRS") :: Nil,
+          new URI("urn:ogc:def:crs:OGC::imageCRS") :: (uniqueCrs flatMap { crs => (URN.fromCrs(crs) map { new URI(_) }) }),
         SupportedFormat = "image/geotiff" :: "image/jpeg" :: "image/png" :: Nil,
         coveragesummarytypeoption = DataRecord(None, "Identifier".some, src.name)
       )

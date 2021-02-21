@@ -7,8 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## Fixed
-
 - Service endpoints reject requests with unsupported version parameters [#313](https://github.com/geotrellis/geotrellis-server/pull/313)
+
+## Added
+- WCS services support configuration of `supported-projections` [#314](https://github.com/geotrellis/geotrellis-server/pull/314)
 
 ## [4.3.0] - 2021-02-12
 

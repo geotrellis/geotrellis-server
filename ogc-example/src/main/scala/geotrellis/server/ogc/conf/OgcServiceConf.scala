@@ -21,6 +21,7 @@ import geotrellis.server.ogc.{ows, MapAlgebraSource, OgcSource, RasterOgcSource}
 import geotrellis.server.ogc.wms.WmsParentLayerMeta
 import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
 import geotrellis.store.query.Repository
+import geotrellis.proj4.CRS
 
 /**
   * Each service has its own unique configuration requirements (see the below instances)
@@ -55,5 +56,6 @@ case class WmtsConf(
 /** WCS Service configuration */
 case class WcsConf(
   serviceMetadata: ows.ServiceMetadata,
-  layerDefinitions: List[OgcSourceConf]
+  layerDefinitions: List[OgcSourceConf],
+  supportedProjections: List[CRS]
 ) extends OgcServiceConf

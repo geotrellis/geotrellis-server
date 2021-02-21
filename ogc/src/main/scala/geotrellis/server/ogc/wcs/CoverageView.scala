@@ -36,12 +36,13 @@ import cats.syntax.option._
 import scala.xml.Elem
 import scalaxb._
 import java.net.{URI, URL}
+import geotrellis.proj4.CRS
 
 class CoverageView[F[_]: Functor](wcsModel: WcsModel[F], serviceUrl: URL, identifiers: Seq[String]) {
   def toXML: F[Elem] = {
     val sources                                     = if (identifiers == Nil) wcsModel.sources.store else wcsModel.sources.find(withNames(identifiers.toSet))
     val sourcesMap: F[Map[String, List[OgcSource]]] = sources.map(_.groupBy(_.name))
-    val coverageTypeMap                             = sourcesMap.map(_.mapValues(CoverageView.sourceDescription))
+    val coverageTypeMap                             = sourcesMap.map(_.mapValues(CoverageView.sourceDescription(wcsModel.supportedProjections, _)))
     coverageTypeMap map { coverageType =>
       scalaxb
         .toXML[CoverageDescriptions](
@@ -58,7 +59,7 @@ class CoverageView[F[_]: Functor](wcsModel: WcsModel[F], serviceUrl: URL, identi
 
 object CoverageView {
 
-  def sourceDescription(sources: List[OgcSource]): CoverageDescriptionType = {
+  def sourceDescription(supportedProjections: List[CRS], sources: List[OgcSource]): CoverageDescriptionType = {
     val source           = sources.head
     val nativeCrs        = source.nativeCrs.head
     val re               = source.nativeRE
@@ -127,6 +128,10 @@ object CoverageView {
       if (records.nonEmpty) TimeSequenceType(records).some
       else None
     }
+
+    val uniqueCrs: List[CRS] = (
+      nativeCrs :: LatLng :: supportedProjections
+    ).distinct
 
     CoverageDescriptionType(
       Title = LanguageStringType(source.title) :: Nil,
@@ -200,9 +205,8 @@ object CoverageView {
           ) :: Nil
       ),
       SupportedCRS =
-        new URI(URN.unsafeFromCrs(nativeCrs)) ::
-        new URI(URN.unsafeFromCrs(LatLng)) ::
-        new URI("urn:ogc:def:crs:OGC::imageCRS") :: Nil,
+        new URI("urn:ogc:def:crs:OGC::imageCRS") ::
+        (uniqueCrs flatMap { proj => URN.fromCrs(proj) map { new URI(_) } }),
       SupportedFormat = "image/geotiff" :: "image/jpeg" :: "image/png" :: Nil
     )
   }
