@@ -111,7 +111,8 @@ case class GetCoverageWcsParams(
 
 object WcsParams {
 
-  val wcsVersion = "1.1.1"
+  val wcsVersion  = "1.1.1"
+  val wcsVersions = Set(wcsVersion, "1.1.0")
 
   /** Defines valid request types, and the WcsParams to build from them. */
   private val requestMap: Map[String, ParamMap => ValidatedNel[ParamError, WcsParams]] =
@@ -138,14 +139,14 @@ object WcsParams {
 
 object GetCapabilitiesWcsParams {
   def build(params: ParamMap): ValidatedNel[ParamError, WcsParams] = {
-    val versionParam = params.validatedVersion(WcsParams.wcsVersion)
+    val versionParam = params.validatedVersion(WcsParams.wcsVersion, WcsParams.wcsVersions)
     versionParam.map { version: String => GetCapabilitiesWcsParams(version) }
   }
 }
 
 object DescribeCoverageWcsParams {
   def build(params: ParamMap): ValidatedNel[ParamError, WcsParams] = {
-    val versionParam = params.validatedVersion(WcsParams.wcsVersion)
+    val versionParam = params.validatedVersion(WcsParams.wcsVersion, WcsParams.wcsVersions)
 
     versionParam
       .andThen { version: String =>
@@ -176,7 +177,7 @@ object GetCoverageWcsParams {
     )
 
   def build(params: ParamMap): ValidatedNel[ParamError, WcsParams] = {
-    val versionParam = params.validatedVersion(WcsParams.wcsVersion)
+    val versionParam = params.validatedVersion(WcsParams.wcsVersion, WcsParams.wcsVersions)
 
     versionParam
       .andThen { version: String =>
