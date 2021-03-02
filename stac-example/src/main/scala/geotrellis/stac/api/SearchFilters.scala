@@ -19,7 +19,8 @@ package geotrellis.stac.api
 import geotrellis.stac._
 import geotrellis.store.query.{Query, QueryF}
 import geotrellis.proj4.LatLng
-import com.azavea.stac4s.{Bbox, TemporalExtent, TwoDimBbox}
+import com.azavea.stac4s.{Bbox, TwoDimBbox}
+import com.azavea.stac4s.types.TemporalExtent
 import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.syntax._

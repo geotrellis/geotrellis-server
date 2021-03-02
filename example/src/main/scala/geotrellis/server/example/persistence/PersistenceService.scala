@@ -68,14 +68,14 @@ class PersistenceService[F[_]: Sync: Logger: ApplicativeError[*[_], Throwable], 
         (for {
           expr <- req.as[Expression]
           _    <- logger.info(
-                    s"Attempting to store expression (${req.bodyAsText}) at key ($key)"
+                    s"Attempting to store expression (${req.bodyText}) at key ($key)"
                   )
           res  <- MamlStore[F, S].putMaml(store, key, expr)
         } yield res).attempt flatMap {
           case Right(created)                                                                  =>
             Created()
           case Left(InvalidMessageBodyFailure(_, _)) | Left(MalformedMessageBodyFailure(_, _)) =>
-            req.bodyAsText.compile.toList flatMap { reqBody =>
+            req.bodyText.compile.toList flatMap { reqBody =>
               BadRequest(s"""Unable to parse ${reqBody
                 .mkString("")} as a MAML expression""")
             }
