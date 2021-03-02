@@ -22,8 +22,6 @@ object Dependencies {
   val jaxbApiVer   = "2.3.1"
   val refinedVer   = "0.9.9"
   val shapelessVer = "2.3.3"
-  val sttpVer      = "1.7.2"
-  val tsecVer      = "0.0.1-M11"
 
   val cats                 = catsVersion("core")
   val catsEffect           = catsVersion("effect")
@@ -63,14 +61,13 @@ object Dependencies {
   val scalatest            = "org.scalatest"                         %% "scalatest"                      % "3.2.5"  % Test
   val scalacheck           = "org.scalacheck"                        %% "scalacheck"                     % "1.14.0" % Test
   val scalacheckCats       = "io.chrisdavenport"                     %% "cats-scalacheck"                % "0.1.1"  % Test
-  val sttp                 = "com.softwaremill.sttp"                 %% "core"                           % sttpVer
-  val sttpCirce            = "com.softwaremill.sttp"                 %% "circe"                          % sttpVer
-  val sttpCats             = "com.softwaremill.sttp"                 %% "async-http-client-backend-cats" % sttpVer
+  val sttpHttp4s           = "com.softwaremill.sttp.client3"         %% "http4s-backend"                 % "3.1.6"
   val macrosParadise       = "org.scalamacros"                        % "paradise"                       % "2.1.1"
   val scalaParser          = "org.scala-lang.modules"                %% "scala-parser-combinators"       % "1.1.2"
   val shapeless            = "com.chuusai"                           %% "shapeless"                      % shapelessVer
   val logback              = "ch.qos.logback"                         % "logback-classic"                % "1.2.3"  % Runtime
   val droste               = "io.higherkindness"                     %% "droste-core"                    % "0.8.0"
-  val stac4s               = "com.azavea.stac4s"                     %% "core"                           % "0.0.21"
+  val stac4sCore           = "com.azavea.stac4s"                     %% "core"                           % "0.0.21"
+  val stac4sClient         = "com.azavea.stac4s"                     %% "client"                         % "0.0.21"
   val ansiColors212        = "org.backuity"                          %% "ansi-interpolator"              % "1.1.0"  % Provided
 }
