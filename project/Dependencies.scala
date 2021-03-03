@@ -20,7 +20,7 @@ object Dependencies {
   val dispatchVer  = "0.11.3"
   val gtVer        = "3.5.2"
   val jaxbApiVer   = "2.3.1"
-  val refinedVer   = "0.9.9"
+  val refinedVer   = "0.9.20"
   val shapelessVer = "2.3.3"
 
   val cats                 = catsVersion("core")
@@ -69,6 +69,7 @@ object Dependencies {
   val droste               = "io.higherkindness"                     %% "droste-core"                 % "0.8.0"
   val stac4sCore           = "com.azavea.stac4s"                     %% "core"                        % "0.0.21"
   val stac4sClient         = "com.azavea.stac4s"                     %% "client"                      % "0.0.21"
-  val refinedCats          = "eu.timepit"                            %% "refined-cats"                % "0.9.20"
+  val refinedCats          = "eu.timepit"                            %% "refined-cats"                % refinedVer
+  val refinedPureconfig    = "eu.timepit"                            %% "refined-pureconfig"          % refinedVer
   val ansiColors212        = "org.backuity"                          %% "ansi-interpolator"           % "1.1.0"  % Provided
 }

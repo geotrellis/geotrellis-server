@@ -37,7 +37,6 @@ import cats.effect.Sync
 import cats.instances.list._
 import higherkindness.droste.{scheme, Algebra}
 import io.chrisdavenport.log4cats.Logger
-import eu.timepit.refined.types.numeric.NonNegInt
 
 case class StacOgcRepository[F[_]: Sync: Logger](
   stacSourceConf: StacSourceConf,
@@ -51,7 +50,7 @@ case class StacOgcRepository[F[_]: Sync: Logger](
     val filters = SearchFilters.eval(query.overrideName(stacSourceConf.layer))
     filters.fold(List.empty[OgcSource].pure[F]) { filter =>
       client
-        .search(filter.copy(limit = stacSourceConf.assetLimit.map(NonNegInt.unsafeFrom)))
+        .search(filter.copy(limit = stacSourceConf.assetLimit))
         .map { items =>
           val rasterSources =
             items.flatMap { item =>

@@ -345,6 +345,7 @@ lazy val `stac-example` = project
       stac4sClient,
       sttpHttp4s,
       refinedCats,
+      refinedPureconfig,
       ansiColors212
     ),
     excludeDependencies ++= Seq(
