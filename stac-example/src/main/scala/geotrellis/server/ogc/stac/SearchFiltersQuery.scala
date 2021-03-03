@@ -14,86 +14,32 @@
  * limitations under the License.
  */
 
-package geotrellis.stac.api
+package geotrellis.server.ogc.stac
 
 import geotrellis.stac._
 import geotrellis.store.query.{Query, QueryF}
 import geotrellis.proj4.LatLng
-import com.azavea.stac4s.{Bbox, TemporalExtent, TwoDimBbox}
-import io.circe._
-import io.circe.generic.semiauto._
+import com.azavea.stac4s.{Bbox, TwoDimBbox}
+import com.azavea.stac4s.types.TemporalExtent
+import com.azavea.stac4s.api.client.{SearchFilters, Superset}
 import io.circe.syntax._
 import higherkindness.droste.{scheme, Algebra}
 import geotrellis.vector._
-import cats.Semigroup
+import cats.{Order, Semigroup}
+import cats.data.NonEmptyVector
 import cats.syntax.option._
 import cats.syntax.either._
 import cats.syntax.semigroup._
-import cats.syntax.apply._
 import cats.instances.option._
-import cats.instances.either._
 import cats.instances.list._
+import eu.timepit.refined.cats._
+import eu.timepit.refined.types.numeric.NonNegInt
 
-import java.time.Instant
-
-case class SearchFilters(
-  bbox: Option[Bbox] = None,
-  datetime: Option[TemporalExtent] = None,
-  intersects: Option[Geometry] = None,
-  collections: List[String] = Nil,
-  items: List[String] = Nil,
-  limit: Option[Int] = None,
-  next: Option[String] = None,
-  query: JsonObject = JsonObject.empty
-)
-
-object SearchFilters {
-  // TemporalExtent STAC API compatible serialization
-  private def stringToInstant(s: String): Either[Throwable, Instant] =
-    Either.catchNonFatal(Instant.parse(s))
-
-  private def temporalExtentToString(te: TemporalExtent): String =
-    te.value match {
-      case Some(start) :: Some(end) :: _ if start != end => s"${start.toString}/${end.toString}"
-      case Some(start) :: Some(end) :: _ if start == end => s"${start.toString}"
-      case Some(start) :: None :: _                      => s"${start.toString}/.."
-      case None :: Some(end) :: _                        => s"../${end.toString}"
-    }
-
-  private def temporalExtentFromString(str: String): Either[String, TemporalExtent] = {
-    str.split("/").toList match {
-      case ".." :: endString :: _        =>
-        val parsedEnd = stringToInstant(endString)
-        parsedEnd match {
-          case Left(_)             => s"Could not decode instant: $str".asLeft
-          case Right(end: Instant) => TemporalExtent(None, end).asRight
-        }
-      case startString :: ".." :: _      =>
-        val parsedStart = stringToInstant(startString)
-        parsedStart match {
-          case Left(_)               => s"Could not decode instant: $str".asLeft
-          case Right(start: Instant) => TemporalExtent(start, None).asRight
-        }
-      case startString :: endString :: _ =>
-        val parsedStart = stringToInstant(startString)
-        val parsedEnd   = stringToInstant(endString)
-        (parsedStart, parsedEnd).tupled match {
-          case Left(_)                               => s"Could not decode instant: $str".asLeft
-          case Right((start: Instant, end: Instant)) => TemporalExtent(start, end).asRight
-        }
-      case _                             =>
-        Either.catchNonFatal(Instant.parse(str)) match {
-          case Left(_)           => s"Could not decode instant: $str".asLeft
-          case Right(t: Instant) => TemporalExtent(t, t).asRight
-        }
-    }
-  }
-
-  implicit val encoderTemporalExtent: Encoder[TemporalExtent] =
-    Encoder.encodeString.contramap[TemporalExtent](temporalExtentToString)
-
-  implicit val decoderTemporalExtent: Decoder[TemporalExtent] =
-    Decoder.decodeString.emap(temporalExtentFromString)
+/** SearchFilters Query evaluation */
+object SearchFiltersQuery {
+  // overcome diverging implicit expansion
+  implicit private val nonNegIntOrder: Order[NonNegInt]       = refTypeOrder
+  implicit private val nonNegIntOrdering: Ordering[NonNegInt] = nonNegIntOrder.toOrdering
 
   object IntersectionSemigroup {
     implicit val bboxIntersectionSemigroup: Semigroup[Bbox] = { (left, right) =>
@@ -175,39 +121,14 @@ object SearchFilters {
     }
   }
 
-  implicit val searchFilterDecoder: Decoder[SearchFilters] = { c =>
-    for {
-      bbox              <- c.downField("bbox").as[Option[Bbox]]
-      datetime          <- c.downField("datetime").as[Option[TemporalExtent]]
-      intersects        <- c.downField("intersects").as[Option[Geometry]]
-      collectionsOption <- c.downField("collections").as[Option[List[String]]]
-      itemsOption       <- c.downField("items").as[Option[List[String]]]
-      limit             <- c.downField("limit").as[Option[Int]]
-      next              <- c.downField("next").as[Option[String]]
-      query             <- c.get[JsonObject]("query")
-    } yield {
-      SearchFilters(
-        bbox,
-        datetime,
-        intersects,
-        collectionsOption.getOrElse(Nil),
-        itemsOption.getOrElse(Nil),
-        limit,
-        next,
-        query
-      )
-    }
-  }
-
-  implicit val searchFilterEncoder: Encoder[SearchFilters] = deriveEncoder
-
   import geotrellis.store.query.QueryF._
   def algebra: Algebra[QueryF, Option[SearchFilters]] =
     Algebra {
       case Nothing()          => None
       case All()              => SearchFilters().some
-      case WithName(name)     => SearchFilters(query = Map("layer:ids" -> Map("superset" -> List(name).asJson).asJson).asJsonObject).some
-      case WithNames(names)   => SearchFilters(query = Map("layer:ids" -> Map("superset" -> names.asJson).asJson).asJsonObject).some
+      case WithName(name)     => SearchFilters(query = Map("layer:ids" -> List(Superset(NonEmptyVector.one(name.asJson))))).some
+      case WithNames(names)   =>
+        SearchFilters(query = Map("layer:ids" -> List(Superset(NonEmptyVector.fromVectorUnsafe(names.map(_.asJson).toVector))))).some
       case At(t, _)           => SearchFilters(datetime = TemporalExtent(t.toInstant, t.toInstant).some).some
       case Between(t1, t2, _) => SearchFilters(datetime = TemporalExtent(t1.toInstant, t2.toInstant).some).some
       case Intersects(e)      => SearchFilters(intersects = e.reproject(LatLng).extent.toPolygon.some).some
@@ -218,5 +139,5 @@ object SearchFilters {
       case _                  => SearchFilters().some
     }
 
-  def eval(query: Query): Option[SearchFilters] = scheme.cata(SearchFilters.algebra).apply(query)
+  def eval(query: Query): Option[SearchFilters] = scheme.cata(algebra).apply(query)
 }

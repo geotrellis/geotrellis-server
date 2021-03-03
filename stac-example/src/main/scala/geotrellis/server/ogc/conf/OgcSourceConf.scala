@@ -21,9 +21,10 @@ import geotrellis.raster.io.geotiff.OverviewStrategy
 import geotrellis.raster.resample._
 import geotrellis.server.ogc._
 import geotrellis.store.GeoTrellisPath
-import com.azavea.maml.ast._
 import geotrellis.proj4.{CRS, WebMercator}
+import com.azavea.maml.ast._
 import cats.syntax.option._
+import eu.timepit.refined.types.numeric.NonNegInt
 import pureconfig.ConfigReader
 
 import scala.util.Try
@@ -42,7 +43,7 @@ case class StacSourceConf(
   title: String,
   source: String,
   asset: String,
-  assetLimit: Option[Int],
+  assetLimit: Option[NonNegInt],
   defaultStyle: Option[String],
   styles: List[StyleConf],
   commonCrs: CRS = WebMercator,

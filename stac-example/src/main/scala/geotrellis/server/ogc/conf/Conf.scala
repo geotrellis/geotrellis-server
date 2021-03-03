@@ -18,6 +18,7 @@ package geotrellis.server.ogc.conf
 
 import pureconfig._
 import pureconfig.generic.auto._
+import eu.timepit.refined.pureconfig._
 import pureconfig.module.catseffect.syntax._
 import cats.effect.{Resource, Sync}
 import com.typesafe.config.ConfigFactory

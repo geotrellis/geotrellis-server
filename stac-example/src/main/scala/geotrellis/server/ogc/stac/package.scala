@@ -16,12 +16,25 @@
 
 package geotrellis.server.ogc
 
-import com.azavea.stac4s.StacItemAsset
+import geotrellis.store.query.Query
 import geotrellis.raster.geotiff.GeoTiffPath
+import com.azavea.stac4s.StacItemAsset
+import com.azavea.stac4s.api.client.{SearchFilters, Query => SQuery}
+import io.circe.syntax._
+import cats.syntax.either._
 
 package object stac {
   implicit class StacItemAssetOps(val self: StacItemAsset) extends AnyVal {
     def hrefGDAL(withGDAL: Boolean): String        = if (withGDAL) s"gdal+${self.href}" else s"${GeoTiffPath.PREFIX}${self.href}"
     def withGDAL(withGDAL: Boolean): StacItemAsset = self.copy(href = hrefGDAL(withGDAL))
+  }
+
+  implicit class QueryMapOps(val left: Map[String, List[SQuery]]) extends AnyVal {
+    def deepMerge(right: Map[String, List[SQuery]]): Map[String, List[SQuery]] =
+      left.asJson.deepMerge(right.asJson).as[Map[String, List[SQuery]]].valueOr(throw _)
+  }
+
+  implicit class SearchFiltersObjOps(val self: SearchFilters.type) extends AnyVal {
+    def eval(query: Query): Option[SearchFilters] = SearchFiltersQuery.eval(query)
   }
 }

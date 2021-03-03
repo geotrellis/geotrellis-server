@@ -22,9 +22,11 @@ import geotrellis.raster.{MosaicRasterSource, RasterSource}
 import geotrellis.server.ogc.{OgcSource, OgcTime, OgcTimeEmpty, OgcTimeInterval, OgcTimePositions}
 import geotrellis.server.ogc.conf.{OgcSourceConf, StacSourceConf}
 import geotrellis.server.ogc.utils._
-import geotrellis.stac.api.{Http4sStacClient, SearchFilters, StacClient}
+import sttp.client3.SttpBackend
+import sttp.client3.UriContext
 import geotrellis.store.query
 import geotrellis.stac.raster.StacAssetRasterSource
+import com.azavea.stac4s.api.client.{Query => _, _}
 
 import cats.data.NonEmptyList
 import cats.syntax.functor._
@@ -34,13 +36,11 @@ import cats.syntax.semigroup._
 import cats.effect.Sync
 import cats.instances.list._
 import higherkindness.droste.{scheme, Algebra}
-import org.http4s.Uri
-import org.http4s.client.Client
 import io.chrisdavenport.log4cats.Logger
 
 case class StacOgcRepository[F[_]: Sync: Logger](
   stacSourceConf: StacSourceConf,
-  client: StacClient[F]
+  client: SttpStacClient[F]
 ) extends RepositoryM[F, List, OgcSource] {
   def store: F[List[OgcSource]] = find(query.all)
 
@@ -102,7 +102,7 @@ case class StacOgcRepository[F[_]: Sync: Logger](
 
 case class StacOgcRepositories[F[_]: Sync: Logger](
   stacLayers: List[StacSourceConf],
-  client: Client[F]
+  client: SttpBackend[F, Any]
 ) extends RepositoryM[F, List, OgcSource] {
   def store: F[List[OgcSource]] = find(query.withNames(stacLayers.map(_.name).toSet))
 
@@ -115,7 +115,7 @@ case class StacOgcRepositories[F[_]: Sync: Logger](
   def find(query: Query): F[List[OgcSource]] =
     StacOgcRepositories
       .eval(query)(stacLayers)
-      .map { conf => StacOgcRepository(conf, Http4sStacClient[F](client, Uri.unsafeFromString(conf.source))) }
+      .map { conf => StacOgcRepository(conf, SttpStacClient(client, uri"${conf.source}")) }
       .fold(RepositoryM.empty[F, List, OgcSource])(_ |+| _)
       .find(query)
 }

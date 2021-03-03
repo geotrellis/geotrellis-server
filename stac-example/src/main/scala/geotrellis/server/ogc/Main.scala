@@ -33,6 +33,7 @@ import org.backuity.ansi.AnsiFormatter.FormattedHelper
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import sttp.client3.http4s.Http4sBackend
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
@@ -115,7 +116,7 @@ object Main
               def createServer: Resource[IO, Server[IO]] =
                 for {
                   conf         <- Conf.loadResourceF[IO](configPath)
-                  http4sClient <- BlazeClientBuilder[IO](executionContext).resource
+                  http4sClient <- Http4sBackend.usingDefaultBlazeClientBuilder[IO](Blocker.liftExecutionContext(executionContext), executionContext)
                   simpleSources = conf.layers.values.collect { case rsc @ RasterSourceConf(_, _, _, _, _, _, _) => rsc.toLayer }.toList
                   _            <- Resource.liftF(
                                     logOptState(
@@ -168,7 +169,7 @@ object Main
                                     wmtsModel,
                                     new URL(publicUrl)
                                   )
-                  server       <- BlazeServerBuilder[IO]
+                  server       <- BlazeServerBuilder[IO](executionContext)
                                     .withIdleTimeout(Duration.Inf)
                                     .withResponseHeaderTimeout(Duration.Inf)
                                     .enableHttp2(true)

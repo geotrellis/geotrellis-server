@@ -220,9 +220,6 @@ lazy val example = project
       concHashMap,
       pureConfig,
       pureConfigCatsEffect,
-      sttp,
-      sttpCats,
-      sttpCirce,
       scalatest,
       jaxbApi,
       log4cats
@@ -330,7 +327,6 @@ lazy val `stac-example` = project
   .settings(moduleName := "geotrellis-stac-example")
   .settings(commonSettings)
   .settings(publishSettings)
-  .settings(crossScalaVersions := Seq(scalaVer))
   .settings(
     libraryDependencies ++= Seq(
       geotrellisGdal,
@@ -345,7 +341,11 @@ lazy val `stac-example` = project
       scaffeine,
       scalatest,
       decline,
-      stac4s,
+      stac4sCore,
+      stac4sClient,
+      sttpHttp4s,
+      refinedCats,
+      refinedPureconfig,
       ansiColors212
     ),
     excludeDependencies ++= Seq(
