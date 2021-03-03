@@ -17,7 +17,8 @@
 package geotrellis.server.ogc.params
 
 import geotrellis.server.ogc._
-import cats.implicits._
+
+import cats.syntax.option._
 import cats.data.{Validated, ValidatedNel}
 import Validated._
 
@@ -41,7 +42,7 @@ case class ParamMap(params: Map[String, Seq[String]]) {
   def validatedOptionalParam(field: String): ValidatedNel[ParamError, Option[String]] =
     (getParams(field) match {
       case None           => Valid(Option.empty[String])
-      case Some(v :: Nil) => Valid(Some(v))
+      case Some(v :: Nil) => Valid(v.some)
       case Some(_)        => Invalid(ParamError.RepeatedParam(field))
     }).toValidatedNel
 
@@ -54,6 +55,17 @@ case class ParamMap(params: Map[String, Seq[String]]) {
           case Failure(_) => Invalid(ParamError.ParseError(field, v))
         }
       case Some(_)        => Invalid(ParamError.RepeatedParam(field))
+    }).toValidatedNel
+
+  def validatedOptionalParam[T](field: String, parseValue: String => Option[T]): ValidatedNel[ParamError, Option[T]] =
+    (getParams(field) match {
+      case Some(v :: Nil) =>
+        parseValue(v) match {
+          case Some(valid) => Valid(valid.some)
+          case None        => Invalid(ParamError.ParseError(field, v))
+        }
+      case Some(_)        => Invalid(ParamError.RepeatedParam(field))
+      case None           => Valid(None)
     }).toValidatedNel
 
   /** Get a field that must appear only once, parse the value successfully, otherwise error */

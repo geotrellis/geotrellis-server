@@ -53,6 +53,8 @@ case class DescribeCoverageWcsParams(version: String, identifiers: Seq[String]) 
   *
   * Reference to QGIS: https://github.com/qgis/QGIS/blob/final-3_10_2/src/providers/wcs/qgswcsprovider.cpp#L674
   * Parameters descriptions can be also found here: https://mapserver.org/ogc/wcs_server.html
+  *
+  * WCS 1.1.1 specs URI: https://portal.opengeospatial.org/files/07-067r2
   */
 case class GetCoverageWcsParams(
   version: String,
@@ -222,17 +224,32 @@ object GetCoverageWcsParams {
               }
             }
 
-        val gridCS     = params.validatedParam[URI]("gridcs", { s => Try(new URI(s)).toOption })
-        val gridType   = params.validatedParam[URI]("gridtype", { s => Try(new URI(s)).toOption })
-        val gridOrigin = params.validatedParam[(Double, Double)](
-          "gridorigin",
-          { s =>
-            Try {
-              val List(fst, snd) = s.split(",").map(_.toDouble).toList
-              (fst, snd)
-            }.toOption
-          }
-        )
+        /** GridCS: default is “urn:ogc:def:cs:OGC:0.0:Grid2dSquareCS” */
+        val gridCS = params
+          .validatedOptionalParam[URI]("gridcs", { s => Try(new URI(s)).toOption })
+          .map(_.getOrElse(new URI("urn:ogc:def:cs:OGC:0.0:Grid2dSquareCS")))
+
+        /**
+          * GridType: default is “urn:ogc:def:method:WCS:1.1:2dSimpleGrid”
+          * (This GridType disallows rotation or skew relative to the GridBaseCRS – therefore
+          * GridOffsets has only two numbers.)
+          */
+        val gridType = params
+          .validatedOptionalParam[URI]("gridtype", { s => Try(new URI(s)).toOption })
+          .map(_.getOrElse(new URI("urn:ogc:def:method:WCS:1.1:2dSimpleGrid")))
+
+        /** GridOrigin: default is “0,0” (KVP) or “0 0” (XML). */
+        val gridOrigin  = params
+          .validatedOptionalParam[(Double, Double)](
+            "gridorigin",
+            { s =>
+              Try {
+                val List(fst, snd) = s.split(",").map(_.toDouble).toList
+                (fst, snd)
+              }.toOption
+            }
+          )
+          .map(_.getOrElse(0d -> 0d))
 
         val gridOffsets = params.validatedParam[(Double, Double)](
           "gridoffsets",
