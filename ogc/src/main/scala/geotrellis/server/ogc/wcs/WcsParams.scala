@@ -26,13 +26,12 @@ import geotrellis.vector.{Extent, ProjectedExtent}
 import cats.data.Validated._
 import cats.data.{Validated, ValidatedNel, NonEmptyList => NEL}
 import cats.syntax.apply._
-import cats.syntax.applicativeError._
+import cats.syntax.traverse._
 import cats.syntax.option._
-import cats.syntax.validated._
+import cats.syntax.flatMap._
 
 import scala.util.Try
 import java.net.URI
-import geotrellis.server.ogc.params.ParamError.MissingParam
 
 abstract sealed class WcsParams {
   val version: String
@@ -62,7 +61,7 @@ case class GetCoverageWcsParams(
   boundingBox: Extent,
   temporalSequence: List[OgcTime],
   format: OutputFormat,
-  gridBaseCRS: CRS,
+  gridBaseCRS: Option[CRS],
   gridCS: URI,
   gridType: URI,
   // GridOrigin is BBOX minx, maxy // swapped in case of a geographic projection
@@ -166,7 +165,7 @@ object GetCoverageWcsParams {
     params.validatedParam[(Vector[Double], Option[String])](
       field,
       { bboxStr =>
-        // Usually the CRS is the 5th element in the bbox param.
+        /** Usually the CRS is the 5th element in the bbox param. */
         try {
           val v = bboxStr.split(",").toVector
           if (v.length == 4) (v.map(_.toDouble), None).some
@@ -183,35 +182,34 @@ object GetCoverageWcsParams {
 
     versionParam
       .andThen { version: String =>
-        // Collected the bbox, id, and possibly the CRS in one shot.
-        // This is because the boundingbox param could contain the CRS as the 5th element.
+        /** Collected the bbox, id, and possibly the CRS in one shot.
+          * This is because the boundingbox param could contain the CRS as the 5th element.
+          */
         val idAndBboxAndCrsOption = {
-          val identifier =
-            params.validatedParam("identifier")
-
-          val bboxAndCrsOption =
-            getBboxAndCrsOption(params, "boundingbox")
-
-          (identifier, bboxAndCrsOption).mapN {
-            case (id, (bbox, crsOption)) => (id, bbox, crsOption)
-          }
+          val identifier       = params.validatedParam("identifier")
+          val bboxAndCrsOption = getBboxAndCrsOption(params, "boundingbox")
+          (identifier, bboxAndCrsOption).mapN { case (id, (bbox, crsOption)) => (id, bbox, crsOption) }
         }
 
-        val gridBaseCRS = params.validatedParam("gridbasecrs").andThen(CRSUtils.ogcToCRS)
+        /** gridBaseCRS is an optional param, in case it is missing we can always grab it from the data source. */
+        val gridBaseCRS = params.validatedOptionalParam("gridbasecrs").andThen(_.traverse(CRSUtils.ogcToCRS))
 
-        // Transform the OGC urn CRS code into a CRS.
+        /** If the CRS is not provided, than it is in the CRS of the dataset. */
         val idAndBboxAndCrs: Validated[NEL[ParamError], (String, Vector[Double], CRS)] =
           idAndBboxAndCrsOption
             .andThen {
               case (id, bbox, crsOption) =>
-                // If the CRS wasn't in the boundingbox parameter, pull it out of the CRS field.
+                /** If the CRS wasn't in the boundingbox parameter, pull it out of the CRS field. */
                 crsOption match {
                   case Some(crsDesc) => CRSUtils.ogcToCRS(crsDesc).map { crs => (id, bbox, crs) }
-                  case None          => gridBaseCRS.map { crs => (id, bbox, crs) }
+                  case None          =>
+                    gridBaseCRS match {
+                      case Valid(Some(crs)) => gridBaseCRS.map(_ => (id, bbox, crs))
+                      case _                => Invalid(ParamError.MissingParam("BoundingBox CRS")).toValidatedNel
+                    }
                 }
             }
-
-        val temporalSequenceOption = params.validatedOgcTimeSequence("timesequence")
+        val temporalSequenceOption                                                     = params.validatedOgcTimeSequence("timesequence")
 
         val format =
           params
@@ -219,8 +217,7 @@ object GetCoverageWcsParams {
             .andThen { f =>
               OutputFormat.fromString(f) match {
                 case Some(format) => Valid(format).toValidatedNel
-                case None         =>
-                  Invalid(UnsupportedFormatError(f)).toValidatedNel
+                case None         => Invalid(UnsupportedFormatError(f)).toValidatedNel
               }
             }
 
@@ -255,7 +252,8 @@ object GetCoverageWcsParams {
           "gridoffsets",
           { s =>
             Try {
-              // in case 4 parameters would be passed, we care only about the first and the last only
+
+              /** In case 4 parameters would be passed, we care only about the first and the last only. */
               val list = s.split(",").map(_.toDouble).toList
               (list.head, list.last)
             }.toOption
