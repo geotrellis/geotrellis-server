@@ -18,30 +18,28 @@ package geotrellis.stac.api
 
 import com.azavea.stac4s.syntax._
 import com.azavea.stac4s.extensions.layer.LayerItemExtension
-import cats.effect.{ConcurrentEffect, IO}
+import cats.effect.{Blocker, ConcurrentEffect, ContextShift, IO}
 import cats.data.NonEmptyList
 import cats.data.Validated.Valid
 import eu.timepit.refined.types.string.NonEmptyString
-import org.http4s.client.blaze.BlazeClientBuilder
-import org.http4s.client.middleware.Logger
 import geotrellis.stac.IOSpec
-import org.http4s.Uri
-import cats.syntax.either._
+import com.azavea.stac4s.api.client.SttpStacClient
 import geotrellis.proj4.CRS
 import geotrellis.stac.raster.StacRepository
 import geotrellis.vector.{Extent, ProjectedExtent}
 import io.chrisdavenport.log4cats.{Logger => Logger4Cats}
+import sttp.client3.http4s.Http4sBackend
+import sttp.client3.UriContext
 
 import scala.concurrent.ExecutionContext
 import scala.language.reflectiveCalls
 
 class Http4sStacClientSpec extends IOSpec {
-  def withClient[F[_]: ConcurrentEffect: Logger4Cats](implicit ec: ExecutionContext) =
+  def withClient[F[_]: ContextShift: ConcurrentEffect: Logger4Cats](implicit ec: ExecutionContext) =
     new {
-      def apply[T](f: StacClient[F] => F[T]): F[T] = {
-        // Http4sStacClient[F](Uri.fromString("http://localhost:9090/"))
-        BlazeClientBuilder[F](executionContext).resource.use { client =>
-          f(new Http4sStacClient[F](Logger(logBody = false, logHeaders = false)(client), Uri.fromString("http://localhost:9090/").valueOr(throw _)))
+      def apply[T](f: SttpStacClient[F] => F[T]): F[T] = {
+        Http4sBackend.usingDefaultBlazeClientBuilder[F](Blocker.liftExecutionContext(executionContext), executionContext).use { client =>
+          f(SttpStacClient(client, uri"http://localhost:9090/"))
         }
       }
     }
@@ -49,8 +47,7 @@ class Http4sStacClientSpec extends IOSpec {
   describe("Http4sStacClientSpec") {
     ignore("should handle the search query") {
       withClient[IO].apply { client =>
-        client
-          .search()
+        client.search
           .map(_.map(_.getExtensionFields[LayerItemExtension]))
           .map { list =>
             list shouldBe List(

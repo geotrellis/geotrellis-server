@@ -21,7 +21,7 @@ import geotrellis.store.query.{Query, QueryF}
 import geotrellis.proj4.LatLng
 import com.azavea.stac4s.{Bbox, TwoDimBbox}
 import com.azavea.stac4s.types.TemporalExtent
-import com.azavea.stac4s.api.client.{Query => SQuery, _}
+import com.azavea.stac4s.api.client.{SearchFilters, Superset}
 import io.circe.syntax._
 import higherkindness.droste.{scheme, Algebra}
 import geotrellis.vector._
@@ -75,7 +75,7 @@ object SearchFiltersOps {
         items = (left.collections |+| right.collections).distinct,
         limit = List(left.limit, right.limit).min,
         next = right.next,
-        query = left.query.asJson.deepMerge(right.query.asJson).as[Map[String, List[SQuery]]].valueOr(throw _)
+        query = left.query.deepMerge(right.query)
       )
     }
   }
@@ -115,7 +115,7 @@ object SearchFiltersOps {
         items = (left.collections |+| right.collections).distinct,
         limit = List(left.limit, right.limit).min,
         next = right.next,
-        query = left.query.asJson.deepMerge(right.query.asJson).as[Map[String, List[SQuery]]].valueOr(throw _)
+        query = left.query.deepMerge(right.query)
       )
     }
   }
