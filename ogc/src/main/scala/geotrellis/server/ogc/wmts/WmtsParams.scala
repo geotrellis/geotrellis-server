@@ -19,9 +19,8 @@ package geotrellis.server.ogc.wmts
 import geotrellis.store.query._
 import geotrellis.server.ogc.OutputFormat
 import geotrellis.server.ogc.params._
-import geotrellis.vector.ProjectedExtent
 
-import cats.implicits._
+import cats.syntax.apply._
 import cats.data.{Validated, ValidatedNel}
 import Validated._
 
@@ -43,10 +42,9 @@ object WmtsParams {
   ) extends WmtsParams
 
   object GetCapabilities {
-    def build(params: ParamMap): ValidatedNel[ParamError, WmtsParams] = {
+    def build(params: ParamMap): ValidatedNel[ParamError, WmtsParams] =
       (params.validatedVersion(wmtsVersion), params.validatedOptionalParam("format"), params.validatedOptionalParam("updatesequence"))
         .mapN(GetCapabilities.apply)
-    }
   }
 
   case class GetTile(
@@ -65,24 +63,16 @@ object WmtsParams {
   object GetTile {
     def build(params: ParamMap): ValidatedNel[ParamError, WmtsParams] = {
       logger.trace(s"PARAM MAP: ${params.params}")
-      val versionParam =
-        params.validatedVersion(wmtsVersion)
+      val versionParam = params.validatedVersion(wmtsVersion)
 
       versionParam
         .andThen { version: String =>
-          val layer = params.validatedParam("layer")
-
-          val style = params.validatedParam("style")
-
+          val layer         = params.validatedParam("layer")
+          val style         = params.validatedParam("style")
           val tileMatrixSet = params.validatedParam("tilematrixset")
-
-          val tileMatrix = params.validatedParam("tilematrix")
-
-          val tileRow =
-            params.validatedParam[Int]("tilerow", { s => Try(s.toInt).toOption })
-
-          val tileCol =
-            params.validatedParam[Int]("tilecol", { s => Try(s.toInt).toOption })
+          val tileMatrix    = params.validatedParam("tilematrix")
+          val tileRow       = params.validatedParam[Int]("tilerow", { s => Try(s.toInt).toOption })
+          val tileCol       = params.validatedParam[Int]("tilecol", { s => Try(s.toInt).toOption })
 
           val format =
             params

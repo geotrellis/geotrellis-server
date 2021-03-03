@@ -22,7 +22,9 @@ import geotrellis.proj4.LatLng
 import geotrellis.proj4.CRS
 import geotrellis.store.query._
 import geotrellis.vector.{Extent, ProjectedExtent}
-import cats.implicits._
+
+import cats.syntax.apply._
+import cats.syntax.option._
 import cats.data.{Validated, ValidatedNel}
 import Validated._
 
@@ -43,10 +45,9 @@ object WmsParams {
   ) extends WmsParams
 
   object GetCapabilities {
-    def build(params: ParamMap): ValidatedNel[ParamError, WmsParams] = {
+    def build(params: ParamMap): ValidatedNel[ParamError, WmsParams] =
       (params.validatedVersion(wmsVersion), params.validatedOptionalParam("format"), params.validatedOptionalParam("updatesequence"))
         .mapN(GetCapabilities.apply)
-    }
   }
 
   case class GetMap(
@@ -74,18 +75,12 @@ object WmsParams {
 
   object GetMap {
     def build(params: ParamMap): ValidatedNel[ParamError, WmsParams] = {
-      val versionParam =
-        params.validatedVersion(wmsVersion)
-
+      val versionParam = params.validatedVersion(wmsVersion)
       versionParam
         .andThen { version: String =>
-          val layers =
-            params.validatedParam[List[String]]("layers", { s => Some(s.split(",").toList) })
-
-          val styles: ValidatedNel[ParamError, List[String]] =
-            params.validatedParam[List[String]]("styles", { s => Some(s.split(",").toList) })
-
-          val crs = params.validatedParam("crs", { s => Try(CRS.fromName(s)).toOption })
+          val layers = params.validatedParam[List[String]]("layers", { s => s.split(",").toList.some })
+          val styles = params.validatedParam[List[String]]("styles", { s => s.split(",").toList.some })
+          val crs    = params.validatedParam("crs", { s => Try(CRS.fromName(s)).toOption })
 
           val bbox = crs.andThen { crs =>
             params.validatedParam(
@@ -93,8 +88,8 @@ object WmsParams {
               { s =>
                 s.split(",").map(_.toDouble) match {
                   case Array(xmin, ymin, xmax, ymax) =>
-                    if (crs == LatLng) Some(Extent(ymin, xmin, ymax, xmax))
-                    else Some(Extent(xmin, ymin, xmax, ymax))
+                    if (crs == LatLng) Extent(ymin, xmin, ymax, xmax).some
+                    else Extent(xmin, ymin, xmax, ymax).some
                   case _                             => None
                 }
               }
@@ -127,14 +122,9 @@ object WmsParams {
   def apply(queryParams: Map[String, Seq[String]]): ValidatedNel[ParamError, WmsParams] = {
     val params = ParamMap(queryParams)
 
-    val serviceParam =
-      params.validatedParam("service", validValues = Set("wms"))
-
-    val requestParam =
-      params.validatedParam("request", validValues = Set("getcapabilities", "getmap"))
-
-    val firstStageValidation =
-      (serviceParam, requestParam).mapN { case (_, b) => b }
+    val serviceParam         = params.validatedParam("service", validValues = Set("wms"))
+    val requestParam         = params.validatedParam("request", validValues = Set("getcapabilities", "getmap"))
+    val firstStageValidation = (serviceParam, requestParam).mapN { case (_, b) => b }
 
     firstStageValidation.andThen {
       case "getcapabilities" => GetCapabilities.build(params)

@@ -28,7 +28,6 @@ import cats.data.{Validated, ValidatedNel, NonEmptyList => NEL}
 import cats.syntax.apply._
 import cats.syntax.traverse._
 import cats.syntax.option._
-import cats.syntax.flatMap._
 
 import scala.util.Try
 import java.net.URI
