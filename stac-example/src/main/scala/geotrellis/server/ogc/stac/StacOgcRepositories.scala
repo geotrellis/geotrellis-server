@@ -48,7 +48,7 @@ case class StacOgcRepository[F[_]: Sync: Logger](
   def find(query: Query): F[List[OgcSource]] = {
 
     /** Replace the actual conf name with the STAC Layer name */
-    val filters = SearchFiltersOps.eval(query.overrideName(stacSourceConf.layer))
+    val filters = SearchFilters.eval(query.overrideName(stacSourceConf.layer))
     filters.fold(List.empty[OgcSource].pure[F]) { filter =>
       client
         .search(filter.copy(limit = stacSourceConf.assetLimit.map(NonNegInt.unsafeFrom)))

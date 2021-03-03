@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-package geotrellis.stac.api
+package geotrellis.server.ogc.stac
 
-import com.azavea.stac4s.syntax._
-import com.azavea.stac4s.extensions.layer.LayerItemExtension
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, IO}
 import cats.data.NonEmptyList
 import cats.data.Validated.Valid
-import eu.timepit.refined.types.string.NonEmptyString
-import geotrellis.stac.IOSpec
+import cats.effect.{Blocker, ConcurrentEffect, ContextShift, IO}
 import com.azavea.stac4s.api.client.SttpStacClient
+import com.azavea.stac4s.extensions.layer.LayerItemExtension
+import com.azavea.stac4s.syntax._
+import eu.timepit.refined.types.string.NonEmptyString
+import geotrellis.IOSpec
 import geotrellis.proj4.CRS
-import geotrellis.stac.raster.StacRepository
+import geotrellis.server.ogc.stac
 import geotrellis.vector.{Extent, ProjectedExtent}
 import io.chrisdavenport.log4cats.{Logger => Logger4Cats}
-import sttp.client3.http4s.Http4sBackend
 import sttp.client3.UriContext
+import sttp.client3.http4s.Http4sBackend
 
 import scala.concurrent.ExecutionContext
 import scala.language.reflectiveCalls
@@ -66,7 +66,8 @@ class Http4sStacClientSpec extends IOSpec {
     ignore("repository") {
       import geotrellis.store.query._
       withClient[IO].apply { client =>
-        StacRepository[IO](client)
+        stac
+          .StacRepository[IO](client)
           .find {
             and(
               withName("layer-us"),

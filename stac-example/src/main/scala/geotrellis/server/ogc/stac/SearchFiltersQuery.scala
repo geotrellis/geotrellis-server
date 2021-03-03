@@ -35,7 +35,8 @@ import cats.instances.list._
 import eu.timepit.refined.cats._
 import eu.timepit.refined.types.numeric.NonNegInt
 
-object SearchFiltersOps {
+/** SearchFilters Query evaluation */
+object SearchFiltersQuery {
   // overcome diverging implicit expansion
   implicit private val nonNegIntOrder: Order[NonNegInt]       = refTypeOrder
   implicit private val nonNegIntOrdering: Ordering[NonNegInt] = nonNegIntOrder.toOrdering
@@ -138,5 +139,5 @@ object SearchFiltersOps {
       case _                  => SearchFilters().some
     }
 
-  def eval(query: Query): Option[SearchFilters] = scheme.cata(SearchFiltersOps.algebra).apply(query)
+  def eval(query: Query): Option[SearchFilters] = scheme.cata(algebra).apply(query)
 }

@@ -16,10 +16,10 @@
 
 package geotrellis.server.ogc
 
+import geotrellis.store.query.Query
 import geotrellis.raster.geotiff.GeoTiffPath
 import com.azavea.stac4s.StacItemAsset
-import com.azavea.stac4s.api.client.{Query => SQuery}
-
+import com.azavea.stac4s.api.client.{SearchFilters, Query => SQuery}
 import io.circe.syntax._
 import cats.syntax.either._
 
@@ -32,5 +32,9 @@ package object stac {
   implicit class QueryMapOps(val left: Map[String, List[SQuery]]) extends AnyVal {
     def deepMerge(right: Map[String, List[SQuery]]): Map[String, List[SQuery]] =
       left.asJson.deepMerge(right.asJson).as[Map[String, List[SQuery]]].valueOr(throw _)
+  }
+
+  implicit class SearchFiltersObjOps(val self: SearchFilters.type) extends AnyVal {
+    def eval(query: Query): Option[SearchFilters] = SearchFiltersQuery.eval(query)
   }
 }
