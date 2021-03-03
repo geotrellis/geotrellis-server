@@ -25,8 +25,8 @@ import cats.effect.Sync
 import cats.syntax.functor._
 import cats.syntax.semigroup._
 import cats.instances.list._
-import org.http4s.client.Client
 import io.chrisdavenport.log4cats.Logger
+import sttp.client3.SttpBackend
 
 case class MapAlgebraStacOgcRepository[F[_]: Sync](
   mapAlgebraSourceConf: MapAlgebraSourceConf,
@@ -49,7 +49,7 @@ case class MapAlgebraStacOgcRepository[F[_]: Sync](
 case class MapAlgebraStacOgcRepositories[F[_]: Sync: Logger](
   mapAlgebraConfLayers: List[MapAlgebraSourceConf],
   stacLayers: List[StacSourceConf],
-  client: Client[F]
+  client: SttpBackend[F, Any]
 ) extends RepositoryM[F, List, OgcSource] {
   def store: F[List[OgcSource]] =
     find(query.withNames(mapAlgebraConfLayers.map(_.name).toSet))

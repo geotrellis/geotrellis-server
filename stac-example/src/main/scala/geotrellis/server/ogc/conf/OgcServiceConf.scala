@@ -27,8 +27,8 @@ import geotrellis.server.ogc.wms.WmsParentLayerMeta
 import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
 import geotrellis.server.ogc.stac._
 import geotrellis.store.query.{Repository, RepositoryM}
-import org.http4s.client.Client
 import io.chrisdavenport.log4cats.Logger
+import sttp.client3.SttpBackend
 
 /**
   * Each service has its own unique configuration requirements (see the below instances)
@@ -46,7 +46,10 @@ sealed trait OgcServiceConf {
     ogc.OgcSourceRepository(rasterLayers ++ mapAlgebraLayers)
   }
 
-  def layerSources[F[_]: Sync: SemigroupK: Logger](rasterOgcSources: List[RasterOgcSource], client: Client[F]): RepositoryM[F, List, OgcSource] = {
+  def layerSources[F[_]: Sync: SemigroupK: Logger](
+    rasterOgcSources: List[RasterOgcSource],
+    client: SttpBackend[F, Any]
+  ): RepositoryM[F, List, OgcSource] = {
     val stacLayers: List[StacSourceConf]                 = layerDefinitions.collect { case ssc @ StacSourceConf(_, _, _, _, _, _, _, _, _, _, _, _, _, _) => ssc }
     val mapAlgebraConfLayers: List[MapAlgebraSourceConf] = layerDefinitions.collect { case masc @ MapAlgebraSourceConf(_, _, _, _, _, _, _) => masc }
 
