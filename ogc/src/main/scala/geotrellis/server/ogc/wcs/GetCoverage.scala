@@ -40,7 +40,7 @@ import scala.concurrent.duration._
 
 class GetCoverage[F[_]: Logger: Sync: Concurrent: Parallel](wcsModel: WcsModel[F]) {
   def renderLayers(params: GetCoverageWcsParams): F[Option[Array[Byte]]] = {
-    val e = params.extent
+    val e  = params.extent
     val cz = params.cellSize
     wcsModel
       .getLayers(params)

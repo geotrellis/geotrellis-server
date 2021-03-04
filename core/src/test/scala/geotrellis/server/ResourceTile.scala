@@ -46,11 +46,15 @@ object ResourceTile extends RasterSourceUtils {
       ): (Extent, Option[CellSize]) => IO[ProjectedRaster[MultibandTile]] =
         (extent: Extent, cellSize: Option[CellSize]) => {
           val rs = getRasterSource(self.uri)
-          cellSize.fold(rs)(cs => rs.resample(
-            TargetRegion(new GridExtent[Long](extent, cs)),
-            self.resampleMethod,
-            self.overviewStrategy
-          )).read(extent)
+          cellSize
+            .fold(rs)(cs =>
+              rs.resample(
+                TargetRegion(new GridExtent[Long](extent, cs)),
+                self.resampleMethod,
+                self.overviewStrategy
+              )
+            )
+            .read(extent)
             .map { raster =>
               ProjectedRaster(raster, rs.crs)
             }

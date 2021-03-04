@@ -66,7 +66,7 @@ object LayerExtent {
                 RasterExtent(extent, cs)
                   .gridBoundsFor(extent)
               )
-            case _ => tile
+            case _        => tile
           }
         }
     }
