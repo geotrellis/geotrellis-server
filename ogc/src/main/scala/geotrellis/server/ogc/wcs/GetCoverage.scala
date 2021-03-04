@@ -41,7 +41,7 @@ import scala.concurrent.duration._
 class GetCoverage[F[_]: Logger: Sync: Concurrent: Parallel](wcsModel: WcsModel[F]) {
   def renderLayers(params: GetCoverageWcsParams): F[Option[Array[Byte]]] = {
     val e  = params.extent
-    val cz = params.cellSize
+    val cs = params.cellSize
     wcsModel
       .getLayers(params)
       .flatMap {
@@ -57,7 +57,7 @@ class GetCoverage[F[_]: Logger: Sync: Concurrent: Parallel](wcsModel: WcsModel[F
               )
           }
           .traverse { eval =>
-            eval(e, cz) map {
+            eval(e, cs) map {
               case Valid(mbtile) =>
                 val bytes = GeoTiff(Raster(mbtile, e), params.crs).toByteArray
                 requestCache.put(params, bytes)

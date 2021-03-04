@@ -133,8 +133,8 @@ object GTLayerNode {
     self =>
       { (ex: Extent, cellSize: Option[CellSize]) =>
         Sync[F].delay {
-          def csToDiag(cz: CellSize) =
-            math.sqrt(cz.width * cz.width + cz.height * cz.height)
+          def csToDiag(cs: CellSize) =
+            math.sqrt(cs.width * cs.width + cs.height * cs.height)
 
           val reqDiag = cellSize.map(csToDiag).getOrElse(0d)
           val z       = self.allMetadata
