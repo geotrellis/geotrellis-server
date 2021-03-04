@@ -92,17 +92,19 @@ object GeoTiffNode extends RasterSourceUtils {
           }
     }
 
-  implicit def CogNodeExtentReification[F[_]: Sync]: ExtentReification[F, GeoTiffNode] = { self => (extent: Extent, cs: CellSize) =>
+  implicit def CogNodeExtentReification[F[_]: Sync]: ExtentReification[F, GeoTiffNode] = { self => (extent: Extent, cellSize: Option[CellSize]) =>
     Sync[F].delay {
-      RasterSource(self.uri.toString)
-        .resample(
+      val source = RasterSource(self.uri.toString)
+      cellSize.fold(source) { cs =>
+        source.resample(
           TargetRegion(new GridExtent[Long](extent, cs)),
           self.resampleMethod,
           self.overviewStrategy
         )
-        .read(extent, self.band :: Nil)
-        .map(ProjectedRaster(_, WebMercator))
-        .getOrElse { throw new Exception(s"no data at $extent") }
+      }
+      .read(extent, self.band :: Nil)
+      .map(ProjectedRaster(_, WebMercator))
+      .getOrElse { throw new Exception(s"no data at $extent") }
     }
   }
 }

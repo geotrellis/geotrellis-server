@@ -66,7 +66,7 @@ case class GetCoverageWcsParams(
   // GridOrigin is BBOX minx, maxy // swapped in case of a geographic projection
   gridOrigin: (Double, Double),
   // GridOffsets is xres, yres // swapped in case of a geographic projection
-  gridOffsets: (Double, Double),
+  gridOffsets: Option[(Double, Double)],
   crs: CRS,
   params: ParamMap
 ) extends WcsParams {
@@ -85,28 +85,28 @@ case class GetCoverageWcsParams(
 
   val changeXY: Boolean = crs.isGeographic
 
-  def cellSize: CellSize =
-    if (changeXY) CellSize(-gridOffsets._1, gridOffsets._2)
-    else CellSize(gridOffsets._1, -gridOffsets._2)
+  def cellSize: Option[CellSize] =
+    if (changeXY) gridOffsets.map { case (f, s) => CellSize(-f, s) }
+    else gridOffsets.map { case (f, s) => CellSize(f, -s) }
 
   // shrink the extent to border cells centers by half cell size
-  def extent: Extent =
+  def extent: Extent             =
     if (changeXY)
       Extent(
         boundingBox.xmin,
         gridOrigin._2,
         gridOrigin._1,
         boundingBox.ymax
-      ).buffer(cellSize.width / 2, cellSize.height / 2).swapXY
+      ).buffer(cellSize).swapXY
     else
       Extent(
         gridOrigin._1,
         boundingBox.ymin,
         boundingBox.xmax,
         gridOrigin._2
-      ).buffer(cellSize.width / 2, cellSize.height / 2)
+      ).buffer(cellSize)
 
-  def gridExtent: GridExtent[Long] = GridExtent[Long](extent, cellSize)
+  def gridExtent: Option[GridExtent[Long]] = cellSize.map(GridExtent[Long](extent, _))
 }
 
 object WcsParams {
@@ -247,7 +247,8 @@ object GetCoverageWcsParams {
           )
           .map(_.getOrElse(0d -> 0d))
 
-        val gridOffsets = params.validatedParam[(Double, Double)](
+        /** If not passed, than the original source resolution would be used. */
+        val gridOffsets = params.validatedOptionalParam[(Double, Double)](
           "gridoffsets",
           { s =>
             Try {

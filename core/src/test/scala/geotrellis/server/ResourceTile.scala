@@ -43,20 +43,20 @@ object ResourceTile extends RasterSourceUtils {
 
       def extentReification(
         self: ResourceTile
-      ): (Extent, CellSize) => IO[ProjectedRaster[MultibandTile]] =
-        (extent: Extent, cs: CellSize) => {
-          val rs = getRasterSource(self.uri.toString)
-          rs.resample(
+      ): (Extent, Option[CellSize]) => IO[ProjectedRaster[MultibandTile]] =
+        (extent: Extent, cellSize: Option[CellSize]) => {
+          val rs = getRasterSource(self.uri)
+          cellSize.fold(rs)(cs => rs.resample(
             TargetRegion(new GridExtent[Long](extent, cs)),
             self.resampleMethod,
             self.overviewStrategy
-          ).read(extent)
+          )).read(extent)
             .map { raster =>
               ProjectedRaster(raster, rs.crs)
             }
             .toIO {
               new Exception(
-                s"No tile avail for RasterExtent: ${RasterExtent(extent, cs)}"
+                s"No tile avail for RasterExtent: RasterExtent(${(extent, cs)})"
               )
             }
         }
@@ -69,7 +69,7 @@ object ResourceTile extends RasterSourceUtils {
         self: ResourceTile
       ): IO[NEL[RasterExtent]] =
         IO {
-          val rs = RasterSource(self.uri.toString)
+          val rs = RasterSource(self.uri)
           rs.resolutions.map(RasterExtent(rs.extent, _)).toNel getOrElse {
             throw new Exception("no resolutions")
           }

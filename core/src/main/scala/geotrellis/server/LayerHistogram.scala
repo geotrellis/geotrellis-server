@@ -31,6 +31,7 @@ import cats.syntax.functor._
 import cats.syntax.applicative._
 import cats.syntax.flatMap._
 import cats.syntax.traverse._
+import cats.syntax.option._
 import cats.instances.option._
 import io.chrisdavenport.log4cats.Logger
 
@@ -79,7 +80,7 @@ object LayerHistogram {
                            )
                          }
       interpretedTile <- intersectionO traverse { intersection =>
-                           mbtileForExtent(intersection, cellSize)
+                           mbtileForExtent(intersection, cellSize.some)
                          }
     } yield {
       interpretedTile.map { mbtileValidated =>

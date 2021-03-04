@@ -32,7 +32,7 @@ trait TileAsSourceImplicits {
     for (zoom <- 0 to 64) yield scheme.levelForZoom(zoom).layout
   }.toArray
 
-  implicit val extentReification: ExtentReification[IO, Tile] = { self => (extent: Extent, cs: CellSize) =>
+  implicit val extentReification: ExtentReification[IO, Tile] = { self => (extent: Extent, _: Option[CellSize]) =>
     IO.pure(ProjectedRaster(MultibandTile(self), extent, WebMercator))
   }
 
