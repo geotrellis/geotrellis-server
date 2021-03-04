@@ -59,16 +59,7 @@ object LayerExtent {
                     }
       } yield reified
         .andThen(_.as[MultibandTile])
-        .map { tile =>
-          cellSize match {
-            case Some(cs) =>
-              tile.crop(
-                RasterExtent(extent, cs)
-                  .gridBoundsFor(extent)
-              )
-            case _        => tile
-          }
-        }
+        .map { tile => cellSize.fold(tile) { cs => tile.crop(RasterExtent(extent, cs).gridBoundsFor(extent)) } }
     }
   }
 
