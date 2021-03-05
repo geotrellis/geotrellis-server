@@ -131,15 +131,15 @@ object GTLayerNode {
 
   implicit def gtLayerNodeExtentReification[F[_]: Sync]: ExtentReification[F, GTLayerNode] = {
     self =>
-      { (ex: Extent, cs: CellSize) =>
+      { (ex: Extent, cellSize: Option[CellSize]) =>
         Sync[F].delay {
-          def csToDiag(cell: CellSize) =
-            math.sqrt(cell.width * cell.width + cell.height * cell.height)
+          def csToDiag(cs: CellSize) = math.sqrt(cs.width * cs.width + cs.height * cs.height)
 
-          val reqDiag = csToDiag(cs)
+          val reqDiag = cellSize.map(csToDiag)
           val z       = self.allMetadata
             .mapValues { md =>
-              csToDiag(md.get.cellSize) - reqDiag
+              val mdDiag = csToDiag(md.get.cellSize)
+              mdDiag - reqDiag.getOrElse(mdDiag)
             }
             .filter(_._2 <= 0)
             .map(_._1)

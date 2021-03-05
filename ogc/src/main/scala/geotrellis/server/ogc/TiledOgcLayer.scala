@@ -71,24 +71,28 @@ case class MapAlgebraTiledOgcLayer(
 ) extends TiledOgcLayer
 
 object SimpleTiledOgcLayer {
-  implicit def simpleTiledExtentReification[F[_]: Sync]: ExtentReification[F, SimpleTiledOgcLayer] = { self => (extent: Extent, cs: CellSize) =>
-    Sync[F].delay {
-      val raster: Raster[MultibandTile] = self.source
-        .reprojectToRegion(
-          self.crs,
-          new GridExtent[Long](extent, cs).toRasterExtent,
-          method = self.resampleMethod,
-          strategy = self.overviewStrategy
-        )
-        .read(extent)
-        .getOrElse(
-          throw new Exception(
-            s"Unable to retrieve layer $self at extent $extent with cell size of $cs"
-          )
-        )
-
-      ProjectedRaster(raster, self.crs)
-    }
+  implicit def simpleTiledExtentReification[F[_]: Sync]: ExtentReification[F, SimpleTiledOgcLayer] = {
+    self => (extent: Extent, cellSize: Option[CellSize]) =>
+      Sync[F].delay {
+        val raster: Raster[MultibandTile] =
+          cellSize
+            .fold(self.source.reproject(self.crs)) { cs =>
+              self.source
+                .reprojectToRegion(
+                  self.crs,
+                  new GridExtent[Long](extent, cs).toRasterExtent,
+                  method = self.resampleMethod,
+                  strategy = self.overviewStrategy
+                )
+            }
+            .read(extent)
+            .getOrElse(
+              throw new Exception(
+                s"Unable to retrieve layer $self at extent $extent with cell size of $cellSize"
+              )
+            )
+        ProjectedRaster(raster, self.crs)
+      }
   }
 
   implicit def simpleTiledReification[F[_]: Sync]: TmsReification[F, SimpleTiledOgcLayer] = { (self, buffer) => (z: Int, x: Int, y: Int) =>

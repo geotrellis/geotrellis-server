@@ -16,6 +16,7 @@
 
 package geotrellis.server.ogc
 
+import geotrellis.raster.CellSize
 import geotrellis.vector.Extent
 
 import scala.xml.NamespaceBinding
@@ -31,6 +32,8 @@ package object wcs {
   )
 
   implicit class ExtentOps(self: Extent) {
-    def swapXY: Extent = Extent(xmin = self.ymin, ymin = self.xmin, xmax = self.ymax, ymax = self.xmax)
+    def swapXY: Extent                             = Extent(xmin = self.ymin, ymin = self.xmin, xmax = self.ymax, ymax = self.xmax)
+    def buffer(cellSize: CellSize): Extent         = self.buffer(cellSize.width / 2, cellSize.height / 2)
+    def buffer(cellSize: Option[CellSize]): Extent = cellSize.fold(self)(buffer)
   }
 }

@@ -21,7 +21,7 @@ import geotrellis.vector.Extent
 import cats.Contravariant
 
 trait ExtentReification[F[_], A] {
-  def extentReification(self: A): (Extent, CellSize) => F[ProjectedRaster[MultibandTile]]
+  def extentReification(self: A): (Extent, Option[CellSize]) => F[ProjectedRaster[MultibandTile]]
 }
 
 object ExtentReification {

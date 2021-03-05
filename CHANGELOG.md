@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Update GT Server STAC4S dependency [#319](https://github.com/geotrellis/geotrellis-server/issues/319)
+- Unnecessary mandatory parameters on WCS 1.1.1 GetCoverage request [#306](https://github.com/geotrellis/geotrellis-server/issues/306)
 
 ## [4.3.0] - 2021-02-12
 

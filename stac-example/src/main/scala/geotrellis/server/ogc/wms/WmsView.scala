@@ -177,7 +177,7 @@ class WmsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[*[_], T
                     _      <- Sync[F].delay { histoCache.put(layer, hist) }
                   } yield hist
 
-                  (evalExtent(re.extent, re.cellSize), histIO).parMapN {
+                  (evalExtent(re.extent, re.cellSize.some), histIO).parMapN {
                     case (Valid(mbtile), Valid(hists)) => Valid((mbtile, hists))
                     case (Invalid(errs), _)            => Invalid(errs)
                     case (_, Invalid(errs))            => Invalid(errs)
