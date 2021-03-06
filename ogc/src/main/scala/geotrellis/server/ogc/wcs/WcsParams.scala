@@ -16,6 +16,7 @@
 
 package geotrellis.server.ogc.wcs
 
+import geotrellis.server.ogc._
 import geotrellis.proj4.CRS
 import geotrellis.raster.{CellSize, GridExtent}
 import geotrellis.server.ogc.{OgcTime, OgcTimeInterval, OgcTimePositions, OutputFormat}
