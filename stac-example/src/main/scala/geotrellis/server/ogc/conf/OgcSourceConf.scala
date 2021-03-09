@@ -59,8 +59,8 @@ case class StacSourceConf(
   /** By default the search would happen across collections. */
   def searchCriteria: StacSearchCriteria =
     (collection, layer) match {
-      case (Some(_), Some(_)) | (Some(_), None) | (None, None) => ByCollection
-      case (None, Some(_))                                     => ByLayer
+      case (None, Some(_)) => ByLayer
+      case _               => ByCollection
     }
 
   def searchName: String =
