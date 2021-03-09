@@ -35,6 +35,6 @@ package object stac {
   }
 
   implicit class SearchFiltersObjOps(val self: SearchFilters.type) extends AnyVal {
-    def eval(query: Query): Option[SearchFilters] = SearchFiltersQuery.eval(query)
+    def eval(stacSearchCriteria: StacSearchCriteria)(query: Query): Option[SearchFilters] = SearchFiltersQuery.eval(stacSearchCriteria)(query)
   }
 }

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Added
 - WCS services support configuration of `supported-projections` [#314](https://github.com/geotrellis/geotrellis-server/pull/314)
 - Add WCS 1.1.0 as the supported version [#330](https://github.com/geotrellis/geotrellis-server/pull/330)
+- STAC Collections support [#338](https://github.com/geotrellis/geotrellis-server/issues/338)
 
 ### Changed
 - Update GT Server STAC4S dependency [#319](https://github.com/geotrellis/geotrellis-server/issues/319)
