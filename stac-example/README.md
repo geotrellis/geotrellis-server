@@ -28,8 +28,11 @@ with the STAC Layer extension, that can be imported into [Franklin](https://azav
 stac-lc8-red-us = {
   type = "stacsourceconf"
   name = "stac-lc8-red-us" // OGC Layer name
+  with-gdal = true // to use gdal to access stac assets
   title = "Landsat LayerUS Red"
+  // GT Server can use the STAC Collection as a source or the STAC Layer
   layer = "layer-us" // STAC Layer
+  collection = "landsat-8-l1" // STAC Collection
   asset = "B4" // STAC Asset to read
   asset-limit = 1000 // Max assets returned by the STAC search request
   source = "http://localhost:9090/" // Path to the STAC API endpoint

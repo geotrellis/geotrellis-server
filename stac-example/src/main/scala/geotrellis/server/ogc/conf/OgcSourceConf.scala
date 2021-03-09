@@ -16,6 +16,7 @@
 
 package geotrellis.server.ogc.conf
 
+import geotrellis.server.ogc.stac.{ByCollection, ByLayer, StacSearchCriteria}
 import geotrellis.raster.RasterSource
 import geotrellis.raster.io.geotiff.OverviewStrategy
 import geotrellis.raster.resample._
@@ -39,7 +40,8 @@ sealed trait OgcSourceConf {
 
 case class StacSourceConf(
   name: String,
-  layer: String,
+  layer: Option[String],
+  collection: Option[String],
   title: String,
   source: String,
   asset: String,
@@ -53,6 +55,20 @@ case class StacSourceConf(
   datetimeField: String = "datetime",
   withGDAL: Boolean = false
 ) extends OgcSourceConf {
+
+  /** By default the search would happen across collections. */
+  def searchCriteria: StacSearchCriteria =
+    (collection, layer) match {
+      case (Some(_), Some(_)) | (Some(_), None) | (None, None) => ByCollection
+      case (None, Some(_))                                     => ByLayer
+    }
+
+  def searchName: String =
+    (searchCriteria match {
+      case ByCollection => collection
+      case ByLayer      => layer
+    }).getOrElse("")
+
   def toLayer(rs: RasterSource): SimpleSource =
     SimpleSource(name, title, rs, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, datetimeField.some)
 }

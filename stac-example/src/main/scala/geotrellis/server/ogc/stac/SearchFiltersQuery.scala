@@ -73,7 +73,7 @@ object SearchFiltersQuery {
         datetime = left.datetime |+| right.datetime,
         intersects = left.intersects |+| right.intersects,
         collections = (left.collections |+| right.collections).distinct,
-        items = (left.collections |+| right.collections).distinct,
+        items = (left.items |+| right.items).distinct,
         limit = List(left.limit, right.limit).min,
         next = right.next,
         query = left.query.deepMerge(right.query)
@@ -113,7 +113,7 @@ object SearchFiltersQuery {
         datetime = left.datetime |+| right.datetime,
         intersects = left.intersects |+| right.intersects,
         collections = (left.collections |+| right.collections).distinct,
-        items = (left.collections |+| right.collections).distinct,
+        items = (left.items |+| right.items).distinct,
         limit = List(left.limit, right.limit).min,
         next = right.next,
         query = left.query.deepMerge(right.query)
@@ -122,13 +122,21 @@ object SearchFiltersQuery {
   }
 
   import geotrellis.store.query.QueryF._
-  def algebra: Algebra[QueryF, Option[SearchFilters]] =
+  def algebra(searchCriteria: StacSearchCriteria): Algebra[QueryF, Option[SearchFilters]] =
     Algebra {
       case Nothing()          => None
       case All()              => SearchFilters().some
-      case WithName(name)     => SearchFilters(query = Map("layer:ids" -> List(Superset(NonEmptyVector.one(name.asJson))))).some
+      case WithName(name)     =>
+        searchCriteria match {
+          case ByCollection => SearchFilters(collections = List(name)).some
+          case ByLayer      => SearchFilters(query = Map("layer:ids" -> List(Superset(NonEmptyVector.one(name.asJson))))).some
+        }
       case WithNames(names)   =>
-        SearchFilters(query = Map("layer:ids" -> List(Superset(NonEmptyVector.fromVectorUnsafe(names.map(_.asJson).toVector))))).some
+        searchCriteria match {
+          case ByCollection => SearchFilters(collections = names.toList).some
+          case ByLayer      =>
+            SearchFilters(query = Map("layer:ids" -> List(Superset(NonEmptyVector.fromVectorUnsafe(names.map(_.asJson).toVector))))).some
+        }
       case At(t, _)           => SearchFilters(datetime = TemporalExtent(t.toInstant, t.toInstant).some).some
       case Between(t1, t2, _) => SearchFilters(datetime = TemporalExtent(t1.toInstant, t2.toInstant).some).some
       case Intersects(e)      => SearchFilters(intersects = e.reproject(LatLng).extent.toPolygon.some).some
@@ -139,5 +147,5 @@ object SearchFiltersQuery {
       case _                  => SearchFilters().some
     }
 
-  def eval(query: Query): Option[SearchFilters] = scheme.cata(algebra).apply(query)
+  def eval(searchCriteria: StacSearchCriteria)(query: Query): Option[SearchFilters] = scheme.cata(algebra(searchCriteria)).apply(query)
 }
