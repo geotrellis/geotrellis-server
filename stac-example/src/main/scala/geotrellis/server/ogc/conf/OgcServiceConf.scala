@@ -38,9 +38,9 @@ import sttp.client3.SttpBackend
 sealed trait OgcServiceConf {
   def layerDefinitions: List[OgcSourceConf]
   def layerSources(rasterOgcSources: List[RasterOgcSource]): Repository[OgcSource] = {
-    val rasterLayers: List[RasterOgcSource]      = layerDefinitions.collect { case rsc @ RasterSourceConf(_, _, _, _, _, _, _) => rsc.toLayer }
+    val rasterLayers: List[RasterOgcSource]      = layerDefinitions.collect { case rsc: RasterSourceConf => rsc.toLayer }
     val mapAlgebraLayers: List[MapAlgebraSource] = layerDefinitions.collect {
-      case masc @ MapAlgebraSourceConf(_, _, _, _, _, _, _) => masc.modelOpt(rasterOgcSources)
+      case masc: MapAlgebraSourceConf => masc.modelOpt(rasterOgcSources)
     }.flatten
 
     ogc.OgcSourceRepository(rasterLayers ++ mapAlgebraLayers)
@@ -50,8 +50,8 @@ sealed trait OgcServiceConf {
     rasterOgcSources: List[RasterOgcSource],
     client: SttpBackend[F, Any]
   ): RepositoryM[F, List, OgcSource] = {
-    val stacLayers: List[StacSourceConf]                 = layerDefinitions.collect { case ssc @ StacSourceConf(_, _, _, _, _, _, _, _, _, _, _, _, _, _, _) => ssc }
-    val mapAlgebraConfLayers: List[MapAlgebraSourceConf] = layerDefinitions.collect { case masc @ MapAlgebraSourceConf(_, _, _, _, _, _, _) => masc }
+    val stacLayers: List[StacSourceConf]                 = layerDefinitions.collect { case ssc: StacSourceConf => ssc }
+    val mapAlgebraConfLayers: List[MapAlgebraSourceConf] = layerDefinitions.collect { case masc: MapAlgebraSourceConf => masc }
 
     layerSources(rasterOgcSources).toF[F] |+|
     StacOgcRepositories[F](stacLayers, client) |+|
