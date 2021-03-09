@@ -14,7 +14,7 @@ case class StacRepository[F[_]: Sync](client: SttpStacClient[F]) extends Reposit
 
   def find(query: Query): F[List[RasterSource]] =
     SearchFilters
-      .eval(query)
+      .eval(ByLayer)(query)
       .map { filter =>
         client
           .search(filter)
