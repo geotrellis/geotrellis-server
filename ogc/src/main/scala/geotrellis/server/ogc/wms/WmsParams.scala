@@ -16,9 +16,8 @@
 
 package geotrellis.server.ogc.wms
 
-import geotrellis.server.ogc.{OgcTime, OgcTimeEmpty, OgcTimeInterval, OgcTimePositions, OutputFormat}
+import geotrellis.server.ogc._
 import geotrellis.server.ogc.params._
-import geotrellis.proj4.LatLng
 import geotrellis.proj4.CRS
 import geotrellis.store.query._
 import geotrellis.vector.{Extent, ProjectedExtent}
@@ -88,8 +87,9 @@ object WmsParams {
               { s =>
                 s.split(",").map(_.toDouble) match {
                   case Array(xmin, ymin, xmax, ymax) =>
-                    if (crs == LatLng) Extent(ymin, xmin, ymax, xmax).some
-                    else Extent(xmin, ymin, xmax, ymax).some
+                    val extent = Extent(xmin, ymin, xmax, ymax)
+                    if (crs.isGeographic) extent.swapXY.some
+                    else extent.some
                   case _                             => None
                 }
               }

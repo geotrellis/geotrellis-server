@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Azavea
+ * Copyright 2021 Azavea
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package geotrellis.server.ogc
+package geotrellis.server
 
-import scala.xml.NamespaceBinding
+import geotrellis.raster.CellSize
+import geotrellis.vector.Extent
 
-package object wcs {
-  val wcsScope: NamespaceBinding = scalaxb.toScope(
-    None          -> "http://www.opengis.net/wcs/1.1.1",
-    Some("gml")   -> "http://www.opengis.net/gml",
-    Some("ows")   -> "http://www.opengis.net/ows/1.1",
-    Some("ogc")   -> "http://www.opengis.net/ogc",
-    Some("xlink") -> "http://www.w3.org/1999/xlink",
-    Some("xsi")   -> "http://www.w3.org/2001/XMLSchema-instance"
-  )
+package object ogc {
+  implicit class ExtentOps(self: Extent) {
+    def swapXY: Extent                             = Extent(xmin = self.ymin, ymin = self.xmin, xmax = self.ymax, ymax = self.xmax)
+    def buffer(cellSize: CellSize): Extent         = self.buffer(cellSize.width / 2, cellSize.height / 2)
+    def buffer(cellSize: Option[CellSize]): Extent = cellSize.fold(self)(buffer)
+  }
 }
