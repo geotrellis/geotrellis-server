@@ -114,7 +114,7 @@ object Main
               def createServer: Resource[IO, Server[IO]] =
                 for {
                   conf         <- Conf.loadResourceF[IO](configPath)
-                  simpleSources = conf.layers.values.collect { case rsc @ RasterSourceConf(_, _, _, _, _, _, _) => rsc.toLayer }.toList
+                  simpleSources = conf.layers.values.collect { case rsc: RasterSourceConf => rsc.toLayer }.toList
                   _            <- Resource.liftF(
                                     logOptState(
                                       conf.wms,

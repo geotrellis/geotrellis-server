@@ -117,7 +117,7 @@ object Main
                 for {
                   conf         <- Conf.loadResourceF[IO](configPath)
                   http4sClient <- Http4sBackend.usingDefaultBlazeClientBuilder[IO](Blocker.liftExecutionContext(executionContext), executionContext)
-                  simpleSources = conf.layers.values.collect { case rsc @ RasterSourceConf(_, _, _, _, _, _, _) => rsc.toLayer }.toList
+                  simpleSources = conf.layers.values.collect { case rsc: RasterSourceConf => rsc.toLayer }.toList
                   _            <- Resource.liftF(
                                     logOptState(
                                       conf.wms,
