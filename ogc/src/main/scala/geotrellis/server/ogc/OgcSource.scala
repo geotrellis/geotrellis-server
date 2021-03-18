@@ -51,7 +51,6 @@ trait OgcSource {
   def nativeExtent: Extent
   def nativeRE: GridExtent[Long]
   def extentIn(crs: CRS): Extent
-  def bboxIn(crs: CRS): BoundingBox
   def nativeCrs: Set[CRS]
   def metadata: RasterMetadata
   def attributes: Map[String, String]
@@ -62,6 +61,7 @@ trait OgcSource {
   def isTemporal: Boolean = timeMetadataKey.nonEmpty && time.nonEmpty
 
   def nativeProjectedExtent: ProjectedExtent = ProjectedExtent(nativeExtent, nativeCrs.head)
+  def projectedExtent: ProjectedExtent = nativeProjectedExtent
 }
 
 trait RasterOgcSource extends OgcSource {
@@ -72,16 +72,13 @@ trait RasterOgcSource extends OgcSource {
     reprojected.extent
   }
 
-  def bboxIn(crs: CRS): BoundingBox = {
-    val reprojected = source.reproject(crs)
-    CapabilitiesView.boundingBox(crs, reprojected.extent, reprojected.cellSize)
-  }
-
   lazy val nativeRE: GridExtent[Long]      = source.gridExtent
   lazy val nativeCrs: Set[CRS]             = Set(source.crs)
   lazy val nativeExtent: Extent            = source.extent
   lazy val metadata: RasterMetadata        = source.metadata
   lazy val attributes: Map[String, String] = metadata.attributes
+
+  def toLayer(crs: CRS, style: Option[OgcStyle] = None): SimpleOgcLayer
 }
 
 /**
@@ -98,6 +95,9 @@ case class SimpleSource(
   timeMetadataKey: Option[String]
 ) extends RasterOgcSource {
   lazy val time: OgcTime = source.time(timeMetadataKey)
+
+  def toLayer(crs: CRS, style: Option[OgcStyle] = None): SimpleOgcLayer =
+    SimpleOgcLayer(name, title, crs, source, style, resampleMethod, overviewStrategy)
 }
 
 case class GeoTrellisOgcSource(
@@ -110,6 +110,8 @@ case class GeoTrellisOgcSource(
   overviewStrategy: OverviewStrategy,
   timeMetadataKey: Option[String] = "times".some
 ) extends RasterOgcSource {
+
+  def toLayer(crs: CRS, style: Option[OgcStyle] = None): SimpleOgcLayer = ???
 
   private val dataPath = GeoTrellisPath.parse(sourceUri)
 
@@ -264,19 +266,9 @@ case class MapAlgebraSource(
   }
 
   val time: OgcTime =
-    timeMetadataKey.toList
-      .flatMap { key =>
-        sources.values.toList.flatMap {
-          case mrs: MosaicRasterSource =>
-            val times = mrs.metadata.list.toList.flatMap(_.attributes.get(key)).map(ZonedDateTime.parse)
-            times match {
-              case head :: tail => OgcTimePositions(NEL(head, tail)).some
-              case _            => None
-            }
-
-          case source                  => source.metadata.attributes.get(key).map(ZonedDateTime.parse).map(OgcTimePositions(_))
-        }
-      }
+    timeMetadataKey
+      .toList
+      .flatMap { key => sources.values.toList.map(_.time(key.some)) }
       .foldLeft[OgcTime](OgcTimeEmpty)(_ |+| _)
 
   val attributes: Map[String, String]  = Map.empty

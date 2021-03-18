@@ -1,7 +1,7 @@
 {
   "type": "Feature",
   "id": "LC80150332018189LGN00",
-  "stac_version" : "1.0.0-beta.1",
+  "stac_version" : "1.0.0-rc.1",
   "stac_extensions" : [
     "eo",
     "view",
@@ -56,11 +56,24 @@
     "landsat:scene_id": "LC80150332018189LGN00",
     "landsat:processing_level": "L1TP",
     "landsat:tier": "T1",
-    "proj:epsg": 32618,
     "instruments": ["OLI_TIRS"],
     "view:off_nadir": 0,
     "platform": "landsat-8",
-    "gsd": 15
+    "gsd": 30,
+    "proj:epsg": 32618,
+    "proj:transform": [222285.0, 30.0, 0.0, 4426515.0, 0.0, -30.0],
+    "proj:geometry": {
+      "type": "Polygon",
+      "coordinates": [
+        [
+          [222285.0, 4187985.0],
+          [222285.0, 4426515.0],
+          [456915.0, 4426515.0],
+          [456915.0, 4187985.0],
+          [222285.0,4187985.0]]
+      ]
+    },
+    "proj:shape": [7821, 7951]
   },
   "assets": {
     "index": {

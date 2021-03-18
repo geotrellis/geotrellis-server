@@ -19,21 +19,25 @@ package geotrellis.server.ogc.stac
 import geotrellis.stac._
 import geotrellis.store.query.{Query, QueryF}
 import geotrellis.proj4.LatLng
-import com.azavea.stac4s.{Bbox, TwoDimBbox}
+import com.azavea.stac4s.{Bbox, StacCollection, TwoDimBbox}
 import com.azavea.stac4s.types.TemporalExtent
-import com.azavea.stac4s.api.client.{SearchFilters, Superset}
+import com.azavea.stac4s.api.client.{SearchFilters, StacClient, Superset}
 import io.circe.syntax._
-import higherkindness.droste.{scheme, Algebra}
+import higherkindness.droste.{Algebra, scheme}
 import geotrellis.vector._
-import cats.{Order, Semigroup}
+import cats.{Applicative, MonoidK, Order, Semigroup, ~>}
 import cats.data.NonEmptyVector
 import cats.syntax.option._
 import cats.syntax.either._
 import cats.syntax.semigroup._
+import cats.syntax.applicative._
+import cats.syntax.functor._
 import cats.instances.option._
 import cats.instances.list._
+import cats.kernel.Monoid
 import eu.timepit.refined.cats._
 import eu.timepit.refined.types.numeric.NonNegInt
+import eu.timepit.refined.types.string.NonEmptyString
 
 /** SearchFilters Query evaluation */
 object SearchFiltersQuery {
@@ -147,5 +151,33 @@ object SearchFiltersQuery {
       case _                  => SearchFilters().some
     }
 
+  def algebraStacCollection[F[_]: Applicative]: Algebra[QueryF, StacClient[F] => F[StacSummary]] =
+    Algebra {
+      case WithName(name)   => _.collection(NonEmptyString.unsafeFrom(name)).map(CollectionSummary)
+      case WithNames(names) => _.collection(NonEmptyString.unsafeFrom(names.head)).map(CollectionSummary)
+      case _                => _ => EmptySummary.pure[F].widen
+    }
+
+  def extractName: Algebra[QueryF, List[String]] =
+    Algebra {
+      case WithName(name)   => name :: Nil
+      case WithNames(names) => names.toList
+      case And(l, r)        => l |+| r
+      case Or(l, r)         => if(l.nonEmpty) l else r
+      case _                => Nil
+    }
+
   def eval(searchCriteria: StacSearchCriteria)(query: Query): Option[SearchFilters] = scheme.cata(algebra(searchCriteria)).apply(query)
+
+  def evalStacCollection[F[_]: Applicative](query: Query): StacClient[F] => F[StacSummary] = {
+    val reconstructedQuery = scheme.cata(extractName).apply(query) match {
+      case name :: Nil => withName(name)
+      case Nil => nothing
+      case names => withNames(names.toSet)
+    }
+
+    scheme.cata(algebraStacCollection[F]).apply(reconstructedQuery)
+  }
+
+  // scheme.cata(algebraStacCollection[F]).apply(query)
 }

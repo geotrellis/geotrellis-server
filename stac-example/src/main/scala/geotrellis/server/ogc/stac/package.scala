@@ -16,10 +16,11 @@
 
 package geotrellis.server.ogc
 
+import cats.{Applicative, MonoidK}
 import geotrellis.store.query.Query
 import geotrellis.raster.geotiff.GeoTiffPath
-import com.azavea.stac4s.StacItemAsset
-import com.azavea.stac4s.api.client.{SearchFilters, Query => SQuery}
+import com.azavea.stac4s.{StacCollection, StacItemAsset}
+import com.azavea.stac4s.api.client.{SearchFilters, StacClient, Query => SQuery}
 import io.circe.syntax._
 import cats.syntax.either._
 
@@ -36,5 +37,9 @@ package object stac {
 
   implicit class SearchFiltersObjOps(val self: SearchFilters.type) extends AnyVal {
     def eval(stacSearchCriteria: StacSearchCriteria)(query: Query): Option[SearchFilters] = SearchFiltersQuery.eval(stacSearchCriteria)(query)
+  }
+
+  implicit class StacClientOps[F[_]: Applicative](val self: StacClient[F]) {
+    def summary(query: Query): F[StacSummary] = SearchFiltersQuery.evalStacCollection[F](query).apply(self)
   }
 }

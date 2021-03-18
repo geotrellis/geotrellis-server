@@ -16,26 +16,28 @@
 
 package geotrellis.server.ogc.stac
 
+import geotrellis.stac._
 import geotrellis.store.query._
 import geotrellis.store.query.QueryF._
-import geotrellis.raster.{MosaicRasterSource, RasterSource}
+import geotrellis.raster.{MosaicRasterSource, RasterSource, StringName}
 import geotrellis.server.ogc.{OgcSource, OgcTime, OgcTimeEmpty, OgcTimeInterval, OgcTimePositions}
 import geotrellis.server.ogc.conf.{OgcSourceConf, StacSourceConf}
 import geotrellis.server.ogc.utils._
 import sttp.client3.SttpBackend
 import sttp.client3.UriContext
 import geotrellis.store.query
-import geotrellis.stac.raster.StacAssetRasterSource
+import geotrellis.stac.raster.{StacAssetRasterSource, StacCollectionSource}
 import com.azavea.stac4s.api.client.{Query => _, _}
-
 import cats.data.NonEmptyList
 import cats.syntax.functor._
 import cats.syntax.applicative._
+import cats.syntax.apply._
 import cats.syntax.option._
 import cats.syntax.semigroup._
 import cats.effect.Sync
 import cats.instances.list._
-import higherkindness.droste.{scheme, Algebra}
+import geotrellis.stac.StacItemProperties
+import higherkindness.droste.{Algebra, scheme}
 import io.chrisdavenport.log4cats.Logger
 
 case class StacOgcRepository[F[_]: Sync: Logger](
@@ -47,11 +49,13 @@ case class StacOgcRepository[F[_]: Sync: Logger](
   def find(query: Query): F[List[OgcSource]] = {
 
     /** Replace the actual conf name with the STAC Layer name */
-    val filters: Option[SearchFilters] = SearchFilters.eval(stacSourceConf.searchCriteria)(query.overrideName(stacSourceConf.searchName))
+    val queryn = query.overrideName(stacSourceConf.searchName)
+    // TODO: use prepromorphism here? https://github.com/higherkindness/droste/blob/6d947dcf47d027202cbfe33b410b6fa228a193eb/modules/core/src/main/scala/higherkindness/droste/zoo.scala#L129
+    val filters: Option[SearchFilters] = SearchFilters.eval(stacSourceConf.searchCriteria)(queryn)
     filters.fold(List.empty[OgcSource].pure[F]) { filter =>
-      client
-        .search(filter.copy(limit = stacSourceConf.assetLimit))
-        .map { items =>
+      (client.summary(queryn), client.search(filter.copy(limit = stacSourceConf.assetLimit)))
+        // TODO: fix non-exhaustive match!
+        .mapN { case (csummary: CollectionSummary, items) =>
           val rasterSources =
             items.flatMap { item =>
               item.assets
@@ -59,13 +63,13 @@ case class StacOgcRepository[F[_]: Sync: Logger](
                 .map { itemAsset =>
                   StacAssetRasterSource(
                     itemAsset.withGDAL(stacSourceConf.withGDAL),
-                    item.properties
+                    StacItemProperties(item.properties)
                   )
                 }
             }
 
-          val source: Option[RasterSource] = rasterSources match {
-            case head :: Nil => head.some
+          val source: Option[StacCollectionSource] = rasterSources match {
+            case head :: Nil => StacCollectionSource(csummary.asset, head).some
             case head :: _   =>
               /**
                 * By default STAC API returns all temporal items even though the time is not specified.
@@ -77,7 +81,9 @@ case class StacOgcRepository[F[_]: Sync: Logger](
                 * All non temporal items would be included into the result.
                 * Otherwise, only items that match the first time position would be returned.
                 */
-              val sources            = if (stacSourceConf.defaultTime && query.nonTemporal && query.nonUniversal) {
+              // it should rely on the stac metadata only
+              // TODO: return temporal queries
+              val sources            = /*if (stacSourceConf.defaultTime && query.nonTemporal && query.nonUniversal) {
                 val datetimeField = stacSourceConf.datetimeField.some
                 rasterSources.map(_.time(datetimeField)).reduce(_ |+| _) match {
                   case OgcTimePositions(list)       =>
@@ -87,10 +93,26 @@ case class StacOgcRepository[F[_]: Sync: Logger](
                     rasterSources.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), start))
                   case OgcTimeEmpty                 => rasterSources
                 }
-              } else rasterSources
+              } else */rasterSources
               val commonCrs          = if (sources.map(_.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
               val reprojectedSources = sources.map(_.reproject(commonCrs))
-              MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs).some
+
+              val attributes = reprojectedSources.map(rs => rs.attributes.map { case (k, v) =>
+                rs.name match {
+                  case StringName(sn) => (s"$sn-$k", v)
+                  case sn             => (s"$sn-$k", v)
+                }
+              }).reduce(_ |+| _)
+
+              StacCollectionSource(
+                csummary.asset,
+                MosaicRasterSource.instance(
+                  NonEmptyList.fromListUnsafe(reprojectedSources),
+                  commonCrs,
+                  StringName(csummary.asset.id),
+                  attributes
+                )
+              ).some
             case _           => None
           }
 
@@ -115,7 +137,7 @@ case class StacOgcRepositories[F[_]: Sync: Logger](
   def find(query: Query): F[List[OgcSource]] =
     StacOgcRepositories
       .eval(query)(stacLayers)
-      .map { conf => StacOgcRepository(conf, SttpStacClient(client, uri"${conf.source}")) }
+      .map { conf => StacOgcRepository(conf, LoggableSttpStacClient(client, uri"${conf.source}")) }
       .fold(RepositoryM.empty[F, List, OgcSource])(_ |+| _)
       .find(query)
 }

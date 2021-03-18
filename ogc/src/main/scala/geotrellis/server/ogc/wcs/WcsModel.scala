@@ -36,8 +36,6 @@ case class WcsModel[F[_]: Functor](
     val filteredSources = sources.find(p.toQuery)
     filteredSources.map {
       _.map {
-        case SimpleSource(name, title, source, _, _, resampleMethod, overviewStrategy, _)               =>
-          SimpleOgcLayer(name, title, p.crs, source, None, resampleMethod, overviewStrategy)
         case gts @ GeoTrellisOgcSource(name, title, _, _, _, resampleMethod, overviewStrategy, _)       =>
           val source =
             p.temporalSequence.headOption match {
@@ -62,6 +60,7 @@ case class WcsModel[F[_]: Functor](
             resampleMethod,
             overviewStrategy
           )
+        case ros: RasterOgcSource               => ros.toLayer(p.crs, None)
       }
     }
   }

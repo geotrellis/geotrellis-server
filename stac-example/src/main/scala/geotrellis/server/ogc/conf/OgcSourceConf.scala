@@ -26,6 +26,7 @@ import geotrellis.proj4.{CRS, WebMercator}
 import com.azavea.maml.ast._
 import cats.syntax.option._
 import eu.timepit.refined.types.numeric.NonNegInt
+import geotrellis.stac.raster.StacCollectionSource
 import pureconfig.ConfigReader
 
 import scala.util.Try
@@ -71,6 +72,9 @@ case class StacSourceConf(
 
   def toLayer(rs: RasterSource): SimpleSource =
     SimpleSource(name, title, rs, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, datetimeField.some)
+
+  def toLayer(rs: StacCollectionSource): StacOgcSource =
+    StacOgcSource(name, title, rs, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, datetimeField.some)
 }
 
 object StacSourceConf {

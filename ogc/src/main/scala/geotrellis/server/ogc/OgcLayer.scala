@@ -47,7 +47,7 @@ sealed trait OgcLayer {
   def overviewStrategy: OverviewStrategy
 }
 
-sealed trait RasterOgcLayer {
+sealed trait RasterOgcLayer extends OgcLayer {
   def source: RasterSource
 }
 
@@ -59,8 +59,7 @@ case class SimpleOgcLayer(
   style: Option[OgcStyle],
   resampleMethod: ResampleMethod,
   overviewStrategy: OverviewStrategy
-) extends OgcLayer
-    with RasterOgcLayer
+) extends RasterOgcLayer
 
 case class MapAlgebraOgcLayer(
   name: String,

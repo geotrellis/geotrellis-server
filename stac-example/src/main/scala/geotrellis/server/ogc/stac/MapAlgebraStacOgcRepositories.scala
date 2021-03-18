@@ -16,11 +16,10 @@
 
 package geotrellis.server.ogc.stac
 
-import geotrellis.server.ogc.{OgcSource, SimpleSource}
+import geotrellis.server.ogc.{OgcSource, RasterOgcSource, SimpleSource}
 import geotrellis.server.ogc.conf.{MapAlgebraSourceConf, StacSourceConf}
 import geotrellis.store.query
 import geotrellis.store.query._
-
 import cats.effect.Sync
 import cats.syntax.functor._
 import cats.syntax.semigroup._
@@ -41,7 +40,7 @@ case class MapAlgebraStacOgcRepository[F[_]: Sync](
     /** Replace the OGC layer name with its STAC Layer name */
     repository
       .find(names.map(query.overrideName).fold(nothing)(_ or _))
-      .map(_.collect { case ss: SimpleSource => ss })
+      .map(_.collect { case rs: RasterOgcSource => rs })
       .map(mapAlgebraSourceConf.modelOpt(_).toList)
       .widen
 }

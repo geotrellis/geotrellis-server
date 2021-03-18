@@ -23,6 +23,7 @@ import cats.syntax.semigroup._
 import jp.ne.opt.chronoscala.Imports._
 
 import java.time.ZonedDateTime
+import scala.util.Try
 
 sealed trait OgcTime {
   def isEmpty: Boolean  = false
@@ -50,6 +51,11 @@ object OgcTime {
       case OgcTimeInterval(start, _, _) => start == dt
       case OgcTimeEmpty                 => true
     }
+
+  def fromString(str: String): OgcTime =
+    Try(OgcTimeInterval.fromString(str))
+      .toOption
+      .getOrElse(OgcTimePositions(str.split(",").toList))
 }
 
 case object OgcTimeEmpty extends OgcTime {
