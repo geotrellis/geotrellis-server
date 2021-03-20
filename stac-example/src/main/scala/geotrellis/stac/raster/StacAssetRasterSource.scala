@@ -1,37 +1,55 @@
-package geotrellis.stac.raster
+/*
+ * Copyright 2021 Azavea
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-import geotrellis.stac._
+package geotrellis.stac.raster
 
 import geotrellis.proj4.CRS
 import geotrellis.raster.io.geotiff.OverviewStrategy
 import geotrellis.raster._
 import geotrellis.vector.Extent
-import com.azavea.stac4s.StacItemAsset
 import cats.syntax.option._
 
 class StacAssetRasterSource(
-  asset: StacItemAsset,
-  itemProperties: StacItemProperties,
+  val asset: StacAsset,
   private[geotrellis] val targetCellType: Option[TargetCellType],
   @transient underlyingRS: => Option[RasterSource]
 ) extends RasterSource {
   @transient private lazy val underlying = underlyingRS.getOrElse(RasterSource(asset.href))
 
   val name: SourceName                                  = asset.href
-  def crs: CRS                                          = asset.crs.orElse(itemProperties.crs).getOrElse(underlying.crs)
-  def bandCount: Int                                    = itemProperties.bandCount.getOrElse(underlying.bandCount)
+  def crs: CRS                                          = asset.crs.getOrElse(underlying.crs)
+  def bandCount: Int                                    = asset.bandCount.getOrElse(underlying.bandCount)
   def cellType: CellType                                = underlying.cellType
-  def gridExtent: GridExtent[Long]                      = asset.gridExtent.orElse(itemProperties.gridExtent).getOrElse(underlying.gridExtent)
+  def gridExtent: GridExtent[Long]                      = asset.gridExtent.getOrElse(underlying.gridExtent)
   def resolutions: List[CellSize]                       = underlying.resolutions
-  def attributes: Map[String, String]                   = itemProperties.toMap.mapValues(_.as[String].toOption).collect { case (k, v) if v.nonEmpty => k -> v.get }
+  def attributes: Map[String, String]                   =
+    asset.item.properties.toMap.mapValues(_.as[String].toOption).collect { case (k, v) if v.nonEmpty => k -> v.get }
   def attributesForBand(band: Int): Map[String, String] = Map.empty
-  def metadata: StacAssetMetadata                       =  StacAssetMetadata(name, crs, bandCount, cellType, gridExtent, resolutions, itemProperties)
+  def metadata: StacAssetMetadata                       = StacAssetMetadata(name, crs, bandCount, cellType, gridExtent, resolutions, asset)
 
-  def reprojection(targetCRS: CRS, resampleTarget: ResampleTarget, method: ResampleMethod, strategy: OverviewStrategy): StacAssetReprojectRasterSource =
-    StacAssetReprojectRasterSource(asset, itemProperties, targetCRS, resampleTarget, method, strategy, targetCellType = targetCellType, underlyingRS = underlyingRS)
+  def reprojection(
+    targetCRS: CRS,
+    resampleTarget: ResampleTarget,
+    method: ResampleMethod,
+    strategy: OverviewStrategy
+  ): StacAssetReprojectRasterSource =
+    StacAssetReprojectRasterSource(asset, targetCRS, resampleTarget, method, strategy, targetCellType = targetCellType, underlyingRS = underlyingRS)
 
   def resample(resampleTarget: ResampleTarget, method: ResampleMethod, strategy: OverviewStrategy): StacAssetResampleRasterSource =
-    StacAssetResampleRasterSource(asset, itemProperties, resampleTarget, method, strategy, targetCellType, underlyingRS)
+    StacAssetResampleRasterSource(asset, resampleTarget, method, strategy, targetCellType, underlyingRS)
 
   def read(extent: Extent, bands: Seq[Int]): Option[Raster[MultibandTile]] =
     underlying.read(extent, bands)
@@ -40,14 +58,15 @@ class StacAssetRasterSource(
     underlying.read(bounds, bands)
 
   def convert(targetCellType: TargetCellType): StacAssetRasterSource =
-    StacAssetRasterSource(asset, itemProperties, targetCellType.some, underlying.convert(targetCellType).some)
+    StacAssetRasterSource(asset, targetCellType.some, underlying.convert(targetCellType).some)
+
+  override def toString: String = s"StacAssetRasterSource($asset, $targetCellType)"
 }
 
 object StacAssetRasterSource {
   def apply(
-    asset: StacItemAsset,
-    itemProperties: StacItemProperties = StacItemProperties.EMPTY,
+    asset: StacAsset,
     targetCellType: Option[TargetCellType] = None,
     underlyingRS: => Option[RasterSource] = None
-  ): StacAssetRasterSource = new StacAssetRasterSource(asset, itemProperties, targetCellType, underlyingRS)
+  ): StacAssetRasterSource = new StacAssetRasterSource(asset, targetCellType, underlyingRS)
 }

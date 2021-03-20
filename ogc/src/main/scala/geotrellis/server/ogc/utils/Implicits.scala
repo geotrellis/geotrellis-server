@@ -50,7 +50,7 @@ trait Implicits {
                 val times = mrs.metadata.list.toList.flatMap(_.attributes.get(key)).map(ZonedDateTime.parse)
                 times match {
                   case head :: tail => OgcTimePositions(NEL(head, tail)).some
-                  case _ => None
+                  case _            => None
                 }
               }
 

@@ -24,13 +24,11 @@ import geotrellis.vector._
 import com.azavea.stac4s.StacCollection
 
 case class StacCollectionSource(asset: StacCollection, source: RasterSource) extends StacSource[StacCollection] {
-  val extent: Extent = asset.extent.spatial.toExtent
+  val extent: Extent   = asset.extent.spatial.toExtent
   val name: SourceName = StringName(asset.id)
 
   lazy val attributes: Map[String, String] =
-    asset
-      .asJson
-      .asObject
+    asset.asJson.asObject
       .map(_.toMap)
       .getOrElse(Map.empty)
       .mapValues(_.toString)

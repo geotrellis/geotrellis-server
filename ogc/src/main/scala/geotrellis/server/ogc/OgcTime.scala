@@ -53,8 +53,7 @@ object OgcTime {
     }
 
   def fromString(str: String): OgcTime =
-    Try(OgcTimeInterval.fromString(str))
-      .toOption
+    Try(OgcTimeInterval.fromString(str)).toOption
       .getOrElse(OgcTimePositions(str.split(",").toList))
 }
 

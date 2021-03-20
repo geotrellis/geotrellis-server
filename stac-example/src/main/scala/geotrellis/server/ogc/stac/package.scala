@@ -40,6 +40,7 @@ package object stac {
   }
 
   implicit class StacClientOps[F[_]: Applicative](val self: StacClient[F]) {
-    def summary(query: Query): F[StacSummary] = SearchFiltersQuery.evalStacCollection[F](query).apply(self)
+    def summary(searchCriteria: StacSearchCriteria)(query: Query): F[StacSummary] =
+      SearchFiltersQuery.evalSummary[F](searchCriteria)(query).apply(self)
   }
 }

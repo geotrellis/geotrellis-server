@@ -61,7 +61,7 @@ trait OgcSource {
   def isTemporal: Boolean = timeMetadataKey.nonEmpty && time.nonEmpty
 
   def nativeProjectedExtent: ProjectedExtent = ProjectedExtent(nativeExtent, nativeCrs.head)
-  def projectedExtent: ProjectedExtent = nativeProjectedExtent
+  def projectedExtent: ProjectedExtent       = nativeProjectedExtent
 }
 
 trait RasterOgcSource extends OgcSource {
@@ -78,7 +78,7 @@ trait RasterOgcSource extends OgcSource {
   lazy val metadata: RasterMetadata        = source.metadata
   lazy val attributes: Map[String, String] = metadata.attributes
 
-  def toLayer(crs: CRS, style: Option[OgcStyle] = None): SimpleOgcLayer
+  def toLayer(crs: CRS, style: Option[OgcStyle], temporalSequence: List[OgcTime]): SimpleOgcLayer
 }
 
 /**
@@ -96,7 +96,7 @@ case class SimpleSource(
 ) extends RasterOgcSource {
   lazy val time: OgcTime = source.time(timeMetadataKey)
 
-  def toLayer(crs: CRS, style: Option[OgcStyle] = None): SimpleOgcLayer =
+  def toLayer(crs: CRS, style: Option[OgcStyle], temporalSequence: List[OgcTime]): SimpleOgcLayer =
     SimpleOgcLayer(name, title, crs, source, style, resampleMethod, overviewStrategy)
 }
 
@@ -111,7 +111,16 @@ case class GeoTrellisOgcSource(
   timeMetadataKey: Option[String] = "times".some
 ) extends RasterOgcSource {
 
-  def toLayer(crs: CRS, style: Option[OgcStyle] = None): SimpleOgcLayer = ???
+  def toLayer(crs: CRS, style: Option[OgcStyle], temporalSequence: List[OgcTime]): SimpleOgcLayer = {
+    val src =
+      temporalSequence.headOption match {
+        case Some(t) if t.nonEmpty                              => sourceForTime(t)
+        case _ if temporalSequence.isEmpty && source.isTemporal =>
+          sourceForTime(source.times.head)
+        case _                                                  => source
+      }
+    SimpleOgcLayer(name, title, crs, src, None, resampleMethod, overviewStrategy)
+  }
 
   private val dataPath = GeoTrellisPath.parse(sourceUri)
 
@@ -266,8 +275,7 @@ case class MapAlgebraSource(
   }
 
   val time: OgcTime =
-    timeMetadataKey
-      .toList
+    timeMetadataKey.toList
       .flatMap { key => sources.values.toList.map(_.time(key.some)) }
       .foldLeft[OgcTime](OgcTimeEmpty)(_ |+| _)
 

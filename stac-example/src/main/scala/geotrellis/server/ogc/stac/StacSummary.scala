@@ -16,17 +16,8 @@
 
 package geotrellis.server.ogc.stac
 
-import cats.Semigroup
 import com.azavea.stac4s.StacCollection
 
 sealed trait StacSummary
-case object StacSummary {
-  implicit val stacSummarySemigroup: Semigroup[StacSummary] = {
-    case (l: CollectionSummary, _) => l
-    case (_, r: CollectionSummary) => r
-    case _ => EmptySummary
-  }
-}
-
-case object EmptySummary extends StacSummary
+case object EmptySummary                            extends StacSummary
 case class CollectionSummary(asset: StacCollection) extends StacSummary
