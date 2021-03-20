@@ -151,12 +151,17 @@ object SearchFiltersQuery {
       case _                  => SearchFilters().some
     }
 
-  def algebraStacCollection[F[_]: Applicative]: Algebra[QueryF, StacClient[F] => F[StacSummary]] =
-    Algebra {
-      case WithName(name)   => _.collection(NonEmptyString.unsafeFrom(name)).map(CollectionSummary)
-      case WithNames(names) => _.collection(NonEmptyString.unsafeFrom(names.head)).map(CollectionSummary)
-      case _                => _ => EmptySummary.pure[F].widen
+  def algebraStacSummary[F[_]: Applicative](searchCriteria: StacSearchCriteria): Algebra[QueryF, StacClient[F] => F[StacSummary]] = {
+    searchCriteria match {
+      case ByLayer => Algebra { case _ => _ => EmptySummary.pure[F].widen }
+      case _       =>
+        Algebra {
+          case WithName(name)   => _.collection(NonEmptyString.unsafeFrom(name)).map(CollectionSummary)
+          case WithNames(names) => _.collection(NonEmptyString.unsafeFrom(names.head)).map(CollectionSummary)
+          case _                => _ => EmptySummary.pure[F].widen
+        }
     }
+  }
 
   def extractName: Algebra[QueryF, List[String]] =
     Algebra {
@@ -170,16 +175,12 @@ object SearchFiltersQuery {
   def eval(searchCriteria: StacSearchCriteria)(query: Query): Option[SearchFilters] = scheme.cata(algebra(searchCriteria)).apply(query)
 
   def evalSummary[F[_]: Applicative](searchCriteria: StacSearchCriteria)(query: Query): StacClient[F] => F[StacSummary] = {
-    searchCriteria match {
-      case ByCollection =>
-        val reconstructedQuery = scheme.cata(extractName).apply(query) match {
-          case Nil         => nothing
-          case name :: Nil => withName(name)
-          case names       => withNames(names.toSet)
-        }
-
-        scheme.cata(algebraStacCollection[F]).apply(reconstructedQuery)
-      case _            => _ => EmptySummary.pure[F].widen
+    val reconstructedQuery = scheme.cata(extractName).apply(query) match {
+      case Nil         => nothing
+      case name :: Nil => withName(name)
+      case names       => withNames(names.toSet)
     }
+
+    scheme.cata(algebraStacSummary[F](searchCriteria)).apply(reconstructedQuery)
   }
 }
