@@ -46,41 +46,41 @@ class CapabilitiesView[F[_]: Functor: Apply: Monad](model: WmsModel[F], serviceU
     val getCapabilities = OperationType(
       Format = "text/xml" :: Nil,
       DCPType = DCPType(
-        HTTP(
-          Get = Get(
-            OnlineResource(
-              Map(
-                "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
-                  serviceUrl.toURI
-                ),
-                "@{http://www.w3.org/1999/xlink}type" -> DataRecord(
-                  xlink.Simple: xlink.TypeType
+          HTTP(
+            Get = Get(
+              OnlineResource(
+                Map(
+                  "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
+                    serviceUrl.toURI
+                  ),
+                  "@{http://www.w3.org/1999/xlink}type" -> DataRecord(
+                    xlink.Simple: xlink.TypeType
+                  )
                 )
               )
             )
           )
-        )
-      ) :: Nil
+        ) :: Nil
     )
 
     val getMap = OperationType(
       Format = "image/png" :: "image/jpeg" :: Nil,
       DCPType = DCPType(
-        HTTP(
-          Get = Get(
-            OnlineResource(
-              Map(
-                "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
-                  serviceUrl.toURI
-                ),
-                "@{http://www.w3.org/1999/xlink}type" -> DataRecord(
-                  xlink.Simple: xlink.TypeType
+          HTTP(
+            Get = Get(
+              OnlineResource(
+                Map(
+                  "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
+                    serviceUrl.toURI
+                  ),
+                  "@{http://www.w3.org/1999/xlink}type" -> DataRecord(
+                    xlink.Simple: xlink.TypeType
+                  )
                 )
               )
             )
           )
-        )
-      ) :: Nil
+        ) :: Nil
     )
 
     modelAsLayer(model.parentLayerMeta, model) map { layer =>
@@ -265,63 +265,64 @@ object CapabilitiesView {
       val ogcBbox = EX_GeographicBoundingBox(bbox.xmin, bbox.xmax, bbox.ymin, bbox.ymax).some
       (ogcBbox, sources.map(_.toLayer(parentLayerMeta.supportedProjections)))
     }
-    (bboxAndLayers, model.time).mapN { case ((bbox, layers), time) =>
-      Layer(
-        Name = parentLayerMeta.name,
-        Title = parentLayerMeta.title,
-        Abstract = parentLayerMeta.description,
-        KeywordList = None,
-        // All layers are avail at least at this CRS
-        // All sublayers would have metadata in this CRS + its own
-        CRS = parentLayerMeta.supportedProjections.distinct.map { crs =>
-          crs.epsgCode
-            .map { code =>
-              s"EPSG:$code"
-            }
-            .getOrElse(
-              throw new java.lang.Exception(
-                s"Unable to construct EPSG code from $crs"
+    (bboxAndLayers, model.time).mapN {
+      case ((bbox, layers), time) =>
+        Layer(
+          Name = parentLayerMeta.name,
+          Title = parentLayerMeta.title,
+          Abstract = parentLayerMeta.description,
+          KeywordList = None,
+          // All layers are avail at least at this CRS
+          // All sublayers would have metadata in this CRS + its own
+          CRS = parentLayerMeta.supportedProjections.distinct.map { crs =>
+            crs.epsgCode
+              .map { code =>
+                s"EPSG:$code"
+              }
+              .getOrElse(
+                throw new java.lang.Exception(
+                  s"Unable to construct EPSG code from $crs"
+                )
               )
-            )
-        },
-        // Extent of all layers in default CRS
-        // Should it be world extent? To simplify tests and QGIS work it's all RasterSources extent
-        EX_GeographicBoundingBox = bbox,
-        // TODO: bounding box for global layer
-        BoundingBox = Nil,
-        Dimension = time match {
-          case tp @ OgcTimePositions(nel)        =>
-            Dimension(
-              tp.toString,
-              Map(
-                "@name"    -> DataRecord("time"),
-                "@units"   -> DataRecord("ISO8601"),
-                "@default" -> DataRecord(nel.head.toInstant.toString)
-              )
-            ) :: Nil
-          case ti @ OgcTimeInterval(start, _, _) =>
-            Dimension(
-              ti.toString,
-              Map(
-                "@name"    -> DataRecord("time"),
-                "@units"   -> DataRecord("ISO8601"),
-                "@default" -> DataRecord(start.toString)
-              )
-            ) :: Nil
-          case OgcTimeEmpty                      => Nil
-        },
-        Attribution = None,
-        AuthorityURL = Nil,
-        Identifier = Nil,
-        MetadataURL = Nil,
-        DataURL = Nil,
-        FeatureListURL = Nil,
-        Style = Nil,
-        MinScaleDenominator = None,
-        MaxScaleDenominator = None,
-        Layer = layers,
-        attributes = Map.empty
-      )
+          },
+          // Extent of all layers in default CRS
+          // Should it be world extent? To simplify tests and QGIS work it's all RasterSources extent
+          EX_GeographicBoundingBox = bbox,
+          // TODO: bounding box for global layer
+          BoundingBox = Nil,
+          Dimension = time match {
+            case tp @ OgcTimePositions(nel)        =>
+              Dimension(
+                tp.toString,
+                Map(
+                  "@name"    -> DataRecord("time"),
+                  "@units"   -> DataRecord("ISO8601"),
+                  "@default" -> DataRecord(nel.head.toInstant.toString)
+                )
+              ) :: Nil
+            case ti @ OgcTimeInterval(start, _, _) =>
+              Dimension(
+                ti.toString,
+                Map(
+                  "@name"    -> DataRecord("time"),
+                  "@units"   -> DataRecord("ISO8601"),
+                  "@default" -> DataRecord(start.toString)
+                )
+              ) :: Nil
+            case OgcTimeEmpty                      => Nil
+          },
+          Attribution = None,
+          AuthorityURL = Nil,
+          Identifier = Nil,
+          MetadataURL = Nil,
+          DataURL = Nil,
+          FeatureListURL = Nil,
+          Style = Nil,
+          MinScaleDenominator = None,
+          MaxScaleDenominator = None,
+          Layer = layers,
+          attributes = Map.empty
+        )
     }
   }
 }

@@ -53,110 +53,113 @@ case class StacOgcRepository[F[_]: Sync: Logger](
     filters.fold(List.empty[OgcSource].pure[F]) { filter =>
       // query summary i.e. collection or layer summary and items
       (client.summary(stacSourceConf.searchCriteria)(queryn), client.search(filter.copy(limit = stacSourceConf.assetLimit)))
-        .mapN { case (summary, items) =>
-          val rasterSources =
-            items.flatMap { item =>
-              item.assets
-                .get(stacSourceConf.asset)
-                .map { itemAsset => StacAssetRasterSource(StacAsset(itemAsset.withGDAL(stacSourceConf.withGDAL), item)) }
+        .mapN {
+          case (summary, items) =>
+            val rasterSources =
+              items.flatMap { item =>
+                item.assets
+                  .get(stacSourceConf.asset)
+                  .map { itemAsset => StacAssetRasterSource(StacAsset(itemAsset.withGDAL(stacSourceConf.withGDAL), item)) }
+              }
+
+            summary match {
+              case csummary: CollectionSummary =>
+                val source: Option[StacCollectionSource] = rasterSources match {
+                  case head :: Nil => StacCollectionSource(csummary.asset, head).some
+                  case head :: _   =>
+                    /** By default STAC API returns all temporal items even though the time is not specified.
+                      * If defaultTime configuration is set to true and the query is not temporal and not universal
+                      * (meaning that it is bounded by temporal or spatial extent),
+                      * we can select the first time position of the temporal layer in this case.
+                      *
+                      * If the layer is not temporal, no extra filtering would be applied.
+                      * All non temporal items would be included into the result.
+                      * Otherwise, only items that match the first time position would be returned.
+                      */
+                    val sources            = if (stacSourceConf.defaultTime && query.nonTemporal && query.nonUniversal) {
+                      val datetimeField = stacSourceConf.datetimeField.some
+                      rasterSources.map(_.time(datetimeField)).reduce(_ |+| _) match {
+                        case OgcTimePositions(list)       =>
+                          val start = list.head
+                          rasterSources.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), start))
+                        case OgcTimeInterval(start, _, _) =>
+                          rasterSources.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), start))
+                        case OgcTimeEmpty                 => rasterSources
+                      }
+                    } else rasterSources
+                    val commonCrs          = if (sources.flatMap(_.asset.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
+                    val reprojectedSources = sources.map(_.reproject(commonCrs))
+
+                    val attributes = reprojectedSources
+                      .map { rs =>
+                        rs.attributes.map {
+                          case (k, v) =>
+                            rs.name match {
+                              case StringName(sn) => (s"$sn-$k", v)
+                              case sn             => (s"$sn-$k", v)
+                            }
+                        }
+                      }
+                      .reduce(_ |+| _)
+
+                    StacCollectionSource(
+                      csummary.asset,
+                      MosaicRasterSource.instance(
+                        NonEmptyList.fromListUnsafe(reprojectedSources),
+                        commonCrs,
+                        StringName(csummary.asset.id),
+                        attributes
+                      )
+                    ).some
+                  case _           => None
+                }
+
+                source.map(stacSourceConf.toLayer).toList
+              case _                           =>
+                val source: Option[RasterSource] = rasterSources match {
+                  case head :: Nil => head.some
+                  case head :: _   =>
+                    /** By default STAC API returns all temporal items even though the time is not specified.
+                      * If defaultTime configuration is set to true and the query is not temporal and not universal
+                      * (meaning that it is bounded by temporal or spatial extent),
+                      * we can select the first time position of the temporal layer in this case.
+                      *
+                      * If the layer is not temporal, no extra filtering would be applied.
+                      * All non temporal items would be included into the result.
+                      * Otherwise, only items that match the first time position would be returned.
+                      */
+                    val sources            = if (stacSourceConf.defaultTime && query.nonTemporal && query.nonUniversal) {
+                      val datetimeField = stacSourceConf.datetimeField.some
+                      rasterSources.map(_.time(datetimeField)).reduce(_ |+| _) match {
+                        case OgcTimePositions(list)       =>
+                          val start = list.head
+                          rasterSources.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), start))
+                        case OgcTimeInterval(start, _, _) =>
+                          rasterSources.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), start))
+                        case OgcTimeEmpty                 => rasterSources
+                      }
+                    } else rasterSources
+                    val commonCrs          = if (sources.map(_.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
+                    val reprojectedSources = sources.map(_.reproject(commonCrs))
+
+                    val attributes = reprojectedSources
+                      .map(rs =>
+                        rs.attributes.map {
+                          case (k, v) =>
+                            rs.name match {
+                              case StringName(sn) => (s"$sn-$k", v)
+                              case sn             => (s"$sn-$k", v)
+                            }
+                        }
+                      )
+                      .reduce(_ |+| _)
+
+                    MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, attributes).some
+                  case _           => None
+                }
+
+                source.map(stacSourceConf.toLayer).toList
             }
-
-          summary match {
-            case csummary: CollectionSummary =>
-              val source: Option[StacCollectionSource] = rasterSources match {
-                case head :: Nil => StacCollectionSource(csummary.asset, head).some
-                case head :: _   =>
-                  /** By default STAC API returns all temporal items even though the time is not specified.
-                    * If defaultTime configuration is set to true and the query is not temporal and not universal
-                    * (meaning that it is bounded by temporal or spatial extent),
-                    * we can select the first time position of the temporal layer in this case.
-                    *
-                    * If the layer is not temporal, no extra filtering would be applied.
-                    * All non temporal items would be included into the result.
-                    * Otherwise, only items that match the first time position would be returned.
-                    */
-                  val sources            = if (stacSourceConf.defaultTime && query.nonTemporal && query.nonUniversal) {
-                    val datetimeField = stacSourceConf.datetimeField.some
-                    rasterSources.map(_.time(datetimeField)).reduce(_ |+| _) match {
-                      case OgcTimePositions(list)       =>
-                        val start = list.head
-                        rasterSources.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), start))
-                      case OgcTimeInterval(start, _, _) =>
-                        rasterSources.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), start))
-                      case OgcTimeEmpty                 => rasterSources
-                    }
-                  } else rasterSources
-                  val commonCrs          = if (sources.flatMap(_.asset.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
-                  val reprojectedSources = sources.map(_.reproject(commonCrs))
-
-                  val attributes = reprojectedSources
-                    .map { rs =>
-                      rs.attributes.map { case (k, v) =>
-                        rs.name match {
-                          case StringName(sn) => (s"$sn-$k", v)
-                          case sn             => (s"$sn-$k", v)
-                        }
-                      }
-                    }
-                    .reduce(_ |+| _)
-
-                  StacCollectionSource(
-                    csummary.asset,
-                    MosaicRasterSource.instance(
-                      NonEmptyList.fromListUnsafe(reprojectedSources),
-                      commonCrs,
-                      StringName(csummary.asset.id),
-                      attributes
-                    )
-                  ).some
-                case _           => None
-              }
-
-              source.map(stacSourceConf.toLayer).toList
-            case _                           =>
-              val source: Option[RasterSource] = rasterSources match {
-                case head :: Nil => head.some
-                case head :: _   =>
-                  /** By default STAC API returns all temporal items even though the time is not specified.
-                    * If defaultTime configuration is set to true and the query is not temporal and not universal
-                    * (meaning that it is bounded by temporal or spatial extent),
-                    * we can select the first time position of the temporal layer in this case.
-                    *
-                    * If the layer is not temporal, no extra filtering would be applied.
-                    * All non temporal items would be included into the result.
-                    * Otherwise, only items that match the first time position would be returned.
-                    */
-                  val sources            = if (stacSourceConf.defaultTime && query.nonTemporal && query.nonUniversal) {
-                    val datetimeField = stacSourceConf.datetimeField.some
-                    rasterSources.map(_.time(datetimeField)).reduce(_ |+| _) match {
-                      case OgcTimePositions(list)       =>
-                        val start = list.head
-                        rasterSources.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), start))
-                      case OgcTimeInterval(start, _, _) =>
-                        rasterSources.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), start))
-                      case OgcTimeEmpty                 => rasterSources
-                    }
-                  } else rasterSources
-                  val commonCrs          = if (sources.map(_.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
-                  val reprojectedSources = sources.map(_.reproject(commonCrs))
-
-                  val attributes = reprojectedSources
-                    .map(rs =>
-                      rs.attributes.map { case (k, v) =>
-                        rs.name match {
-                          case StringName(sn) => (s"$sn-$k", v)
-                          case sn             => (s"$sn-$k", v)
-                        }
-                      }
-                    )
-                    .reduce(_ |+| _)
-
-                  MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, attributes).some
-                case _           => None
-              }
-
-              source.map(stacSourceConf.toLayer).toList
-          }
         }
     }
   }

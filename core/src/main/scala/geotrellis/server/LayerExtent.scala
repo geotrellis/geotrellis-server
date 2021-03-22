@@ -48,9 +48,10 @@ object LayerExtent {
                       s"[LayerExtent] Retrieved Teters for extent ($extent) and cellsize ($cellSize): ${paramMap.toString}"
                     )
         vars      = Vars.varsWithBuffer(expr)
-        params   <- vars.toList.parTraverse { case (varName, (_, buffer)) =>
-                      val thingify = implicitly[ExtentReification[F, T]].extentReification(paramMap(varName))
-                      thingify(extent, cellSize).map(varName -> _)
+        params   <- vars.toList.parTraverse {
+                      case (varName, (_, buffer)) =>
+                        val thingify = implicitly[ExtentReification[F, T]].extentReification(paramMap(varName))
+                        thingify(extent, cellSize).map(varName -> _)
                     } map { _.toMap }
         reified  <- Expression.bindParams(expr, params.mapValues(RasterLit(_))) match {
                       case Valid(expression) => interpreter(expression)

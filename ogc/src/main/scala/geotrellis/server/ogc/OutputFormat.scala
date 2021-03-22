@@ -60,7 +60,7 @@ object OutputFormat {
 
     def render(tile: Tile): Array[Byte] = {
       encoding match {
-        case None =>
+        case None                        =>
           val nd = noDataValue(tile.cellType)
           tile.renderPng(GreyPngEncoding(nd)).bytes
 
@@ -68,29 +68,29 @@ object OutputFormat {
           val nd = noDataValue(tile.cellType)
           tile.renderPng(GreyPngEncoding(nd)).bytes
 
-        case Some(RgbPngEncoding(None)) =>
+        case Some(RgbPngEncoding(None))  =>
           val nd = noDataValue(tile.cellType)
           tile.renderPng(RgbPngEncoding(nd)).bytes
 
-        case Some(encoding) =>
+        case Some(encoding)              =>
           tile.renderPng(encoding).bytes
       }
     }
 
     def render(tile: Tile, cm: ColorMap) = {
       val encoder = encoding match {
-        case None =>
+        case None                        =>
           PngEncoder(Settings(RgbaPngEncoding, PaethFilter))
 
         case Some(GreyPngEncoding(None)) =>
           val nd = noDataValue(tile.cellType)
           PngEncoder(Settings(GreyPngEncoding(nd), PaethFilter))
 
-        case Some(RgbPngEncoding(None)) =>
+        case Some(RgbPngEncoding(None))  =>
           val nd = noDataValue(tile.cellType)
           PngEncoder(Settings(RgbPngEncoding(nd), PaethFilter))
 
-        case Some(encoding) =>
+        case Some(encoding)              =>
           PngEncoder(Settings(encoding, PaethFilter))
       }
 
@@ -99,18 +99,18 @@ object OutputFormat {
 
     def render(tile: Tile, cm: InterpolatedColorMap): Array[Byte] = {
       val encoder = encoding match {
-        case None =>
+        case None                        =>
           PngEncoder(Settings(RgbaPngEncoding, PaethFilter))
 
         case Some(GreyPngEncoding(None)) =>
           val nd = noDataValue(tile.cellType)
           PngEncoder(Settings(GreyPngEncoding(nd), PaethFilter))
 
-        case Some(RgbPngEncoding(None)) =>
+        case Some(RgbPngEncoding(None))  =>
           val nd = noDataValue(tile.cellType)
           PngEncoder(Settings(RgbPngEncoding(nd), PaethFilter))
 
-        case Some(encoding) =>
+        case Some(encoding)              =>
           PngEncoder(Settings(encoding, PaethFilter))
       }
 
@@ -132,7 +132,7 @@ object OutputFormat {
         val encoding = Png.stringToEncodding(enc)
         OutputFormat.Png(encoding)
 
-      case "image/jpeg" => OutputFormat.Jpg
+      case "image/jpeg"                                                                      => OutputFormat.Jpg
     }
 
   def fromString(str: String) = Try(fromStringUnsafe(str)).toOption

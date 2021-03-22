@@ -111,8 +111,9 @@ object WmsParams {
                 }
               }
 
-          (layers, styles, bbox, format, width, height, crs, time).mapN { case (layers, styles, bbox, format, width, height, crs, time) =>
-            GetMap(version, layers, styles, bbox, format = format, width = width, height = height, crs = crs, time = time, params)
+          (layers, styles, bbox, format, width, height, crs, time).mapN {
+            case (layers, styles, bbox, format, width, height, crs, time) =>
+              GetMap(version, layers, styles, bbox, format = format, width = width, height = height, crs = crs, time = time, params)
           }
         }
     }

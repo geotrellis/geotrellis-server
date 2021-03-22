@@ -84,7 +84,7 @@ class GetCoverage[F[_]: Logger: Sync: Concurrent: Parallel](wcsModel: WcsModel[F
       case Some(bytes) =>
         Logger[F].trace(s"GetCoverage cache HIT: $params") *> bytes.pure[F]
 
-      case _ =>
+      case _           =>
         Logger[F].trace(s"GetCoverage cache MISS: $params") >>= { _ =>
           renderLayers(params).flatMap {
             case Some(bytes) => bytes.pure[F]

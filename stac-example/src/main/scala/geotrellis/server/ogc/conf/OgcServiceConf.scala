@@ -38,8 +38,9 @@ sealed trait OgcServiceConf {
   def layerDefinitions: List[OgcSourceConf]
   def layerSources(rasterOgcSources: List[RasterOgcSource]): Repository[OgcSource] = {
     val rasterLayers: List[RasterOgcSource]      = layerDefinitions.collect { case rsc: RasterSourceConf => rsc.toLayer }
-    val mapAlgebraLayers: List[MapAlgebraSource] = layerDefinitions.collect { case masc: MapAlgebraSourceConf =>
-      masc.modelOpt(rasterOgcSources)
+    val mapAlgebraLayers: List[MapAlgebraSource] = layerDefinitions.collect {
+      case masc: MapAlgebraSourceConf =>
+        masc.modelOpt(rasterOgcSources)
     }.flatten
 
     ogc.OgcSourceRepository(rasterLayers ++ mapAlgebraLayers)

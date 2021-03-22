@@ -43,15 +43,15 @@ class CapabilitiesView[F[_]: Monad](wmtsModel: WmtsModel[F], serviceUrl: URL) {
     val serviceIdentification =
       ServiceIdentification(
         Title = LanguageStringType(
-          wmtsModel.serviceMetadata.identification.title
-        ) :: Nil,
+            wmtsModel.serviceMetadata.identification.title
+          ) :: Nil,
         Abstract = LanguageStringType(
-          wmtsModel.serviceMetadata.identification.description
-        ) :: Nil,
+            wmtsModel.serviceMetadata.identification.description
+          ) :: Nil,
         Keywords = KeywordsType(
-          wmtsModel.serviceMetadata.identification.keywords.map(LanguageStringType(_)),
-          None
-        ) :: Nil,
+            wmtsModel.serviceMetadata.identification.keywords.map(LanguageStringType(_)),
+            None
+          ) :: Nil,
         ServiceType = CodeType("OGC WMTS"),
         ServiceTypeVersion = "1.0.0" :: Nil
       )
@@ -72,71 +72,71 @@ class CapabilitiesView[F[_]: Monad](wmtsModel: WmtsModel[F], serviceUrl: URL) {
     val operationsMetadata = {
       val getCapabilities = Operation(
         DCP = DCP(
-          OwsDataRecord(
-            HTTP(
-              OwsDataRecord(
-                "Get",
-                RequestMethodType(
-                  Constraint = DomainType(
-                    possibleValuesOption1 = OwsDataRecord(
-                      AllowedValues(
-                        OwsDataRecord(
-                          ValueType("KVP")
-                        ) :: Nil
+            OwsDataRecord(
+              HTTP(
+                OwsDataRecord(
+                  "Get",
+                  RequestMethodType(
+                    Constraint = DomainType(
+                        possibleValuesOption1 = OwsDataRecord(
+                          AllowedValues(
+                            OwsDataRecord(
+                              ValueType("KVP")
+                            ) :: Nil
+                          )
+                        ),
+                        attributes = Map("@name" -> DataRecord("GetEncoding"))
+                      ) :: Nil,
+                    attributes = Map(
+                      "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
+                        serviceUrl.toURI
                       )
-                    ),
-                    attributes = Map("@name" -> DataRecord("GetEncoding"))
-                  ) :: Nil,
-                  attributes = Map(
-                    "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
-                      serviceUrl.toURI
                     )
                   )
-                )
-              ) :: Nil
+                ) :: Nil
+              )
             )
-          )
-        ) :: Nil,
+          ) :: Nil,
         attributes = Map("@name" -> DataRecord("GetCapabilities"))
       )
 
       val getTile = Operation(
         DCP = DCP(
-          OwsDataRecord(
-            HTTP(
-              OwsDataRecord(
-                "Get",
-                RequestMethodType(
-                  attributes = Map(
-                    "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
-                      serviceUrl.toURI
+            OwsDataRecord(
+              HTTP(
+                OwsDataRecord(
+                  "Get",
+                  RequestMethodType(
+                    attributes = Map(
+                      "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
+                        serviceUrl.toURI
+                      )
                     )
                   )
-                )
-              ) :: Nil
+                ) :: Nil
+              )
             )
-          )
-        ) :: Nil,
+          ) :: Nil,
         attributes = Map("@name" -> DataRecord("GetTile"))
       )
 
       val getFeatureInfo = Operation(
         DCP = DCP(
-          OwsDataRecord(
-            HTTP(
-              OwsDataRecord(
-                "Get",
-                RequestMethodType(
-                  attributes = Map(
-                    "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
-                      serviceUrl.toURI
+            OwsDataRecord(
+              HTTP(
+                OwsDataRecord(
+                  "Get",
+                  RequestMethodType(
+                    attributes = Map(
+                      "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
+                        serviceUrl.toURI
+                      )
                     )
                   )
-                )
-              ) :: Nil
+                ) :: Nil
+              )
             )
-          )
-        ) :: Nil,
+          ) :: Nil,
         attributes = Map("@name" -> DataRecord("GetFeatureInfo"))
       )
 
@@ -221,9 +221,9 @@ object CapabilitiesView {
         Dimension = Nil,
         // NOTE: This "ID" MUST correspond to the TileMatrixSet ID for the layers to show up in QGIS
         TileMatrixSetLink = TileMatrixSetLink(
-          TileMatrixSet = "GoogleMapsCompatible",
-          TileMatrixSetLimits = TileMatrixSetLimits(tileMatrixLimits).some
-        )
+            TileMatrixSet = "GoogleMapsCompatible",
+            TileMatrixSetLimits = TileMatrixSetLimits(tileMatrixLimits).some
+          )
           :: Nil,
         ResourceURL = Nil
       )

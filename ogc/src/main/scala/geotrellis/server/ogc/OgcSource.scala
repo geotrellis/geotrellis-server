@@ -172,7 +172,7 @@ case class GeoTrellisOgcSource(
             }
             .fold(sourceForTime(sourceInterval))(sourceForTime)
 
-        case OgcTimePositions(NEL(head, _)) =>
+        case OgcTimePositions(NEL(head, _))  =>
           source.times
             .find { t =>
               interval match {
@@ -182,7 +182,7 @@ case class GeoTrellisOgcSource(
               }
             }
             .fold(sourceForTime(head))(sourceForTime)
-        case _                              => source
+        case _                               => source
       }
     } else source
 

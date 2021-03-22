@@ -138,7 +138,7 @@ object WcsParams {
     val firstStageValidation = (serviceParam, requestParam).mapN { case (_, b) => b }
 
     firstStageValidation
-      // Further validation and building based on request type.
+    // Further validation and building based on request type.
       .andThen { request => requestMap(request)(params) }
   }
 }
@@ -202,16 +202,17 @@ object GetCoverageWcsParams {
         /** If the CRS is not provided, than it is in the CRS of the dataset. */
         val idAndBboxAndCrs: Validated[NEL[ParamError], (String, Vector[Double], CRS)] =
           idAndBboxAndCrsOption
-            .andThen { case (id, bbox, crsOption) =>
-              /** If the CRS wasn't in the boundingbox parameter, pull it out of the CRS field. */
-              crsOption match {
-                case Some(crsDesc) => CRSUtils.ogcToCRS(crsDesc).map { crs => (id, bbox, crs) }
-                case None          =>
-                  gridBaseCRS match {
-                    case Valid(Some(crs)) => gridBaseCRS.map(_ => (id, bbox, crs))
-                    case _                => Invalid(ParamError.MissingParam("BoundingBox CRS")).toValidatedNel
-                  }
-              }
+            .andThen {
+              case (id, bbox, crsOption) =>
+                /** If the CRS wasn't in the boundingbox parameter, pull it out of the CRS field. */
+                crsOption match {
+                  case Some(crsDesc) => CRSUtils.ogcToCRS(crsDesc).map { crs => (id, bbox, crs) }
+                  case None          =>
+                    gridBaseCRS match {
+                      case Valid(Some(crs)) => gridBaseCRS.map(_ => (id, bbox, crs))
+                      case _                => Invalid(ParamError.MissingParam("BoundingBox CRS")).toValidatedNel
+                    }
+                }
             }
 
         val temporalSequenceOption = params.validatedOgcTimeSequence("timesequence")

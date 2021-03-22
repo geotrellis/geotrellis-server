@@ -54,7 +54,7 @@ trait Implicits {
                 }
               }
 
-            case _ => source.attributes.get(key).map(ZonedDateTime.parse).map(OgcTimePositions(_))
+            case _                       => source.attributes.get(key).map(ZonedDateTime.parse).map(OgcTimePositions(_))
           }
         }
         .getOrElse(OgcTimeEmpty)
