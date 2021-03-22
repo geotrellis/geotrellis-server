@@ -41,8 +41,7 @@ case class GetCapabilitiesWcsParams(version: String) extends WcsParams
 
 case class DescribeCoverageWcsParams(version: String, identifiers: Seq[String]) extends WcsParams
 
-/**
-  * "EPSG:4326" or "WGS84" use the latitude first, longitude second axis order.
+/** "EPSG:4326" or "WGS84" use the latitude first, longitude second axis order.
   * According to the WCS spec for 1.1, some CRS have inverted axis
   * box:
   *  1.0.0: minx,miny,maxx,maxy
@@ -91,8 +90,7 @@ case class GetCoverageWcsParams(
     if (changeXY) gridOffsets.map { case (f, s) => CellSize(-f, s) }
     else gridOffsets.map { case (f, s) => CellSize(f, -s) }
 
-  /**
-    * Shrink the extent to border cells centers by half cell size.
+  /** Shrink the extent to border cells centers by half cell size.
     * GridOrigin: default is "0,0" (KVP) or "0 0" (XML); it is the boundingBox corner.
     */
   def extent: Extent             =
@@ -140,7 +138,7 @@ object WcsParams {
     val firstStageValidation = (serviceParam, requestParam).mapN { case (_, b) => b }
 
     firstStageValidation
-    // Further validation and building based on request type.
+      // Further validation and building based on request type.
       .andThen { request => requestMap(request)(params) }
   }
 }
@@ -204,17 +202,16 @@ object GetCoverageWcsParams {
         /** If the CRS is not provided, than it is in the CRS of the dataset. */
         val idAndBboxAndCrs: Validated[NEL[ParamError], (String, Vector[Double], CRS)] =
           idAndBboxAndCrsOption
-            .andThen {
-              case (id, bbox, crsOption) =>
-                /** If the CRS wasn't in the boundingbox parameter, pull it out of the CRS field. */
-                crsOption match {
-                  case Some(crsDesc) => CRSUtils.ogcToCRS(crsDesc).map { crs => (id, bbox, crs) }
-                  case None          =>
-                    gridBaseCRS match {
-                      case Valid(Some(crs)) => gridBaseCRS.map(_ => (id, bbox, crs))
-                      case _                => Invalid(ParamError.MissingParam("BoundingBox CRS")).toValidatedNel
-                    }
-                }
+            .andThen { case (id, bbox, crsOption) =>
+              /** If the CRS wasn't in the boundingbox parameter, pull it out of the CRS field. */
+              crsOption match {
+                case Some(crsDesc) => CRSUtils.ogcToCRS(crsDesc).map { crs => (id, bbox, crs) }
+                case None          =>
+                  gridBaseCRS match {
+                    case Valid(Some(crs)) => gridBaseCRS.map(_ => (id, bbox, crs))
+                    case _                => Invalid(ParamError.MissingParam("BoundingBox CRS")).toValidatedNel
+                  }
+              }
             }
 
         val temporalSequenceOption = params.validatedOgcTimeSequence("timesequence")
@@ -234,8 +231,7 @@ object GetCoverageWcsParams {
           .validatedOptionalParam[URI]("gridcs", { s => Try(new URI(s)).toOption })
           .map(_.getOrElse(new URI("urn:ogc:def:cs:OGC:0.0:Grid2dSquareCS")))
 
-        /**
-          * GridType: default is "urn:ogc:def:method:WCS:1.1:2dSimpleGrid"
+        /** GridType: default is "urn:ogc:def:method:WCS:1.1:2dSimpleGrid"
           * (This GridType disallows rotation or skew relative to the GridBaseCRS – therefore
           * GridOffsets has only two numbers.)
           */

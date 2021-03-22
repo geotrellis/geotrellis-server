@@ -95,8 +95,7 @@ object CoverageView {
     val llex             = llre.extent
     val Dimensions(w, h) = re.dimensions
 
-    /**
-      * WCS expects this very specific format for its time strings, which is not quite (TM)
+    /** WCS expects this very specific format for its time strings, which is not quite (TM)
       * what Java's toString method returns. Instead we convert to Instant.toString, which
       * does conform.
       *
@@ -122,7 +121,7 @@ object CoverageView {
           GmlDataRecord(TimePositionType(start.toInstant.toString)) :: Nil
         case OgcTimeInterval(start, end, _)                 =>
           GmlDataRecord(TimePositionType(start.toInstant.toString)) ::
-          GmlDataRecord(TimePositionType(end.toInstant.toString)) :: Nil
+            GmlDataRecord(TimePositionType(end.toInstant.toString)) :: Nil
         case OgcTimeEmpty                                   => Nil
       }
       if (records.nonEmpty) TimeSequenceType(records).some
@@ -142,41 +141,41 @@ object CoverageView {
       Domain = CoverageDomainType(
         SpatialDomain = SpatialDomainType(
           BoundingBox = OwsDataRecord(
-              BoundingBoxType(
-                LowerCorner = 0d :: 0d :: Nil,
-                UpperCorner = w.toDouble :: h.toDouble :: Nil,
-                attributes = Map(
-                  "@crs"        -> DataRecord(new URI("urn:ogc:def:crs:OGC::imageCRS")),
-                  "@dimensions" -> DataRecord(BigInt(2))
-                )
+            BoundingBoxType(
+              LowerCorner = 0d :: 0d :: Nil,
+              UpperCorner = w.toDouble :: h.toDouble :: Nil,
+              attributes = Map(
+                "@crs"        -> DataRecord(new URI("urn:ogc:def:crs:OGC::imageCRS")),
+                "@dimensions" -> DataRecord(BigInt(2))
               )
-            ) :: OwsDataRecord(
-              BoundingBoxType(
-                LowerCorner = ex.xmin :: ex.ymin :: Nil,
-                UpperCorner = ex.xmax :: ex.ymax :: Nil,
-                attributes = Map(
-                  "@crs"        -> DataRecord(new URI(URN.unsafeFromCrs(nativeCrs))),
-                  "@dimensions" -> DataRecord(BigInt(2))
-                )
+            )
+          ) :: OwsDataRecord(
+            BoundingBoxType(
+              LowerCorner = ex.xmin :: ex.ymin :: Nil,
+              UpperCorner = ex.xmax :: ex.ymax :: Nil,
+              attributes = Map(
+                "@crs"        -> DataRecord(new URI(URN.unsafeFromCrs(nativeCrs))),
+                "@dimensions" -> DataRecord(BigInt(2))
               )
-            ) :: OwsDataRecord(
-              BoundingBoxType(
-                LowerCorner = llex.ymin :: llex.xmin :: Nil,
-                UpperCorner = llex.ymax :: llex.xmax :: Nil,
-                attributes = Map(
-                  "@crs"        -> DataRecord(new URI(URN.unsafeFromCrs(LatLng))),
-                  "@dimensions" -> DataRecord(BigInt(2))
-                )
+            )
+          ) :: OwsDataRecord(
+            BoundingBoxType(
+              LowerCorner = llex.ymin :: llex.xmin :: Nil,
+              UpperCorner = llex.ymax :: llex.xmax :: Nil,
+              attributes = Map(
+                "@crs"        -> DataRecord(new URI(URN.unsafeFromCrs(LatLng))),
+                "@dimensions" -> DataRecord(BigInt(2))
               )
-            ) :: OwsDataRecord(
-              WGS84BoundingBoxType(
-                LowerCorner = llex.ymin :: llex.xmin :: Nil,
-                UpperCorner = llex.ymax :: llex.xmax :: Nil,
-                attributes = Map(
-                  "@dimensions" -> DataRecord(BigInt(2))
-                )
+            )
+          ) :: OwsDataRecord(
+            WGS84BoundingBoxType(
+              LowerCorner = llex.ymin :: llex.xmin :: Nil,
+              UpperCorner = llex.ymax :: llex.xmax :: Nil,
+              attributes = Map(
+                "@dimensions" -> DataRecord(BigInt(2))
               )
-            ) :: Nil,
+            )
+          ) :: Nil,
           GridCRS = Some(
             GridCrsType(
               GridBaseCRS = new URI(URN.unsafeFromCrs(nativeCrs)),
@@ -191,21 +190,19 @@ object CoverageView {
       ),
       RangeValue = wcs.RangeType(
         Field = FieldType(
-            Identifier = "contents",
-            Definition = UnNamedDomainType(
-              possibleValuesOption1 = OwsDataRecord(AnyValue())
-            ),
-            InterpolationMethods = InterpolationMethods(
-              InterpolationMethod =
-                InterpolationMethodType("nearest neighbor") ::
-                InterpolationMethodType("bilinear") ::
-                InterpolationMethodType("bicubic") :: Nil,
-              Default = "nearest neighbor".some
-            )
-          ) :: Nil
+          Identifier = "contents",
+          Definition = UnNamedDomainType(
+            possibleValuesOption1 = OwsDataRecord(AnyValue())
+          ),
+          InterpolationMethods = InterpolationMethods(
+            InterpolationMethod = InterpolationMethodType("nearest neighbor") ::
+              InterpolationMethodType("bilinear") ::
+              InterpolationMethodType("bicubic") :: Nil,
+            Default = "nearest neighbor".some
+          )
+        ) :: Nil
       ),
-      SupportedCRS =
-        new URI("urn:ogc:def:crs:OGC::imageCRS") ::
+      SupportedCRS = new URI("urn:ogc:def:crs:OGC::imageCRS") ::
         (uniqueCrs flatMap { proj => URN.fromCrs(proj) map { new URI(_) } }),
       SupportedFormat = "image/geotiff" :: "image/jpeg" :: "image/png" :: Nil
     )

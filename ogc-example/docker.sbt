@@ -1,6 +1,6 @@
 dockerfile in docker := {
   // The assembly task generates a fat JAR file
-  val artifact: File = assembly.value
+  val artifact: File     = assembly.value
   val artifactTargetPath = s"/app/${artifact.name}"
 
   new Dockerfile {
@@ -13,7 +13,6 @@ dockerfile in docker := {
 imageNames in docker := Seq(
   // Sets the latest tag
   ImageName(s"geotrellis/geotrellis-server-ogc-services:latest"),
-
   // Sets a name with a tag that contains the project version
   ImageName(
     namespace = Some("geotrellis"),

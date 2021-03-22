@@ -35,8 +35,7 @@ import opengis.wms.BoundingBox
 
 import java.time.ZonedDateTime
 
-/**
-  * This trait and its implementing types should be jointly sufficient, along with a WMS 'GetMap'
+/** This trait and its implementing types should be jointly sufficient, along with a WMS 'GetMap'
   *  (or a WMTS 'GetTile' or a WCS 'GetCoverage' etc etc) request to produce a visual layer
   *  (represented more fully by [[OgcLayer]].
   *  This type represents *merely* that there is some backing by which valid OGC layers
@@ -81,8 +80,7 @@ trait RasterOgcSource extends OgcSource {
   def toLayer(crs: CRS, style: Option[OgcStyle], temporalSequence: List[OgcTime]): SimpleOgcLayer
 }
 
-/**
-  * An imagery source with a [[RasterSource]] that defines its capacities
+/** An imagery source with a [[RasterSource]] that defines its capacities
   */
 case class SimpleSource(
   name: String,
@@ -144,8 +142,7 @@ case class GeoTrellisOgcSource(
     if (!source.isTemporal) OgcTimeEmpty
     else OgcTimePositions(source.times)
 
-  /**
-    * If temporal, try to match in the following order:
+  /** If temporal, try to match in the following order:
     *
     * OgcTimeInterval behavior
     *  1. To the closest time in known valid source times
@@ -175,7 +172,7 @@ case class GeoTrellisOgcSource(
             }
             .fold(sourceForTime(sourceInterval))(sourceForTime)
 
-        case OgcTimePositions(NEL(head, _))  =>
+        case OgcTimePositions(NEL(head, _)) =>
           source.times
             .find { t =>
               interval match {
@@ -185,7 +182,7 @@ case class GeoTrellisOgcSource(
               }
             }
             .fold(sourceForTime(head))(sourceForTime)
-        case _                               => source
+        case _                              => source
       }
     } else source
 
@@ -209,8 +206,7 @@ case class MapAlgebraSourceMetadata(
   def attributesForBand(band: Int): Map[String, String] = Map.empty
 }
 
-/**
-  * A complex layer, constructed from an [[Expression]] and one or more [[RasterSource]]
+/** A complex layer, constructed from an [[Expression]] and one or more [[RasterSource]]
   *  mappings which allow evaluation of said [[Expression]]
   */
 case class MapAlgebraSource(

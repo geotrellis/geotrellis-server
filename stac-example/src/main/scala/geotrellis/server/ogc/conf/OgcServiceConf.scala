@@ -30,8 +30,7 @@ import geotrellis.store.query.{Repository, RepositoryM}
 import io.chrisdavenport.log4cats.Logger
 import sttp.client3.SttpBackend
 
-/**
-  * Each service has its own unique configuration requirements (see the below instances)
+/** Each service has its own unique configuration requirements (see the below instances)
   *  but share certain basic behaviors related to layer management. This trait encodes
   *  those expectations
   */
@@ -39,8 +38,8 @@ sealed trait OgcServiceConf {
   def layerDefinitions: List[OgcSourceConf]
   def layerSources(rasterOgcSources: List[RasterOgcSource]): Repository[OgcSource] = {
     val rasterLayers: List[RasterOgcSource]      = layerDefinitions.collect { case rsc: RasterSourceConf => rsc.toLayer }
-    val mapAlgebraLayers: List[MapAlgebraSource] = layerDefinitions.collect {
-      case masc: MapAlgebraSourceConf => masc.modelOpt(rasterOgcSources)
+    val mapAlgebraLayers: List[MapAlgebraSource] = layerDefinitions.collect { case masc: MapAlgebraSourceConf =>
+      masc.modelOpt(rasterOgcSources)
     }.flatten
 
     ogc.OgcSourceRepository(rasterLayers ++ mapAlgebraLayers)

@@ -25,8 +25,7 @@ import geotrellis.server.ogc.utils._
 import geotrellis.stac.raster.StacSource
 import geotrellis.vector.{Extent, ProjectedExtent}
 
-/**
-  * An imagery source with a [[RasterSource]] that defines its capacities
+/** An imagery source with a [[RasterSource]] that defines its capacities
   */
 case class StacOgcSource(
   name: String,

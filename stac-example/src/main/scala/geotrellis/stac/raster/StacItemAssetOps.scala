@@ -49,8 +49,8 @@ case class StacItemAssetOps(self: StacItemAsset) {
   def cellSize: Option[CellSize] =
     transform
       .map(_.cellSize)
-      .orElse((getExtent, dimensions).mapN {
-        case (e, Dimensions(c, r)) => GridExtent(e, c, r).cellSize
+      .orElse((getExtent, dimensions).mapN { case (e, Dimensions(c, r)) =>
+        GridExtent(e, c, r).cellSize
       })
       .orElse(gsd.map(d => CellSize(d, d)))
 

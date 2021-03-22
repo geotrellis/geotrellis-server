@@ -20,31 +20,35 @@ import geotrellis.stac.extensions.proj.{ProjItemExtension, ProjTransform}
 import com.azavea.stac4s.StacItem
 import com.azavea.stac4s.extensions.eo.EOItemExtension
 import com.azavea.stac4s.syntax._
+import com.azavea.stac4s.extensions.ExtensionResult
 import geotrellis.raster.{CellSize, Dimensions, GridExtent, RasterExtent}
 import geotrellis.proj4.{CRS, LatLng}
 import geotrellis.vector._
 import cats.syntax.apply._
 
 case class StacItemOps(self: StacItem) {
-  def eoExtension: Option[EOItemExtension]     = self.getExtensionFields[EOItemExtension].toOption
-  def projExtension: Option[ProjItemExtension] = self.getExtensionFields[ProjItemExtension].toOption
+  def eoExtension: ExtensionResult[EOItemExtension]     = self.getExtensionFields[EOItemExtension]
+  def projExtension: ExtensionResult[ProjItemExtension] = self.getExtensionFields[ProjItemExtension]
 
-  def bandCount: Option[Int] = eoExtension.map(_.bands.length)
+  private def eoExtensionOption: Option[EOItemExtension]     = eoExtension.toOption
+  private def projExtensionOption: Option[ProjItemExtension] = projExtension.toOption
+
+  def bandCount: Option[Int] = eoExtensionOption.map(_.bands.length)
   def crs: Option[CRS]       =
-    projExtension
+    projExtensionOption
       .flatMap(_.epsgCode)
       .map(CRS.fromEpsgCode)
       .orElse {
-        projExtension
+        projExtensionOption
           .flatMap(_.wktString)
           .flatMap(CRS.fromWKT)
       }
 
   // geometry can be taken from the proj extension or projected from the LatLng geometry
-  def getGeometry: Option[Geometry] = projExtension.flatMap(_.geometry).orElse(crs.map(self.geometry.reproject(LatLng, _)))
+  def getGeometry: Option[Geometry] = projExtensionOption.flatMap(_.geometry).orElse(crs.map(self.geometry.reproject(LatLng, _)))
   def getExtent: Option[Extent]     = getGeometry.map(geom => Extent(geom.getEnvelopeInternal))
 
-  def transform: Option[ProjTransform] = projExtension.flatMap(_.transform)
+  def transform: Option[ProjTransform] = projExtensionOption.flatMap(_.transform)
 
   // https://github.com/radiantearth/stac-spec/blob/v1.0.0-rc.1/item-spec/common-metadata.md#gsd
   def gsd: Option[Double] = self.properties("gsd").flatMap(_.as[Double].toOption)
@@ -53,12 +57,12 @@ case class StacItemOps(self: StacItem) {
   def cellSize: Option[CellSize] =
     transform
       .map(_.cellSize)
-      .orElse((getExtent, dimensions).mapN {
-        case (e, Dimensions(c, r)) => GridExtent(e, c, r).cellSize
+      .orElse((getExtent, dimensions).mapN { case (e, Dimensions(c, r)) =>
+        GridExtent(e, c, r).cellSize
       })
       .orElse(gsd.map(d => CellSize(d, d)))
 
   def gridExtent: Option[GridExtent[Long]] = (getExtent, cellSize).mapN(GridExtent.apply[Long])
   def rasterExtent: Option[RasterExtent]   = gridExtent.map(_.toRasterExtent)
-  def dimensions: Option[Dimensions[Long]] = projExtension.flatMap(_.shape).map(_.toDimensions)
+  def dimensions: Option[Dimensions[Long]] = projExtensionOption.flatMap(_.shape).map(_.toDimensions)
 }

@@ -136,17 +136,17 @@ class WmsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[*[_], T
 
   def responseFor(req: Request[F]): F[Response[F]] = {
     WmsParams(req.multiParams) match {
-      case Invalid(errors)           =>
+      case Invalid(errors) =>
         val msg = ParamError.generateErrorMessage(errors.toList)
         logger.warn(msg) *> BadRequest(msg)
 
       case Valid(_: GetCapabilities) =>
         logger.debug(ansi"%bold{GetCapabilities: ${req.uri}}") *>
-        new CapabilitiesView[F](wmsModel, serviceUrl, extendedCapabilities).toXML flatMap {
-          Ok(_)
-        }
+          new CapabilitiesView[F](wmsModel, serviceUrl, extendedCapabilities).toXML flatMap {
+            Ok(_)
+          }
 
-      case Valid(wmsReq: GetMap)     =>
+      case Valid(wmsReq: GetMap) =>
         logger.debug(ansi"%bold{GetMap: ${req.uri}}") *> {
           val re  = RasterExtent(wmsReq.boundingBox, wmsReq.width, wmsReq.height)
           val res = wmsModel

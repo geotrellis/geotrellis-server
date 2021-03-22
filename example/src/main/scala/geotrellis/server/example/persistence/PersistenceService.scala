@@ -44,12 +44,9 @@ class PersistenceService[F[_]: Sync: Logger: ApplicativeError[*[_], Throwable], 
 
   // Unapply to handle UUIDs on path
   object IdVar {
-    def unapply(str: String): Option[UUID] = {
-      if (!str.isEmpty)
-        Try(UUID.fromString(str)).toOption
-      else
-        None
-    }
+    def unapply(str: String): Option[UUID] =
+      if (!str.isEmpty) Try(UUID.fromString(str)).toOption
+      else None
   }
 
   object ParamBindings {
@@ -64,7 +61,7 @@ class PersistenceService[F[_]: Sync: Logger: ApplicativeError[*[_], Throwable], 
 
   def routes: HttpRoutes[F] =
     HttpRoutes.of {
-      case req @ POST -> Root / IdVar(key)               =>
+      case req @ POST -> Root / IdVar(key) =>
         (for {
           expr <- req.as[Expression]
           _    <- logger.info(
@@ -84,7 +81,7 @@ class PersistenceService[F[_]: Sync: Logger: ApplicativeError[*[_], Throwable], 
             InternalServerError(err.toString)
         }
 
-      case req @ GET -> Root / IdVar(key)                =>
+      case req @ GET -> Root / IdVar(key) =>
         logger.info(s"Attempting to retrieve expression at key ($key)")
         MamlStore[F, S].getMaml(store, key) flatMap {
           case Some(expr) => Ok(expr.asJson)

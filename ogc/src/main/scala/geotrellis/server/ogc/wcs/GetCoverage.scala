@@ -69,8 +69,7 @@ class GetCoverage[F[_]: Logger: Sync: Concurrent: Parallel](wcsModel: WcsModel[F
 
   }
 
-  /**
-    * QGIS appears to sample WCS service by placing low and high resolution requests at coverage center.
+  /** QGIS appears to sample WCS service by placing low and high resolution requests at coverage center.
     * These sampling requests happen for every actual WCS request, we can get really great cache hit rates.
     */
   lazy val requestCache: Cache[GetCoverageWcsParams, Array[Byte]] =
@@ -85,7 +84,7 @@ class GetCoverage[F[_]: Logger: Sync: Concurrent: Parallel](wcsModel: WcsModel[F
       case Some(bytes) =>
         Logger[F].trace(s"GetCoverage cache HIT: $params") *> bytes.pure[F]
 
-      case _           =>
+      case _ =>
         Logger[F].trace(s"GetCoverage cache MISS: $params") >>= { _ =>
           renderLayers(params).flatMap {
             case Some(bytes) => bytes.pure[F]

@@ -62,7 +62,7 @@ case class RGBParameters(
         case _                  => e
       }
 
-    case e                          => e
+    case e => e
   }
 }
 

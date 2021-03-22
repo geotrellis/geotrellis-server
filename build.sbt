@@ -63,36 +63,37 @@ lazy val commonSettings = Seq(
   assembly / test := {},
   sources in (Compile, doc) := (sources in (Compile, doc)).value,
   assembly / assemblyMergeStrategy := {
-    case "reference.conf"   => MergeStrategy.concat
-    case "application.conf" => MergeStrategy.concat
+    case "reference.conf"              => MergeStrategy.concat
+    case "application.conf"            => MergeStrategy.concat
     case PathList("META-INF", xs @ _*) =>
       xs match {
-        case ("MANIFEST.MF" :: Nil) =>
+        case ("MANIFEST.MF" :: Nil)                                                                                     =>
           MergeStrategy.discard
-        case ("services" :: _ :: Nil) =>
+        case ("services" :: _ :: Nil)                                                                                   =>
           MergeStrategy.concat
-        case ("javax.media.jai.registryFile.jai" :: Nil) |
-            ("registryFile.jai" :: Nil) | ("registryFile.jaiext" :: Nil) =>
+        case ("javax.media.jai.registryFile.jai" :: Nil) | ("registryFile.jai" :: Nil) | ("registryFile.jaiext" :: Nil) =>
           MergeStrategy.concat
         case (name :: Nil)
             if name.endsWith(".RSA") || name.endsWith(".DSA") || name
               .endsWith(".SF") =>
           MergeStrategy.discard
-        case _ =>
+        case _                                                                                                          =>
           MergeStrategy.first
       }
-    case _ => MergeStrategy.first
+    case _                             => MergeStrategy.first
   },
   headerLicense := Some(
     HeaderLicense.ALv2(java.time.Year.now.getValue.toString, "Azavea")
   ),
   headerMappings := Map(
     FileType.scala -> CommentStyle.cStyleBlockComment.copy(
-      commentCreator = { (text, existingText) => {
-        // preserve year of old headers
-        val newText = CommentStyle.cStyleBlockComment.commentCreator.apply(text, existingText)
-        existingText.flatMap(_ => existingText.map(_.trim)).getOrElse(newText)
-      } }
+      commentCreator = { (text, existingText) =>
+        {
+          // preserve year of old headers
+          val newText = CommentStyle.cStyleBlockComment.commentCreator.apply(text, existingText)
+          existingText.flatMap(_ => existingText.map(_.trim)).getOrElse(newText)
+        }
+      }
     )
   ),
   useCoursier := false,
@@ -252,19 +253,19 @@ lazy val opengis = project
     Compile / scalaxb / scalaxbPackageName := "generated",
     Compile / scalaxb / scalaxbProtocolPackageName := Some("opengis"),
     Compile / scalaxb / scalaxbPackageNames := Map(
-      uri("http://www.w3.org/1999/xlink") -> "xlink",
-      uri("http://www.opengis.net/wms") -> "opengis.wms",
-      uri("http://www.opengis.net/ogc") -> "opengis.ogc",
-      uri("http://www.opengis.net/wmts/1.0") -> "opengis.wmts",
-      uri("http://www.opengis.net/ows/1.1") -> "opengis.ows",
-      uri("http://www.opengis.net/ows") -> "opengis.sld.ows",
-      uri("http://www.opengis.net/wcs/1.1.1") -> "opengis.wcs",
-      uri("http://www.opengis.net/gml") -> "opengis.gml",
-      uri("http://www.opengis.net/filter") -> "opengis.filter",
-      uri("http://www.opengis.net/se") -> "opengis.se",
-      uri("http://www.opengis.net/sld") -> "opengis.sld",
-      uri("http://www.opengis.net/wfs") -> "opengis.wfs",
-      uri("http://www.w3.org/2001/SMIL20/") -> "opengis.gml.smil",
+      uri("http://www.w3.org/1999/xlink")           -> "xlink",
+      uri("http://www.opengis.net/wms")             -> "opengis.wms",
+      uri("http://www.opengis.net/ogc")             -> "opengis.ogc",
+      uri("http://www.opengis.net/wmts/1.0")        -> "opengis.wmts",
+      uri("http://www.opengis.net/ows/1.1")         -> "opengis.ows",
+      uri("http://www.opengis.net/ows")             -> "opengis.sld.ows",
+      uri("http://www.opengis.net/wcs/1.1.1")       -> "opengis.wcs",
+      uri("http://www.opengis.net/gml")             -> "opengis.gml",
+      uri("http://www.opengis.net/filter")          -> "opengis.filter",
+      uri("http://www.opengis.net/se")              -> "opengis.se",
+      uri("http://www.opengis.net/sld")             -> "opengis.sld",
+      uri("http://www.opengis.net/wfs")             -> "opengis.wfs",
+      uri("http://www.w3.org/2001/SMIL20/")         -> "opengis.gml.smil",
       uri("http://www.w3.org/2001/SMIL20/Language") -> "opengis.gml.smil"
     )
   )

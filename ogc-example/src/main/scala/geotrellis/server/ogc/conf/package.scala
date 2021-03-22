@@ -33,7 +33,7 @@ import pureconfig.error.CannotConvert
 import pureconfig.generic.FieldCoproductHint
 import pureconfig.generic.auto._
 
-import scala.util.Try
+import scala.util.{Success, Try}
 import scala.collection.JavaConverters._
 
 /** A grab bag of [[ConfigReader]] instances necessary to read the configuration */
@@ -71,8 +71,7 @@ package object conf {
       ColorRamp(colors.map(java.lang.Long.decode(_).toInt))
     }
 
-  /**
-    * HOCON doesn't naturally handle unquoted strings which contain decimals ('.') very well.
+  /** HOCON doesn't naturally handle unquoted strings which contain decimals ('.') very well.
     *  As a result, some special configuration handling is required here to allow unquoted
     *  strings specifically when we know we're trying to decode a ColorMap.
     *
@@ -83,30 +82,26 @@ package object conf {
   implicit val mapDoubleIntReader: ConfigReader[Map[Double, Int]] =
     ConfigReader[Map[String, ConfigValue]].map { cmap =>
       val numericMap = cmap
-        .flatMap({
-          case (k, v) =>
-            v.valueType match {
-              case ConfigValueType.OBJECT =>
-                val confmap = v.asInstanceOf[ConfigObject].asScala
-                confmap.map {
-                  case (ck, cv) =>
-                    val key   = k + "." + ck
-                    val value = cv.unwrapped.asInstanceOf[String]
-                    key -> value
-                }
-              case ConfigValueType.STRING =>
-                List(k -> v.unwrapped.asInstanceOf[String])
-              case _                      =>
-                List(k -> v.toString)
-            }
+        .flatMap({ case (k, v) =>
+          v.valueType match {
+            case ConfigValueType.OBJECT =>
+              val confmap = v.asInstanceOf[ConfigObject].asScala
+              confmap.map { case (ck, cv) =>
+                val key   = k + "." + ck
+                val value = cv.unwrapped.asInstanceOf[String]
+                key -> value
+              }
+            case ConfigValueType.STRING =>
+              List(k -> v.unwrapped.asInstanceOf[String])
+            case _                      =>
+              List(k -> v.toString)
+          }
         })
-        .map({
-          case (k, v) =>
-            val key   = k.toDouble
-            val value = java.lang.Long.decode(v).toInt
-            key -> value
+        .map({ case (k, v) =>
+          val key   = k.toDouble
+          val value = java.lang.Long.decode(v).toInt
+          key -> value
         })
-        .toMap
       numericMap
     }
 
@@ -137,28 +132,26 @@ package object conf {
 
   implicit val crsReader: ConfigReader[CRS] =
     ConfigReader[Int].map { epsgCode =>
-      Try(CRS.fromEpsgCode(epsgCode)).toOption match {
-        case Some(crs) => crs
-        case None      => throw new Exception(s"Invalid EPSG code: ${epsgCode}")
+      Try(CRS.fromEpsgCode(epsgCode)) match {
+        case Success(crs) => crs
+        case _            => throw new Exception(s"Invalid EPSG code: ${epsgCode}")
       }
     }
 
   implicit val extentReader: ConfigReader[Extent] =
-    ConfigReader[(Double, Double, Double, Double)].map {
-      case extent @ (xmin, ymin, xmax, ymax) =>
-        Try(Extent(xmin, ymin, xmax, ymax)).toOption match {
-          case Some(extent) => extent
-          case None         => throw new Exception(s"Invalid extent: $extent. Should be (xmin, ymin, xmax, ymax)")
-        }
+    ConfigReader[(Double, Double, Double, Double)].map { case extent @ (xmin, ymin, xmax, ymax) =>
+      Try(Extent(xmin, ymin, xmax, ymax)) match {
+        case Success(extent) => extent
+        case _               => throw new Exception(s"Invalid extent: $extent. Should be (xmin, ymin, xmax, ymax)")
+      }
     }
 
   implicit val tileLayoutReader: ConfigReader[TileLayout] =
-    ConfigReader[(Int, Int, Int, Int)].map {
-      case layout @ (layoutCols, layoutRows, tileCols, tileRows) =>
-        Try(TileLayout(layoutCols, layoutRows, tileCols, tileRows)).toOption match {
-          case Some(layout) => layout
-          case None         => throw new Exception(s"Invalid layout: $layout. Should be (layoutCols, layoutRows, tileCols, tileRows)")
-        }
+    ConfigReader[(Int, Int, Int, Int)].map { case layout @ (layoutCols, layoutRows, tileCols, tileRows) =>
+      Try(TileLayout(layoutCols, layoutRows, tileCols, tileRows)) match {
+        case Success(layout) => layout
+        case _               => throw new Exception(s"Invalid layout: $layout. Should be (layoutCols, layoutRows, tileCols, tileRows)")
+      }
     }
 
   implicit val resampleMethodReader: ConfigReader[ResampleMethod] =
@@ -178,7 +171,7 @@ package object conf {
 
   implicit val overviewStrategyReader: ConfigReader[OverviewStrategy] = {
     def parse(strategy: String, input: String): OverviewStrategy =
-      Auto(Try { input.split(s"$strategy-").last.toInt }.toOption.getOrElse(0))
+      Auto(Try { input.split(s"$strategy-").last.toInt }.getOrElse(0))
 
     def parseAuto(str: String): OverviewStrategy  = parse("auto", str)
     def parseLevel(str: String): OverviewStrategy = parse("level", str)

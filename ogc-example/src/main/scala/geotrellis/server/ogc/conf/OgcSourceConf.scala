@@ -68,8 +68,7 @@ case class MapAlgebraSourceConf(
     eval(expr)
   }
 
-  /**
-    * Given a list of all available `SimpleSourceConf` instances in the global [[Conf]] object,
+  /** Given a list of all available `SimpleSourceConf` instances in the global [[Conf]] object,
     *  attempt to produce the parameter bindings necessary for evaluating the MAML [[Expression]]
     *  in the algebra field
     */

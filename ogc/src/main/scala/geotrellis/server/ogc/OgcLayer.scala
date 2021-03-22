@@ -32,8 +32,7 @@ import cats.syntax.apply._
 import cats.syntax.functor._
 import io.chrisdavenport.log4cats.Logger
 
-/**
-  * OgcLayer instances are sufficient to produce visual rasters as the end product of 'get map'
+/** OgcLayer instances are sufficient to produce visual rasters as the end product of 'get map'
   *  requests. They are produced from a combination of a WMS 'GetMap'
   *  (or whatever the analogous request in whatever OGC service is being produced) and an instance
   *  of [[OgcSource]]

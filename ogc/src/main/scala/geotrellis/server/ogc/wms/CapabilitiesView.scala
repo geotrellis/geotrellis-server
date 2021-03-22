@@ -36,8 +36,7 @@ import java.net.URL
 import scala.xml.Elem
 import cats.Monad
 
-/**
-  * @param model Model of layers we can report
+/** @param model Model of layers we can report
   * @param serviceUrl URL where this service can be reached with addition of `?request=` query parameter
   */
 class CapabilitiesView[F[_]: Functor: Apply: Monad](model: WmsModel[F], serviceUrl: URL, extendedCapabilities: List[DataRecord[Elem]] = Nil) {
@@ -47,41 +46,41 @@ class CapabilitiesView[F[_]: Functor: Apply: Monad](model: WmsModel[F], serviceU
     val getCapabilities = OperationType(
       Format = "text/xml" :: Nil,
       DCPType = DCPType(
-          HTTP(
-            Get = Get(
-              OnlineResource(
-                Map(
-                  "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
-                    serviceUrl.toURI
-                  ),
-                  "@{http://www.w3.org/1999/xlink}type" -> DataRecord(
-                    xlink.Simple: xlink.TypeType
-                  )
+        HTTP(
+          Get = Get(
+            OnlineResource(
+              Map(
+                "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
+                  serviceUrl.toURI
+                ),
+                "@{http://www.w3.org/1999/xlink}type" -> DataRecord(
+                  xlink.Simple: xlink.TypeType
                 )
               )
             )
           )
-        ) :: Nil
+        )
+      ) :: Nil
     )
 
     val getMap = OperationType(
       Format = "image/png" :: "image/jpeg" :: Nil,
       DCPType = DCPType(
-          HTTP(
-            Get = Get(
-              OnlineResource(
-                Map(
-                  "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
-                    serviceUrl.toURI
-                  ),
-                  "@{http://www.w3.org/1999/xlink}type" -> DataRecord(
-                    xlink.Simple: xlink.TypeType
-                  )
+        HTTP(
+          Get = Get(
+            OnlineResource(
+              Map(
+                "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
+                  serviceUrl.toURI
+                ),
+                "@{http://www.w3.org/1999/xlink}type" -> DataRecord(
+                  xlink.Simple: xlink.TypeType
                 )
               )
             )
           )
-        ) :: Nil
+        )
+      ) :: Nil
     )
 
     modelAsLayer(model.parentLayerMeta, model) map { layer =>
@@ -194,8 +193,7 @@ object CapabilitiesView {
               )
           }
 
-          /**
-            * TODO: replace with source.extentIn(LatLng)
+          /** TODO: replace with source.extentIn(LatLng)
             * see: https://github.com/locationtech/geotrellis/issues/3258
             */
           val Extent(xmin, ymin, xmax, ymax) = llre.extent
@@ -255,8 +253,7 @@ object CapabilitiesView {
             ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(rasterOgcLayer.resampleMethod))
         }
 
-        /**
-          * TODO: replace with
+        /** TODO: replace with
           * val llExtents = model.sources.store.map(_.extentIn(LatLng))
           * val llExtent = llExtents.tail.fold(llExtents.head)(_ combine _)
           * see: https://github.com/locationtech/geotrellis/issues/3258
@@ -268,64 +265,63 @@ object CapabilitiesView {
       val ogcBbox = EX_GeographicBoundingBox(bbox.xmin, bbox.xmax, bbox.ymin, bbox.ymax).some
       (ogcBbox, sources.map(_.toLayer(parentLayerMeta.supportedProjections)))
     }
-    (bboxAndLayers, model.time).mapN {
-      case ((bbox, layers), time) =>
-        Layer(
-          Name = parentLayerMeta.name,
-          Title = parentLayerMeta.title,
-          Abstract = parentLayerMeta.description,
-          KeywordList = None,
-          // All layers are avail at least at this CRS
-          // All sublayers would have metadata in this CRS + its own
-          CRS = parentLayerMeta.supportedProjections.distinct.map { crs =>
-            crs.epsgCode
-              .map { code =>
-                s"EPSG:$code"
-              }
-              .getOrElse(
-                throw new java.lang.Exception(
-                  s"Unable to construct EPSG code from $crs"
-                )
+    (bboxAndLayers, model.time).mapN { case ((bbox, layers), time) =>
+      Layer(
+        Name = parentLayerMeta.name,
+        Title = parentLayerMeta.title,
+        Abstract = parentLayerMeta.description,
+        KeywordList = None,
+        // All layers are avail at least at this CRS
+        // All sublayers would have metadata in this CRS + its own
+        CRS = parentLayerMeta.supportedProjections.distinct.map { crs =>
+          crs.epsgCode
+            .map { code =>
+              s"EPSG:$code"
+            }
+            .getOrElse(
+              throw new java.lang.Exception(
+                s"Unable to construct EPSG code from $crs"
               )
-          },
-          // Extent of all layers in default CRS
-          // Should it be world extent? To simplify tests and QGIS work it's all RasterSources extent
-          EX_GeographicBoundingBox = bbox,
-          // TODO: bounding box for global layer
-          BoundingBox = Nil,
-          Dimension = time match {
-            case tp @ OgcTimePositions(nel)        =>
-              Dimension(
-                tp.toString,
-                Map(
-                  "@name"    -> DataRecord("time"),
-                  "@units"   -> DataRecord("ISO8601"),
-                  "@default" -> DataRecord(nel.head.toInstant.toString)
-                )
-              ) :: Nil
-            case ti @ OgcTimeInterval(start, _, _) =>
-              Dimension(
-                ti.toString,
-                Map(
-                  "@name"    -> DataRecord("time"),
-                  "@units"   -> DataRecord("ISO8601"),
-                  "@default" -> DataRecord(start.toString)
-                )
-              ) :: Nil
-            case OgcTimeEmpty                      => Nil
-          },
-          Attribution = None,
-          AuthorityURL = Nil,
-          Identifier = Nil,
-          MetadataURL = Nil,
-          DataURL = Nil,
-          FeatureListURL = Nil,
-          Style = Nil,
-          MinScaleDenominator = None,
-          MaxScaleDenominator = None,
-          Layer = layers,
-          attributes = Map.empty
-        )
+            )
+        },
+        // Extent of all layers in default CRS
+        // Should it be world extent? To simplify tests and QGIS work it's all RasterSources extent
+        EX_GeographicBoundingBox = bbox,
+        // TODO: bounding box for global layer
+        BoundingBox = Nil,
+        Dimension = time match {
+          case tp @ OgcTimePositions(nel)        =>
+            Dimension(
+              tp.toString,
+              Map(
+                "@name"    -> DataRecord("time"),
+                "@units"   -> DataRecord("ISO8601"),
+                "@default" -> DataRecord(nel.head.toInstant.toString)
+              )
+            ) :: Nil
+          case ti @ OgcTimeInterval(start, _, _) =>
+            Dimension(
+              ti.toString,
+              Map(
+                "@name"    -> DataRecord("time"),
+                "@units"   -> DataRecord("ISO8601"),
+                "@default" -> DataRecord(start.toString)
+              )
+            ) :: Nil
+          case OgcTimeEmpty                      => Nil
+        },
+        Attribution = None,
+        AuthorityURL = Nil,
+        Identifier = Nil,
+        MetadataURL = Nil,
+        DataURL = Nil,
+        FeatureListURL = Nil,
+        Style = Nil,
+        MinScaleDenominator = None,
+        MaxScaleDenominator = None,
+        Layer = layers,
+        attributes = Map.empty
+      )
     }
   }
 }

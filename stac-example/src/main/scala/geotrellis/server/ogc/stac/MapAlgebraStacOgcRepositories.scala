@@ -53,8 +53,7 @@ case class MapAlgebraStacOgcRepositories[F[_]: Sync: Logger](
   def store: F[List[OgcSource]] =
     find(query.withNames(mapAlgebraConfLayers.map(_.name).toSet))
 
-  /**
-    * At first, choose stacLayers that fit the query, because after that we'll erase their name.
+  /** At first, choose stacLayers that fit the query, because after that we'll erase their name.
     * GT Server layer conf names != the STAC Layer name
     * conf names can be different for the same STAC Layer name.
     * A name is unique per the STAC layer and an asset.

@@ -36,8 +36,7 @@ object RangeReaderUtils {
     IO {
       val javaUri = new URI(uri)
 
-      /**
-        * Links can be signed for instance via HMAC-SHA,
+      /** Links can be signed for instance via HMAC-SHA,
         * it means that request signature can be specific at least to the METHOD
         * (GET and HEAD requests would have different auth signature)
         *
@@ -50,21 +49,21 @@ object RangeReaderUtils {
         URLEncodedUtils.parse(uri, Charset.forName("UTF-8")).isEmpty
 
       javaUri.getScheme match {
-        case "file" | null                     =>
+        case "file" | null =>
           FileRangeReader(Paths.get(javaUri).toFile)
 
         case "http" | "https" if noQueryParams =>
           HttpRangeReader(new URL(uri))
 
-        case "http" | "https"                  =>
+        case "http" | "https" =>
           new HttpRangeReader(new URL(uri), false)
 
-        case "s3"                              =>
+        case "s3" =>
           val s3Uri    = new AmazonS3URI(java.net.URLDecoder.decode(uri, "UTF-8"))
           val s3Client = S3ClientProducer.get()
           S3RangeReader(s3Uri.getBucket, s3Uri.getKey, s3Client)
 
-        case scheme                            =>
+        case scheme =>
           throw new java.lang.IllegalArgumentException(
             s"Unrecognized scheme found for range reader: $scheme"
           )
