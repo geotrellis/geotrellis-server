@@ -1,4 +1,5 @@
 {
+  "type": "Catalog",
   "stac_version": "1.0.0-rc.1",
   "stac_extensions": [],
   "id": "landsat-stac-layers",
