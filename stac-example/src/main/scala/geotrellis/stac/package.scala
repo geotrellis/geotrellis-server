@@ -24,6 +24,7 @@ import geotrellis.raster.{EmptyName, GridExtent, MosaicRasterSource, RasterSourc
 import geotrellis.proj4.CRS
 import geotrellis.vector._
 import cats.syntax.either._
+import cats.syntax.semigroup._
 import cats.data.NonEmptyList
 
 package object stac {
@@ -37,9 +38,7 @@ package object stac {
   }
 
   implicit class SpatialExtentOps(val self: SpatialExtent) extends AnyVal {
-    // self.bbox.reduce(_ union _)
-    // https://github.com/azavea/stac4s/pull/259
-    def toExtent: Extent = self.bbox.head.toExtent.valueOr(e => throw new Exception(e))
+    def toExtent: Extent = self.bbox.reduce(_ |+| _).toExtent.valueOr(e => throw new Exception(e))
   }
 
   implicit def stacItemOps(stacItem: StacItem): StacItemOps                     = StacItemOps(stacItem)
