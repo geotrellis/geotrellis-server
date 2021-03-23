@@ -28,17 +28,16 @@ import sttp.client3.SttpBackend
 import sttp.client3.UriContext
 import geotrellis.store.query
 import com.azavea.stac4s.api.client.{Query => _, _}
+import cats.{Applicative, MonadThrow}
 import cats.data.NonEmptyList
 import cats.syntax.applicative._
 import cats.syntax.apply._
 import cats.syntax.option._
 import cats.syntax.semigroup._
-import cats.effect.Sync
 import cats.instances.list._
 import higherkindness.droste.{scheme, Algebra}
-import io.chrisdavenport.log4cats.Logger
 
-case class StacOgcRepository[F[_]: Sync: Logger](
+case class StacOgcRepository[F[_]: Applicative](
   stacSourceConf: StacSourceConf,
   client: SttpStacClient[F]
 ) extends RepositoryM[F, List, OgcSource] {
@@ -104,7 +103,7 @@ case class StacOgcRepository[F[_]: Sync: Logger](
   }
 }
 
-case class StacOgcRepositories[F[_]: Sync: Logger](
+case class StacOgcRepositories[F[_]: MonadThrow](
   stacLayers: List[StacSourceConf],
   client: SttpBackend[F, Any]
 ) extends RepositoryM[F, List, OgcSource] {

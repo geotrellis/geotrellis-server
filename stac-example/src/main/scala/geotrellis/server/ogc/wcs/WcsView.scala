@@ -25,7 +25,7 @@ import org.http4s.scalaxml._
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
 import cats.effect._
-import cats.{ApplicativeError, Parallel}
+import cats.Parallel
 import cats.data.Validated
 import cats.syntax.apply._
 import cats.syntax.flatMap._
@@ -39,7 +39,7 @@ import scalaxb._
 
 import java.net._
 
-class WcsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[*[_], Throwable]](
+class WcsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
   wcsModel: WcsModel[F],
   serviceUrl: URL
 ) extends Http4sDsl[F] {

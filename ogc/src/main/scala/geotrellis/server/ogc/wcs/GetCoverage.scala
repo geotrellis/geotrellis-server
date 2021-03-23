@@ -38,7 +38,7 @@ import io.chrisdavenport.log4cats.Logger
 
 import scala.concurrent.duration._
 
-class GetCoverage[F[_]: Logger: Sync: Concurrent: Parallel](wcsModel: WcsModel[F]) {
+class GetCoverage[F[_]: Concurrent: Parallel: Logger](wcsModel: WcsModel[F]) {
   def renderLayers(params: GetCoverageWcsParams): F[Option[Array[Byte]]] = {
     val e  = params.extent
     val cs = params.cellSize

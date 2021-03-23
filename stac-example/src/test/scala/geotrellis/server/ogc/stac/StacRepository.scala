@@ -21,11 +21,11 @@ import geotrellis.store.query
 import geotrellis.store.query.{Query, RepositoryM}
 import com.azavea.stac4s.api.client.{SearchFilters, SttpStacClient}
 
+import cats.Monad
 import cats.syntax.functor._
 import cats.syntax.traverse._
-import cats.effect.Sync
 
-case class StacRepository[F[_]: Sync](client: SttpStacClient[F]) extends RepositoryM[F, List, RasterSource] {
+case class StacRepository[F[_]: Monad](client: SttpStacClient[F]) extends RepositoryM[F, List, RasterSource] {
   def store: F[List[RasterSource]] = find(query.all)
 
   def find(query: Query): F[List[RasterSource]] =
@@ -34,11 +34,7 @@ case class StacRepository[F[_]: Sync](client: SttpStacClient[F]) extends Reposit
       .map { filter =>
         client
           .search(filter)
-          .map {
-            _ flatMap {
-              _.assets.values.map(a => RasterSource(a.href))
-            }
-          }
+          .map { _.flatMap { _.assets.values.map(a => RasterSource(a.href)) } }
       }
       .toList
       .sequence

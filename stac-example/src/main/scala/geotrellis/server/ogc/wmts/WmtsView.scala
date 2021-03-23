@@ -29,7 +29,7 @@ import org.http4s.dsl.Http4sDsl
 import org.http4s.circe._
 import _root_.io.circe.syntax._
 import cats.effect._
-import cats.{Applicative, ApplicativeError, Parallel}
+import cats.Parallel
 import cats.data.Validated.{Invalid, Valid}
 import cats.syntax.apply._
 import cats.syntax.applicative._
@@ -44,7 +44,7 @@ import scala.concurrent.duration._
 
 import java.net._
 
-class WmtsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[*[_], Throwable]](
+class WmtsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
   wmtsModel: WmtsModel[F],
   serviceUrl: URL
 ) extends Http4sDsl[F] {
