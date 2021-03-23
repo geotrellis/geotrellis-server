@@ -16,14 +16,60 @@
 
 package geotrellis
 
-import com.azavea.stac4s.TwoDimBbox
-import geotrellis.vector.Extent
+import geotrellis.stac.raster.{StacItemAssetOps, StacItemOps}
+
+import com.azavea.stac4s.{SpatialExtent, StacCollection, StacItem, StacItemAsset, TwoDimBbox}
+import io.circe.generic.extras.Configuration
+import geotrellis.raster.{EmptyName, GridExtent, MosaicRasterSource, RasterSource, SourceName, StringName}
+import geotrellis.proj4.CRS
+import geotrellis.vector._
+import cats.syntax.either._
+import cats.syntax.semigroup._
+import cats.data.NonEmptyList
 
 package object stac {
-  implicit class extentOps(val self: Extent) {
+  implicit lazy val configuration: Configuration = Configuration.default.withSnakeCaseMemberNames
+
+  implicit class ExtentOps(val self: Extent) extends AnyVal {
     def toTwoDimBbox: TwoDimBbox = {
       val Extent(xmin, xmax, ymin, ymax) = self
       TwoDimBbox(xmin, xmax, ymin, ymax)
     }
+  }
+
+  implicit class SpatialExtentOps(val self: SpatialExtent) extends AnyVal {
+    def toExtent: Extent = self.bbox.reduce(_ |+| _).toExtent.valueOr(e => throw new Exception(e))
+  }
+
+  implicit def stacItemOps(stacItem: StacItem): StacItemOps                     = StacItemOps(stacItem)
+  implicit def stacItemAssetOps(stacItemAsset: StacItemAsset): StacItemAssetOps = StacItemAssetOps(stacItemAsset)
+
+  implicit class StacCollectionOps(val self: StacCollection) extends AnyVal {
+    def sourceName: SourceName = StringName(self.id)
+  }
+
+  implicit class MosaicRasterSourceOps(val self: MosaicRasterSource.type) extends AnyVal {
+    def instance(
+      sourcesList: NonEmptyList[RasterSource],
+      targetCRS: CRS,
+      sourceName: SourceName,
+      stacAttributes: Map[String, String]
+    ): MosaicRasterSource = {
+      val combinedExtent     = sourcesList.map(_.extent).toList.reduce(_ combine _)
+      val minCellSize        = sourcesList.map(_.cellSize).toList.maxBy(_.resolution)
+      val combinedGridExtent = GridExtent[Long](combinedExtent, minCellSize)
+
+      new MosaicRasterSource {
+        val sources: NonEmptyList[RasterSource] = sourcesList
+        val crs: CRS                            = targetCRS
+        def gridExtent: GridExtent[Long]        = combinedGridExtent
+        val name: SourceName                    = sourceName
+
+        override val attributes = stacAttributes
+      }
+    }
+
+    def instance(sourcesList: NonEmptyList[RasterSource], targetCRS: CRS, stacAttributes: Map[String, String]): MosaicRasterSource =
+      instance(sourcesList, targetCRS, EmptyName, stacAttributes)
   }
 }

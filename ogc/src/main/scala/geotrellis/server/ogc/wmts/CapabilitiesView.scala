@@ -33,8 +33,7 @@ import scalaxb._
 import java.net.{URI, URL}
 import scala.xml.Elem
 
-/**
-  * @param wmtsModel WmtsModel of layers and tile matrices we can report
+/** @param wmtsModel WmtsModel of layers and tile matrices we can report
   * @param serviceUrl URL where this service can be reached with addition of `?request=` query parameter
   */
 class CapabilitiesView[F[_]: Monad](wmtsModel: WmtsModel[F], serviceUrl: URL) {
@@ -221,8 +220,7 @@ object CapabilitiesView {
         InfoFormat = "text/xml" :: Nil,
         Dimension = Nil,
         // NOTE: This "ID" MUST correspond to the TileMatrixSet ID for the layers to show up in QGIS
-        TileMatrixSetLink =
-          TileMatrixSetLink(
+        TileMatrixSetLink = TileMatrixSetLink(
             TileMatrixSet = "GoogleMapsCompatible",
             TileMatrixSetLimits = TileMatrixSetLimits(tileMatrixLimits).some
           )

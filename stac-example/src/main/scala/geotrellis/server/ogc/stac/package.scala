@@ -16,14 +16,32 @@
 
 package geotrellis.server.ogc
 
-import geotrellis.store.query.Query
+import geotrellis.stac._
+import geotrellis.server.ogc.utils._
+import geotrellis.store.query._
+
+import geotrellis.raster.{EmptyName, RasterSource, SourceName, StringName}
 import geotrellis.raster.geotiff.GeoTiffPath
 import com.azavea.stac4s.StacItemAsset
-import com.azavea.stac4s.api.client.{SearchFilters, Query => SQuery}
+import com.azavea.stac4s.api.client.{SearchFilters, StacClient, Query => SQuery}
 import io.circe.syntax._
+import cats.{Applicative, Foldable, FunctorFilter}
 import cats.syntax.either._
+import cats.syntax.foldable._
+import cats.syntax.functor._
+import cats.syntax.functorFilter._
+import cats.syntax.applicative._
+import eu.timepit.refined.types.string.NonEmptyString
 
 package object stac {
+  implicit class StacSummaryOps(val self: StacSummary) extends AnyVal {
+    def sourceName: SourceName =
+      self match {
+        case CollectionSummary(asset) => asset.sourceName
+        case EmptySummary             => EmptyName
+      }
+  }
+
   implicit class StacItemAssetOps(val self: StacItemAsset) extends AnyVal {
     def hrefGDAL(withGDAL: Boolean): String        = if (withGDAL) s"gdal+${self.href}" else s"${GeoTiffPath.PREFIX}${self.href}"
     def withGDAL(withGDAL: Boolean): StacItemAsset = self.copy(href = hrefGDAL(withGDAL))
@@ -36,5 +54,51 @@ package object stac {
 
   implicit class SearchFiltersObjOps(val self: SearchFilters.type) extends AnyVal {
     def eval(stacSearchCriteria: StacSearchCriteria)(query: Query): Option[SearchFilters] = SearchFiltersQuery.eval(stacSearchCriteria)(query)
+  }
+
+  implicit class StacClientOps[F[_]: Applicative](val self: StacClient[F]) {
+    def summary(query: Query, searchCriteria: StacSearchCriteria): F[StacSummary] =
+      SearchFiltersQuery.evalSummary[F](searchCriteria)(query).apply(self)
+
+    def summary(name: String, searchCriteria: StacSearchCriteria): F[StacSummary] =
+      searchCriteria match {
+        case ByLayer => EmptySummary.pure[F].widen
+        case _       => self.collection(NonEmptyString.unsafeFrom(name)).map(CollectionSummary)
+      }
+  }
+
+  implicit class RasterSourcesQueryOps[G[_]: Foldable: FunctorFilter, T <: RasterSource](val self: G[T]) {
+
+    /** A helper function that filters raster sources in case the STAC Layer is temporal and it is not taken into account in the query.
+      *
+      * By default STAC API returns all temporal items even though the time is not specified.
+      * If defaultTime configuration is set to true and the query is not temporal and not universal
+      * (meaning that it is bounded by temporal or spatial extent),
+      * we can select the first time position of the temporal layer in this case.
+      *
+      * If the layer is not temporal, no extra filtering would be applied.
+      * All non temporal items would be included into the result.
+      * Otherwise, only items that match the first time position would be returned.
+      */
+    def timeSlice(query: Query, defaultTime: Boolean, datetimeField: Option[String]): G[T] =
+      if (defaultTime && query.nonTemporal && query.nonUniversal) {
+        self.foldMap(_.time(datetimeField)) match {
+          case OgcTimePositions(list)       =>
+            val start = list.head
+            self.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), start))
+          case OgcTimeInterval(start, _, _) =>
+            self.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), start))
+          case OgcTimeEmpty                 => self
+        }
+      } else self
+
+    /** Collects all RasterSources attributes and prefixing each result Map key with the RasterSource name. */
+    def attributesByName: Map[String, String] =
+      self.foldMap { rs =>
+        rs.name match {
+          case StringName(sn) => rs.attributes.map { case (k, v) => s"$sn-$k" -> v }
+          case EmptyName      => rs.attributes
+        }
+      }
   }
 }

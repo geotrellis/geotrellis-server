@@ -44,12 +44,9 @@ class PersistenceService[F[_]: Sync: Logger: ApplicativeError[*[_], Throwable], 
 
   // Unapply to handle UUIDs on path
   object IdVar {
-    def unapply(str: String): Option[UUID] = {
-      if (!str.isEmpty)
-        Try(UUID.fromString(str)).toOption
-      else
-        None
-    }
+    def unapply(str: String): Option[UUID] =
+      if (!str.isEmpty) Try(UUID.fromString(str)).toOption
+      else None
   }
 
   object ParamBindings {

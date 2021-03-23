@@ -21,8 +21,9 @@ import geotrellis.server.ogc.params.ParamMap
 import geotrellis.server.ogc.style._
 import geotrellis.server.ogc.wms.WmsParams.GetMap
 import geotrellis.server.ogc.utils._
-import com.azavea.maml.ast.Expression
 import geotrellis.store.query.RepositoryM
+
+import com.azavea.maml.ast.Expression
 import cats.Monad
 import cats.syntax.functor._
 import cats.syntax.applicative._
@@ -51,6 +52,7 @@ case class WmsModel[F[_]: Monad](
               source.styles.find(_.name == name)
             }
             source match {
+              case rs: RasterOgcSource                                                                              => rs.toLayer(supportedCrs, None, p.time :: Nil)
               case MapAlgebraSource(name, title, rasterSources, algebra, _, _, resampleMethod, overviewStrategy, _) =>
                 val simpleLayers       = rasterSources.mapValues { rs =>
                   SimpleOgcLayer(name, title, supportedCrs, rs, style, resampleMethod, overviewStrategy)
@@ -66,16 +68,6 @@ case class WmsModel[F[_]: Monad](
                   resampleMethod,
                   overviewStrategy
                 )
-              case SimpleSource(name, title, rasterSource, _, _, resampleMethod, overviewStrategy, _)               =>
-                SimpleOgcLayer(name, title, supportedCrs, rasterSource, style, resampleMethod, overviewStrategy)
-              case gts @ GeoTrellisOgcSource(name, title, _, _, _, resampleMethod, overviewStrategy, _)             =>
-                val source = p.time match {
-                  case t if t.nonEmpty            => gts.sourceForTime(t)
-                  case _ if gts.source.isTemporal =>
-                    gts.sourceForTime(gts.source.times.head)
-                  case _                          => gts.source
-                }
-                SimpleOgcLayer(name, title, supportedCrs, source, style, resampleMethod, overviewStrategy)
             }
           }
         }

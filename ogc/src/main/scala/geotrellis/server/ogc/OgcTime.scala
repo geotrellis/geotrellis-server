@@ -23,6 +23,7 @@ import cats.syntax.semigroup._
 import jp.ne.opt.chronoscala.Imports._
 
 import java.time.ZonedDateTime
+import scala.util.Try
 
 sealed trait OgcTime {
   def isEmpty: Boolean  = false
@@ -50,6 +51,9 @@ object OgcTime {
       case OgcTimeInterval(start, _, _) => start == dt
       case OgcTimeEmpty                 => true
     }
+
+  def fromString(str: String): OgcTime =
+    Try(OgcTimeInterval.fromString(str)).getOrElse(OgcTimePositions(str.split(",").toList))
 }
 
 case object OgcTimeEmpty extends OgcTime {
@@ -87,8 +91,7 @@ object OgcTimePositions {
   def apply(times: List[String])(implicit d: DummyImplicit): OgcTime = apply(times.map(ZonedDateTime.parse))
 }
 
-/**
-  * Represents the TimeInterval used in TimeSequence requests
+/** Represents the TimeInterval used in TimeSequence requests
   *
   * If end is provided, a TimeInterval is assumed. Otherwise, a TimePosition.
   *
@@ -114,8 +117,7 @@ final case class OgcTimeInterval(start: ZonedDateTime, end: ZonedDateTime, inter
 
 object OgcTimeInterval {
 
-  /**
-    * Merge two OgcTimeInterval instances
+  /** Merge two OgcTimeInterval instances
     * This semigroup instance destroys the interval. If you need to retain interval when combining
     *  instances, perform this operation yourself.
     */

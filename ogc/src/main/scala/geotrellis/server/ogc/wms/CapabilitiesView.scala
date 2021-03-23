@@ -36,8 +36,7 @@ import java.net.URL
 import scala.xml.Elem
 import cats.Monad
 
-/**
-  * @param model Model of layers we can report
+/** @param model Model of layers we can report
   * @param serviceUrl URL where this service can be reached with addition of `?request=` query parameter
   */
 class CapabilitiesView[F[_]: Functor: Apply: Monad](model: WmsModel[F], serviceUrl: URL, extendedCapabilities: List[DataRecord[Elem]] = Nil) {
@@ -194,8 +193,7 @@ object CapabilitiesView {
               )
           }
 
-          /**
-            * TODO: replace with source.extentIn(LatLng)
+          /** TODO: replace with source.extentIn(LatLng)
             * see: https://github.com/locationtech/geotrellis/issues/3258
             */
           val Extent(xmin, ymin, xmax, ymax) = llre.extent
@@ -255,8 +253,7 @@ object CapabilitiesView {
             ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(rasterOgcLayer.resampleMethod))
         }
 
-        /**
-          * TODO: replace with
+        /** TODO: replace with
           * val llExtents = model.sources.store.map(_.extentIn(LatLng))
           * val llExtent = llExtents.tail.fold(llExtents.head)(_ combine _)
           * see: https://github.com/locationtech/geotrellis/issues/3258

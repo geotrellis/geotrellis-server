@@ -14,16 +14,10 @@
  * limitations under the License.
  */
 
-package geotrellis
+package geotrellis.server.ogc.stac
 
-import cats.effect.IO
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import com.azavea.stac4s.StacCollection
 
-import scala.concurrent.ExecutionContext.Implicits.global
-
-package object server {
-  implicit val cs = IO.contextShift(global)
-
-  implicit val logger: Logger[IO] = Slf4jLogger.getLogger
-}
+sealed trait StacSummary
+case object EmptySummary                            extends StacSummary
+case class CollectionSummary(asset: StacCollection) extends StacSummary

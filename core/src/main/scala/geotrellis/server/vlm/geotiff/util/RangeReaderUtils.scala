@@ -36,8 +36,7 @@ object RangeReaderUtils {
     IO {
       val javaUri = new URI(uri)
 
-      /**
-        * Links can be signed for instance via HMAC-SHA,
+      /** Links can be signed for instance via HMAC-SHA,
         * it means that request signature can be specific at least to the METHOD
         * (GET and HEAD requests would have different auth signature)
         *

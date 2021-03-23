@@ -14,16 +14,21 @@
  * limitations under the License.
  */
 
-package geotrellis
+package geotrellis.stac.raster
 
-import cats.effect.IO
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import geotrellis.proj4.{CRS, LatLng}
+import geotrellis.raster.{RasterSource, SourceName}
+import geotrellis.vector.{Extent, ProjectedExtent}
 
-import scala.concurrent.ExecutionContext.Implicits.global
+trait StacSource[T] {
+  val crs: CRS                         = LatLng
+  def projectedExtent: ProjectedExtent = ProjectedExtent(extent, crs)
 
-package object server {
-  implicit val cs = IO.contextShift(global)
+  def asset: T
+  def extent: Extent
+  def name: SourceName
+  // native projection can be not LatLng
+  def source: RasterSource
 
-  implicit val logger: Logger[IO] = Slf4jLogger.getLogger
+  def attributes: Map[String, String]
 }

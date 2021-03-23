@@ -23,8 +23,7 @@ import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
 import geotrellis.store.query.Repository
 import geotrellis.proj4.CRS
 
-/**
-  * Each service has its own unique configuration requirements (see the below instances)
+/** Each service has its own unique configuration requirements (see the below instances)
   *  but share certain basic behaviors related to layer management. This trait encodes
   *  those expectations
   */

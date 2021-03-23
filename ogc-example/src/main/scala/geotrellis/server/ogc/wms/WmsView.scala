@@ -34,7 +34,7 @@ import org.http4s._
 import org.http4s.dsl.Http4sDsl
 import _root_.io.circe.syntax._
 import cats.effect._
-import cats.{Applicative, ApplicativeError, Parallel}
+import cats.Parallel
 import cats.syntax.apply._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
@@ -54,7 +54,7 @@ import java.net.URL
 import scala.concurrent.duration._
 import scala.xml.Elem
 
-class WmsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[*[_], Throwable]](
+class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
   wmsModel: WmsModel[F],
   serviceUrl: URL
 ) extends Http4sDsl[F] {

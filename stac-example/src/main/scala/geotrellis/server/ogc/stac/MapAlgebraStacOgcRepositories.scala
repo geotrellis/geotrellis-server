@@ -16,19 +16,18 @@
 
 package geotrellis.server.ogc.stac
 
-import geotrellis.server.ogc.{OgcSource, SimpleSource}
+import geotrellis.server.ogc.{OgcSource, RasterOgcSource}
 import geotrellis.server.ogc.conf.{MapAlgebraSourceConf, StacSourceConf}
 import geotrellis.store.query
 import geotrellis.store.query._
 
-import cats.effect.Sync
+import cats.{Functor, MonadThrow}
 import cats.syntax.functor._
 import cats.syntax.semigroup._
 import cats.instances.list._
-import io.chrisdavenport.log4cats.Logger
 import sttp.client3.SttpBackend
 
-case class MapAlgebraStacOgcRepository[F[_]: Sync](
+case class MapAlgebraStacOgcRepository[F[_]: Functor](
   mapAlgebraSourceConf: MapAlgebraSourceConf,
   stacSourceConfs: List[StacSourceConf],
   repository: RepositoryM[F, List, OgcSource]
@@ -41,12 +40,12 @@ case class MapAlgebraStacOgcRepository[F[_]: Sync](
     /** Replace the OGC layer name with its STAC Layer name */
     repository
       .find(names.map(query.overrideName).fold(nothing)(_ or _))
-      .map(_.collect { case ss: SimpleSource => ss })
+      .map(_.collect { case rs: RasterOgcSource => rs })
       .map(mapAlgebraSourceConf.modelOpt(_).toList)
       .widen
 }
 
-case class MapAlgebraStacOgcRepositories[F[_]: Sync: Logger](
+case class MapAlgebraStacOgcRepositories[F[_]: MonadThrow](
   mapAlgebraConfLayers: List[MapAlgebraSourceConf],
   stacLayers: List[StacSourceConf],
   client: SttpBackend[F, Any]
@@ -54,8 +53,7 @@ case class MapAlgebraStacOgcRepositories[F[_]: Sync: Logger](
   def store: F[List[OgcSource]] =
     find(query.withNames(mapAlgebraConfLayers.map(_.name).toSet))
 
-  /**
-    * At first, choose stacLayers that fit the query, because after that we'll erase their name.
+  /** At first, choose stacLayers that fit the query, because after that we'll erase their name.
     * GT Server layer conf names != the STAC Layer name
     * conf names can be different for the same STAC Layer name.
     * A name is unique per the STAC layer and an asset.

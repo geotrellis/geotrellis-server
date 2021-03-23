@@ -246,8 +246,7 @@ object CapabilitiesView {
             LowerCorner = wgs84extent.ymin :: wgs84extent.xmin :: Nil,
             UpperCorner = wgs84extent.ymax :: wgs84extent.xmax :: Nil
           ) :: Nil,
-        SupportedCRS =
-          new URI("urn:ogc:def:crs:OGC::imageCRS") :: (uniqueCrs flatMap { crs => (URN.fromCrs(crs) map { new URI(_) }) }),
+        SupportedCRS = new URI("urn:ogc:def:crs:OGC::imageCRS") :: (uniqueCrs flatMap { crs => (URN.fromCrs(crs) map { new URI(_) }) }),
         SupportedFormat = "image/geotiff" :: "image/jpeg" :: "image/png" :: Nil,
         coveragesummarytypeoption = DataRecord(None, "Identifier".some, src.name)
       )

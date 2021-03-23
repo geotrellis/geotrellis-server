@@ -95,8 +95,7 @@ object CoverageView {
     val llex             = llre.extent
     val Dimensions(w, h) = re.dimensions
 
-    /**
-      * WCS expects this very specific format for its time strings, which is not quite (TM)
+    /** WCS expects this very specific format for its time strings, which is not quite (TM)
       * what Java's toString method returns. Instead we convert to Instant.toString, which
       * does conform.
       *
@@ -196,16 +195,14 @@ object CoverageView {
               possibleValuesOption1 = OwsDataRecord(AnyValue())
             ),
             InterpolationMethods = InterpolationMethods(
-              InterpolationMethod =
-                InterpolationMethodType("nearest neighbor") ::
+              InterpolationMethod = InterpolationMethodType("nearest neighbor") ::
                 InterpolationMethodType("bilinear") ::
                 InterpolationMethodType("bicubic") :: Nil,
               Default = "nearest neighbor".some
             )
           ) :: Nil
       ),
-      SupportedCRS =
-        new URI("urn:ogc:def:crs:OGC::imageCRS") ::
+      SupportedCRS = new URI("urn:ogc:def:crs:OGC::imageCRS") ::
         (uniqueCrs flatMap { proj => URN.fromCrs(proj) map { new URI(_) } }),
       SupportedFormat = "image/geotiff" :: "image/jpeg" :: "image/png" :: Nil
     )

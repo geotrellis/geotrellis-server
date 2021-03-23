@@ -19,6 +19,7 @@ object Dependencies {
 
   val dispatchVer  = "0.11.3"
   val gtVer        = "3.5.3-SNAPSHOT"
+  val stac4sVer    = "0.1.1"
   val jaxbApiVer   = "2.3.1"
   val refinedVer   = "0.9.20"
   val shapelessVer = "2.3.3"
@@ -67,8 +68,8 @@ object Dependencies {
   val shapeless            = "com.chuusai"                           %% "shapeless"                   % shapelessVer
   val logback              = "ch.qos.logback"                         % "logback-classic"             % "1.2.3"  % Runtime
   val droste               = "io.higherkindness"                     %% "droste-core"                 % "0.8.0"
-  val stac4sCore           = "com.azavea.stac4s"                     %% "core"                        % "0.0.21"
-  val stac4sClient         = "com.azavea.stac4s"                     %% "client"                      % "0.0.21"
+  val stac4sCore           = "com.azavea.stac4s"                     %% "core"                        % stac4sVer
+  val stac4sClient         = "com.azavea.stac4s"                     %% "client"                      % stac4sVer
   val refinedCats          = "eu.timepit"                            %% "refined-cats"                % refinedVer
   val refinedPureconfig    = "eu.timepit"                            %% "refined-pureconfig"          % refinedVer
   val ansiColors212        = "org.backuity"                          %% "ansi-interpolator"           % "1.1.0"  % Provided

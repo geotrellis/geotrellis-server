@@ -46,16 +46,34 @@ trait Implicits {
         .flatMap { key =>
           source match {
             case mrs: MosaicRasterSource =>
-              val times = mrs.metadata.list.toList.flatMap(_.attributes.get(key)).map(ZonedDateTime.parse)
-              times match {
-                case head :: tail => OgcTimePositions(NEL(head, tail)).some
-                case _            => None
+              mrs.attributes.times(timeMetadataKey).orElse {
+                val times = mrs.metadata.list.toList.flatMap(_.attributes.get(key)).map(ZonedDateTime.parse)
+                times match {
+                  case head :: tail => OgcTimePositions(NEL(head, tail)).some
+                  case _            => None
+                }
               }
 
-            case _                       => source.metadata.attributes.get(key).map(ZonedDateTime.parse).map(OgcTimePositions(_))
+            case _                       => source.attributes.get(key).map(ZonedDateTime.parse).map(OgcTimePositions(_))
           }
         }
         .getOrElse(OgcTimeEmpty)
+  }
+
+  implicit class AttributesOps(val self: Map[String, String]) {
+    def time(timeMetadataKey: Option[String]): Option[OgcTime] =
+      timeMetadataKey
+        .flatMap(self.get(_).map(OgcTime.fromString))
+
+    def times(timeMetadataKey: Option[String]): Option[OgcTime] =
+      timeMetadataKey.flatMap { key =>
+        val times = self.filterKeys(_.endsWith(key)).values.toList.map(ZonedDateTime.parse)
+
+        times match {
+          case head :: tail => OgcTimePositions(NEL(head, tail)).some
+          case _            => None
+        }
+      }
   }
 }
 

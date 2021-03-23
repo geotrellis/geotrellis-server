@@ -29,8 +29,7 @@ import scala.xml.{Elem, NamespaceBinding, NodeSeq}
 
 package object wms {
 
-  /**
-    * Default scope generates an incorrect XML file (in the incorrect scope, prefixes all XML elements with `wms:` prefix.
+  /** Default scope generates an incorrect XML file (in the incorrect scope, prefixes all XML elements with `wms:` prefix.
     *
     * val defaultScope = scalaxb.toScope(Some("ogc") -> "http://www.opengis.net/ogc",
     * Some("wms") -> "http://www.opengis.net/wms",

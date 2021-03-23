@@ -30,8 +30,7 @@ import io.chrisdavenport.log4cats.Logger
 /** Provides methods for producing TMS tiles */
 object LayerTms {
 
-  /**
-    * Given an [[Expression]], a parameter map, and an interpreter, create a function
+  /** Given an [[Expression]], a parameter map, and an interpreter, create a function
     *  which takes z, x, and y coordinates and returns the corresponding tile.
     *
     * @tparam T a type whose instances can refer to layers

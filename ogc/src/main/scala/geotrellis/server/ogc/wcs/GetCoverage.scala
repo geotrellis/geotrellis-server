@@ -38,7 +38,7 @@ import io.chrisdavenport.log4cats.Logger
 
 import scala.concurrent.duration._
 
-class GetCoverage[F[_]: Logger: Sync: Concurrent: Parallel](wcsModel: WcsModel[F]) {
+class GetCoverage[F[_]: Concurrent: Parallel: Logger](wcsModel: WcsModel[F]) {
   def renderLayers(params: GetCoverageWcsParams): F[Option[Array[Byte]]] = {
     val e  = params.extent
     val cs = params.cellSize
@@ -69,8 +69,7 @@ class GetCoverage[F[_]: Logger: Sync: Concurrent: Parallel](wcsModel: WcsModel[F
 
   }
 
-  /**
-    * QGIS appears to sample WCS service by placing low and high resolution requests at coverage center.
+  /** QGIS appears to sample WCS service by placing low and high resolution requests at coverage center.
     * These sampling requests happen for every actual WCS request, we can get really great cache hit rates.
     */
   lazy val requestCache: Cache[GetCoverageWcsParams, Array[Byte]] =
