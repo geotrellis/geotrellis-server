@@ -158,7 +158,7 @@ case class MapAlgebraSourceConf(
       }
     }
     val timeMetadataKey = sourceList.flatMap(_._1).headOption
-    if (sourceList.nonEmpty)
+    if (sourceList.length == layerNames.length)
       MapAlgebraSource(
         name,
         title,

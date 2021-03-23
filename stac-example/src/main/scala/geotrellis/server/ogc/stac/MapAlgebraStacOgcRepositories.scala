@@ -69,7 +69,9 @@ case class MapAlgebraStacOgcRepositories[F[_]: MonadThrow](
         /** Get all ogc layers that are required for the MAML expression evaluation */
         val ogcLayersFiltered = ogcLayers.filter(l => layerNames.contains(l.name))
         val stacLayers        = ogcLayersFiltered.collect { case ssc: StacSourceConf => ssc }
-        val rasterLayers      = ogcLayersFiltered.collect { case ssc: RasterSourceConf => ssc.toLayer }
+        val rasterLayers      =
+          if (stacLayers.nonEmpty) ogcLayersFiltered.collect { case ssc: RasterSourceConf => ssc.toLayer }
+          else Nil
         val repositories      = OgcSourceRepository(rasterLayers).toF[F] |+| StacOgcRepositories[F](stacLayers, client)
 
         MapAlgebraStacOgcRepository[F](conf, ogcLayersFiltered, repositories)
