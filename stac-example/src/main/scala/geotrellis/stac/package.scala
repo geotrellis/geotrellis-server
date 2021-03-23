@@ -18,13 +18,13 @@ package geotrellis
 
 import geotrellis.stac.raster.{StacItemAssetOps, StacItemOps}
 
-import cats.data.NonEmptyList
-import com.azavea.stac4s.{SpatialExtent, StacItem, StacItemAsset, TwoDimBbox}
+import com.azavea.stac4s.{SpatialExtent, StacCollection, StacItem, StacItemAsset, TwoDimBbox}
 import io.circe.generic.extras.Configuration
-import geotrellis.raster.{EmptyName, GridExtent, MosaicRasterSource, RasterSource, SourceName}
+import geotrellis.raster.{EmptyName, GridExtent, MosaicRasterSource, RasterSource, SourceName, StringName}
 import geotrellis.proj4.CRS
 import geotrellis.vector._
 import cats.syntax.either._
+import cats.data.NonEmptyList
 
 package object stac {
   implicit lazy val configuration: Configuration = Configuration.default.withSnakeCaseMemberNames
@@ -44,6 +44,10 @@ package object stac {
 
   implicit def stacItemOps(stacItem: StacItem): StacItemOps                     = StacItemOps(stacItem)
   implicit def stacItemAssetOps(stacItemAsset: StacItemAsset): StacItemAssetOps = StacItemAssetOps(stacItemAsset)
+
+  implicit class StacCollectionOps(val self: StacCollection) extends AnyVal {
+    def sourceName: SourceName = StringName(self.id)
+  }
 
   implicit class MosaicRasterSourceOps(val self: MosaicRasterSource.type) extends AnyVal {
     def instance(
