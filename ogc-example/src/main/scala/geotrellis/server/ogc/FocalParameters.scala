@@ -64,10 +64,9 @@ object FocalParameters {
         }
       }
 
-    (azimuth, altitude, zFactor, target).mapN {
-      case (az, al, z, t) =>
-        // if at lest one of parsed params non empty
-        if (List(az, al, z, t).map(_.nonEmpty).fold(false)(_ || _)) FocalParameters(az, al, z, t).some else None
+    (azimuth, altitude, zFactor, target).mapN { case (az, al, z, t) =>
+      // if at lest one of parsed params non empty
+      if (List(az, al, z, t).map(_.nonEmpty).fold(false)(_ || _)) FocalParameters(az, al, z, t).some else None
     }
   }
 

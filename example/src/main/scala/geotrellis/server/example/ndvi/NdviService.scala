@@ -83,10 +83,10 @@ class NdviService[F[_]: Sync: Logger: Parallel, T: Encoder: Decoder: TmsReificat
             Ok(mbtile.band(0).renderPng(ColorRamps.Viridis).bytes)
           case Right(Invalid(errs)) =>
             logger.debug(errs.toList.toString) *>
-            BadRequest(errs.asJson)
+              BadRequest(errs.asJson)
           case Left(err)            =>
             logger.debug(err.toString) *>
-            InternalServerError(err.toString)
+              InternalServerError(err.toString)
         }
     }
 }

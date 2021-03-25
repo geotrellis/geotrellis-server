@@ -82,28 +82,25 @@ package object conf {
   implicit val mapDoubleIntReader: ConfigReader[Map[Double, Int]] =
     ConfigReader[Map[String, ConfigValue]].map { cmap =>
       val numericMap = cmap
-        .flatMap({
-          case (k, v) =>
-            v.valueType match {
-              case ConfigValueType.OBJECT =>
-                val confmap = v.asInstanceOf[ConfigObject].asScala
-                confmap.map {
-                  case (ck, cv) =>
-                    val key   = k + "." + ck
-                    val value = cv.unwrapped.asInstanceOf[String]
-                    key -> value
-                }
-              case ConfigValueType.STRING =>
-                List(k -> v.unwrapped.asInstanceOf[String])
-              case _                      =>
-                List(k -> v.toString)
-            }
+        .flatMap({ case (k, v) =>
+          v.valueType match {
+            case ConfigValueType.OBJECT =>
+              val confmap = v.asInstanceOf[ConfigObject].asScala
+              confmap.map { case (ck, cv) =>
+                val key   = k + "." + ck
+                val value = cv.unwrapped.asInstanceOf[String]
+                key -> value
+              }
+            case ConfigValueType.STRING =>
+              List(k -> v.unwrapped.asInstanceOf[String])
+            case _                      =>
+              List(k -> v.toString)
+          }
         })
-        .map({
-          case (k, v) =>
-            val key   = k.toDouble
-            val value = java.lang.Long.decode(v).toInt
-            key -> value
+        .map({ case (k, v) =>
+          val key   = k.toDouble
+          val value = java.lang.Long.decode(v).toInt
+          key -> value
         })
         .toMap
       numericMap
@@ -143,21 +140,19 @@ package object conf {
     }
 
   implicit val extentReader: ConfigReader[Extent] =
-    ConfigReader[(Double, Double, Double, Double)].map {
-      case extent @ (xmin, ymin, xmax, ymax) =>
-        Try(Extent(xmin, ymin, xmax, ymax)) match {
-          case Success(extent) => extent
-          case _               => throw new Exception(s"Invalid extent: $extent. Should be (xmin, ymin, xmax, ymax)")
-        }
+    ConfigReader[(Double, Double, Double, Double)].map { case extent @ (xmin, ymin, xmax, ymax) =>
+      Try(Extent(xmin, ymin, xmax, ymax)) match {
+        case Success(extent) => extent
+        case _               => throw new Exception(s"Invalid extent: $extent. Should be (xmin, ymin, xmax, ymax)")
+      }
     }
 
   implicit val tileLayoutReader: ConfigReader[TileLayout] =
-    ConfigReader[(Int, Int, Int, Int)].map {
-      case layout @ (layoutCols, layoutRows, tileCols, tileRows) =>
-        Try(TileLayout(layoutCols, layoutRows, tileCols, tileRows)) match {
-          case Success(layout) => layout
-          case _               => throw new Exception(s"Invalid layout: $layout. Should be (layoutCols, layoutRows, tileCols, tileRows)")
-        }
+    ConfigReader[(Int, Int, Int, Int)].map { case layout @ (layoutCols, layoutRows, tileCols, tileRows) =>
+      Try(TileLayout(layoutCols, layoutRows, tileCols, tileRows)) match {
+        case Success(layout) => layout
+        case _               => throw new Exception(s"Invalid layout: $layout. Should be (layoutCols, layoutRows, tileCols, tileRows)")
+      }
     }
 
   implicit val resampleMethodReader: ConfigReader[ResampleMethod] =

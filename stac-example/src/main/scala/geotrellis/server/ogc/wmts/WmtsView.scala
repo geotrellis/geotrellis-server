@@ -59,15 +59,15 @@ class WmtsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
 
   def responseFor(req: Request[F]): F[Response[F]] = {
     WmtsParams(req.multiParams) match {
-      case Invalid(errors)           =>
+      case Invalid(errors) =>
         val msg = ParamError.generateErrorMessage(errors.toList)
         logger.warn(msg) *> BadRequest(msg)
 
       case Valid(_: GetCapabilities) =>
         logger.debug(ansi"%bold{GetCapabilities: ${req.uri}}") *>
-        new CapabilitiesView(wmtsModel, serviceUrl).toXML flatMap (Ok(_))
+          new CapabilitiesView(wmtsModel, serviceUrl).toXML flatMap (Ok(_))
 
-      case Valid(wmtsReq: GetTile)   =>
+      case Valid(wmtsReq: GetTile) =>
         logger.debug(ansi"%bold{GetTile: ${req.uri}}")
         val tileCol   = wmtsReq.tileCol
         val tileRow   = wmtsReq.tileRow
