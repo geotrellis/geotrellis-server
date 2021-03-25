@@ -58,7 +58,7 @@ case class GeotrellisTileMatrix(
           MatrixHeight = layout.tileLayout.layoutRows
         )
 
-      case None                =>
+      case None =>
         throw new Exception(s"Invalid CRS: ${crs}")
     }
   }

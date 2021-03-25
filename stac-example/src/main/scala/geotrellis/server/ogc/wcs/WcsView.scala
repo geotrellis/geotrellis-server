@@ -103,37 +103,37 @@ class WcsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
   }
 
   val extendedParameters: List[DomainType] = DomainType(
-      possibleValuesOption1 = OwsDataRecord(
-        AllowedValues(
-          OwsDataRecord(
-            ValueType("all")
-          ) :: OwsDataRecord(
-            ValueType("data")
-          ) :: OwsDataRecord(
-            ValueType("nodata")
-          ) :: Nil
-        )
-      ),
-      DefaultValue = ValueType("all").some,
-      attributes = Map(
-        "@name" -> DataRecord("target")
+    possibleValuesOption1 = OwsDataRecord(
+      AllowedValues(
+        OwsDataRecord(
+          ValueType("all")
+        ) :: OwsDataRecord(
+          ValueType("data")
+        ) :: OwsDataRecord(
+          ValueType("nodata")
+        ) :: Nil
       )
-    ) :: DomainType(
-      possibleValuesOption1 = OwsDataRecord(AnyValue()),
-      attributes = Map(
-        "@name" -> DataRecord("zFactor")
-      )
-    ) :: DomainType(
-      possibleValuesOption1 = OwsDataRecord(AnyValue()),
-      attributes = Map(
-        "@name" -> DataRecord("azimuth")
-      )
-    ) :: DomainType(
-      possibleValuesOption1 = OwsDataRecord(AnyValue()),
-      attributes = Map(
-        "@name" -> DataRecord("altitude")
-      )
-    ) :: Nil
+    ),
+    DefaultValue = ValueType("all").some,
+    attributes = Map(
+      "@name" -> DataRecord("target")
+    )
+  ) :: DomainType(
+    possibleValuesOption1 = OwsDataRecord(AnyValue()),
+    attributes = Map(
+      "@name" -> DataRecord("zFactor")
+    )
+  ) :: DomainType(
+    possibleValuesOption1 = OwsDataRecord(AnyValue()),
+    attributes = Map(
+      "@name" -> DataRecord("azimuth")
+    )
+  ) :: DomainType(
+    possibleValuesOption1 = OwsDataRecord(AnyValue()),
+    attributes = Map(
+      "@name" -> DataRecord("altitude")
+    )
+  ) :: Nil
 
   private def handleError[Result: EntityEncoder[F, *]](result: Either[Throwable, Result]): F[Response[F]] =
     result match {
@@ -149,7 +149,7 @@ class WcsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
 
   def responseFor(req: Request[F]): F[Response[F]] = {
     WcsParams(req.multiParams) match {
-      case Validated.Invalid(errors)  =>
+      case Validated.Invalid(errors) =>
         val msg = ParamError.generateErrorMessage(errors.toList)
         logger.warn(s"""Error parsing parameters: ${msg}""") *> BadRequest(
           s"""Error parsing parameters: ${msg}"""
@@ -157,19 +157,19 @@ class WcsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
 
       case Validated.Valid(wcsParams) =>
         wcsParams match {
-          case _: GetCapabilitiesWcsParams  =>
+          case _: GetCapabilitiesWcsParams =>
             logger.debug(ansi"%bold{GetCapabilities: $serviceUrl}") *>
-            new CapabilitiesView[F](
-              wcsModel,
-              serviceUrl,
-              extendedParameters ::: extendedRGBParameters
-            ).toXML flatMap { Ok(_) }
+              new CapabilitiesView[F](
+                wcsModel,
+                serviceUrl,
+                extendedParameters ::: extendedRGBParameters
+              ).toXML flatMap { Ok(_) }
 
           case p: DescribeCoverageWcsParams =>
             logger.debug(ansi"%bold{DescribeCoverage: ${req.uri}}") *>
-            Ok(CoverageView(wcsModel, serviceUrl, p).toXML)
+              Ok(CoverageView(wcsModel, serviceUrl, p).toXML)
 
-          case p: GetCoverageWcsParams      =>
+          case p: GetCoverageWcsParams =>
             for {
               _           <- logger.debug(ansi"%bold{GetCoverage: ${req.uri}}")
               getCoverage <- getCoverage.build(p).attempt

@@ -54,50 +54,49 @@ case class StacOgcRepository[F[_]: Applicative](
     filters.fold(List.empty[OgcSource].pure[F]) { filter =>
       /** Query summary i.e. collection or layer summary and items and perform the matching items search. */
       (client.summary(stacSourceConf.searchName, stacSourceConf.searchCriteria), client.search(filter))
-        .mapN {
-          case (summary, items) =>
-            val rasterSources =
-              items.flatMap { item =>
-                item.assets
-                  .get(stacSourceConf.asset)
-                  .map { itemAsset => StacAssetRasterSource(StacAsset(itemAsset.withGDAL(stacSourceConf.withGDAL), item)) }
+        .mapN { case (summary, items) =>
+          val rasterSources =
+            items.flatMap { item =>
+              item.assets
+                .get(stacSourceConf.asset)
+                .map { itemAsset => StacAssetRasterSource(StacAsset(itemAsset.withGDAL(stacSourceConf.withGDAL), item)) }
+            }
+
+          summary match {
+            case csummary: CollectionSummary =>
+              val source: Option[StacCollectionSource] = rasterSources match {
+                case head :: Nil => StacCollectionSource(csummary.asset, head).some
+                case head :: _   =>
+                  /** Extra temporal layers filtering (slicing). If the layer is not temporal, no extra filtering (slicing) would be applied. */
+                  val sources            = rasterSources.timeSlice(query, stacSourceConf.defaultTime, stacSourceConf.datetimeField.some)
+                  val commonCrs          = if (sources.flatMap(_.asset.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
+                  val reprojectedSources = sources.map(_.reproject(commonCrs))
+                  val attributes         = reprojectedSources.attributesByName
+                  val mosaicRasterSource =
+                    MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, csummary.sourceName, attributes)
+
+                  /** In case some of the RasterSources are not from the STAC collection, we'd need to expand the [[StacCollectionSource]] extent. */
+                  StacCollectionSource(csummary.asset.expandExtentToInclude(mosaicRasterSource.extent), mosaicRasterSource).some
+                case _           => None
               }
 
-            summary match {
-              case csummary: CollectionSummary =>
-                val source: Option[StacCollectionSource] = rasterSources match {
-                  case head :: Nil => StacCollectionSource(csummary.asset, head).some
-                  case head :: _   =>
-                    /** Extra temporal layers filtering (slicing). If the layer is not temporal, no extra filtering (slicing) would be applied. */
-                    val sources            = rasterSources.timeSlice(query, stacSourceConf.defaultTime, stacSourceConf.datetimeField.some)
-                    val commonCrs          = if (sources.flatMap(_.asset.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
-                    val reprojectedSources = sources.map(_.reproject(commonCrs))
-                    val attributes         = reprojectedSources.attributesByName
-                    val mosaicRasterSource =
-                      MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, csummary.sourceName, attributes)
+              source.map(stacSourceConf.toLayer).toList
+            case _                           =>
+              val source: Option[RasterSource] = rasterSources match {
+                case head :: Nil => head.some
+                case head :: _   =>
+                  /** Extra temporal layers filtering (slicing). If the layer is not temporal, no extra filtering (slicing) would be applied. */
+                  val sources            = rasterSources.timeSlice(query, stacSourceConf.defaultTime, stacSourceConf.datetimeField.some)
+                  val commonCrs          = if (sources.flatMap(_.asset.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
+                  val reprojectedSources = sources.map(_.reproject(commonCrs))
+                  val attributes         = reprojectedSources.attributesByName
 
-                    /** In case some of the RasterSources are not from the STAC collection, we'd need to expand the [[StacCollectionSource]] extent. */
-                    StacCollectionSource(csummary.asset.expandExtentToInclude(mosaicRasterSource.extent), mosaicRasterSource).some
-                  case _           => None
-                }
+                  MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, attributes).some
+                case _           => None
+              }
 
-                source.map(stacSourceConf.toLayer).toList
-              case _                           =>
-                val source: Option[RasterSource] = rasterSources match {
-                  case head :: Nil => head.some
-                  case head :: _   =>
-                    /** Extra temporal layers filtering (slicing). If the layer is not temporal, no extra filtering (slicing) would be applied. */
-                    val sources            = rasterSources.timeSlice(query, stacSourceConf.defaultTime, stacSourceConf.datetimeField.some)
-                    val commonCrs          = if (sources.flatMap(_.asset.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
-                    val reprojectedSources = sources.map(_.reproject(commonCrs))
-                    val attributes         = reprojectedSources.attributesByName
-
-                    MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, attributes).some
-                  case _           => None
-                }
-
-                source.map(stacSourceConf.toLayer).toList
-            }
+              source.map(stacSourceConf.toLayer).toList
+          }
         }
     }
   }
