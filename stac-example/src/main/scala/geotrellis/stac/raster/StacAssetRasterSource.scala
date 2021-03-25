@@ -21,6 +21,8 @@ import geotrellis.raster.io.geotiff.OverviewStrategy
 import geotrellis.raster._
 import geotrellis.vector.Extent
 import cats.syntax.option._
+import cats.syntax.flatMap._
+import cats.instances.option._
 
 class StacAssetRasterSource(
   val asset: StacAsset,
@@ -52,10 +54,10 @@ class StacAssetRasterSource(
     StacAssetResampleRasterSource(asset, resampleTarget, method, strategy, targetCellType, underlyingRS)
 
   def read(extent: Extent, bands: Seq[Int]): Option[Raster[MultibandTile]] =
-    underlying.read(extent, bands)
+    extent.intersection(this.extent) >> underlying.read(extent, bands)
 
   def read(bounds: GridBounds[Long], bands: Seq[Int]): Option[Raster[MultibandTile]] =
-    underlying.read(bounds, bands)
+    bounds.intersection(dimensions) >> underlying.read(bounds, bands)
 
   def convert(targetCellType: TargetCellType): StacAssetRasterSource =
     StacAssetRasterSource(asset, targetCellType.some, underlying.convert(targetCellType).some)

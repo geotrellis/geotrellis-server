@@ -73,11 +73,11 @@ case class StacOgcRepository[F[_]: Applicative](
                     val commonCrs          = if (sources.flatMap(_.asset.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
                     val reprojectedSources = sources.map(_.reproject(commonCrs))
                     val attributes         = reprojectedSources.attributesByName
-
-                    StacCollectionSource(
-                      csummary.asset,
+                    val mosaicRasterSource =
                       MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, csummary.sourceName, attributes)
-                    ).some
+
+                    /** In case some of the RasterSources are not from the STAC collection, we'd need to expand the [[StacCollectionSource]] extent. */
+                    StacCollectionSource(csummary.asset.expandExtentToInclude(mosaicRasterSource.extent), mosaicRasterSource).some
                   case _           => None
                 }
 

@@ -20,8 +20,7 @@ import cats.{MonadThrow, SemigroupK}
 import cats.instances.list._
 import cats.syntax.semigroup._
 import geotrellis.proj4.CRS
-import geotrellis.server.ogc
-import geotrellis.server.ogc.{ows, MapAlgebraSource, OgcSource, RasterOgcSource}
+import geotrellis.server.ogc.{ows, OgcSource, OgcSourceRepository, RasterOgcSource}
 import geotrellis.server.ogc.wms.WmsParentLayerMeta
 import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
 import geotrellis.server.ogc.stac._
@@ -35,25 +34,23 @@ import sttp.client3.SttpBackend
 sealed trait OgcServiceConf {
   def layerDefinitions: List[OgcSourceConf]
   def layerSources(rasterOgcSources: List[RasterOgcSource]): Repository[OgcSource] = {
-    val rasterLayers: List[RasterOgcSource]      = layerDefinitions.collect { case rsc: RasterSourceConf => rsc.toLayer }
-    val mapAlgebraLayers: List[MapAlgebraSource] = layerDefinitions.collect {
-      case masc: MapAlgebraSourceConf =>
-        masc.modelOpt(rasterOgcSources)
-    }.flatten
+    val rasterLayers     = layerDefinitions.collect { case rsc: RasterSourceConf => rsc.toLayer }
+    val mapAlgebraLayers = layerDefinitions.collect { case masc: MapAlgebraSourceConf => masc.modelOpt(rasterOgcSources) }.flatten
 
-    ogc.OgcSourceRepository(rasterLayers ++ mapAlgebraLayers)
+    OgcSourceRepository(rasterLayers ++ mapAlgebraLayers)
   }
 
   def layerSources[F[_]: SemigroupK: MonadThrow](
     rasterOgcSources: List[RasterOgcSource],
     client: SttpBackend[F, Any]
   ): RepositoryM[F, List, OgcSource] = {
-    val stacLayers: List[StacSourceConf]                 = layerDefinitions.collect { case ssc: StacSourceConf => ssc }
-    val mapAlgebraConfLayers: List[MapAlgebraSourceConf] = layerDefinitions.collect { case masc: MapAlgebraSourceConf => masc }
+    val ogcLayers            = layerDefinitions.collect { case osc: OgcSourceConf => osc }
+    val stacLayers           = ogcLayers.collect { case ssc: StacSourceConf => ssc }
+    val mapAlgebraConfLayers = ogcLayers.collect { case masc: MapAlgebraSourceConf => masc }
 
     layerSources(rasterOgcSources).toF[F] |+|
     StacOgcRepositories[F](stacLayers, client) |+|
-    MapAlgebraStacOgcRepositories[F](mapAlgebraConfLayers, stacLayers, client)
+    MapAlgebraStacOgcRepositories[F](mapAlgebraConfLayers, ogcLayers, client)
   }
 }
 

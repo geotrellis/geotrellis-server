@@ -17,9 +17,10 @@
 package geotrellis.server.ogc.stac
 
 import geotrellis.server.ogc.{OgcSource, RasterOgcSource}
-import geotrellis.server.ogc.conf.{MapAlgebraSourceConf, StacSourceConf}
+import geotrellis.server.ogc.conf.{MapAlgebraSourceConf, OgcSourceConf, RasterSourceConf, StacSourceConf}
 import geotrellis.store.query
 import geotrellis.store.query._
+import geotrellis.server.ogc._
 
 import cats.{Functor, MonadThrow}
 import cats.syntax.functor._
@@ -29,10 +30,10 @@ import sttp.client3.SttpBackend
 
 case class MapAlgebraStacOgcRepository[F[_]: Functor](
   mapAlgebraSourceConf: MapAlgebraSourceConf,
-  stacSourceConfs: List[StacSourceConf],
+  ogcSourceConfs: List[OgcSourceConf],
   repository: RepositoryM[F, List, OgcSource]
 ) extends RepositoryM[F, List, OgcSource] {
-  private val names = stacSourceConfs.map(_.name).distinct
+  private val names = ogcSourceConfs.map(_.name).distinct
 
   def store: F[List[OgcSource]] = find(query.all)
 
@@ -47,7 +48,7 @@ case class MapAlgebraStacOgcRepository[F[_]: Functor](
 
 case class MapAlgebraStacOgcRepositories[F[_]: MonadThrow](
   mapAlgebraConfLayers: List[MapAlgebraSourceConf],
-  stacLayers: List[StacSourceConf],
+  ogcLayers: List[OgcSourceConf],
   client: SttpBackend[F, Any]
 ) extends RepositoryM[F, List, OgcSource] {
   def store: F[List[OgcSource]] =
@@ -66,8 +67,14 @@ case class MapAlgebraStacOgcRepositories[F[_]: MonadThrow](
         val layerNames = conf.listParams(conf.algebra)
 
         /** Get all ogc layers that are required for the MAML expression evaluation */
-        val stacLayersFiltered = stacLayers.filter(l => layerNames.contains(l.name))
-        MapAlgebraStacOgcRepository[F](conf, stacLayersFiltered, StacOgcRepositories[F](stacLayersFiltered, client))
+        val ogcLayersFiltered = ogcLayers.filter(l => layerNames.contains(l.name))
+        val stacLayers        = ogcLayersFiltered.collect { case ssc: StacSourceConf => ssc }
+        val rasterLayers      =
+          if (stacLayers.nonEmpty) ogcLayersFiltered.collect { case ssc: RasterSourceConf => ssc.toLayer }
+          else Nil
+        val repositories      = OgcSourceRepository(rasterLayers).toF[F] |+| StacOgcRepositories[F](stacLayers, client)
+
+        MapAlgebraStacOgcRepository[F](conf, ogcLayersFiltered, repositories)
       }
       .fold(RepositoryM.empty[F, List, OgcSource])(_ |+| _)
       .find(query)
