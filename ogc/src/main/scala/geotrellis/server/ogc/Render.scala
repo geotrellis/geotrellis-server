@@ -20,7 +20,8 @@ import geotrellis.server.ogc.style._
 
 import geotrellis.proj4.CRS
 import geotrellis.raster._
-import geotrellis.raster.io.geotiff.GeoTiff
+import geotrellis.raster.io.geotiff.tags.codes.ColorSpace
+import geotrellis.raster.io.geotiff.{GeoTiff, GeoTiffOptions, MultibandGeoTiff}
 import geotrellis.raster.render.png._
 
 object Render {
@@ -31,7 +32,7 @@ object Render {
         format match {
           case format: OutputFormat.Png => OutputFormat.Png(Some(RgbPngEncoding)).render(raster.tile.color())
           case OutputFormat.Jpg         => raster.tile.color().renderJpg.bytes
-          case OutputFormat.GeoTiff     => GeoTiff(raster, crs).toCloudOptimizedByteArray
+          case OutputFormat.GeoTiff     => MultibandGeoTiff(raster, crs, GeoTiffOptions(colorSpace = ColorSpace.RGB)).toCloudOptimizedByteArray
         }
     }
 
@@ -42,7 +43,7 @@ object Render {
         format match {
           case format: OutputFormat.Png => OutputFormat.Png(Some(RgbaPngEncoding)).render(raster.tile.color())
           case OutputFormat.Jpg         => raster.tile.color().renderJpg.bytes
-          case OutputFormat.GeoTiff     => GeoTiff(raster, crs).toCloudOptimizedByteArray
+          case OutputFormat.GeoTiff     => MultibandGeoTiff(raster, crs, GeoTiffOptions(colorSpace = ColorSpace.RGB)).toCloudOptimizedByteArray
         }
     }
 

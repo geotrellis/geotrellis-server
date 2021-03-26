@@ -19,7 +19,8 @@ package geotrellis.server.ogc.style
 import geotrellis.proj4.CRS
 import geotrellis.raster.{MultibandTile, Raster}
 import geotrellis.raster.histogram.Histogram
-import geotrellis.raster.io.geotiff.GeoTiff
+import geotrellis.raster.io.geotiff.tags.codes.ColorSpace
+import geotrellis.raster.io.geotiff.{GeoTiffOptions, MultibandGeoTiff}
 import geotrellis.server.ogc.OutputFormat
 
 case class RGBStyle(name: String, title: String, legends: List[LegendModel] = Nil) extends OgcStyle {
@@ -27,7 +28,7 @@ case class RGBStyle(name: String, title: String, legends: List[LegendModel] = Ni
     format match {
       case _: OutputFormat.Png  => raster.tile.renderPng()
       case OutputFormat.Jpg     => raster.tile.renderJpg()
-      case OutputFormat.GeoTiff => GeoTiff(raster, crs).toCloudOptimizedByteArray
+      case OutputFormat.GeoTiff => MultibandGeoTiff(raster, crs, GeoTiffOptions(colorSpace = ColorSpace.RGB)).toCloudOptimizedByteArray
     }
   }
 }
