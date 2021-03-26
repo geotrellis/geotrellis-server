@@ -16,16 +16,18 @@
 
 package geotrellis.server.ogc.style
 
-import geotrellis.raster.MultibandTile
+import geotrellis.proj4.CRS
+import geotrellis.raster.{MultibandTile, Raster}
 import geotrellis.raster.histogram.Histogram
+import geotrellis.raster.io.geotiff.GeoTiff
 import geotrellis.server.ogc.OutputFormat
 
 case class RGBStyle(name: String, title: String, legends: List[LegendModel] = Nil) extends OgcStyle {
-  def renderImage(mbtile: MultibandTile, format: OutputFormat, hists: List[Histogram[Double]]): Array[Byte] = {
+  def renderRaster(raster: Raster[MultibandTile], crs: CRS, format: OutputFormat, hists: List[Histogram[Double]]): Array[Byte] = {
     format match {
-      case _: OutputFormat.Png  => mbtile.renderPng()
-      case OutputFormat.Jpg     => mbtile.renderJpg()
-      case OutputFormat.GeoTiff => ??? // Implementation necessary
+      case _: OutputFormat.Png  => raster.tile.renderPng()
+      case OutputFormat.Jpg     => raster.tile.renderJpg()
+      case OutputFormat.GeoTiff => GeoTiff(raster, crs).toCloudOptimizedByteArray
     }
   }
 }

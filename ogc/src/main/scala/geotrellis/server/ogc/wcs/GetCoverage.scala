@@ -59,7 +59,7 @@ class GetCoverage[F[_]: Concurrent: Parallel: Logger](wcsModel: WcsModel[F]) {
           .traverse { eval =>
             eval(e, cs) map {
               case Valid(mbtile) =>
-                val bytes = GeoTiff(Raster(mbtile, e), params.crs).toByteArray
+                val bytes = Raster(mbtile, e).render(params.crs, None, params.format, Nil)
                 requestCache.put(params, bytes)
                 bytes
               case Invalid(errs) => throw MamlException(errs)
@@ -99,7 +99,7 @@ class GetCoverage[F[_]: Concurrent: Parallel: Logger](wcsModel: WcsModel[F]) {
                       // return the actual tile
                       // TODO: handle it in a proper way, how to get information about the bands amount?
                       val tile = ArrayTile.empty(IntCellType, 1, 1)
-                      GeoTiff(Raster(MultibandTile(tile, tile, tile), params.extent), params.crs).toByteArray.pure[F]
+                      Raster(MultibandTile(tile, tile, tile), params.extent).render(params.crs, None, params.format, Nil).pure[F]
                     case _       => Logger[F].error(s"No tile found for the $params request.") *> Array[Byte]().pure[F]
                   }
                 }

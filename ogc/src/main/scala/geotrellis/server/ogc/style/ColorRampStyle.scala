@@ -18,10 +18,11 @@ package geotrellis.server.ogc.style
 
 import geotrellis.server.ogc._
 
+import geotrellis.proj4.CRS
 import geotrellis.raster._
 import geotrellis.raster.histogram.Histogram
-import geotrellis.raster.render.{ColorMap, ColorRamp}
-import geotrellis.raster.render.jpg.JpgEncoder
+import geotrellis.raster.io.geotiff.GeoTiff
+import geotrellis.raster.render.ColorRamp
 import geotrellis.util.np.linspace
 
 case class ColorRampStyle(
@@ -51,8 +52,9 @@ case class ColorRampStyle(
     linspace(minBreak, maxBreak, numBreaks)
   }
 
-  def renderImage(
-    mbtile: MultibandTile,
+  def renderRaster(
+    raster: Raster[MultibandTile],
+    crs: CRS,
     format: OutputFormat,
     hists: List[Histogram[Double]]
   ): Array[Byte] = {
@@ -68,9 +70,9 @@ case class ColorRampStyle(
     val cmap                              = ColorRamp(interpolatedColors).toColorMap(interpolatedBreaks)
 
     format match {
-      case format: OutputFormat.Png => format.render(mbtile.band(bandIndex = 0), cmap)
-      case OutputFormat.Jpg         => mbtile.band(bandIndex = 0).renderJpg(cmap).bytes
-      case OutputFormat.GeoTiff     => ??? // Implementation necessary
+      case format: OutputFormat.Png => format.render(raster.tile.band(bandIndex = 0), cmap)
+      case OutputFormat.Jpg         => raster.tile.band(bandIndex = 0).renderJpg(cmap).bytes
+      case OutputFormat.GeoTiff     => GeoTiff(raster.mapTile(_.band(bandIndex = 0).color(cmap)), crs).toCloudOptimizedByteArray
     }
   }
 }

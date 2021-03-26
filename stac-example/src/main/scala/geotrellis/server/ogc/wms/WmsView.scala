@@ -183,7 +183,7 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
                     case (_, Invalid(errs))            => Invalid(errs)
                   }.attempt flatMap {
                     case Right(Valid((mbtile, hists))) => // success
-                      val rendered = Render.singleband(mbtile, layer.style, wmsReq.format, hists)
+                      val rendered = Raster(mbtile, re.extent).render(wmsReq.crs, layer.style, wmsReq.format, hists)
                       tileCache.put(wmsReq, rendered)
                       Ok(rendered)
                     case Right(Invalid(errs))          => // maml-specific errors
@@ -207,8 +207,8 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
                         _.headOption match {
                           case Some(_) =>
                             val tile   = ArrayTile(Array(0, 0), 1, 1)
-                            val mbtile = MultibandTile(tile, tile, tile)
-                            Ok(Render.singleband(mbtile, None, wmsReq.format, Nil))
+                            val raster = Raster(MultibandTile(tile, tile, tile), wmsReq.boundingBox)
+                            Ok(raster.render(wmsReq.crs, None, wmsReq.format, Nil))
                           case _       => BadRequest(s"Layer ($layerName) not found or CRS (${wmsReq.crs}) not supported")
                         }
                       }

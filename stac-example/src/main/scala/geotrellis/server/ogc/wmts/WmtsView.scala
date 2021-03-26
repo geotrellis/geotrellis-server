@@ -22,6 +22,8 @@ import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wmts.WmtsParams.{GetCapabilities, GetTile}
 import geotrellis.server.utils._
 
+import geotrellis.layer.SpatialKey
+import geotrellis.raster.Raster
 import com.azavea.maml.eval._
 import org.http4s.scalaxml._
 import org.http4s._
@@ -41,7 +43,6 @@ import com.github.blemale.scaffeine.{Cache, Scaffeine}
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
 
 import scala.concurrent.duration._
-
 import java.net._
 
 class WmtsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
@@ -98,7 +99,8 @@ class WmtsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
                   case (_, Invalid(errs))            => Invalid(errs)
                 }.attempt flatMap {
                   case Right(Valid((mbtile, hists))) => // success
-                    val rendered = Render.singleband(mbtile, layer.style, wmtsReq.format, hists)
+                    val extent   = layer.layout.mapTransform(SpatialKey(tileCol, tileRow))
+                    val rendered = Raster(mbtile, extent).render(layer.crs, layer.style, wmtsReq.format, hists)
                     tileCache.put(wmtsReq, rendered)
                     Ok(rendered)
                   case Right(Invalid(errs))          => // maml-specific errors
