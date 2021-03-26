@@ -47,6 +47,7 @@ import io.chrisdavenport.log4cats.Logger
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
 import opengis._
+import org.http4s.headers.`Content-Type`
 import scalaxb._
 
 import java.net.URL
@@ -185,7 +186,7 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
                     case Right(Valid((mbtile, hists))) => // success
                       val rendered = Raster(mbtile, re.extent).render(wmsReq.crs, layer.style, wmsReq.format, hists)
                       tileCache.put(wmsReq, rendered)
-                      Ok(rendered)
+                      Ok(rendered).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.format))))
                     case Right(Invalid(errs))          => // maml-specific errors
                       logger.debug(errs.toList.toString)
                       BadRequest(errs.asJson)
@@ -207,9 +208,8 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
                         _.headOption match {
                           case Some(_) =>
                             val tile   = ArrayTile(Array(0, 0), 1, 1)
-                            val mbtile = MultibandTile(tile, tile, tile)
                             val raster = Raster(MultibandTile(tile, tile, tile), wmsReq.boundingBox)
-                            Ok(raster.render(wmsReq.crs, None, wmsReq.format, Nil))
+                            Ok(raster.render(wmsReq.crs, None, wmsReq.format, Nil)).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.format))))
                           case _       => BadRequest(s"Layer ($layerName) not found or CRS (${wmsReq.crs}) not supported")
                         }
                       }
@@ -218,7 +218,7 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
             }
 
           tileCache.getIfPresent(wmsReq) match {
-            case Some(rendered) => Ok(rendered)
+            case Some(rendered) => Ok(rendered).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.format))))
             case _              => res
           }
         }

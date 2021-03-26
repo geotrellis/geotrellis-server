@@ -16,6 +16,7 @@
 
 package geotrellis.server.ogc.wcs
 
+import geotrellis.server.ogc.{OutputFormat, ToMediaType}
 import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.ows.OwsDataRecord
 import geotrellis.server.utils._
@@ -35,6 +36,7 @@ import cats.syntax.applicativeError._
 import io.chrisdavenport.log4cats.Logger
 import opengis.ows.{AllowedValues, AnyValue, DomainType, ValueType}
 import opengis._
+import org.http4s.headers.`Content-Type`
 import scalaxb._
 
 import java.net._
@@ -135,11 +137,11 @@ class WcsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
     )
   ) :: Nil
 
-  private def handleError[Result: EntityEncoder[F, *]](result: Either[Throwable, Result]): F[Response[F]] =
+  private def handleError[Result: EntityEncoder[F, *]](result: Either[Throwable, Result], format: OutputFormat): F[Response[F]] =
     result match {
       case Right(res) =>
         logger.info(s"response ${res.toString}")
-        Ok(res)
+        Ok(res).map(_.putHeaders(`Content-Type`(ToMediaType(format))))
       case Left(err)  =>
         logger.error(err.stackTraceString)
         InternalServerError(err.stackTraceString)
@@ -173,7 +175,7 @@ class WcsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
             for {
               _           <- logger.debug(ansi"%bold{GetCoverage: ${req.uri}}")
               getCoverage <- getCoverage.build(p).attempt
-              result      <- handleError(getCoverage)
+              result      <- handleError(getCoverage, p.format)
               _           <- logger.debug(s"getcoverage result: $result")
             } yield {
               result
