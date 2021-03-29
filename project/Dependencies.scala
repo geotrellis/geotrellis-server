@@ -29,6 +29,7 @@ object Dependencies {
   val circeCore            = circeVersion("core")
   val circeShapes          = circeVersion("shapes")
   val circeGeneric         = circeVersion("generic")
+  val circeGenericExtras   = circeVersion("generic-extras")
   val circeOptics          = Def.setting { "io.circe" %% "circe-optics" % "0.13.0" }
   val circeParser          = circeVersion("parser")
   val circeRefined         = circeVersion("refined")
