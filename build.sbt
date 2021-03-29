@@ -168,11 +168,11 @@ lazy val credentialSettings = Seq(
 
 lazy val root = project
   .in(file("."))
-  .settings(moduleName := "root")
+  .settings(name := "geotrellis-server")
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(noPublishSettings)
-  .aggregate(core, example, ogc, opengis, `ogc-example`, `stac-example`)
+  .aggregate(core, example, ogc, opengis, `ogc-example`, stac, `stac-example`)
 
 lazy val core = project
   .settings(moduleName := "geotrellis-server-core")
@@ -323,9 +323,24 @@ lazy val `ogc-example` = project
     )
   )
 
+lazy val stac = project
+  .settings(moduleName := "geotrellis-stac")
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      circeCore.value,
+      circeGeneric.value,
+      circeGenericExtras.value,
+      geotrellisRaster,
+      stac4sCore,
+      stac4sClient
+    )
+  )
+
 lazy val `stac-example` = project
-  .dependsOn(ogc)
-  .settings(moduleName := "geotrellis-stac-example")
+  .dependsOn(ogc, stac)
+  .settings(moduleName := "geotrellis-server-stac-example")
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(
@@ -342,8 +357,6 @@ lazy val `stac-example` = project
       scaffeine,
       scalatest,
       decline,
-      stac4sCore,
-      stac4sClient,
       sttpHttp4s,
       refinedCats,
       refinedPureconfig,
@@ -355,7 +368,7 @@ lazy val `stac-example` = project
       ExclusionRule("org.slf4j", "slf4j-log4j12"),
       ExclusionRule("org.slf4j", "slf4j-nop")
     ),
-    assembly / assemblyJarName := "geotrellis-stac-example.jar"
+    assembly / assemblyJarName := "geotrellis-server-stac-example.jar"
   )
 
 lazy val bench = project

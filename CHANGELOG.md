@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - StacAssetRasterSource improvements [#326](https://github.com/geotrellis/geotrellis-server/issues/326)
 - StacCollectionRasterSource implementation [#340](https://github.com/geotrellis/geotrellis-server/issues/340)
 - WCS Rendering formats support [#195](https://github.com/geotrellis/geotrellis-server/issues/195)
+- GeoTrellis Server STAC Package [#350](https://github.com/geotrellis/geotrellis-server/issues/350)
 
 ### Changed
 - Update GT Server STAC4S dependency [#319](https://github.com/geotrellis/geotrellis-server/issues/319)
@@ -130,7 +131,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Update geotrellis-contrib [#135](https://github.com/geotrellis/geotrellis-server/pull/135)
 
-[Unreleased]: https://github.com/geotrellis/geotrellis-server/compare/4.2.0...HEAD
+[Unreleased]: https://github.com/geotrellis/geotrellis-server/compare/4.3.0...HEAD
+[4.3.0]: https://github.com/geotrellis/geotrellis-server/compare/4.3.0...4.2.0
 [4.2.0]: https://github.com/geotrellis/geotrellis-server/compare/4.2.0...4.1.0
 [4.1.0]: https://github.com/geotrellis/geotrellis-server/compare/4.0.1...4.1.0
 [4.0.1]: https://github.com/geotrellis/geotrellis-server/compare/4.0.0...4.0.1
