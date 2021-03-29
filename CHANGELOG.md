@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Service endpoints reject requests with unsupported version parameters [#313](https://github.com/geotrellis/geotrellis-server/pull/313)
 - Axis Ordering in a wms getmap [#302](https://github.com/geotrellis/geotrellis-server/issues/302)
 - Interoperability of STAC and non-STAC layers in mapalgebra layers [#309](https://github.com/geotrellis/geotrellis-server/issues/309)
+- OGC endpoints format parameter and HTTP response mime-type not matching [#255](https://github.com/geotrellis/geotrellis-server/issues/255)
 
 ## Added
 - WCS services support configuration of `supported-projections` [#314](https://github.com/geotrellis/geotrellis-server/pull/314)
@@ -17,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - STAC Collections support [#338](https://github.com/geotrellis/geotrellis-server/issues/338)
 - StacAssetRasterSource improvements [#326](https://github.com/geotrellis/geotrellis-server/issues/326)
 - StacCollectionRasterSource implementation [#340](https://github.com/geotrellis/geotrellis-server/issues/340)
+- WCS Rendering formats support [#195](https://github.com/geotrellis/geotrellis-server/issues/195)
 
 ### Changed
 - Update GT Server STAC4S dependency [#319](https://github.com/geotrellis/geotrellis-server/issues/319)

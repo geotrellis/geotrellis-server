@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Azavea
+ * Copyright 2021 Azavea
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package geotrellis.server.ogc.style
+package geotrellis.server.ogc
 
-import geotrellis.proj4.CRS
-import geotrellis.server.ogc.OutputFormat
-import geotrellis.raster._
-import geotrellis.raster.histogram.Histogram
+import org.http4s.MediaType
 
-trait OgcStyle {
-  def name: String
-  def title: String
-  def legends: List[LegendModel]
-  def renderRaster(raster: Raster[MultibandTile], crs: CRS, format: OutputFormat, hists: List[Histogram[Double]]): Array[Byte]
+object ToMediaType {
+  def apply(format: OutputFormat): MediaType = format match {
+    case OutputFormat.Png(_)  => MediaType.image.png
+    case OutputFormat.Jpg     => MediaType.image.jpeg
+    case OutputFormat.GeoTiff => MediaType.image.tiff
+  }
 }

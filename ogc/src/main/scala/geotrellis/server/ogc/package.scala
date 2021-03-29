@@ -16,13 +16,20 @@
 
 package geotrellis.server
 
-import geotrellis.raster.CellSize
+import geotrellis.proj4.CRS
+import geotrellis.raster.{CellSize, Histogram, MultibandTile, Raster}
+import geotrellis.server.ogc.style.OgcStyle
 import geotrellis.vector.Extent
 
 package object ogc {
-  implicit class ExtentOps(self: Extent) {
+  implicit class ExtentOps(val self: Extent) extends AnyVal {
     def swapXY: Extent                             = Extent(xmin = self.ymin, ymin = self.xmin, xmax = self.ymax, ymax = self.xmax)
     def buffer(cellSize: CellSize): Extent         = self.buffer(cellSize.width / 2, cellSize.height / 2)
     def buffer(cellSize: Option[CellSize]): Extent = cellSize.fold(self)(buffer)
+  }
+
+  implicit class RasterOps(val self: Raster[MultibandTile]) extends AnyVal {
+    def render(crs: CRS, maybeStyle: Option[OgcStyle], format: OutputFormat, hists: List[Histogram[Double]]): Array[Byte] =
+      Render.singleband(self, crs, maybeStyle, format, hists)
   }
 }

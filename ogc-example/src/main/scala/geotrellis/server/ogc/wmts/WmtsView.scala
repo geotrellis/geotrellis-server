@@ -22,6 +22,8 @@ import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wmts.WmtsParams.{GetCapabilities, GetTile}
 import geotrellis.server.utils._
 
+import geotrellis.layer.SpatialKey
+import geotrellis.raster.Raster
 import com.azavea.maml.eval._
 import org.http4s.scalaxml._
 import org.http4s._
@@ -33,12 +35,14 @@ import cats.Parallel
 import cats.data.Validated.{Invalid, Valid}
 import cats.syntax.apply._
 import cats.syntax.applicative._
+import cats.syntax.functor._
 import cats.syntax.flatMap._
 import cats.syntax.applicativeError._
 import cats.syntax.parallel._
 import io.chrisdavenport.log4cats.Logger
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
+import org.http4s.headers.`Content-Type`
 
 import scala.concurrent.duration._
 
@@ -98,9 +102,10 @@ class WmtsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
                   case (_, Invalid(errs))            => Invalid(errs)
                 }.attempt flatMap {
                   case Right(Valid((mbtile, hists))) => // success
-                    val rendered = Render.singleband(mbtile, layer.style, wmtsReq.format, hists)
+                    val extent   = layer.layout.mapTransform(SpatialKey(tileCol, tileRow))
+                    val rendered = Raster(mbtile, extent).render(layer.crs, layer.style, wmtsReq.format, hists)
                     tileCache.put(wmtsReq, rendered)
-                    Ok(rendered)
+                    Ok(rendered).map(_.putHeaders(`Content-Type`(ToMediaType(wmtsReq.format))))
                   case Right(Invalid(errs))          => // maml-specific errors
                     logger.debug(errs.toList.toString)
                     BadRequest(errs.asJson)
@@ -113,7 +118,7 @@ class WmtsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
         }
 
         tileCache.getIfPresent(wmtsReq) match {
-          case Some(rendered) => Ok(rendered)
+          case Some(rendered) => Ok(rendered).map(_.putHeaders(`Content-Type`(ToMediaType(wmtsReq.format))))
           case _              => res
         }
     }
