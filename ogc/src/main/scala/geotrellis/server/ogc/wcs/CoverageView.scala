@@ -64,14 +64,14 @@ object CoverageView {
     val nativeCrs        = source.nativeCrs.head
     val re               = source.nativeRE
     val llre             = source match {
-      case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod, _, _) =>
-        rss.values
+      case mas: MapAlgebraSource           =>
+        mas.sourcesList
           .map { rs =>
             ReprojectRasterExtent(
               rs.gridExtent,
               rs.crs,
               LatLng,
-              Options.DEFAULT.copy(resampleMethod)
+              Options.DEFAULT.copy(mas.resampleMethod)
             )
           }
           .reduce { (re1, re2) =>
@@ -82,7 +82,7 @@ object CoverageView {
               else re2.cellSize
             new GridExtent[Long](e, cs)
           }
-      case rasterOgcLayer: RasterOgcSource                            =>
+      case rasterOgcLayer: RasterOgcSource =>
         val rs = rasterOgcLayer.source
         ReprojectRasterExtent(
           rs.gridExtent,

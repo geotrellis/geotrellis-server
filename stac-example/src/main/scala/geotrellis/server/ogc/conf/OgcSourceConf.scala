@@ -17,6 +17,7 @@
 package geotrellis.server.ogc.conf
 
 import geotrellis.server.ogc.stac.{ByCollection, ByLayer, StacSearchCriteria}
+
 import geotrellis.raster.RasterSource
 import geotrellis.raster.io.geotiff.OverviewStrategy
 import geotrellis.raster.resample._
@@ -54,7 +55,8 @@ case class StacSourceConf(
   overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
   defaultTime: Boolean = false,
   datetimeField: String = "datetime",
-  withGDAL: Boolean = false
+  withGDAL: Boolean = false,
+  computeTimePositions: Boolean = false
 ) extends OgcSourceConf {
 
   /** By default the search would happen across collections. */
@@ -74,7 +76,7 @@ case class StacSourceConf(
     SimpleSource(name, title, rs, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, datetimeField.some)
 
   def toLayer(rs: StacCollectionSource): StacOgcSource =
-    StacOgcSource(name, title, rs, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, datetimeField.some)
+    StacOgcSource(name, title, rs, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, datetimeField.some, computeTimePositions)
 }
 
 object StacSourceConf {
@@ -127,48 +129,40 @@ case class MapAlgebraSourceConf(
     *  in the algebra field
     */
   def model(possibleSources: List[RasterOgcSource]): MapAlgebraSource = {
-    val layerNames      = listParams(algebra)
-    val sourceList      = layerNames.map { name =>
+    val layerNames = listParams(algebra)
+    val sourceList = layerNames.map { name =>
       val layerSrc = possibleSources.find(_.name == name).getOrElse {
         throw new Exception(
           s"MAML Layer expected but was unable to find the simple layer '$name', make sure all required layers are in the server configuration and are correctly spelled there and in all provided MAML"
         )
       }
-      (layerSrc.timeMetadataKey, name -> layerSrc.source)
+      name -> layerSrc
     }
-    val timeMetadataKey = sourceList.flatMap(_._1).headOption
     MapAlgebraSource(
       name,
       title,
-      sourceList.map(_._2).toMap,
+      sourceList.toMap,
       algebra,
       defaultStyle,
       styles.map(_.toStyle),
       resampleMethod,
-      overviewStrategy,
-      timeMetadataKey
+      overviewStrategy
     )
   }
 
   def modelOpt(possibleSources: List[RasterOgcSource]): Option[MapAlgebraSource] = {
-    val layerNames      = listParams(algebra)
-    val sourceList      = layerNames.flatMap { name =>
-      possibleSources.find(_.name == name).map { layerSrc =>
-        (layerSrc.timeMetadataKey, name -> layerSrc.source)
-      }
-    }
-    val timeMetadataKey = sourceList.flatMap(_._1).headOption
+    val layerNames = listParams(algebra)
+    val sourceList = layerNames.flatMap { name => possibleSources.find(_.name == name).map { layerSrc => name -> layerSrc } }
     if (sourceList.length == layerNames.length)
       MapAlgebraSource(
         name,
         title,
-        sourceList.map(_._2).toMap,
+        sourceList.toMap,
         algebra,
         defaultStyle,
         styles.map(_.toStyle),
         resampleMethod,
-        overviewStrategy,
-        timeMetadataKey
+        overviewStrategy
       ).some
     else None
   }

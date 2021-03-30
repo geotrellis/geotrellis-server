@@ -165,14 +165,14 @@ object CapabilitiesView {
         },
         EX_GeographicBoundingBox = {
           val llre = source match {
-            case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod, _, _) =>
-              rss.values
+            case mas: MapAlgebraSource           =>
+              mas.sourcesList
                 .map { rs =>
                   ReprojectRasterExtent(
                     rs.gridExtent,
                     rs.crs,
                     LatLng,
-                    Options.DEFAULT.copy(resampleMethod)
+                    Options.DEFAULT.copy(mas.resampleMethod)
                   )
                 }
                 .reduce { (re1, re2) =>
@@ -183,7 +183,7 @@ object CapabilitiesView {
                     else re2.cellSize
                   new GridExtent[Long](e, cs)
                 }
-            case rasterOgcLayer: RasterOgcSource                            =>
+            case rasterOgcLayer: RasterOgcSource =>
               val rs = rasterOgcLayer.source
               ReprojectRasterExtent(
                 rs.gridExtent,
@@ -240,15 +240,15 @@ object CapabilitiesView {
     val bboxAndLayers = model.sources.store map { sources =>
       val bboxes  = sources map { source =>
         val llre = source match {
-          case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod, _, _) =>
-            rss.values
-              .map { rs => ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(resampleMethod)) }
+          case mas: MapAlgebraSource           =>
+            mas.sourcesList
+              .map { rs => ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(mas.resampleMethod)) }
               .reduce { (re1, re2) =>
                 val e  = re1.extent combine re2.extent
                 val cs = if (re1.cellSize.resolution < re2.cellSize.resolution) re1.cellSize else re2.cellSize
                 new GridExtent[Long](e, cs)
               }
-          case rasterOgcLayer: RasterOgcSource                            =>
+          case rasterOgcLayer: RasterOgcSource =>
             val rs = rasterOgcLayer.source
             ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(rasterOgcLayer.resampleMethod))
         }

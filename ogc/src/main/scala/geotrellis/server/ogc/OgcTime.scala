@@ -37,6 +37,8 @@ object OgcTime {
       (l, r) match {
         case (l: OgcTimePositions, r: OgcTimePositions)  => l |+| r
         case (l: OgcTimeInterval, r: OgcTimeInterval)    => l |+| r
+        case (l: OgcTimePositions, r: OgcTimeInterval)   => l.toOgcTimeInterval |+| r
+        case (l: OgcTimeInterval, r: OgcTimePositions)   => l |+| r.toOgcTimeInterval
         case (l: OgcTimePositions, _: OgcTimeEmpty.type) => l
         case (l: OgcTimeInterval, _: OgcTimeEmpty.type)  => l
         case (_: OgcTimeEmpty.type, r: OgcTimePositions) => r
@@ -126,7 +128,9 @@ object OgcTimeInterval {
     OgcTimeInterval(times.head, times.last, None)
   }
 
-  def apply(timePeriod: ZonedDateTime): OgcTimeInterval = OgcTimeInterval(timePeriod, timePeriod, None)
+  def apply(start: ZonedDateTime): OgcTimeInterval = OgcTimeInterval(start, start, None)
+
+  def apply(start: ZonedDateTime, end: ZonedDateTime): OgcTimeInterval = OgcTimeInterval(start, end, None)
 
   def apply(timeString: String): OgcTimeInterval = fromString(timeString)
 

@@ -212,16 +212,22 @@ case class MapAlgebraSourceMetadata(
 case class MapAlgebraSource(
   name: String,
   title: String,
-  sources: Map[String, RasterSource],
+  ogcSources: Map[String, RasterOgcSource],
   algebra: Expression,
   defaultStyle: Option[String],
   styles: List[OgcStyle],
   resampleMethod: ResampleMethod,
-  overviewStrategy: OverviewStrategy,
-  timeMetadataKey: Option[String]
+  overviewStrategy: OverviewStrategy
 ) extends OgcSource {
+  // each of the underlying ogcSources uses it's own timeMetadataKey
+  val timeMetadataKey: Option[String] = None
+
+  lazy val sources: Map[String, RasterSource]    = ogcSources.mapValues(_.source)
+  lazy val sourcesList: List[RasterSource]       = sources.values.toList
+  lazy val ogcSourcesList: List[RasterOgcSource] = ogcSources.values.toList
+
   def extentIn(crs: CRS): Extent = {
-    val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sources.values.map(_.reproject(crs)).toList)
+    val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sourcesList.map(_.reproject(crs)))
     val extents                               = reprojectedSources.map(_.extent)
 
     SampleUtils.intersectExtents(extents).getOrElse {
@@ -230,7 +236,7 @@ case class MapAlgebraSource(
   }
 
   def bboxIn(crs: CRS): BoundingBox = {
-    val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sources.values.map(_.reproject(crs)).toList)
+    val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sourcesList.map(_.reproject(crs)))
     val extents                               = reprojectedSources.map(_.extent)
     val extentIntersection                    = SampleUtils.intersectExtents(extents)
     val cellSize                              = SampleUtils.chooseLargestCellSize(reprojectedSources.map(_.cellSize))
@@ -253,7 +259,7 @@ case class MapAlgebraSource(
     )
 
   lazy val nativeExtent: Extent = {
-    val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sources.values.map(_.reproject(nativeCrs.head)).toList)
+    val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sourcesList.map(_.reproject(nativeCrs.head)))
     val extents                               = reprojectedSources.map(_.extent)
     val extentIntersection                    = SampleUtils.intersectExtents(extents)
 
@@ -264,20 +270,17 @@ case class MapAlgebraSource(
   }
 
   lazy val nativeRE: GridExtent[Long] = {
-    val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sources.values.map(_.reproject(nativeCrs.head)).toList)
+    val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sourcesList.map(_.reproject(nativeCrs.head)))
     val cellSize                              = SampleUtils.chooseSmallestCellSize(reprojectedSources.map(_.cellSize))
 
     new GridExtent[Long](nativeExtent, cellSize)
   }
 
-  val time: OgcTime =
-    timeMetadataKey.toList
-      .flatMap { key => sources.values.toList.map(_.time(key.some)) }
-      .foldLeft[OgcTime](OgcTimeEmpty)(_ |+| _)
+  val time: OgcTime = ogcSources.values.toList.map(_.time).foldLeft[OgcTime](OgcTimeEmpty)(_ |+| _)
 
   val attributes: Map[String, String]  = Map.empty
-  lazy val nativeCrs: Set[CRS]         = sources.values.map(_.crs).toSet
-  lazy val minBandCount: Int           = sources.values.map(_.bandCount).min
-  lazy val cellTypes: Set[CellType]    = sources.values.map(_.cellType).toSet
-  lazy val resolutions: List[CellSize] = sources.values.flatMap(_.resolutions).toList.distinct
+  lazy val nativeCrs: Set[CRS]         = ogcSourcesList.flatMap(_.nativeCrs).toSet
+  lazy val minBandCount: Int           = sourcesList.map(_.bandCount).min
+  lazy val cellTypes: Set[CellType]    = sourcesList.map(_.cellType).toSet
+  lazy val resolutions: List[CellSize] = sourcesList.flatMap(_.resolutions).distinct
 }

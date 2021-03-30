@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - StacCollectionRasterSource implementation [#340](https://github.com/geotrellis/geotrellis-server/issues/340)
 - WCS Rendering formats support [#195](https://github.com/geotrellis/geotrellis-server/issues/195)
 - GeoTrellis Server STAC Package [#350](https://github.com/geotrellis/geotrellis-server/issues/350)
+- STAC Collection temporal extents support [#347](https://github.com/geotrellis/geotrellis-server/issues/347)
 
 ### Changed
 - Update GT Server STAC4S dependency [#319](https://github.com/geotrellis/geotrellis-server/issues/319)

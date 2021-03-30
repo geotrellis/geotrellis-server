@@ -37,6 +37,8 @@ stac-lc8-red-us = {
   asset-limit = 1000 // Max assets returned by the STAC search request
   source = "http://localhost:9090/" // Path to the STAC API endpoint
   default-style = "red-to-blue"
+  // force time positions computation even if the range is given through the collection / layer summary
+  compute-time-positions = true
   styles = [
     {
       name = "red-to-blue"

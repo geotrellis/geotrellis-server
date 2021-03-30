@@ -52,12 +52,14 @@ case class WmsModel[F[_]: Monad](
               source.styles.find(_.name == name)
             }
             source match {
-              case rs: RasterOgcSource                                                                              => rs.toLayer(supportedCrs, None, p.time :: Nil)
-              case MapAlgebraSource(name, title, rasterSources, algebra, _, _, resampleMethod, overviewStrategy, _) =>
-                val simpleLayers       = rasterSources.mapValues { rs =>
+              case rs: RasterOgcSource   => rs.toLayer(supportedCrs, None, p.time :: Nil)
+              case mas: MapAlgebraSource =>
+                val (name, title, algebra, resampleMethod, overviewStrategy) =
+                  (mas.name, mas.title, mas.algebra, mas.resampleMethod, mas.overviewStrategy)
+                val simpleLayers                                             = mas.sources.mapValues { rs =>
                   SimpleOgcLayer(name, title, supportedCrs, rs, style, resampleMethod, overviewStrategy)
                 }
-                val extendedParameters = extendedParametersBinding.flatMap(_.apply(p.params))
+                val extendedParameters                                       = extendedParametersBinding.flatMap(_.apply(p.params))
                 MapAlgebraOgcLayer(
                   name,
                   title,

@@ -22,7 +22,7 @@ import geotrellis.store.query._
 
 import geotrellis.raster.{EmptyName, RasterSource, SourceName, StringName}
 import geotrellis.raster.geotiff.GeoTiffPath
-import com.azavea.stac4s.StacItemAsset
+import com.azavea.stac4s.{StacExtent, StacItemAsset}
 import com.azavea.stac4s.api.client.{SearchFilters, StacClient, Query => SQuery}
 import io.circe.syntax._
 import cats.{Applicative, Foldable, FunctorFilter}
@@ -33,7 +33,19 @@ import cats.syntax.functorFilter._
 import cats.syntax.applicative._
 import eu.timepit.refined.types.string.NonEmptyString
 
+import java.time.ZoneOffset
+
 package object stac {
+  implicit class StacExtentionOps(val self: StacExtent) extends AnyVal {
+
+    /** [[StacExtent]]s with no temporal component are valid. */
+    def ogcTime: Option[OgcTime] = self.temporal.interval.headOption.map(_.value.flatten.map(_.atZone(ZoneOffset.UTC))).map {
+      case fst :: Nil        => OgcTimeInterval(fst)
+      case fst :: snd :: Nil => OgcTimeInterval(fst, snd)
+      case _                 => OgcTimeEmpty
+    }
+  }
+
   implicit class StacSummaryOps(val self: StacSummary) extends AnyVal {
     def sourceName: SourceName =
       self match {

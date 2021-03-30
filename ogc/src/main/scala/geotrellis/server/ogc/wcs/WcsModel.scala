@@ -36,12 +36,11 @@ case class WcsModel[F[_]: Functor](
     val filteredSources = sources.find(p.toQuery)
     filteredSources.map {
       _.map {
-        case rs: RasterOgcSource                                                                        => rs.toLayer(p.crs, None, p.temporalSequence)
-        case MapAlgebraSource(name, title, sources, algebra, _, _, resampleMethod, overviewStrategy, _) =>
-          val simpleLayers       = sources.mapValues { rs =>
-            SimpleOgcLayer(name, title, p.crs, rs, None, resampleMethod, overviewStrategy)
-          }
-          val extendedParameters = extendedParametersBinding.flatMap(_.apply(p.params))
+        case rs: RasterOgcSource   => rs.toLayer(p.crs, None, p.temporalSequence)
+        case mas: MapAlgebraSource =>
+          val (name, title, algebra, resampleMethod, overviewStrategy) = (mas.name, mas.title, mas.algebra, mas.resampleMethod, mas.overviewStrategy)
+          val simpleLayers                                             = mas.sources.mapValues { rs => SimpleOgcLayer(name, title, p.crs, rs, None, resampleMethod, overviewStrategy) }
+          val extendedParameters                                       = extendedParametersBinding.flatMap(_.apply(p.params))
           MapAlgebraOgcLayer(
             name,
             title,

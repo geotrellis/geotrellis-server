@@ -73,26 +73,24 @@ case class MapAlgebraSourceConf(
     *  in the algebra field
     */
   def model(possibleSources: List[RasterOgcSource]): MapAlgebraSource = {
-    val layerNames      = listParams(algebra)
-    val sourceList      = layerNames.map { name =>
+    val layerNames = listParams(algebra)
+    val sourceList = layerNames.map { name =>
       val layerSrc = possibleSources.find(_.name == name).getOrElse {
         throw new Exception(
           s"MAML Layer expected but was unable to find the simple layer '$name', make sure all required layers are in the server configuration and are correctly spelled there and in all provided MAML"
         )
       }
-      (layerSrc.timeMetadataKey, name -> layerSrc.source)
+      name -> layerSrc
     }
-    val timeMetadataKey = sourceList.flatMap(_._1).headOption
     MapAlgebraSource(
       name,
       title,
-      sourceList.map(_._2).toMap,
+      sourceList.toMap,
       algebra,
       defaultStyle,
       styles.map(_.toStyle),
       resampleMethod,
-      overviewStrategy,
-      timeMetadataKey
+      overviewStrategy
     )
   }
 }

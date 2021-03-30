@@ -17,15 +17,12 @@
 package geotrellis.stac.raster
 
 import io.circe.syntax._
-
-import geotrellis.stac._
 import geotrellis.raster._
-import geotrellis.vector._
-import com.azavea.stac4s.StacCollection
+import com.azavea.stac4s.{StacCollection, StacExtent}
 
 case class StacCollectionSource(asset: StacCollection, source: RasterSource) extends StacSource[StacCollection] {
-  val extent: Extent   = asset.extent.spatial.toExtent
-  val name: SourceName = StringName(asset.id)
+  val stacExtent: StacExtent = asset.extent
+  val name: SourceName       = StringName(asset.id)
 
   lazy val attributes: Map[String, String] =
     asset.asJson.asObject
