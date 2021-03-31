@@ -23,6 +23,7 @@ import cats.syntax.semigroup._
 import jp.ne.opt.chronoscala.Imports._
 
 import java.time.ZonedDateTime
+import java.time.Duration
 import scala.util.Try
 
 sealed trait OgcTime {
@@ -56,6 +57,28 @@ object OgcTime {
 
   def fromString(str: String): OgcTime =
     Try(OgcTimeInterval.fromString(str)).getOrElse(OgcTimePositions(str.split(",").toList))
+
+  implicit class OgcTimeOps(val self: OgcTime) extends AnyVal {
+
+    /** Reformat OgcTime if possible. */
+    def format(format: OgcTimeFormat): OgcTime = {
+      format match {
+        case OgcTimeFormat.Interval  =>
+          self match {
+            case interval: OgcTimeInterval   => interval
+            case positions: OgcTimePositions => positions.toOgcTimeInterval
+            case _                           => self
+          }
+        case OgcTimeFormat.Positions =>
+          self match {
+            case interval: OgcTimeInterval   => interval.toTimePositions.getOrElse(interval)
+            case positions: OgcTimePositions => positions
+            case _                           => self
+          }
+        case OgcTimeFormat.Self      => self
+      }
+    }
+  }
 }
 
 case object OgcTimeEmpty extends OgcTime {
@@ -69,9 +92,22 @@ case object OgcTimeEmpty extends OgcTime {
 final case class OgcTimePositions(list: NonEmptyList[ZonedDateTime]) extends OgcTime {
   import OgcTimePositions._
 
+  /** Compute (if possible) the period of the [[ZonedDateTime]] lists. */
+  def computeIntervalPeriod: Option[Duration] = {
+    val periods =
+      list.toList
+        .sliding(2)
+        .map { case Seq(l, r, _*) => Duration.ofMillis((l - r.toEpochMilli).toEpochMilli) }
+        .toList
+        .distinct
+
+    if (periods.length < 2) periods.headOption
+    else None
+  }
+
   def toOgcTimeInterval: OgcTimeInterval = {
     val times = list.sorted
-    OgcTimeInterval(times.head, times.last, None)
+    OgcTimeInterval(times.head, times.last, computeIntervalPeriod.map(_.toString))
   }
   override def toString: String = list.toList.map(_.toInstant.toString).mkString(", ")
 }
@@ -112,6 +148,19 @@ object OgcTimePositions {
   *                       encoded directly
   */
 final case class OgcTimeInterval(start: ZonedDateTime, end: ZonedDateTime, interval: Option[String]) extends OgcTime {
+  def duration: Option[Duration] = interval.flatMap(p => Try(Duration.parse(p)).toOption)
+
+  def toTimePositions: Option[OgcTimePositions] =
+    duration.flatMap { d =>
+      val positions =
+        (start.toEpochMilli to end.toEpochMilli by d.toMillis)
+          .map(Instant.ofEpochMilli)
+          .map(ZonedDateTime.ofInstant(_, start.getZone))
+          .toList
+
+      NonEmptyList.fromList(positions).map(OgcTimePositions.apply)
+    }
+
   override def toString: String =
     if (start != end) s"${start.toInstant.toString}/${end.toInstant.toString}${interval.map("/" + _).getOrElse("")}"
     else start.toInstant.toString

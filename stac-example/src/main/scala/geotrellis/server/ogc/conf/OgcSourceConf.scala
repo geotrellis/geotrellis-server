@@ -55,6 +55,7 @@ case class StacSourceConf(
   overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
   defaultTime: Boolean = false,
   datetimeField: String = "datetime",
+  timeFormat: OgcTimeFormat = OgcTimeFormat.Self,
   withGDAL: Boolean = false,
   computeTimePositions: Boolean = false
 ) extends OgcSourceConf {
@@ -73,10 +74,21 @@ case class StacSourceConf(
     }).getOrElse("")
 
   def toLayer(rs: RasterSource): SimpleSource =
-    SimpleSource(name, title, rs, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, datetimeField.some)
+    SimpleSource(name, title, rs, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, datetimeField.some, timeFormat)
 
   def toLayer(rs: StacCollectionSource): StacOgcSource =
-    StacOgcSource(name, title, rs, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, datetimeField.some, computeTimePositions)
+    StacOgcSource(
+      name,
+      title,
+      rs,
+      defaultStyle,
+      styles.map(_.toStyle),
+      resampleMethod,
+      overviewStrategy,
+      datetimeField.some,
+      computeTimePositions,
+      timeFormat
+    )
 }
 
 object StacSourceConf {
@@ -96,12 +108,36 @@ case class RasterSourceConf(
   defaultStyle: Option[String],
   styles: List[StyleConf],
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
+  datetimeField: String = SimpleSource.TimeFieldDefault,
+  timeFormat: OgcTimeFormat = OgcTimeFormat.Self
 ) extends OgcSourceConf {
   def toLayer: RasterOgcSource = {
     GeoTrellisPath.parseOption(source) match {
-      case Some(_) => GeoTrellisOgcSource(name, title, source, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy)
-      case None    => SimpleSource(name, title, RasterSource(source), defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, None)
+      case Some(_) =>
+        GeoTrellisOgcSource(
+          name,
+          title,
+          source,
+          defaultStyle,
+          styles.map(_.toStyle),
+          resampleMethod,
+          overviewStrategy,
+          datetimeField.some,
+          timeFormat
+        )
+      case None    =>
+        SimpleSource(
+          name,
+          title,
+          RasterSource(source),
+          defaultStyle,
+          styles.map(_.toStyle),
+          resampleMethod,
+          overviewStrategy,
+          datetimeField.some,
+          timeFormat
+        )
     }
   }
 }
@@ -113,7 +149,8 @@ case class MapAlgebraSourceConf(
   defaultStyle: Option[String],
   styles: List[StyleConf],
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
+  timeFormat: OgcTimeFormat = OgcTimeFormat.Self
 ) extends OgcSourceConf {
   def listParams(expr: Expression): List[String] = {
     def eval(subExpr: Expression): List[String] =
@@ -146,7 +183,8 @@ case class MapAlgebraSourceConf(
       defaultStyle,
       styles.map(_.toStyle),
       resampleMethod,
-      overviewStrategy
+      overviewStrategy,
+      timeFormat
     )
   }
 
@@ -162,7 +200,8 @@ case class MapAlgebraSourceConf(
         defaultStyle,
         styles.map(_.toStyle),
         resampleMethod,
-        overviewStrategy
+        overviewStrategy,
+        timeFormat
       ).some
     else None
   }

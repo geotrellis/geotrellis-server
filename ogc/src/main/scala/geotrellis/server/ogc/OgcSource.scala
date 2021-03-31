@@ -90,12 +90,17 @@ case class SimpleSource(
   styles: List[OgcStyle],
   resampleMethod: ResampleMethod,
   overviewStrategy: OverviewStrategy,
-  timeMetadataKey: Option[String]
+  timeMetadataKey: Option[String],
+  timeFormat: OgcTimeFormat
 ) extends RasterOgcSource {
-  lazy val time: OgcTime = source.time(timeMetadataKey)
+  lazy val time: OgcTime = source.time(timeMetadataKey).format(timeFormat)
 
   def toLayer(crs: CRS, style: Option[OgcStyle], temporalSequence: List[OgcTime]): SimpleOgcLayer =
     SimpleOgcLayer(name, title, crs, source, style, resampleMethod, overviewStrategy)
+}
+
+object SimpleSource {
+  val TimeFieldDefault: String = "times"
 }
 
 case class GeoTrellisOgcSource(
@@ -106,7 +111,8 @@ case class GeoTrellisOgcSource(
   styles: List[OgcStyle],
   resampleMethod: ResampleMethod,
   overviewStrategy: OverviewStrategy,
-  timeMetadataKey: Option[String] = "times".some
+  timeMetadataKey: Option[String],
+  timeFormat: OgcTimeFormat
 ) extends RasterOgcSource {
 
   def toLayer(crs: CRS, style: Option[OgcStyle], temporalSequence: List[OgcTime]): SimpleOgcLayer = {
@@ -134,13 +140,13 @@ case class GeoTrellisOgcSource(
       ),
       None,
       None,
-      timeMetadataKey.getOrElse("times")
+      timeMetadataKey.getOrElse(SimpleSource.TimeFieldDefault)
     )
   }
 
   lazy val time: OgcTime =
     if (!source.isTemporal) OgcTimeEmpty
-    else OgcTimePositions(source.times)
+    else OgcTimePositions(source.times).format(timeFormat)
 
   /** If temporal, try to match in the following order:
     *
@@ -217,7 +223,8 @@ case class MapAlgebraSource(
   defaultStyle: Option[String],
   styles: List[OgcStyle],
   resampleMethod: ResampleMethod,
-  overviewStrategy: OverviewStrategy
+  overviewStrategy: OverviewStrategy,
+  timeFormat: OgcTimeFormat
 ) extends OgcSource {
   // each of the underlying ogcSources uses it's own timeMetadataKey
   val timeMetadataKey: Option[String] = None
@@ -276,7 +283,7 @@ case class MapAlgebraSource(
     new GridExtent[Long](nativeExtent, cellSize)
   }
 
-  val time: OgcTime = ogcSources.values.toList.map(_.time).foldLeft[OgcTime](OgcTimeEmpty)(_ |+| _)
+  val time: OgcTime = ogcSources.values.toList.map(_.time).foldLeft[OgcTime](OgcTimeEmpty)(_ |+| _).format(timeFormat)
 
   val attributes: Map[String, String]  = Map.empty
   lazy val nativeCrs: Set[CRS]         = ogcSourcesList.flatMap(_.nativeCrs).toSet

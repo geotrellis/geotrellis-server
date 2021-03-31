@@ -28,8 +28,10 @@ import com.typesafe.config._
 import geotrellis.raster.io.geotiff.{Auto, AutoHigherResolution, Base, OverviewStrategy}
 import io.circe._
 import io.circe.parser._
+import io.circe.syntax._
+import cats.syntax.either._
 import pureconfig._
-import pureconfig.error.CannotConvert
+import pureconfig.error.{CannotConvert, ExceptionThrown, FailureReason}
 import pureconfig.generic.FieldCoproductHint
 import pureconfig.generic.auto._
 
@@ -185,4 +187,7 @@ package object conf {
       case _                              => OverviewStrategy.DEFAULT
     }
   }
+
+  implicit val ogcTimeFormatReader: ConfigReader[OgcTimeFormat] =
+    ConfigReader[String].emap { _.asJson.as[OgcTimeFormat].leftMap(e => ExceptionThrown(e.fillInStackTrace())) }
 }

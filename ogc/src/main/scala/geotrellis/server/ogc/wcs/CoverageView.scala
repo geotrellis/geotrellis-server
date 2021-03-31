@@ -114,9 +114,7 @@ object CoverageView {
     val temporalDomain: Option[TimeSequenceType] = {
       val records = source.time match {
         case OgcTimePositions(nel)                          =>
-          nel.toList.map { t =>
-            GmlDataRecord(TimePositionType(t.toInstant.toString))
-          }
+          nel.toList.map { t => GmlDataRecord(TimePositionType(t.toInstant.toString)) }
         case OgcTimeInterval(start, end, _) if start == end =>
           GmlDataRecord(TimePositionType(start.toInstant.toString)) :: Nil
         case OgcTimeInterval(start, end, _)                 =>
@@ -128,9 +126,7 @@ object CoverageView {
       else None
     }
 
-    val uniqueCrs: List[CRS] = (
-      nativeCrs :: LatLng :: supportedProjections
-    ).distinct
+    val uniqueCrs: List[CRS] = (nativeCrs :: LatLng :: supportedProjections).distinct
 
     CoverageDescriptionType(
       Title = LanguageStringType(source.title) :: Nil,
