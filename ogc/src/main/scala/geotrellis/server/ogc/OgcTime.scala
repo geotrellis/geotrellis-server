@@ -109,7 +109,9 @@ final case class OgcTimePositions(list: NonEmptyList[ZonedDateTime]) extends Ogc
     val times = list.sorted
     OgcTimeInterval(times.head, times.last, computeIntervalPeriod.map(_.toString))
   }
-  override def toString: String = list.toList.map(_.toInstant.toString).mkString(", ")
+
+  def toList: List[String]      = list.toList.map(_.toInstant.toString)
+  override def toString: String = toList.mkString(", ")
 }
 
 object OgcTimePositions {

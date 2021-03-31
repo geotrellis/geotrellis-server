@@ -39,6 +39,9 @@ stac-lc8-red-us = {
   default-style = "red-to-blue"
   // force time positions computation even if the range is given through the collection / layer summary
   compute-time-positions = true
+  // optional field (can be added to all layers definitions)
+  // the default value is "self", meaning that it would use the OGC Time in a format recieved from the source
+  time-format = "{interval | positions | self}" 
   styles = [
     {
       name = "red-to-blue"

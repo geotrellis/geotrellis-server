@@ -113,14 +113,16 @@ object CoverageView {
       */
     val temporalDomain: Option[TimeSequenceType] = {
       val records = source.time match {
-        case OgcTimePositions(nel)                          =>
-          nel.toList.map { t => GmlDataRecord(TimePositionType(t.toInstant.toString)) }
-        case OgcTimeInterval(start, end, _) if start == end =>
-          GmlDataRecord(TimePositionType(start.toInstant.toString)) :: Nil
-        case OgcTimeInterval(start, end, _)                 =>
-          GmlDataRecord(TimePositionType(start.toInstant.toString)) ::
-            GmlDataRecord(TimePositionType(end.toInstant.toString)) :: Nil
-        case OgcTimeEmpty                                   => Nil
+        case otp: OgcTimePositions               => otp.toList.map(p => GmlDataRecord(TimePositionType(p)))
+        case OgcTimeInterval(start, end, period) =>
+          GmlDataRecord(
+            wcs.TimePeriodType(
+              BeginPosition = TimePositionType(start.toInstant.toString),
+              EndPosition = TimePositionType(end.toInstant.toString),
+              TimeResolution = period
+            )
+          ) :: Nil
+        case OgcTimeEmpty                        => Nil
       }
       if (records.nonEmpty) TimeSequenceType(records).some
       else None
