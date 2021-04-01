@@ -24,7 +24,7 @@ import java.time.ZonedDateTime
 import scala.util.Try
 
 sealed trait OgcTimeDefault {
-  lazy val name: String = getClass.getName.split("\\.").last.toLowerCase
+  lazy val name: String = getClass.getName.split("\\$").last.toLowerCase
 }
 
 object OgcTimeDefault {

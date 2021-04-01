@@ -31,7 +31,7 @@ import io.circe.parser._
 import io.circe.syntax._
 import cats.syntax.either._
 import pureconfig._
-import pureconfig.error.{CannotConvert, ExceptionThrown, FailureReason}
+import pureconfig.error.{CannotConvert, ExceptionThrown}
 import pureconfig.generic.FieldCoproductHint
 import pureconfig.generic.auto._
 
