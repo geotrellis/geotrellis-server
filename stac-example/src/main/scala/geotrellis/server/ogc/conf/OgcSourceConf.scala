@@ -88,7 +88,8 @@ case class StacSourceConf(
       overviewStrategy,
       datetimeField.some,
       computeTimePositions,
-      timeFormat
+      timeFormat,
+      timeDefault
     )
 }
 
@@ -153,7 +154,8 @@ case class MapAlgebraSourceConf(
   styles: List[StyleConf],
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
   overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
-  timeFormat: OgcTimeFormat = OgcTimeFormat.Self
+  timeFormat: OgcTimeFormat = OgcTimeFormat.Self,
+  timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest
 ) extends OgcSourceConf {
   def listParams(expr: Expression): List[String] = {
     def eval(subExpr: Expression): List[String] =
@@ -187,7 +189,8 @@ case class MapAlgebraSourceConf(
       styles.map(_.toStyle),
       resampleMethod,
       overviewStrategy,
-      timeFormat
+      timeFormat,
+      timeDefault
     )
   }
 
@@ -204,7 +207,8 @@ case class MapAlgebraSourceConf(
         styles.map(_.toStyle),
         resampleMethod,
         overviewStrategy,
-        timeFormat
+        timeFormat,
+        timeDefault
       ).some
     else None
   }

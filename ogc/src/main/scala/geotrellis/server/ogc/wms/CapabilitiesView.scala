@@ -29,12 +29,13 @@ import cats.syntax.option._
 import opengis.wms._
 import opengis._
 import scalaxb._
+import cats.Monad
 import cats.Functor
+import cats.data.NonEmptyList
 import cats.syntax.functor._
 
 import java.net.URL
 import scala.xml.Elem
-import cats.Monad
 
 /** @param model Model of layers we can report
   * @param serviceUrl URL where this service can be reached with addition of `?request=` query parameter
@@ -201,25 +202,25 @@ object CapabilitiesView {
         },
         BoundingBox = Nil,
         Dimension = source.time match {
-          case tp @ OgcTimePositions(nel)        =>
+          case tp @ OgcTimePositions(nel)          =>
             Dimension(
               tp.toString,
               Map(
                 "@name"    -> DataRecord("time"),
                 "@units"   -> DataRecord("ISO8601"),
-                "@default" -> DataRecord(nel.head.toInstant.toString)
+                "@default" -> DataRecord(source.timeDefault.selectTime(nel).toInstant.toString)
               )
             ) :: Nil
-          case ti @ OgcTimeInterval(start, _, _) =>
+          case ti @ OgcTimeInterval(start, end, _) =>
             Dimension(
               ti.toString,
               Map(
                 "@name"    -> DataRecord("time"),
                 "@units"   -> DataRecord("ISO8601"),
-                "@default" -> DataRecord(start.toString)
+                "@default" -> DataRecord(source.timeDefault.selectTime(NonEmptyList.of(start, end)).toInstant.toString)
               )
             ) :: Nil
-          case OgcTimeEmpty                      => Nil
+          case OgcTimeEmpty                        => Nil
         },
         Attribution = None,
         AuthorityURL = Nil,

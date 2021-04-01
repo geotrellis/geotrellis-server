@@ -1,5 +1,6 @@
 package geotrellis.server.ogc
 
+import cats.data.NonEmptyList
 import io.circe.Decoder
 import cats.syntax.either._
 
@@ -23,5 +24,14 @@ object OgcTimeDefault {
 
   implicit val ogcTimeDefaultDecoder: Decoder[OgcTimeDefault] = Decoder[String].emap { s =>
     Try(fromString(s)).toEither.leftMap(_.getMessage)
+  }
+
+  implicit class OgcTimeDefaultOps(val self: OgcTimeDefault) extends AnyVal {
+    def selectTime(list: NonEmptyList[ZonedDateTime]): ZonedDateTime =
+      self match {
+        case OgcTimeDefault.Oldest  => list.head
+        case OgcTimeDefault.Newest  => list.last
+        case OgcTimeDefault.Time(t) => t
+      }
   }
 }

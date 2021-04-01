@@ -39,7 +39,8 @@ case class StacOgcSource(
   overviewStrategy: OverviewStrategy,
   timeMetadataKey: Option[String],
   computeTimePositions: Boolean,
-  timeFormat: OgcTimeFormat
+  timeFormat: OgcTimeFormat,
+  timeDefault: OgcTimeDefault
 ) extends RasterOgcSource {
 
   lazy val time: OgcTime = {

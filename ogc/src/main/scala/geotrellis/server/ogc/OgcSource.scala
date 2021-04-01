@@ -57,6 +57,7 @@ trait OgcSource {
   def overviewStrategy: OverviewStrategy
   def time: OgcTime
   def timeMetadataKey: Option[String]
+  def timeDefault: OgcTimeDefault
   def isTemporal: Boolean = timeMetadataKey.nonEmpty && time.nonEmpty
 
   def nativeProjectedExtent: ProjectedExtent = ProjectedExtent(nativeExtent, nativeCrs.head)
@@ -93,7 +94,8 @@ case class SimpleSource(
   timeMetadataKey: Option[String],
   timeFormat: OgcTimeFormat
 ) extends RasterOgcSource {
-  lazy val time: OgcTime = source.time(timeMetadataKey).format(timeFormat)
+  val timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest
+  lazy val time: OgcTime          = source.time(timeMetadataKey).format(timeFormat)
 
   def toLayer(crs: CRS, style: Option[OgcStyle], temporalSequence: List[OgcTime]): SimpleOgcLayer =
     SimpleOgcLayer(name, title, crs, source, style, resampleMethod, overviewStrategy)
@@ -185,7 +187,6 @@ case class GeoTrellisOgcSource(
               }
             }
             .map(sourceForTime)
-        case _            => None
       }).getOrElse(source)
     } else source
 
@@ -221,7 +222,8 @@ case class MapAlgebraSource(
   styles: List[OgcStyle],
   resampleMethod: ResampleMethod,
   overviewStrategy: OverviewStrategy,
-  timeFormat: OgcTimeFormat
+  timeFormat: OgcTimeFormat,
+  timeDefault: OgcTimeDefault
 ) extends OgcSource {
   // each of the underlying ogcSources uses it's own timeMetadataKey
   val timeMetadataKey: Option[String] = None

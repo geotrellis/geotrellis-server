@@ -82,13 +82,6 @@ package object stac {
 
   implicit class RasterSourcesQueryOps[G[_]: Foldable: FunctorFilter, T <: RasterSource](val self: G[T]) {
 
-    private def selectTime(list: NonEmptyList[ZonedDateTime], timeDefault: OgcTimeDefault): ZonedDateTime =
-      timeDefault match {
-        case OgcTimeDefault.Oldest  => list.head
-        case OgcTimeDefault.Newest  => list.last
-        case OgcTimeDefault.Time(t) => t
-      }
-
     /** A helper function that filters raster sources in case the STAC Layer is temporal and it is not taken into account in the query.
       *
       * By default STAC API returns all temporal items even though the time is not specified.
@@ -104,9 +97,9 @@ package object stac {
       if (!ignoreTime & query.nonTemporal && query.nonUniversal) {
         self.foldMap(_.time(datetimeField)) match {
           case OgcTimePositions(list)         =>
-            self.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), selectTime(list, timeDefault)))
+            self.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), timeDefault.selectTime(list)))
           case OgcTimeInterval(start, end, _) =>
-            self.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), selectTime(NonEmptyList.of(start, end), timeDefault)))
+            self.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), timeDefault.selectTime(NonEmptyList.of(start, end))))
           case OgcTimeEmpty                   => self
         }
       } else self
