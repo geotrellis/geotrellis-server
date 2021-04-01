@@ -95,7 +95,7 @@ final case class OgcTimePositions(list: NonEmptyList[ZonedDateTime]) extends Ogc
   def sorted: NonEmptyList[ZonedDateTime] = list.sorted
 
   /** Compute (if possible) the period of the [[ZonedDateTime]] lists. */
-  def computeIntervalPeriod: Option[Duration] = {
+  def computeIntervalPeriod: Option[PeriodDuration] = {
     val periods =
       sorted.toList
         .sliding(2)
@@ -103,6 +103,7 @@ final case class OgcTimePositions(list: NonEmptyList[ZonedDateTime]) extends Ogc
         .toList
         .distinct
         .map(Duration.ofMillis)
+        .map(PeriodDuration.of(_).normalizedStandardDays)
 
     if (periods.length < 2) periods.headOption
     else None
@@ -142,7 +143,7 @@ object OgcTimePositions {
   *                 followed by a number of years Y, months M, days D, a time designator T, number
   *                 of hours H, minutes M, and seconds S. Unneeded elements may be omitted. Here are
   *                 a few examples:
-  *                 EXAMPLE 1 -  P1Y, 1 year
+  *                 EXAMPLE 1 - P1Y, 1 year
   *                 EXAMPLE 2 - P1M10D, 1 month plus 10 days
   *                 EXAMPLE 3 - PT2H, 2 hours
   *
