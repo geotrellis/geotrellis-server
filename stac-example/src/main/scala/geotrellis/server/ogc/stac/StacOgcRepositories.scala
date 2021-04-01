@@ -68,7 +68,8 @@ case class StacOgcRepository[F[_]: Applicative](
                 case head :: Nil => StacCollectionSource(csummary.asset, head).some
                 case head :: _   =>
                   /** Extra temporal layers filtering (slicing). If the layer is not temporal, no extra filtering (slicing) would be applied. */
-                  val sources            = rasterSources.timeSlice(query, stacSourceConf.defaultTime, stacSourceConf.datetimeField.some)
+                  val sources            =
+                    rasterSources.timeSlice(query, stacSourceConf.timeDefault, stacSourceConf.ignoreTime, stacSourceConf.datetimeField.some)
                   val commonCrs          = if (sources.flatMap(_.asset.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
                   val reprojectedSources = sources.map(_.reproject(commonCrs))
                   val attributes         = reprojectedSources.attributesByName
@@ -86,7 +87,8 @@ case class StacOgcRepository[F[_]: Applicative](
                 case head :: Nil => head.some
                 case head :: _   =>
                   /** Extra temporal layers filtering (slicing). If the layer is not temporal, no extra filtering (slicing) would be applied. */
-                  val sources            = rasterSources.timeSlice(query, stacSourceConf.defaultTime, stacSourceConf.datetimeField.some)
+                  val sources            =
+                    rasterSources.timeSlice(query, stacSourceConf.timeDefault, stacSourceConf.ignoreTime, stacSourceConf.datetimeField.some)
                   val commonCrs          = if (sources.flatMap(_.asset.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
                   val reprojectedSources = sources.map(_.reproject(commonCrs))
                   val attributes         = reprojectedSources.attributesByName

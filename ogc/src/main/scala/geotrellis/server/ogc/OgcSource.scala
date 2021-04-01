@@ -112,7 +112,8 @@ case class GeoTrellisOgcSource(
   resampleMethod: ResampleMethod,
   overviewStrategy: OverviewStrategy,
   timeMetadataKey: Option[String],
-  timeFormat: OgcTimeFormat
+  timeFormat: OgcTimeFormat,
+  timeDefault: OgcTimeDefault
 ) extends RasterOgcSource {
 
   def toLayer(crs: CRS, style: Option[OgcStyle], temporalSequence: List[OgcTime]): SimpleOgcLayer = {
@@ -120,7 +121,13 @@ case class GeoTrellisOgcSource(
       temporalSequence.headOption match {
         case Some(t) if t.nonEmpty                              => sourceForTime(t)
         case _ if temporalSequence.isEmpty && source.isTemporal =>
-          sourceForTime(source.times.head)
+          val sorted = source.times
+          val time   = timeDefault match {
+            case OgcTimeDefault.Oldest   => sorted.head
+            case OgcTimeDefault.Newest   => sorted.last
+            case OgcTimeDefault.Time(dt) => dt
+          }
+          sourceForTime(time)
         case _                                                  => source
       }
     SimpleOgcLayer(name, title, crs, src, None, resampleMethod, overviewStrategy)
@@ -166,8 +173,9 @@ case class GeoTrellisOgcSource(
     */
   def sourceForTime(interval: OgcTime): GeoTrellisRasterSource =
     if (source.isTemporal) {
-      time match {
-        case sourceInterval: OgcTimeInterval =>
+      (time match {
+        case OgcTimeEmpty => None
+        case _            =>
           source.times
             .find { t =>
               interval match {
@@ -176,20 +184,9 @@ case class GeoTrellisOgcSource(
                 case OgcTimeEmpty                   => false
               }
             }
-            .fold(sourceForTime(sourceInterval))(sourceForTime)
-
-        case OgcTimePositions(NEL(head, _)) =>
-          source.times
-            .find { t =>
-              interval match {
-                case OgcTimeInterval(start, end, _) => start <= t && t <= end
-                case OgcTimePositions(list)         => list.exists(_ == t)
-                case OgcTimeEmpty                   => false
-              }
-            }
-            .fold(sourceForTime(head))(sourceForTime)
-        case _                              => source
-      }
+            .map(sourceForTime)
+        case _            => None
+      }).getOrElse(source)
     } else source
 
   def sourceForTime(time: ZonedDateTime): GeoTrellisRasterSource =
@@ -233,14 +230,10 @@ case class MapAlgebraSource(
   lazy val sourcesList: List[RasterSource]       = sources.values.toList
   lazy val ogcSourcesList: List[RasterOgcSource] = ogcSources.values.toList
 
-  def extentIn(crs: CRS): Extent = {
-    val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sourcesList.map(_.reproject(crs)))
-    val extents                               = reprojectedSources.map(_.extent)
-
-    SampleUtils.intersectExtents(extents).getOrElse {
+  def extentIn(crs: CRS): Extent =
+    SampleUtils.intersectExtents(sourcesList.map(_.reproject(crs).extent)).getOrElse {
       throw new Exception("no intersection found among map map algebra sources")
     }
-  }
 
   def bboxIn(crs: CRS): BoundingBox = {
     val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sourcesList.map(_.reproject(crs)))
@@ -265,16 +258,11 @@ case class MapAlgebraSource(
       sources.mapValues(_.metadata)
     )
 
-  lazy val nativeExtent: Extent = {
-    val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sourcesList.map(_.reproject(nativeCrs.head)))
-    val extents                               = reprojectedSources.map(_.extent)
-    val extentIntersection                    = SampleUtils.intersectExtents(extents)
-
-    extentIntersection match {
+  lazy val nativeExtent: Extent =
+    SampleUtils.intersectExtents(sourcesList.map(_.reproject(nativeCrs.head).extent)) match {
       case Some(extent) => extent
       case None         => throw new Exception("no intersection found among map algebra sources")
     }
-  }
 
   lazy val nativeRE: GridExtent[Long] = {
     val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sourcesList.map(_.reproject(nativeCrs.head)))

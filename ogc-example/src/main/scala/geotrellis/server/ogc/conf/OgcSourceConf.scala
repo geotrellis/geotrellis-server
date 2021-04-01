@@ -41,23 +41,13 @@ case class RasterSourceConf(
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
   overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
   datetimeField: String = SimpleSource.TimeFieldDefault,
-  timeFormat: OgcTimeFormat = OgcTimeFormat.Self
+  timeFormat: OgcTimeFormat = OgcTimeFormat.Self,
+  timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest
 ) extends OgcSourceConf {
   def toLayer: RasterOgcSource = {
-    GeoTrellisPath.parseOption(source) match {
-      case Some(_) =>
-        GeoTrellisOgcSource(
-          name,
-          title,
-          source,
-          defaultStyle,
-          styles.map(_.toStyle),
-          resampleMethod,
-          overviewStrategy,
-          datetimeField.some,
-          timeFormat
-        )
-      case None    =>
+    GeoTrellisPath
+      .parseOption(source)
+      .fold[RasterOgcSource](
         SimpleSource(
           name,
           title,
@@ -69,7 +59,20 @@ case class RasterSourceConf(
           datetimeField.some,
           timeFormat
         )
-    }
+      )(_ =>
+        GeoTrellisOgcSource(
+          name,
+          title,
+          source,
+          defaultStyle,
+          styles.map(_.toStyle),
+          resampleMethod,
+          overviewStrategy,
+          datetimeField.some,
+          timeFormat,
+          timeDefault
+        )
+      )
   }
 }
 

@@ -165,7 +165,7 @@ object Main
                                wmtsModel,
                                new URL(publicUrl)
                              )
-                server    <- BlazeServerBuilder[IO]
+                server    <- BlazeServerBuilder[IO](executionContext)
                                .withIdleTimeout(Duration.Inf)
                                .withResponseHeaderTimeout(Duration.Inf)
                                .enableHttp2(true)

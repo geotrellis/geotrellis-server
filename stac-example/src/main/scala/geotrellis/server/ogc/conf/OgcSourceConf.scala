@@ -53,11 +53,12 @@ case class StacSourceConf(
   commonCrs: CRS = WebMercator,
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
   overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
-  defaultTime: Boolean = false,
+  ignoreTime: Boolean = false,
   datetimeField: String = "datetime",
   timeFormat: OgcTimeFormat = OgcTimeFormat.Self,
-  withGDAL: Boolean = false,
-  computeTimePositions: Boolean = false
+  timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest,
+  computeTimePositions: Boolean = false,
+  withGDAL: Boolean = false
 ) extends OgcSourceConf {
 
   /** By default the search would happen across collections. */
@@ -110,23 +111,13 @@ case class RasterSourceConf(
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
   overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
   datetimeField: String = SimpleSource.TimeFieldDefault,
-  timeFormat: OgcTimeFormat = OgcTimeFormat.Self
+  timeFormat: OgcTimeFormat = OgcTimeFormat.Self,
+  timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest
 ) extends OgcSourceConf {
-  def toLayer: RasterOgcSource = {
-    GeoTrellisPath.parseOption(source) match {
-      case Some(_) =>
-        GeoTrellisOgcSource(
-          name,
-          title,
-          source,
-          defaultStyle,
-          styles.map(_.toStyle),
-          resampleMethod,
-          overviewStrategy,
-          datetimeField.some,
-          timeFormat
-        )
-      case None    =>
+  def toLayer: RasterOgcSource =
+    GeoTrellisPath
+      .parseOption(source)
+      .fold[RasterOgcSource](
         SimpleSource(
           name,
           title,
@@ -138,8 +129,20 @@ case class RasterSourceConf(
           datetimeField.some,
           timeFormat
         )
-    }
-  }
+      )(_ =>
+        GeoTrellisOgcSource(
+          name,
+          title,
+          source,
+          defaultStyle,
+          styles.map(_.toStyle),
+          resampleMethod,
+          overviewStrategy,
+          datetimeField.some,
+          timeFormat,
+          timeDefault
+        )
+      )
 }
 
 case class MapAlgebraSourceConf(

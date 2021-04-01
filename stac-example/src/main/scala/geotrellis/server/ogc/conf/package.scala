@@ -190,4 +190,7 @@ package object conf {
 
   implicit val ogcTimeFormatReader: ConfigReader[OgcTimeFormat] =
     ConfigReader[String].emap { _.asJson.as[OgcTimeFormat].leftMap(e => ExceptionThrown(e.fillInStackTrace())) }
+
+  implicit val ogcTimeDefaultReader: ConfigReader[OgcTimeDefault] =
+    ConfigReader[String].emap { _.asJson.as[OgcTimeDefault].leftMap(e => ExceptionThrown(e.fillInStackTrace())) }
 }

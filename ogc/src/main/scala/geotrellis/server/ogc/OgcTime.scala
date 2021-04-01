@@ -21,9 +21,9 @@ import cats.{Monoid, Order, Semigroup}
 import cats.syntax.option._
 import cats.syntax.semigroup._
 import jp.ne.opt.chronoscala.Imports._
+import org.threeten.extra.PeriodDuration
 
-import java.time.ZonedDateTime
-import java.time.Duration
+import java.time.{Duration, ZonedDateTime}
 import scala.util.Try
 
 sealed trait OgcTime {
@@ -92,23 +92,23 @@ case object OgcTimeEmpty extends OgcTime {
 final case class OgcTimePositions(list: NonEmptyList[ZonedDateTime]) extends OgcTime {
   import OgcTimePositions._
 
+  def sorted: NonEmptyList[ZonedDateTime] = list.sorted
+
   /** Compute (if possible) the period of the [[ZonedDateTime]] lists. */
   def computeIntervalPeriod: Option[Duration] = {
     val periods =
-      list.toList
+      sorted.toList
         .sliding(2)
-        .map { case Seq(l, r, _*) => Duration.ofMillis((l - r.toEpochMilli).toEpochMilli) }
+        .map { case Seq(l, r, _*) => r.toEpochMilli - l.toEpochMilli }
         .toList
         .distinct
+        .map(Duration.ofMillis)
 
     if (periods.length < 2) periods.headOption
     else None
   }
 
-  def toOgcTimeInterval: OgcTimeInterval = {
-    val times = list.sorted
-    OgcTimeInterval(times.head, times.last, computeIntervalPeriod.map(_.toString))
-  }
+  def toOgcTimeInterval: OgcTimeInterval = OgcTimeInterval(sorted.head, sorted.last, computeIntervalPeriod.map(_.toString))
 
   def toList: List[String]      = list.toList.map(_.toInstant.toString)
   override def toString: String = toList.mkString(", ")
@@ -150,12 +150,12 @@ object OgcTimePositions {
   *                       encoded directly
   */
 final case class OgcTimeInterval(start: ZonedDateTime, end: ZonedDateTime, interval: Option[String]) extends OgcTime {
-  def duration: Option[Duration] = interval.flatMap(p => Try(Duration.parse(p)).toOption)
+  def periodDuration: Option[PeriodDuration] = interval.flatMap(p => Try(PeriodDuration.parse(p)).toOption)
 
   def toTimePositions: Option[OgcTimePositions] =
-    duration.flatMap { d =>
+    periodDuration.flatMap { pd =>
       val positions =
-        (start.toEpochMilli to end.toEpochMilli by d.toMillis)
+        (start.toEpochMilli to end.toEpochMilli by pd.toMillis)
           .map(Instant.ofEpochMilli)
           .map(ZonedDateTime.ofInstant(_, start.getZone))
           .toList

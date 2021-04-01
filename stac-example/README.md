@@ -41,7 +41,10 @@ stac-lc8-red-us = {
   compute-time-positions = true
   // optional field (can be added to all layers definitions)
   // the default value is "self", meaning that it would use the OGC Time in a format recieved from the source
-  time-format = "{interval | positions | self}" 
+  time-format = "{interval | positions | self}"
+  ignore-time = false // work with temporal layers as with spatial layers, false by default
+  // specify the default temporal rollback, oldest by default
+  time-default = "{newest | oldest | ISO compatible date time}"
   styles = [
     {
       name = "red-to-blue"

@@ -26,6 +26,7 @@ import com.azavea.stac4s.{StacExtent, StacItemAsset}
 import com.azavea.stac4s.api.client.{SearchFilters, StacClient, Query => SQuery}
 import io.circe.syntax._
 import cats.{Applicative, Foldable, FunctorFilter}
+import cats.data.NonEmptyList
 import cats.syntax.either._
 import cats.syntax.foldable._
 import cats.syntax.functor._
@@ -33,7 +34,7 @@ import cats.syntax.functorFilter._
 import cats.syntax.applicative._
 import eu.timepit.refined.types.string.NonEmptyString
 
-import java.time.ZoneOffset
+import java.time.{ZoneOffset, ZonedDateTime}
 
 package object stac {
   implicit class StacExtentionOps(val self: StacExtent) extends AnyVal {
@@ -81,10 +82,17 @@ package object stac {
 
   implicit class RasterSourcesQueryOps[G[_]: Foldable: FunctorFilter, T <: RasterSource](val self: G[T]) {
 
+    private def selectTime(list: NonEmptyList[ZonedDateTime], timeDefault: OgcTimeDefault): ZonedDateTime =
+      timeDefault match {
+        case OgcTimeDefault.Oldest  => list.head
+        case OgcTimeDefault.Newest  => list.last
+        case OgcTimeDefault.Time(t) => t
+      }
+
     /** A helper function that filters raster sources in case the STAC Layer is temporal and it is not taken into account in the query.
       *
       * By default STAC API returns all temporal items even though the time is not specified.
-      * If defaultTime configuration is set to true and the query is not temporal and not universal
+      * If ignoreTime configuration is set to false and the query is not temporal and not universal
       * (meaning that it is bounded by temporal or spatial extent),
       * we can select the first time position of the temporal layer in this case.
       *
@@ -92,15 +100,14 @@ package object stac {
       * All non temporal items would be included into the result.
       * Otherwise, only items that match the first time position would be returned.
       */
-    def timeSlice(query: Query, defaultTime: Boolean, datetimeField: Option[String]): G[T] =
-      if (defaultTime && query.nonTemporal && query.nonUniversal) {
+    def timeSlice(query: Query, timeDefault: OgcTimeDefault, ignoreTime: Boolean, datetimeField: Option[String]): G[T] =
+      if (!ignoreTime & query.nonTemporal && query.nonUniversal) {
         self.foldMap(_.time(datetimeField)) match {
-          case OgcTimePositions(list)       =>
-            val start = list.head
-            self.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), start))
-          case OgcTimeInterval(start, _, _) =>
-            self.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), start))
-          case OgcTimeEmpty                 => self
+          case OgcTimePositions(list)         =>
+            self.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), selectTime(list, timeDefault)))
+          case OgcTimeInterval(start, end, _) =>
+            self.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), selectTime(NonEmptyList.of(start, end), timeDefault)))
+          case OgcTimeEmpty                   => self
         }
       } else self
 

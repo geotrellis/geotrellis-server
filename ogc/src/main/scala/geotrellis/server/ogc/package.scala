@@ -21,6 +21,8 @@ import geotrellis.raster.{CellSize, Histogram, MultibandTile, Raster}
 import geotrellis.server.ogc.style.OgcStyle
 import geotrellis.vector.Extent
 
+import org.threeten.extra.PeriodDuration
+
 package object ogc {
   implicit class ExtentOps(val self: Extent) extends AnyVal {
     def swapXY: Extent                             = Extent(xmin = self.ymin, ymin = self.xmin, xmax = self.ymax, ymax = self.xmax)
@@ -31,5 +33,14 @@ package object ogc {
   implicit class RasterOps(val self: Raster[MultibandTile]) extends AnyVal {
     def render(crs: CRS, maybeStyle: Option[OgcStyle], format: OutputFormat, hists: List[Histogram[Double]]): Array[Byte] =
       Render.singleband(self, crs, maybeStyle, format, hists)
+  }
+
+  implicit class PeriodDurationOps(val self: PeriodDuration) extends AnyVal {
+    def toMillis: Long = {
+      val p = self.getPeriod
+      p.getYears.toLong * 365 * 24 * 3600 * 1000 +
+      p.getMonths.toLong * 30 * 24 * 3600 * 1000 +
+      p.getDays * 24 * 3600 * 100 + self.getDuration.toMillis
+    }
   }
 }
