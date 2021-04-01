@@ -16,6 +16,9 @@
 
 package geotrellis.stac.raster
 
+import geotrellis.stac._
+
+import com.azavea.stac4s.StacExtent
 import geotrellis.proj4.{CRS, LatLng}
 import geotrellis.raster.{RasterSource, SourceName}
 import geotrellis.vector.{Extent, ProjectedExtent}
@@ -23,10 +26,11 @@ import geotrellis.vector.{Extent, ProjectedExtent}
 trait StacSource[T] {
   val crs: CRS                         = LatLng
   def projectedExtent: ProjectedExtent = ProjectedExtent(extent, crs)
+  def extent: Extent                   = stacExtent.spatial.toExtent
 
   def asset: T
-  def extent: Extent
   def name: SourceName
+  def stacExtent: StacExtent
   // native projection can be not LatLng
   def source: RasterSource
 

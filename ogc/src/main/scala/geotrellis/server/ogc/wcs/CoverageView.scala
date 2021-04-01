@@ -64,14 +64,14 @@ object CoverageView {
     val nativeCrs        = source.nativeCrs.head
     val re               = source.nativeRE
     val llre             = source match {
-      case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod, _, _) =>
-        rss.values
+      case mas: MapAlgebraSource           =>
+        mas.sourcesList
           .map { rs =>
             ReprojectRasterExtent(
               rs.gridExtent,
               rs.crs,
               LatLng,
-              Options.DEFAULT.copy(resampleMethod)
+              Options.DEFAULT.copy(mas.resampleMethod)
             )
           }
           .reduce { (re1, re2) =>
@@ -82,7 +82,7 @@ object CoverageView {
               else re2.cellSize
             new GridExtent[Long](e, cs)
           }
-      case rasterOgcLayer: RasterOgcSource                            =>
+      case rasterOgcLayer: RasterOgcSource =>
         val rs = rasterOgcLayer.source
         ReprojectRasterExtent(
           rs.gridExtent,
@@ -113,24 +113,22 @@ object CoverageView {
       */
     val temporalDomain: Option[TimeSequenceType] = {
       val records = source.time match {
-        case OgcTimePositions(nel)                          =>
-          nel.toList.map { t =>
-            GmlDataRecord(TimePositionType(t.toInstant.toString))
-          }
-        case OgcTimeInterval(start, end, _) if start == end =>
-          GmlDataRecord(TimePositionType(start.toInstant.toString)) :: Nil
-        case OgcTimeInterval(start, end, _)                 =>
-          GmlDataRecord(TimePositionType(start.toInstant.toString)) ::
-            GmlDataRecord(TimePositionType(end.toInstant.toString)) :: Nil
-        case OgcTimeEmpty                                   => Nil
+        case otp: OgcTimePositions               => otp.toList.map(p => GmlDataRecord(TimePositionType(p)))
+        case OgcTimeInterval(start, end, period) =>
+          GmlDataRecord(
+            wcs.TimePeriodType(
+              BeginPosition = TimePositionType(start.toInstant.toString),
+              EndPosition = TimePositionType(end.toInstant.toString),
+              TimeResolution = period
+            )
+          ) :: Nil
+        case OgcTimeEmpty                        => Nil
       }
       if (records.nonEmpty) TimeSequenceType(records).some
       else None
     }
 
-    val uniqueCrs: List[CRS] = (
-      nativeCrs :: LatLng :: supportedProjections
-    ).distinct
+    val uniqueCrs: List[CRS] = (nativeCrs :: LatLng :: supportedProjections).distinct
 
     CoverageDescriptionType(
       Title = LanguageStringType(source.title) :: Nil,

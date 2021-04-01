@@ -29,12 +29,13 @@ import cats.syntax.option._
 import opengis.wms._
 import opengis._
 import scalaxb._
+import cats.Monad
 import cats.Functor
+import cats.data.NonEmptyList
 import cats.syntax.functor._
 
 import java.net.URL
 import scala.xml.Elem
-import cats.Monad
 
 /** @param model Model of layers we can report
   * @param serviceUrl URL where this service can be reached with addition of `?request=` query parameter
@@ -165,14 +166,14 @@ object CapabilitiesView {
         },
         EX_GeographicBoundingBox = {
           val llre = source match {
-            case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod, _, _) =>
-              rss.values
+            case mas: MapAlgebraSource           =>
+              mas.sourcesList
                 .map { rs =>
                   ReprojectRasterExtent(
                     rs.gridExtent,
                     rs.crs,
                     LatLng,
-                    Options.DEFAULT.copy(resampleMethod)
+                    Options.DEFAULT.copy(mas.resampleMethod)
                   )
                 }
                 .reduce { (re1, re2) =>
@@ -183,7 +184,7 @@ object CapabilitiesView {
                     else re2.cellSize
                   new GridExtent[Long](e, cs)
                 }
-            case rasterOgcLayer: RasterOgcSource                            =>
+            case rasterOgcLayer: RasterOgcSource =>
               val rs = rasterOgcLayer.source
               ReprojectRasterExtent(
                 rs.gridExtent,
@@ -201,25 +202,25 @@ object CapabilitiesView {
         },
         BoundingBox = Nil,
         Dimension = source.time match {
-          case tp @ OgcTimePositions(nel)        =>
+          case tp @ OgcTimePositions(nel)          =>
             Dimension(
               tp.toString,
               Map(
                 "@name"    -> DataRecord("time"),
                 "@units"   -> DataRecord("ISO8601"),
-                "@default" -> DataRecord(nel.head.toInstant.toString)
+                "@default" -> DataRecord(source.timeDefault.selectTime(nel).toInstant.toString)
               )
             ) :: Nil
-          case ti @ OgcTimeInterval(start, _, _) =>
+          case ti @ OgcTimeInterval(start, end, _) =>
             Dimension(
               ti.toString,
               Map(
                 "@name"    -> DataRecord("time"),
                 "@units"   -> DataRecord("ISO8601"),
-                "@default" -> DataRecord(start.toString)
+                "@default" -> DataRecord(source.timeDefault.selectTime(NonEmptyList.of(start, end)).toInstant.toString)
               )
             ) :: Nil
-          case OgcTimeEmpty                      => Nil
+          case OgcTimeEmpty                        => Nil
         },
         Attribution = None,
         AuthorityURL = Nil,
@@ -240,15 +241,15 @@ object CapabilitiesView {
     val bboxAndLayers = model.sources.store map { sources =>
       val bboxes  = sources map { source =>
         val llre = source match {
-          case MapAlgebraSource(_, _, rss, _, _, _, resampleMethod, _, _) =>
-            rss.values
-              .map { rs => ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(resampleMethod)) }
+          case mas: MapAlgebraSource           =>
+            mas.sourcesList
+              .map { rs => ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(mas.resampleMethod)) }
               .reduce { (re1, re2) =>
                 val e  = re1.extent combine re2.extent
                 val cs = if (re1.cellSize.resolution < re2.cellSize.resolution) re1.cellSize else re2.cellSize
                 new GridExtent[Long](e, cs)
               }
-          case rasterOgcLayer: RasterOgcSource                            =>
+          case rasterOgcLayer: RasterOgcSource =>
             val rs = rasterOgcLayer.source
             ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(rasterOgcLayer.resampleMethod))
         }

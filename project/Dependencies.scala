@@ -73,5 +73,6 @@ object Dependencies {
   val stac4sClient         = "com.azavea.stac4s"                     %% "client"                      % stac4sVer
   val refinedCats          = "eu.timepit"                            %% "refined-cats"                % refinedVer
   val refinedPureconfig    = "eu.timepit"                            %% "refined-pureconfig"          % refinedVer
+  val threetenExtra        = "org.threeten"                           % "threeten-extra"              % "1.6.0"
   val ansiColors212        = "org.backuity"                          %% "ansi-interpolator"           % "1.1.0"  % Provided
 }

@@ -283,7 +283,8 @@ lazy val ogc = project
       commonsIO, // to make GeoTiffRasterSources work
       scaffeine,
       scalatest,
-      jaxbApi
+      jaxbApi,
+      threetenExtra
     )
   )
 

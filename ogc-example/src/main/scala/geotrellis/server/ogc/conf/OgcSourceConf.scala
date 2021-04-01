@@ -22,6 +22,7 @@ import geotrellis.raster.resample._
 import geotrellis.server.ogc._
 import geotrellis.store.GeoTrellisPath
 import com.azavea.maml.ast._
+import cats.syntax.option._
 
 // This sumtype corresponds to the in-config representation of a source
 sealed trait OgcSourceConf {
@@ -38,13 +39,40 @@ case class RasterSourceConf(
   defaultStyle: Option[String],
   styles: List[StyleConf],
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
+  datetimeField: String = SimpleSource.TimeFieldDefault,
+  timeFormat: OgcTimeFormat = OgcTimeFormat.Self,
+  timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest
 ) extends OgcSourceConf {
   def toLayer: RasterOgcSource = {
-    GeoTrellisPath.parseOption(source) match {
-      case Some(_) => GeoTrellisOgcSource(name, title, source, defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy)
-      case None    => SimpleSource(name, title, RasterSource(source), defaultStyle, styles.map(_.toStyle), resampleMethod, overviewStrategy, None)
-    }
+    GeoTrellisPath
+      .parseOption(source)
+      .fold[RasterOgcSource](
+        SimpleSource(
+          name,
+          title,
+          RasterSource(source),
+          defaultStyle,
+          styles.map(_.toStyle),
+          resampleMethod,
+          overviewStrategy,
+          datetimeField.some,
+          timeFormat
+        )
+      )(_ =>
+        GeoTrellisOgcSource(
+          name,
+          title,
+          source,
+          defaultStyle,
+          styles.map(_.toStyle),
+          resampleMethod,
+          overviewStrategy,
+          datetimeField.some,
+          timeFormat,
+          timeDefault
+        )
+      )
   }
 }
 
@@ -55,7 +83,9 @@ case class MapAlgebraSourceConf(
   defaultStyle: Option[String],
   styles: List[StyleConf],
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
+  timeFormat: OgcTimeFormat = OgcTimeFormat.Self,
+  timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest
 ) extends OgcSourceConf {
   private def listParams(expr: Expression): List[String] = {
     def eval(subExpr: Expression): List[String] =
@@ -73,26 +103,26 @@ case class MapAlgebraSourceConf(
     *  in the algebra field
     */
   def model(possibleSources: List[RasterOgcSource]): MapAlgebraSource = {
-    val layerNames      = listParams(algebra)
-    val sourceList      = layerNames.map { name =>
+    val layerNames = listParams(algebra)
+    val sourceList = layerNames.map { name =>
       val layerSrc = possibleSources.find(_.name == name).getOrElse {
         throw new Exception(
           s"MAML Layer expected but was unable to find the simple layer '$name', make sure all required layers are in the server configuration and are correctly spelled there and in all provided MAML"
         )
       }
-      (layerSrc.timeMetadataKey, name -> layerSrc.source)
+      name -> layerSrc
     }
-    val timeMetadataKey = sourceList.flatMap(_._1).headOption
     MapAlgebraSource(
       name,
       title,
-      sourceList.map(_._2).toMap,
+      sourceList.toMap,
       algebra,
       defaultStyle,
       styles.map(_.toStyle),
       resampleMethod,
       overviewStrategy,
-      timeMetadataKey
+      timeFormat,
+      timeDefault
     )
   }
 }

@@ -16,6 +16,8 @@
 
 package geotrellis.server.ogc
 
+import geotrellis.server.ogc.stac._
+
 import com.azavea.stac4s.StacCollection
 import geotrellis.proj4.CRS
 import geotrellis.raster.{RasterSource, ResampleMethod}
@@ -35,9 +37,23 @@ case class StacOgcSource(
   styles: List[OgcStyle],
   resampleMethod: ResampleMethod,
   overviewStrategy: OverviewStrategy,
-  timeMetadataKey: Option[String]
+  timeMetadataKey: Option[String],
+  computeTimePositions: Boolean,
+  timeFormat: OgcTimeFormat,
+  timeDefault: OgcTimeDefault
 ) extends RasterOgcSource {
-  lazy val time: OgcTime = attributes.time(timeMetadataKey).orElse(source.attributes.time(timeMetadataKey)).getOrElse(source.time(timeMetadataKey))
+
+  lazy val time: OgcTime = {
+    val summaryTime = if (!computeTimePositions) stacSource.stacExtent.ogcTime else None
+    summaryTime
+      .orElse(
+        attributes
+          .time(timeMetadataKey)
+          .orElse(source.attributes.time(timeMetadataKey))
+      )
+      .getOrElse(source.time(timeMetadataKey))
+      .format(timeFormat)
+  }
 
   def source: RasterSource = stacSource.source
 

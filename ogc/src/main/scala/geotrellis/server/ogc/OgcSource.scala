@@ -57,6 +57,7 @@ trait OgcSource {
   def overviewStrategy: OverviewStrategy
   def time: OgcTime
   def timeMetadataKey: Option[String]
+  def timeDefault: OgcTimeDefault
   def isTemporal: Boolean = timeMetadataKey.nonEmpty && time.nonEmpty
 
   def nativeProjectedExtent: ProjectedExtent = ProjectedExtent(nativeExtent, nativeCrs.head)
@@ -90,12 +91,18 @@ case class SimpleSource(
   styles: List[OgcStyle],
   resampleMethod: ResampleMethod,
   overviewStrategy: OverviewStrategy,
-  timeMetadataKey: Option[String]
+  timeMetadataKey: Option[String],
+  timeFormat: OgcTimeFormat
 ) extends RasterOgcSource {
-  lazy val time: OgcTime = source.time(timeMetadataKey)
+  val timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest
+  lazy val time: OgcTime          = source.time(timeMetadataKey).format(timeFormat)
 
   def toLayer(crs: CRS, style: Option[OgcStyle], temporalSequence: List[OgcTime]): SimpleOgcLayer =
     SimpleOgcLayer(name, title, crs, source, style, resampleMethod, overviewStrategy)
+}
+
+object SimpleSource {
+  val TimeFieldDefault: String = "times"
 }
 
 case class GeoTrellisOgcSource(
@@ -106,7 +113,9 @@ case class GeoTrellisOgcSource(
   styles: List[OgcStyle],
   resampleMethod: ResampleMethod,
   overviewStrategy: OverviewStrategy,
-  timeMetadataKey: Option[String] = "times".some
+  timeMetadataKey: Option[String],
+  timeFormat: OgcTimeFormat,
+  timeDefault: OgcTimeDefault
 ) extends RasterOgcSource {
 
   def toLayer(crs: CRS, style: Option[OgcStyle], temporalSequence: List[OgcTime]): SimpleOgcLayer = {
@@ -114,7 +123,13 @@ case class GeoTrellisOgcSource(
       temporalSequence.headOption match {
         case Some(t) if t.nonEmpty                              => sourceForTime(t)
         case _ if temporalSequence.isEmpty && source.isTemporal =>
-          sourceForTime(source.times.head)
+          val sorted = source.times
+          val time   = timeDefault match {
+            case OgcTimeDefault.Oldest   => sorted.head
+            case OgcTimeDefault.Newest   => sorted.last
+            case OgcTimeDefault.Time(dt) => dt
+          }
+          sourceForTime(time)
         case _                                                  => source
       }
     SimpleOgcLayer(name, title, crs, src, None, resampleMethod, overviewStrategy)
@@ -134,13 +149,13 @@ case class GeoTrellisOgcSource(
       ),
       None,
       None,
-      timeMetadataKey.getOrElse("times")
+      timeMetadataKey.getOrElse(SimpleSource.TimeFieldDefault)
     )
   }
 
   lazy val time: OgcTime =
     if (!source.isTemporal) OgcTimeEmpty
-    else OgcTimePositions(source.times)
+    else OgcTimePositions(source.times).format(timeFormat)
 
   /** If temporal, try to match in the following order:
     *
@@ -160,8 +175,9 @@ case class GeoTrellisOgcSource(
     */
   def sourceForTime(interval: OgcTime): GeoTrellisRasterSource =
     if (source.isTemporal) {
-      time match {
-        case sourceInterval: OgcTimeInterval =>
+      (time match {
+        case OgcTimeEmpty => None
+        case _            =>
           source.times
             .find { t =>
               interval match {
@@ -170,20 +186,8 @@ case class GeoTrellisOgcSource(
                 case OgcTimeEmpty                   => false
               }
             }
-            .fold(sourceForTime(sourceInterval))(sourceForTime)
-
-        case OgcTimePositions(NEL(head, _)) =>
-          source.times
-            .find { t =>
-              interval match {
-                case OgcTimeInterval(start, end, _) => start <= t && t <= end
-                case OgcTimePositions(list)         => list.exists(_ == t)
-                case OgcTimeEmpty                   => false
-              }
-            }
-            .fold(sourceForTime(head))(sourceForTime)
-        case _                              => source
-      }
+            .map(sourceForTime)
+      }).getOrElse(source)
     } else source
 
   def sourceForTime(time: ZonedDateTime): GeoTrellisRasterSource =
@@ -212,25 +216,29 @@ case class MapAlgebraSourceMetadata(
 case class MapAlgebraSource(
   name: String,
   title: String,
-  sources: Map[String, RasterSource],
+  ogcSources: Map[String, RasterOgcSource],
   algebra: Expression,
   defaultStyle: Option[String],
   styles: List[OgcStyle],
   resampleMethod: ResampleMethod,
   overviewStrategy: OverviewStrategy,
-  timeMetadataKey: Option[String]
+  timeFormat: OgcTimeFormat,
+  timeDefault: OgcTimeDefault
 ) extends OgcSource {
-  def extentIn(crs: CRS): Extent = {
-    val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sources.values.map(_.reproject(crs)).toList)
-    val extents                               = reprojectedSources.map(_.extent)
+  // each of the underlying ogcSources uses it's own timeMetadataKey
+  val timeMetadataKey: Option[String] = None
 
-    SampleUtils.intersectExtents(extents).getOrElse {
+  lazy val sources: Map[String, RasterSource]    = ogcSources.mapValues(_.source)
+  lazy val sourcesList: List[RasterSource]       = sources.values.toList
+  lazy val ogcSourcesList: List[RasterOgcSource] = ogcSources.values.toList
+
+  def extentIn(crs: CRS): Extent =
+    SampleUtils.intersectExtents(sourcesList.map(_.reproject(crs).extent)).getOrElse {
       throw new Exception("no intersection found among map map algebra sources")
     }
-  }
 
   def bboxIn(crs: CRS): BoundingBox = {
-    val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sources.values.map(_.reproject(crs)).toList)
+    val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sourcesList.map(_.reproject(crs)))
     val extents                               = reprojectedSources.map(_.extent)
     val extentIntersection                    = SampleUtils.intersectExtents(extents)
     val cellSize                              = SampleUtils.chooseLargestCellSize(reprojectedSources.map(_.cellSize))
@@ -252,32 +260,24 @@ case class MapAlgebraSource(
       sources.mapValues(_.metadata)
     )
 
-  lazy val nativeExtent: Extent = {
-    val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sources.values.map(_.reproject(nativeCrs.head)).toList)
-    val extents                               = reprojectedSources.map(_.extent)
-    val extentIntersection                    = SampleUtils.intersectExtents(extents)
-
-    extentIntersection match {
+  lazy val nativeExtent: Extent =
+    SampleUtils.intersectExtents(sourcesList.map(_.reproject(nativeCrs.head).extent)) match {
       case Some(extent) => extent
       case None         => throw new Exception("no intersection found among map algebra sources")
     }
-  }
 
   lazy val nativeRE: GridExtent[Long] = {
-    val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sources.values.map(_.reproject(nativeCrs.head)).toList)
+    val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sourcesList.map(_.reproject(nativeCrs.head)))
     val cellSize                              = SampleUtils.chooseSmallestCellSize(reprojectedSources.map(_.cellSize))
 
     new GridExtent[Long](nativeExtent, cellSize)
   }
 
-  val time: OgcTime =
-    timeMetadataKey.toList
-      .flatMap { key => sources.values.toList.map(_.time(key.some)) }
-      .foldLeft[OgcTime](OgcTimeEmpty)(_ |+| _)
+  val time: OgcTime = ogcSources.values.toList.map(_.time).foldLeft[OgcTime](OgcTimeEmpty)(_ |+| _).format(timeFormat)
 
   val attributes: Map[String, String]  = Map.empty
-  lazy val nativeCrs: Set[CRS]         = sources.values.map(_.crs).toSet
-  lazy val minBandCount: Int           = sources.values.map(_.bandCount).min
-  lazy val cellTypes: Set[CellType]    = sources.values.map(_.cellType).toSet
-  lazy val resolutions: List[CellSize] = sources.values.flatMap(_.resolutions).toList.distinct
+  lazy val nativeCrs: Set[CRS]         = ogcSourcesList.flatMap(_.nativeCrs).toSet
+  lazy val minBandCount: Int           = sourcesList.map(_.bandCount).min
+  lazy val cellTypes: Set[CellType]    = sourcesList.map(_.cellType).toSet
+  lazy val resolutions: List[CellSize] = sourcesList.flatMap(_.resolutions).distinct
 }
