@@ -118,6 +118,8 @@ case class GeoTrellisOgcSource(
   timeDefault: OgcTimeDefault
 ) extends RasterOgcSource {
 
+  import geotrellis.fake._
+
   def toLayer(crs: CRS, style: Option[OgcStyle], temporalSequence: List[OgcTime]): SimpleOgcLayer = {
     val src =
       temporalSequence.headOption match {
@@ -139,10 +141,10 @@ case class GeoTrellisOgcSource(
 
   lazy val source = {
     val attributeStore = AttributeStore(dataPath.value)
-    new GeoTrellisRasterSource(
+    new GeoTrellisRasterSourceE(
       attributeStore,
       dataPath,
-      GeoTrellisRasterSource.getSourceLayersByName(
+      GeoTrellisRasterSourceE.getSourceLayersByName(
         attributeStore,
         dataPath.layerName,
         dataPath.bandCount.getOrElse(1)
@@ -173,7 +175,7 @@ case class GeoTrellisOgcSource(
     * @param interval
     * @return
     */
-  def sourceForTime(interval: OgcTime): GeoTrellisRasterSource =
+  def sourceForTime(interval: OgcTime): GeoTrellisRasterSourceE =
     if (source.isTemporal) {
       (time match {
         case OgcTimeEmpty => None
@@ -190,8 +192,8 @@ case class GeoTrellisOgcSource(
       }).getOrElse(source)
     } else source
 
-  def sourceForTime(time: ZonedDateTime): GeoTrellisRasterSource =
-    if (source.isTemporal) GeoTrellisRasterSource(dataPath, Some(time))
+  def sourceForTime(time: ZonedDateTime): GeoTrellisRasterSourceE =
+    if (source.isTemporal) GeoTrellisRasterSourceE(dataPath, Some(time))
     else source
 }
 

@@ -23,7 +23,6 @@ import geotrellis.server.ogc.utils._
 import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wms.WmsParams.{GetCapabilities, GetMap}
 import geotrellis.server.utils._
-
 import geotrellis.raster.RasterExtent
 import geotrellis.raster.{io => _, _}
 import com.azavea.maml.error._
@@ -35,6 +34,7 @@ import org.http4s.dsl.Http4sDsl
 import _root_.io.circe.syntax._
 import cats.effect._
 import cats.Parallel
+import cats.data.{NonEmptyList, Validated}
 import cats.syntax.apply._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
@@ -51,7 +51,6 @@ import org.http4s.headers.`Content-Type`
 import scalaxb._
 
 import java.net.URL
-
 import scala.concurrent.duration._
 import scala.xml.Elem
 
@@ -173,18 +172,40 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
                     cached <- Sync[F].delay { histoCache.getIfPresent(layer) }
                     hist   <- cached match {
                                 case Some(h) => h.pure[F]
-                                case None    => evalHisto
+                                case None    => Sync[F].delay(println("EVAL")) *> evalHisto
                               }
                     _      <- Sync[F].delay { histoCache.put(layer, hist) }
                   } yield hist
 
-                  (evalExtent(re.extent, re.cellSize.some), histIO).parMapN {
+                  println(s"re.extent: ${re.extent}")
+
+                  val res: F[Either[Throwable, Validated[NonEmptyList[MamlError], (MultibandTile, List[Histogram[Double]])]]] = (evalExtent(re.extent, re.cellSize.some), histIO).parMapN {
                     case (Valid(mbtile), Valid(hists)) => Valid((mbtile, hists))
                     case (Invalid(errs), _)            => Invalid(errs)
                     case (_, Invalid(errs))            => Invalid(errs)
-                  }.attempt flatMap {
+                  }.attempt
+
+                  val res2: F[Either[Throwable, Validated[NonEmptyList[MamlError], (MultibandTile, List[Histogram[Double]])]]] =
+                    Left(new Exception("")).pure[F].widen
+
+                  /*res2 flatMap {
                     case Right(Valid((mbtile, hists))) => // success
                       val rendered = Raster(mbtile, re.extent).render(wmsReq.crs, layer.style, wmsReq.format, hists)
+                      tileCache.put(wmsReq, rendered)
+                      Ok(rendered).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.format))))
+                    case Right(Invalid(errs))          => // maml-specific errors
+                      logger.debug(errs.toList.toString)
+                      BadRequest(errs.asJson)
+                    case Left(err)                     => // exceptions
+                      logger.error(err.stackTraceString)
+                      InternalServerError(err.stackTraceString)
+                  }*/
+
+                  val rr: F[Either[Throwable, Interpreted[MultibandTile]]] = evalExtent(re.extent, re.cellSize.some).map(Right(_)).widen
+
+                  rr flatMap {
+                    case Right(Valid(mbtile)) => // success
+                      val rendered = Raster(mbtile, re.extent).render(wmsReq.crs, layer.style, wmsReq.format, Nil)
                       tileCache.put(wmsReq, rendered)
                       Ok(rendered).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.format))))
                     case Right(Invalid(errs))          => // maml-specific errors
@@ -207,6 +228,7 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
                       .flatMap {
                         _.headOption match {
                           case Some(_) =>
+                            println("Oh no Im here!")
                             val tile   = ArrayTile(Array(0, 0), 1, 1)
                             val raster = Raster(MultibandTile(tile, tile, tile), wmsReq.boundingBox)
                             Ok(raster.render(wmsReq.crs, None, wmsReq.format, Nil)).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.format))))

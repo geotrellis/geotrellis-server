@@ -75,8 +75,10 @@ object SimpleOgcLayer {
   implicit def simpleOgcReification[F[_]: Sync: Logger]: ExtentReification[F, SimpleOgcLayer] = {
     self => (extent: Extent, cellSize: Option[CellSize]) =>
       {
-        Logger[F].trace(
-          s"attempting to retrieve layer $self at extent $extent with $cellSize"
+        Logger[F].info(
+          s"\n ----------------------------------- \n" +
+          s"\n attempting to retrieve layer $self at extent $extent with $cellSize \n" +
+          s"\n ----------------------------------- \n"
         ) *>
         Logger[F].trace(s"Requested extent geojson: ${extent.toGeoJson}") *> {
           Sync[F].delay {

@@ -7,7 +7,7 @@ import geotrellis.raster.gdal.GDALDataset.DatasetType
 import geotrellis.raster.gdal.{GDALDataset, GDALIOException, GDALRasterSource, acceptableDatasets, numberOfAttempts}
 import geotrellis.raster.reproject.ReprojectRasterExtent
 import geotrellis.raster.{ArrayTile, ByteCellType, GridBounds, RasterExtent, Tile, TileLayout}
-import geotrellis.store.GeoTrellisRasterSource
+import geotrellis.store.{GeoTrellisPath, GeoTrellisRasterSource}
 import geotrellis.vector.Extent
 
 object Main {
@@ -19,7 +19,12 @@ object Main {
     // WIDTH=1135&HEIGHT=890&
     // LAYERS=hrdsm&
 
-    GDALRasterSource("")
+    // https://datacube-stage.services.geo.ca/ows/elevation?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&
+    // BBOX=-13545.86242142471019,6808610.873036045581,1090481.44127773121,7675087.328320214525
+    // &CRS=EPSG:2957&
+    // WIDTH=1135&HEIGHT=890&LAYERS=dsm
+    // &STYLES=elevation&FORMAT=image/png&DPI=96&
+    // MAP_RESOLUTION=96&FORMAT_OPTIONS=dpi:96&TRANSPARENT=TRUE
 
     val sourceCRS = CRS.fromString("+proj=lcc +lat_1=49 +lat_2=77 +lat_0=49 +lon_0=-95 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
     val sourceZoom = 15

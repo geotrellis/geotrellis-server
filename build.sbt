@@ -271,7 +271,7 @@ lazy val opengis = project
   )
 
 lazy val ogc = project
-  .dependsOn(core, opengis)
+  .dependsOn(core, opengis, stac)
   .settings(moduleName := "geotrellis-server-ogc")
   .settings(commonSettings)
   .settings(publishSettings)
@@ -334,6 +334,7 @@ lazy val stac = project
       circeGeneric.value,
       circeGenericExtras.value,
       geotrellisRaster,
+      geotrellisS3,
       stac4sCore,
       stac4sClient
     )
