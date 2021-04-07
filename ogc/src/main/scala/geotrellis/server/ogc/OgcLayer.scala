@@ -75,11 +75,7 @@ object SimpleOgcLayer {
   implicit def simpleOgcReification[F[_]: Sync: Logger]: ExtentReification[F, SimpleOgcLayer] = {
     self => (extent: Extent, cellSize: Option[CellSize]) =>
       {
-        Logger[F].info(
-          s"\n ----------------------------------- \n" +
-          s"\n attempting to retrieve layer $self at extent $extent with $cellSize \n" +
-          s"\n ----------------------------------- \n"
-        ) *>
+        Logger[F].trace(s"attempting to retrieve layer $self at extent $extent with $cellSize") *>
         Logger[F].trace(s"Requested extent geojson: ${extent.toGeoJson}") *> {
           Sync[F].delay {
             cellSize
@@ -111,12 +107,28 @@ object SimpleOgcLayer {
     Sync[F].delay {
       val rasterExtents = self.source.resolutions.map { cs =>
         val re = RasterExtent(self.source.extent, cs)
-        ReprojectRasterExtent(
+        val res = ReprojectRasterExtent(
           re,
           self.source.crs,
           self.crs,
           Options.DEFAULT.copy(method = self.resampleMethod)
         )
+
+        println("----------------")
+        println(s"re.extent: ${re.extent}")
+        println(s"self.source.crs: ${self.source.crs.toProj4String}")
+        println(s"res.extent: ${res.extent}")
+        println(s"self.crs: ${self.crs.toProj4String}")
+        println("----------------")
+        println("================")
+        println(s"${re.extent.reproject(self.source.crs, self.crs)}")
+        println(s"${res.extent.reproject(self.crs, self.source.crs)}")
+        println("================")
+        println("~~~~~~~~~~~~~~~~")
+        println(s"${Extent(-898112.6757444271, 4366397.955450379, 3196914.503779556, 10104027.377988787).reproject(self.crs, self.source.crs)}")
+        println("~~~~~~~~~~~~~~~~")
+
+        res
       }
       NEL.fromList(rasterExtents).get
     }

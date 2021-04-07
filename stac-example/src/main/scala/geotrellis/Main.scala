@@ -26,6 +26,12 @@ object Main {
     // &STYLES=elevation&FORMAT=image/png&DPI=96&
     // MAP_RESOLUTION=96&FORMAT_OPTIONS=dpi:96&TRANSPARENT=TRUE
 
+    //
+    // ?service=WMS&request=GetMap&
+    // BBOX=-13545.86242142471019,6808610.873036045581,1090481.44127773121,7675087.328320214525&
+    // CRS=EPSG:2957&WIDTH=1135&HEIGHT=890&LAYERS=hrdsm&
+    // STYLES=elevation&FORMAT=image/png&DPI=96&MAP_RESOLUTION=96&FORMAT_OPTIONS=dpi:96&TRANSPARENT=TRUE
+
     val sourceCRS = CRS.fromString("+proj=lcc +lat_1=49 +lat_2=77 +lat_0=49 +lon_0=-95 +x_0=0 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs")
     val sourceZoom = 15
     val sourceExtent = Extent(-2328477.302331076, -732242.5105083217, 2641140.7340110596, 3898486.2485002363)
@@ -40,6 +46,7 @@ object Main {
 
     val targetCRS = CRS.fromEpsgCode(2957)
     val extent = Extent(-13545.86242142471019, 6808610.873036045581, 1090481.44127773121, 7675087.328320214525)
+    // val extent = Extent(-1710305.1057673902, 4362904.445741585, 4016160.017683338, 1.0060133986247078E7)
     val (cols, rows) = 1135 -> 890
     val rasterExtent = RasterExtent(extent, cols, rows)
 

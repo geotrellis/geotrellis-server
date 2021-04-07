@@ -185,10 +185,10 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
                     case (_, Invalid(errs))            => Invalid(errs)
                   }.attempt
 
-                  val res2: F[Either[Throwable, Validated[NonEmptyList[MamlError], (MultibandTile, List[Histogram[Double]])]]] =
-                    Left(new Exception("")).pure[F].widen
+                  // val res2: F[Either[Throwable, Validated[NonEmptyList[MamlError], (MultibandTile, List[Histogram[Double]])]]] =
+                    // Left(new Exception("")).pure[F].widen
 
-                  /*res2 flatMap {
+                  res flatMap {
                     case Right(Valid((mbtile, hists))) => // success
                       val rendered = Raster(mbtile, re.extent).render(wmsReq.crs, layer.style, wmsReq.format, hists)
                       tileCache.put(wmsReq, rendered)
@@ -199,9 +199,9 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
                     case Left(err)                     => // exceptions
                       logger.error(err.stackTraceString)
                       InternalServerError(err.stackTraceString)
-                  }*/
+                  }
 
-                  val rr: F[Either[Throwable, Interpreted[MultibandTile]]] = evalExtent(re.extent, re.cellSize.some).map(Right(_)).widen
+                  /*val rr: F[Either[Throwable, Interpreted[MultibandTile]]] = evalExtent(re.extent, re.cellSize.some).map(Right(_)).widen
 
                   rr flatMap {
                     case Right(Valid(mbtile)) => // success
@@ -214,7 +214,7 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
                     case Left(err)                     => // exceptions
                       logger.error(err.stackTraceString)
                       InternalServerError(err.stackTraceString)
-                  }
+                  }*/
                 }
                 .headOption
                 .getOrElse(wmsReq.layers.headOption match {

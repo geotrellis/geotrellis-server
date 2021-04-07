@@ -47,6 +47,7 @@ lazy val commonSettings = Seq(
     Resolver.bintrayRepo("azavea", "geotrellis"),
     Resolver.sonatypeRepo("releases"),
     Resolver.sonatypeRepo("snapshots"),
+    Resolver.mavenLocal,
     "osgeo-snapshots" at "https://repo.osgeo.org/repository/snapshot/",
     "osgeo-releases" at "https://repo.osgeo.org/repository/release/",
     "eclipse-releases" at "https://repo.eclipse.org/content/groups/releases",
@@ -362,7 +363,8 @@ lazy val `stac-example` = project
       sttpHttp4s,
       refinedCats,
       refinedPureconfig,
-      ansiColors212
+      ansiColors212,
+      proj4
     ),
     excludeDependencies ++= Seq(
       // log4j brought in via uzaygezen is a pain for us

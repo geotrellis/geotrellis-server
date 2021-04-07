@@ -56,6 +56,7 @@ object LayerHistogram {
                            .fromListUnsafe(params.values.toList)
                            .traverse(HasRasterExtents[F, T].rasterExtents(_))
                            .map(_.flatten)
+      _ = println(s"rasterExtents: ${rasterExtents}")
       extents         <- NEL
                            .fromListUnsafe(params.values.toList)
                            .traverse(
@@ -64,6 +65,7 @@ object LayerHistogram {
                                .map(z => z.map(_.extent).reduce)
                            )
       intersectionO    = SampleUtils.intersectExtents(extents)
+      _ = println(s"intersectionO: ${intersectionO}")
       _               <- intersectionO traverse { intersection =>
                            logger.trace(
                              s"[LayerHistogram] Intersection of provided layer extents calculated: $intersection"
@@ -121,6 +123,7 @@ object LayerHistogram {
     param: T,
     maxCells: Int
   ): F[Interpreted[List[Histogram[Double]]]] = {
+    println(s"concurrent")
     val eval =
       curried[F, T](
         RasterVar("identity"),
