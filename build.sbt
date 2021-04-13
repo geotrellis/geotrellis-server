@@ -61,7 +61,7 @@ lazy val commonSettings = Seq(
   run / fork := true,
   outputStrategy := Some(StdoutOutput),
   assembly / test := {},
-  sources in (Compile, doc) := (sources in (Compile, doc)).value,
+  Compile / doc / sources := (Compile / doc / sources).value,
   assembly / assemblyMergeStrategy := {
     case "reference.conf"              => MergeStrategy.concat
     case "application.conf"            => MergeStrategy.concat
@@ -300,7 +300,7 @@ lazy val `ogc-example` = project
       geotrellisS3,
       geotrellisStore,
       geotrellisCassandra,
-      geotrellisHBase,
+      // geotrellisHBase,
       geotrellisAccumulo,
       geotrellisGdal,
       http4sDsl.value,
