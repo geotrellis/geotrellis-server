@@ -32,7 +32,7 @@ case class ResourceTile(
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
   overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
 ) {
-  def uri: String = s"file://${getClass.getResource(s"/$name").getFile}"
+  def uri: String = s"gtiff+file://${getClass.getResource(s"/$name").getFile}"
 }
 
 object ResourceTile extends RasterSourceUtils {

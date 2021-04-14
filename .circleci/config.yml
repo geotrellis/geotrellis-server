@@ -35,25 +35,25 @@ aliases:
         command: ./scripts/cipublish
 
   # Build environments
-  - &openjdk8-scala2_12_12_environment
+  - &openjdk8-scala2_12_13_environment
     docker:
       - image: circleci/openjdk:8-jdk
     environment:
-      SCALA_VERSION: 2.12.12
+      SCALA_VERSION: 2.12.13
 
 version: 2
 workflows:
   version: 2
   build:
     jobs:
-      - "openjdk8-scala2.12.12":
+      - "openjdk8-scala2.12.13":
           filters: # required since `openjdk8-scala2.12.12_deploy` has tag filters AND requires `openjdk8-scala2.12.12`
             tags:
               only:
                 - /^(.*)$/
-      - "openjdk8-scala2.12.12_deploy":
+      - "openjdk8-scala2.12.13_deploy":
           requires:
-            - "openjdk8-scala2.12.12"
+            - "openjdk8-scala2.12.13"
           filters:
             tags:
               only:
@@ -65,10 +65,10 @@ workflows:
                 - /hotfix\/.*/
 
 jobs:
-  "openjdk8-scala2.12.12":
-    <<: *openjdk8-scala2_12_12_environment
+  "openjdk8-scala2.12.13":
+    <<: *openjdk8-scala2_12_13_environment
     steps: *run_cibuild
 
-  "openjdk8-scala2.12.12_deploy":
-    <<: *openjdk8-scala2_12_12_environment
+  "openjdk8-scala2.12.13_deploy":
+    <<: *openjdk8-scala2_12_13_environment
     steps: *run_cipublish

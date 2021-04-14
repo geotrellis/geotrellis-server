@@ -96,7 +96,7 @@ lazy val commonSettings = Seq(
       }
     )
   ),
-  useCoursier := false,
+  // useCoursier := false,
   Global / cancelable := true,
   javaOptions ++= Seq("-Djava.library.path=/usr/local/lib")
 )
@@ -300,7 +300,7 @@ lazy val `ogc-example` = project
       geotrellisS3,
       geotrellisStore,
       geotrellisCassandra,
-      // geotrellisHBase,
+      geotrellisHBase,
       geotrellisAccumulo,
       geotrellisGdal,
       http4sDsl.value,
@@ -321,6 +321,29 @@ lazy val `ogc-example` = project
       ExclusionRule("log4j", "log4j"),
       ExclusionRule("org.slf4j", "slf4j-log4j12"),
       ExclusionRule("org.slf4j", "slf4j-nop")
+    )
+  )
+  .settings(
+    docker / dockerfile := {
+      // The assembly task generates a fat JAR file
+      val artifact: File     = assembly.value
+      val artifactTargetPath = s"/app/${artifact.name}"
+
+      new Dockerfile {
+        from("openjdk:8-jre")
+        add(artifact, artifactTargetPath)
+        entryPoint("java", "-jar", artifactTargetPath)
+      }
+    },
+    docker / imageNames := Seq(
+      // Sets the latest tag
+      ImageName(s"geotrellis/geotrellis-server-ogc-services:latest"),
+      // Sets a name with a tag that contains the project version
+      ImageName(
+        namespace = Some("geotrellis"),
+        repository = "geotrellis-server-ogc-services",
+        tag = Some("v" + version.value)
+      )
     )
   )
 
