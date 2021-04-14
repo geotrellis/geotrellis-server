@@ -132,7 +132,7 @@ case class GeoTrellisOgcSource(
           sourceForTime(time)
         case _                                                  => source
       }
-    SimpleOgcLayer(name, title, crs, src, None, resampleMethod, overviewStrategy)
+    SimpleOgcLayer(name, title, crs, src, style, resampleMethod, overviewStrategy)
   }
 
   private val dataPath = GeoTrellisPath.parse(sourceUri)
