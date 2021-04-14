@@ -52,7 +52,7 @@ case class WmsModel[F[_]: Monad](
               source.styles.find(_.name == name)
             }
             source match {
-              case rs: RasterOgcSource   => rs.toLayer(supportedCrs, None, p.time :: Nil)
+              case rs: RasterOgcSource   => rs.toLayer(supportedCrs, style, p.time :: Nil)
               case mas: MapAlgebraSource =>
                 val (name, title, algebra, resampleMethod, overviewStrategy) =
                   (mas.name, mas.title, mas.algebra, mas.resampleMethod, mas.overviewStrategy)
