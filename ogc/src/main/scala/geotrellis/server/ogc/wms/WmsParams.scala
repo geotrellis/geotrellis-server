@@ -145,22 +145,36 @@ object WmsParams {
   object GetFeatureInfoParams {
     def build(params: ParamMap): ValidatedNel[ParamError, WmsParams] = {
 
-      val getMap: ValidatedNel[ParamError, WmsParams] = GetMapParams.build(params)
+      val getMap: ValidatedNel[ParamError, WmsParams]    = GetMapParams.build(params)
       val versionParam: ValidatedNel[ParamError, String] = params.validatedVersion(wmsVersion)
-      (versionParam, getMap)
-        .tupled
+      (versionParam, getMap).tupled
         .andThen {
           case (version, getMap: GetMapParams) =>
-            val infoFormat  = params.validatedParam("infoFormat")
-            val queryLayers = params.validatedParam[List[String]]("queryLayers", { s => s.split(",").toList.some })
+            val infoFormat  = params.validatedParam("info_format")
+            val queryLayers = params.validatedParam[List[String]]("query_layers", { s => s.split(",").toList.some })
 
             val i = params.validatedParam[Int]("i", { s => Try(s.toInt).toOption })
             val j = params.validatedParam[Int]("j", { s => Try(s.toInt).toOption })
 
             (infoFormat, queryLayers, i, j).mapN { case (infoFormat, queryLayers, i, j) =>
-              GetFeatureInfoParams(version, infoFormat, queryLayers, i, j, None, getMap.layers, getMap.boundingBox, getMap.format, getMap.width, getMap.height, getMap.crs, getMap.time, params)
+              GetFeatureInfoParams(
+                version,
+                infoFormat,
+                queryLayers,
+                i,
+                j,
+                None,
+                getMap.layers,
+                getMap.boundingBox,
+                getMap.format,
+                getMap.width,
+                getMap.height,
+                getMap.crs,
+                getMap.time,
+                params
+              )
             }
-          case (_, getMap) => Invalid(ParamError.InvalidValue("getMap", getMap.toString, Nil)).toValidatedNel
+          case (_, getMap)                     => Invalid(ParamError.InvalidValue("getMap", getMap.toString, Nil)).toValidatedNel
         }
     }
   }

@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OGC Services configurable time representation [#324](https://github.com/geotrellis/geotrellis-server/issues/324)
 - Default time period configurable on the WMS layer with a time dimension [#325](https://github.com/geotrellis/geotrellis-server/issues/325)
 - STAC Periodic Temporal extent support [#354](https://github.com/geotrellis/geotrellis-server/issues/354)
+- WMS GetFeatureInfo [#321](https://github.com/geotrellis/geotrellis-server/issues/321)
 
 ### Changed
 - Update GT Server STAC4S dependency [#319](https://github.com/geotrellis/geotrellis-server/issues/319)

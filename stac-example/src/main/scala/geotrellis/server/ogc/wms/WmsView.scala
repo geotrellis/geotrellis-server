@@ -16,19 +16,14 @@
 
 package geotrellis.server.ogc.wms
 
-import geotrellis.store.query._
-import geotrellis.server._
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.utils._
 import geotrellis.server.ogc.params.ParamError
-import geotrellis.server.ogc.wms.WmsParams.{GetCapabilitiesParams, GetMapParams, GetFeatureInfoParams}
-import geotrellis.server.utils._
+import geotrellis.server.ogc.wms.WmsParams.{GetCapabilitiesParams, GetFeatureInfoParams, GetMapParams}
 import geotrellis.vector.{io => _, _}
 
-import geotrellis.raster.RasterExtent
 import geotrellis.raster.{io => _, _}
 import com.azavea.maml.error._
-import com.azavea.maml.eval._
 import org.http4s.scalaxml._
 import org.http4s.circe._
 import org.http4s._
@@ -36,7 +31,6 @@ import org.http4s.dsl.Http4sDsl
 import _root_.io.circe.syntax._
 import cats.effect._
 import cats.Parallel
-import cats.syntax.apply._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.option._
@@ -144,30 +138,30 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
     WmsParams(req.multiParams) match {
       case Invalid(errors) =>
         val msg = ParamError.generateErrorMessage(errors.toList)
-        logger.warn(msg) *> BadRequest(msg)
+        logger.warn(msg) >> BadRequest(msg)
 
       case Valid(_: GetCapabilitiesParams) =>
-        logger.debug(ansi"%bold{GetCapabilities: ${req.uri}}") *>
+        logger.debug(ansi"%bold{GetCapabilities: ${req.uri}}") >>
           CapabilitiesView[F](wmsModel, serviceUrl, extendedCapabilities).toXML.flatMap(Ok(_))
 
       case Valid(wmsReq: GetMapParams) =>
-        logger.debug(ansi"%bold{GetMap: ${req.uri}}") *>
+        logger.debug(ansi"%bold{GetMap: ${req.uri}}") >>
           GetMap(wmsModel, tileCache, histoCache)
             .build(wmsReq)
             .flatMap {
-              case Right(rendered) => Ok(rendered).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.format))))
-              case Left(GetMapBadRequest(msg)) => BadRequest(msg)
+              case Right(rendered)                      => Ok(rendered).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.format))))
+              case Left(GetMapBadRequest(msg))          => BadRequest(msg)
               case Left(GetMapInternalServerError(msg)) => InternalServerError(msg)
             }
 
       case Valid(wmsReq: GetFeatureInfoParams) =>
-        logger.debug(ansi"%bold{GetCapabilities: ${req.uri}}") *>
+        logger.debug(ansi"%bold{GetCapabilities: ${req.uri}}") >>
           GetFeatureInfo[F](wmsModel, rasterCache)
             .build(wmsReq)
             .flatMap {
-              case Right(f) => Ok(f.asJson)
+              case Right(f)                          => Ok(f.asJson)
               case Left(e: LayerNotDefinedException) => NotFound(e.asJson)
-              case Left(e: InvalidPointException) => BadRequest(e.asJson)
+              case Left(e: InvalidPointException)    => BadRequest(e.asJson)
             }
     }
   }

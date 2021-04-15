@@ -1,3 +1,19 @@
+/*
+ * Copyright 2021 Azavea
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package geotrellis.server.ogc.wms
 
 import io.circe.syntax._
@@ -27,20 +43,20 @@ case class GetMap[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
   histoCache: Cache[OgcLayer, Interpreted[List[Histogram[Double]]]]
 ) {
   def build(params: GetMapParams): F[Either[GetMapException, Array[Byte]]] = {
-    val re  = RasterExtent(params.boundingBox, params.width, params.height)
+    val re                                           = RasterExtent(params.boundingBox, params.width, params.height)
     val res: F[Either[GetMapException, Array[Byte]]] = model
       .getLayer(params)
       .flatMap { layers =>
         layers
           .map { layer =>
             val evalExtent = layer match {
-              case sl: SimpleOgcLayer    => LayerExtent.concurrent(sl)
+              case sl: SimpleOgcLayer     => LayerExtent.concurrent(sl)
               case ml: MapAlgebraOgcLayer =>
                 LayerExtent(ml.algebra.pure[F], ml.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F])
             }
 
             val evalHisto = layer match {
-              case sl: SimpleOgcLayer => LayerHistogram.concurrent(sl, 512)
+              case sl: SimpleOgcLayer     => LayerHistogram.concurrent(sl, 512)
               case ml: MapAlgebraOgcLayer =>
                 LayerHistogram(ml.algebra.pure[F], ml.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F], 512)
             }
@@ -50,9 +66,9 @@ case class GetMap[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
             val histIO = for {
               cached <- Sync[F].delay { histoCache.getIfPresent(layer) }
               hist   <- cached match {
-                case Some(h) => h.pure[F]
-                case None    => evalHisto
-              }
+                          case Some(h) => h.pure[F]
+                          case None    => evalHisto
+                        }
               _      <- Sync[F].delay { histoCache.put(layer, hist) }
             } yield hist
 
