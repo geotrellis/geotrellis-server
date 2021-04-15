@@ -21,7 +21,7 @@ import geotrellis.server._
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.utils._
 import geotrellis.server.ogc.params.ParamError
-import geotrellis.server.ogc.wms.WmsParams.{GetCapabilities, GetMap}
+import geotrellis.server.ogc.wms.WmsParams.{GetCapabilitiesParams, GetFeatureInfoParams, GetMapParams}
 import geotrellis.server.utils._
 
 import geotrellis.raster.RasterExtent
@@ -128,12 +128,12 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
       .maximumSize(500)
       .build[OgcLayer, Interpreted[List[Histogram[Double]]]]()
 
-  private val tileCache: Cache[GetMap, Array[Byte]] =
+  private val tileCache: Cache[GetMapParams, Array[Byte]] =
     Scaffeine()
       .recordStats()
       .expireAfterWrite(1.hour)
       .maximumSize(500)
-      .build[GetMap, Array[Byte]]()
+      .build[GetMapParams, Array[Byte]]()
 
   def responseFor(req: Request[F]): F[Response[F]] = {
     WmsParams(req.multiParams) match {
@@ -141,13 +141,13 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
         val msg = ParamError.generateErrorMessage(errors.toList)
         logger.warn(msg) *> BadRequest(msg)
 
-      case Valid(_: GetCapabilities) =>
+      case Valid(_: GetCapabilitiesParams) =>
         logger.debug(ansi"%bold{GetCapabilities: ${req.uri}}") *>
           new CapabilitiesView[F](wmsModel, serviceUrl, extendedCapabilities).toXML flatMap {
             Ok(_)
           }
 
-      case Valid(wmsReq: GetMap) =>
+      case Valid(wmsReq: GetMapParams) =>
         logger.debug(ansi"%bold{GetMap: ${req.uri}}") *> {
           val re  = RasterExtent(wmsReq.boundingBox, wmsReq.width, wmsReq.height)
           val res = wmsModel
@@ -222,6 +222,11 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
             case _              => res
           }
         }
+
+      case Valid(wmsReq: GetFeatureInfoParams) =>
+        logger.debug(ansi"%bold{GetCapabilities: ${req.uri}}") // *>
+          // new GetFeatureInfo[F](wmsModel).build(wmsReq).map(Ok(_))
+          null
     }
   }
 }
