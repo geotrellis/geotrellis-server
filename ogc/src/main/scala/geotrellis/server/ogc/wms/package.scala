@@ -95,12 +95,11 @@ package object wms {
       ).toXML
     ) :: Nil
 
-  implicit class DataRecordsOps[T](val self: Seq[DataRecord[T]]) extends AnyVal {
-    def extendedElement(key: String): Elem = ExtendedElement(key, self: _*)
-    def extendedEmptyElement: Elem         = ExtendedEmptyElement(self: _*)
-  }
-
-  implicit class ElemsOps(val self: Seq[Elem]) extends AnyVal {
-    def extendedCapabilities: List[DataRecord[Elem]] = ExtendedCapabilities(self: _*)
+  implicit class GetFeatureInfoFeatureOps(val self: Feature[Geometry, Json]) extends AnyVal {
+    def render(infoFormat: InfoFormat, crs: CRS, cellSize: CellSize): String =
+      infoFormat match {
+        case InfoFormat.Json => JsonFeatureCollection(self :: Nil).asJson.noSpaces
+        case InfoFormat.XML  => WfsFeatureCollection.toXML(self :: Nil, crs, cellSize).toString
+      }
   }
 }

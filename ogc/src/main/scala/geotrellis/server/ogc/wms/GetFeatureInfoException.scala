@@ -17,6 +17,7 @@
 package geotrellis.server.ogc.wms
 
 import cats.syntax.option._
+import geotrellis.server.ogc.InfoFormat
 import io.circe.Encoder
 import io.circe.syntax._
 import opengis.ogc.{ServiceExceptionReport, ServiceExceptionType}
@@ -63,6 +64,14 @@ object GetFeatureInfoException {
         ).asJson
       ).asJson
     }
+
+  implicit class GetFeatureInfoExceptionOps[T <: GetFeatureInfoException](self: T) {
+    def render(infoFormat: InfoFormat): String =
+      infoFormat match {
+        case InfoFormat.Json => self.asJson.noSpaces
+        case InfoFormat.XML  => self.toXML.toString
+      }
+  }
 }
 
 case class LayerNotDefinedException(msg: String, version: String) extends GetFeatureInfoException {

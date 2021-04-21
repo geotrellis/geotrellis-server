@@ -161,22 +161,11 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
             .build(wmsReq)
             .flatMap {
               case Right(f)                          =>
-                wmsReq.infoFormat match {
-                  case InfoFormat.Json => Ok(JsonFeatureCollection(f :: Nil).asJson).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.infoFormat))))
-                  case InfoFormat.XML  =>
-                    Ok(WfsFeatureCollection.toXML(f :: Nil, wmsReq.crs, wmsReq.cellSize))
-                      .map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.infoFormat))))
-                }
+                Ok(f.render(wmsReq.infoFormat, wmsReq.crs, wmsReq.cellSize)).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.infoFormat))))
               case Left(e: LayerNotDefinedException) =>
-                wmsReq.infoFormat match {
-                  case InfoFormat.Json => NotFound(e.asJson).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.infoFormat))))
-                  case InfoFormat.XML  => NotFound(e.toXML).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.infoFormat))))
-                }
+                NotFound(e.render(wmsReq.infoFormat)).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.infoFormat))))
               case Left(e: InvalidPointException)    =>
-                wmsReq.infoFormat match {
-                  case InfoFormat.Json => BadRequest(e.asJson).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.infoFormat))))
-                  case InfoFormat.XML  => BadRequest(e.toXML).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.infoFormat))))
-                }
+                BadRequest(e.render(wmsReq.infoFormat)).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.infoFormat))))
             }
     }
   }
