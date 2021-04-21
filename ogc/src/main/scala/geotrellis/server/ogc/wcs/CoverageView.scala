@@ -119,7 +119,7 @@ object CoverageView {
             wcs.TimePeriodType(
               BeginPosition = TimePositionType(start.toInstant.toString),
               EndPosition = TimePositionType(end.toInstant.toString),
-              TimeResolution = period
+              TimeResolution = period.map(_.toString)
             )
           ) :: Nil
         case OgcTimeEmpty                        => Nil

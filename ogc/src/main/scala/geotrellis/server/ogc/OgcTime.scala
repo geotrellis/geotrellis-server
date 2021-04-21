@@ -18,7 +18,6 @@ package geotrellis.server.ogc
 
 import cats.data.NonEmptyList
 import cats.{Monoid, Order, Semigroup}
-import cats.syntax.option._
 import cats.syntax.semigroup._
 import jp.ne.opt.chronoscala.Imports._
 import org.threeten.extra.PeriodDuration
@@ -109,7 +108,7 @@ final case class OgcTimePositions(list: NonEmptyList[ZonedDateTime]) extends Ogc
     else None
   }
 
-  def toOgcTimeInterval: OgcTimeInterval = OgcTimeInterval(sorted.head, sorted.last, computeIntervalPeriod.map(_.toString))
+  def toOgcTimeInterval: OgcTimeInterval = OgcTimeInterval(sorted.head, sorted.last, computeIntervalPeriod)
 
   def toList: List[String]      = list.toList.map(_.toInstant.toString)
   override def toString: String = toList.mkString(", ")
@@ -150,11 +149,9 @@ object OgcTimePositions {
   *                 @note This param is not validated. It is up to the user to ensure that it is
   *                       encoded directly
   */
-final case class OgcTimeInterval(start: ZonedDateTime, end: ZonedDateTime, interval: Option[String]) extends OgcTime {
-  def periodDuration: Option[PeriodDuration] = interval.flatMap(p => Try(PeriodDuration.parse(p)).toOption)
-
+final case class OgcTimeInterval(start: ZonedDateTime, end: ZonedDateTime, interval: Option[PeriodDuration]) extends OgcTime {
   def toTimePositions: Option[OgcTimePositions] =
-    periodDuration.flatMap { pd =>
+    interval.flatMap { pd =>
       val positions =
         (start.toEpochMilli to end.toEpochMilli by pd.toMillis)
           .map(Instant.ofEpochMilli)
@@ -165,11 +162,14 @@ final case class OgcTimeInterval(start: ZonedDateTime, end: ZonedDateTime, inter
     }
 
   override def toString: String =
-    if (start != end) s"${start.toInstant.toString}/${end.toInstant.toString}${interval.map("/" + _).getOrElse("")}"
+    if (start != end) s"${start.toInstant.toString}/${end.toInstant.toString}${interval.map(i => s"/$i").getOrElse("")}"
     else start.toInstant.toString
 }
 
 object OgcTimeInterval {
+
+  /** Safe [[PeriodDuration]] parser. */
+  private def periodDurationParse(string: String): Option[PeriodDuration] = Try(PeriodDuration.parse(string)).toOption
 
   /** Merge two OgcTimeInterval instances
     * This semigroup instance destroys the interval. If you need to retain interval when combining
@@ -184,12 +184,14 @@ object OgcTimeInterval {
 
   def apply(start: ZonedDateTime, end: ZonedDateTime): OgcTimeInterval = OgcTimeInterval(start, end, None)
 
+  def apply(start: ZonedDateTime, end: ZonedDateTime, interval: String): OgcTimeInterval = OgcTimeInterval(start, end, periodDurationParse(interval))
+
   def apply(timeString: String): OgcTimeInterval = fromString(timeString)
 
   def fromString(timeString: String): OgcTimeInterval = {
     val timeParts = timeString.split("/")
     timeParts match {
-      case Array(start, end, interval) => OgcTimeInterval(ZonedDateTime.parse(start), ZonedDateTime.parse(end), interval.some)
+      case Array(start, end, interval) => OgcTimeInterval(ZonedDateTime.parse(start), ZonedDateTime.parse(end), periodDurationParse(interval))
       case Array(start, end)           => OgcTimeInterval(ZonedDateTime.parse(start), ZonedDateTime.parse(end), None)
       case Array(start)                => OgcTimeInterval(ZonedDateTime.parse(start))
       case _                           => throw new UnsupportedOperationException("Unsupported string format for OgcTimeInterval")

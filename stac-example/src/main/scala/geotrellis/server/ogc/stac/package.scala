@@ -44,7 +44,7 @@ package object stac {
     /** [[StacExtent]]s with no temporal component are valid. */
     def ogcTime: Option[OgcTime] = self.temporal.interval.headOption.map(_.value.flatten.map(_.atZone(ZoneOffset.UTC))).map {
       case fst :: Nil        => OgcTimeInterval(fst)
-      case fst :: snd :: Nil => OgcTimeInterval(fst, snd, self.temporal.getExtensionFields[PeriodicExtent].map(_.period.toString).toOption)
+      case fst :: snd :: Nil => OgcTimeInterval(fst, snd, self.temporal.getExtensionFields[PeriodicExtent].map(_.period).toOption)
       case _                 => OgcTimeEmpty
     }
   }
