@@ -17,13 +17,13 @@
 package geotrellis.stac.raster
 
 import geotrellis.stac._
-import com.azavea.stac4s.{StacItem, StacItemAsset}
+import com.azavea.stac4s.{StacAsset, StacItem}
 import geotrellis.proj4.CRS
 import geotrellis.raster.{CellSize, Dimensions, GridExtent, RasterExtent}
 import geotrellis.stac.extensions.proj.ProjTransform
 import geotrellis.vector.{Extent, Geometry}
 
-case class StacAsset(itemAsset: StacItemAsset, item: StacItem) {
+case class StacItemAsset(itemAsset: StacAsset, item: StacItem) {
   def href: String           = itemAsset.href
   def bandCount: Option[Int] = item.bandCount
   def crs: Option[CRS]       = itemAsset.crs orElse item.crs

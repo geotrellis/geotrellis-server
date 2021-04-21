@@ -20,7 +20,6 @@ import geotrellis.proj4.CRS
 import geotrellis.raster.{CellSize, Histogram, MultibandTile, Raster}
 import geotrellis.server.ogc.style.OgcStyle
 import geotrellis.vector.Extent
-
 import org.threeten.extra.PeriodDuration
 
 package object ogc {

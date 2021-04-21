@@ -25,7 +25,7 @@ import cats.syntax.flatMap._
 import cats.instances.option._
 
 class StacAssetRasterSource(
-  val asset: StacAsset,
+  val asset: StacItemAsset,
   private[geotrellis] val targetCellType: Option[TargetCellType],
   @transient underlyingRS: => Option[RasterSource]
 ) extends RasterSource {
@@ -40,7 +40,7 @@ class StacAssetRasterSource(
   def attributes: Map[String, String]                   =
     asset.item.properties.toMap.mapValues(_.as[String].toOption).collect { case (k, v) if v.nonEmpty => k -> v.get }
   def attributesForBand(band: Int): Map[String, String] = Map.empty
-  def metadata: StacAssetMetadata                       = StacAssetMetadata(name, crs, bandCount, cellType, gridExtent, resolutions, asset)
+  def metadata: StacItemAssetMetadata                   = StacItemAssetMetadata(name, crs, bandCount, cellType, gridExtent, resolutions, asset)
 
   def reprojection(
     targetCRS: CRS,
@@ -67,7 +67,7 @@ class StacAssetRasterSource(
 
 object StacAssetRasterSource {
   def apply(
-    asset: StacAsset,
+    asset: StacItemAsset,
     targetCellType: Option[TargetCellType] = None,
     underlyingRS: => Option[RasterSource] = None
   ): StacAssetRasterSource = new StacAssetRasterSource(asset, targetCellType, underlyingRS)

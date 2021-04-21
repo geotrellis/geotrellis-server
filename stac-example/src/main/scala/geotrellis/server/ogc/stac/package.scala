@@ -22,8 +22,10 @@ import geotrellis.store.query._
 
 import geotrellis.raster.{EmptyName, RasterSource, SourceName, StringName}
 import geotrellis.raster.geotiff.GeoTiffPath
-import com.azavea.stac4s.{StacExtent, StacItemAsset}
+import com.azavea.stac4s.{StacAsset, StacExtent}
 import com.azavea.stac4s.api.client.{SearchFilters, StacClient, Query => SQuery}
+import com.azavea.stac4s.extensions.periodic.PeriodicExtent
+import com.azavea.stac4s.syntax._
 import io.circe.syntax._
 import cats.{Applicative, Foldable, FunctorFilter}
 import cats.data.NonEmptyList
@@ -34,7 +36,7 @@ import cats.syntax.functorFilter._
 import cats.syntax.applicative._
 import eu.timepit.refined.types.string.NonEmptyString
 
-import java.time.{ZoneOffset, ZonedDateTime}
+import java.time.ZoneOffset
 
 package object stac {
   implicit class StacExtentionOps(val self: StacExtent) extends AnyVal {
@@ -42,7 +44,7 @@ package object stac {
     /** [[StacExtent]]s with no temporal component are valid. */
     def ogcTime: Option[OgcTime] = self.temporal.interval.headOption.map(_.value.flatten.map(_.atZone(ZoneOffset.UTC))).map {
       case fst :: Nil        => OgcTimeInterval(fst)
-      case fst :: snd :: Nil => OgcTimeInterval(fst, snd)
+      case fst :: snd :: Nil => OgcTimeInterval(fst, snd, self.temporal.getExtensionFields[PeriodicExtent].map(_.period).toOption)
       case _                 => OgcTimeEmpty
     }
   }
@@ -55,9 +57,9 @@ package object stac {
       }
   }
 
-  implicit class StacItemAssetOps(val self: StacItemAsset) extends AnyVal {
-    def hrefGDAL(withGDAL: Boolean): String        = if (withGDAL) s"gdal+${self.href}" else s"${GeoTiffPath.PREFIX}${self.href}"
-    def withGDAL(withGDAL: Boolean): StacItemAsset = self.copy(href = hrefGDAL(withGDAL))
+  implicit class StacAssetOps(val self: StacAsset) extends AnyVal {
+    def hrefGDAL(withGDAL: Boolean): String    = if (withGDAL) s"gdal+${self.href}" else s"${GeoTiffPath.PREFIX}${self.href}"
+    def withGDAL(withGDAL: Boolean): StacAsset = self.copy(href = hrefGDAL(withGDAL))
   }
 
   implicit class QueryMapOps(val left: Map[String, List[SQuery]]) extends AnyVal {
@@ -97,9 +99,9 @@ package object stac {
       if (!ignoreTime & query.nonTemporal && query.nonUniversal) {
         self.foldMap(_.time(datetimeField)) match {
           case OgcTimePositions(list)         =>
-            self.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), timeDefault.selectTime(list)))
+            self.filter(source => source.time(datetimeField).strictTimeMatch(timeDefault.selectTime(list)))
           case OgcTimeInterval(start, end, _) =>
-            self.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), timeDefault.selectTime(NonEmptyList.of(start, end))))
+            self.filter(source => source.time(datetimeField).strictTimeMatch(timeDefault.selectTime(NonEmptyList.of(start, end))))
           case OgcTimeEmpty                   => self
         }
       } else self

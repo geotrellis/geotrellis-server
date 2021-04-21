@@ -21,7 +21,7 @@ import geotrellis.store.query.{Query, QueryF}
 import geotrellis.proj4.LatLng
 
 import com.azavea.stac4s.{Bbox, TwoDimBbox}
-import com.azavea.stac4s.types.TemporalExtent
+import com.azavea.stac4s.jvmTypes.TemporalExtent
 import com.azavea.stac4s.api.client.{SearchFilters, StacClient, Superset}
 import io.circe.syntax._
 import higherkindness.droste.{scheme, Algebra}
