@@ -27,7 +27,7 @@ import cats.syntax.flatMap._
 import cats.instances.option._
 
 class StacAssetReprojectRasterSource(
-  val asset: StacAsset,
+  val asset: StacItemAsset,
   val crs: CRS,
   val resampleTarget: ResampleTarget = DefaultTarget,
   val resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
@@ -56,7 +56,7 @@ class StacAssetReprojectRasterSource(
     resampleTarget(reprojectedRasterExtent)
   }
 
-  def metadata: StacAssetMetadata                       = StacAssetMetadata(name, crs, bandCount, cellType, gridExtent, resolutions, asset)
+  def metadata: StacItemAssetMetadata                   = StacItemAssetMetadata(name, crs, bandCount, cellType, gridExtent, resolutions, asset)
   val name: SourceName                                  = asset.href
   def bandCount: Int                                    = asset.bandCount.getOrElse(underlyingReprojected.bandCount)
   def cellType: CellType                                = underlyingReprojected.cellType
@@ -99,7 +99,7 @@ class StacAssetReprojectRasterSource(
 
 object StacAssetReprojectRasterSource {
   def apply(
-    asset: StacAsset,
+    asset: StacItemAsset,
     crs: CRS,
     resampleTarget: ResampleTarget = DefaultTarget,
     resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,

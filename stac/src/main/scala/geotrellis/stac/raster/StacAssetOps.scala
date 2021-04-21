@@ -17,14 +17,14 @@
 package geotrellis.stac.raster
 
 import cats.syntax.apply._
-import com.azavea.stac4s.StacItemAsset
+import com.azavea.stac4s.StacAsset
 import com.azavea.stac4s.syntax._
 import geotrellis.proj4.CRS
 import geotrellis.raster.{CellSize, Dimensions, GridExtent, RasterExtent}
 import geotrellis.stac.extensions.proj.{ProjItemExtension, ProjTransform}
 import geotrellis.vector._
 
-case class StacItemAssetOps(self: StacItemAsset) {
+case class StacAssetOps(self: StacAsset) {
   def projExtension: Option[ProjItemExtension] = self.getExtensionFields[ProjItemExtension].toOption
 
   def crs: Option[CRS] =

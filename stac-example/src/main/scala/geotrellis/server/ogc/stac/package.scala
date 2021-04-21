@@ -22,7 +22,7 @@ import geotrellis.store.query._
 
 import geotrellis.raster.{EmptyName, RasterSource, SourceName, StringName}
 import geotrellis.raster.geotiff.GeoTiffPath
-import com.azavea.stac4s.{StacExtent, StacItemAsset}
+import com.azavea.stac4s.{StacAsset, StacExtent}
 import com.azavea.stac4s.api.client.{SearchFilters, StacClient, Query => SQuery}
 import io.circe.syntax._
 import cats.{Applicative, Foldable, FunctorFilter}
@@ -55,9 +55,9 @@ package object stac {
       }
   }
 
-  implicit class StacItemAssetOps(val self: StacItemAsset) extends AnyVal {
-    def hrefGDAL(withGDAL: Boolean): String        = if (withGDAL) s"gdal+${self.href}" else s"${GeoTiffPath.PREFIX}${self.href}"
-    def withGDAL(withGDAL: Boolean): StacItemAsset = self.copy(href = hrefGDAL(withGDAL))
+  implicit class StacAssetOps(val self: StacAsset) extends AnyVal {
+    def hrefGDAL(withGDAL: Boolean): String    = if (withGDAL) s"gdal+${self.href}" else s"${GeoTiffPath.PREFIX}${self.href}"
+    def withGDAL(withGDAL: Boolean): StacAsset = self.copy(href = hrefGDAL(withGDAL))
   }
 
   implicit class QueryMapOps(val left: Map[String, List[SQuery]]) extends AnyVal {

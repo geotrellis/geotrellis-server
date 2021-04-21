@@ -17,7 +17,7 @@
 package geotrellis.server.ogc.stac
 
 import geotrellis.stac._
-import geotrellis.stac.raster.{StacAsset, StacAssetRasterSource, StacCollectionSource}
+import geotrellis.stac.raster.{StacAssetRasterSource, StacCollectionSource, StacItemAsset}
 import geotrellis.store.query._
 import geotrellis.store.query.QueryF._
 
@@ -59,7 +59,7 @@ case class StacOgcRepository[F[_]: Applicative](
             items.flatMap { item =>
               item.assets
                 .get(stacSourceConf.asset)
-                .map { itemAsset => StacAssetRasterSource(StacAsset(itemAsset.withGDAL(stacSourceConf.withGDAL), item)) }
+                .map { itemAsset => StacAssetRasterSource(StacItemAsset(itemAsset.withGDAL(stacSourceConf.withGDAL), item)) }
             }
 
           summary match {

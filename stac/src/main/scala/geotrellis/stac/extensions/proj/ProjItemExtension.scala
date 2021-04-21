@@ -19,7 +19,7 @@ package geotrellis.stac.extensions.proj
 import geotrellis.stac._
 
 import geotrellis.vector.{io => _, _}
-import com.azavea.stac4s.extensions.{ItemAssetExtension, ItemExtension}
+import com.azavea.stac4s.extensions.{ItemExtension, StacAssetExtension}
 import cats.kernel.Eq
 import io.circe.generic.extras.{ConfiguredJsonCodec, JsonKey}
 
@@ -36,5 +36,5 @@ object ProjItemExtension {
   implicit val eq: Eq[ProjItemExtension] = Eq.fromUniversalEquals
 
   implicit lazy val itemExtension: ItemExtension[ProjItemExtension]           = ItemExtension.instance
-  implicit lazy val itemAssetExtension: ItemAssetExtension[ProjItemExtension] = ItemAssetExtension.instance
+  implicit lazy val stacAssetExtension: StacAssetExtension[ProjItemExtension] = StacAssetExtension.instance
 }
