@@ -253,7 +253,7 @@ object CapabilitiesView {
         MinScaleDenominator = None,
         MaxScaleDenominator = None,
         Layer = Nil,
-        attributes = Map("@queryable" -> DataRecord("1"), "@opaque" -> DataRecord("0"))
+        attributes = Map("@queryable" -> DataRecord("1"))
       )
     }
   }
@@ -342,7 +342,7 @@ object CapabilitiesView {
         MinScaleDenominator = None,
         MaxScaleDenominator = None,
         Layer = layers,
-        attributes = Map("@queryable" -> DataRecord("1"), "@opaque" -> DataRecord("0"))
+        attributes = Map("@queryable" -> DataRecord("1"))
       )
     }
   }

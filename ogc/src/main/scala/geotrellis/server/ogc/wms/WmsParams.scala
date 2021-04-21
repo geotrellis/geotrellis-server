@@ -126,8 +126,8 @@ object WmsParams {
     version: String,
     infoFormat: InfoFormat,
     queryLayers: List[String],
-    i: Int,
-    j: Int,
+    i: Int, // col
+    j: Int, // row
     exceptions: InfoFormat,
     // GetMap params
     layers: List[String],

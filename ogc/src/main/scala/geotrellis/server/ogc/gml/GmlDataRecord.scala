@@ -25,9 +25,6 @@ object GmlDataRecord {
   def apply[T: CanWriteXML: ClassTag](value: T): DataRecord[T] =
     apply[T](classTag[T].toString.split("\\.").lastOption.flatMap(_.split("Type").headOption), value)
 
-  def propertyType[T: CanWriteXML: ClassTag](value: T): DataRecord[T] =
-    apply[T](classTag[T].toString.split("\\.").lastOption.flatMap(_.split("PropertyType").headOption), value)
-
   def apply[T: CanWriteXML](key: Option[String], value: T): DataRecord[T] =
     DataRecord("gml".some, key.map(k => s"gml:$k"), value)
 

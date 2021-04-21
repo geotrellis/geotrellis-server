@@ -16,8 +16,6 @@
 
 package geotrellis.server.ogc
 
-import opengis.gml.GeometryPropertyType
-import opengis._
 import scalaxb.DataRecord
 
 import scala.xml.{Elem, NamespaceBinding, NodeSeq, XML}
@@ -52,18 +50,5 @@ package object wfs {
           scope = wfsScope,
           typeAttribute = false
         )
-  }
-
-  implicit class GeometryPropertyTypeOps(val self: GeometryPropertyType) extends AnyVal {
-    def toXML: Elem =
-      scalaxb
-        .toXML[GeometryPropertyType](
-          obj = self,
-          namespace = None,
-          elementLabel = Some("Geometry"),
-          scope = wfsScope,
-          typeAttribute = false
-        )
-        .asInstanceOf[Elem]
   }
 }
