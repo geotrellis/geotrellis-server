@@ -17,20 +17,16 @@
 package geotrellis.server.ogc.wms
 
 import geotrellis.server.ogc._
-import geotrellis.server.ogc.wfs.WfsFeatureCollection
 import geotrellis.server.ogc.utils._
 import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wms.WmsParams.{GetCapabilitiesParams, GetFeatureInfoParams, GetMapParams}
-import geotrellis.vector.{io => _, _}
-import geotrellis.vector.io.json.JsonFeatureCollection
+import geotrellis.vector.{io => _}
 
 import geotrellis.raster.{io => _, _}
 import com.azavea.maml.error._
 import org.http4s.scalaxml._
-import org.http4s.circe._
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
-import _root_.io.circe.syntax._
 import cats.effect._
 import cats.Parallel
 import cats.syntax.flatMap._
