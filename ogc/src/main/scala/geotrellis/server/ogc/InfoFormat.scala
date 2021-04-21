@@ -34,4 +34,6 @@ object InfoFormat {
     }
 
   def fromString(str: String): Option[InfoFormat] = Try(fromStringUnsafe(str)).toOption
+
+  val all: List[String] = List(XML, Json).map(_.name)
 }

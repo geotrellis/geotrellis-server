@@ -46,7 +46,7 @@ case class CapabilitiesView[F[_]: Functor: Apply: Monad](model: WmsModel[F], ser
 
   def toXML: F[Elem] = {
     val getCapabilities = OperationType(
-      Format = "text/xml" :: Nil,
+      Format = InfoFormat.XML.name :: Nil,
       DCPType = DCPType(
         HTTP(
           Get = Get(
@@ -66,7 +66,7 @@ case class CapabilitiesView[F[_]: Functor: Apply: Monad](model: WmsModel[F], ser
     )
 
     val getMap = OperationType(
-      Format = "image/png" :: "image/jpeg" :: Nil,
+      Format = OutputFormat.all,
       DCPType = DCPType(
         HTTP(
           Get = Get(
@@ -86,7 +86,7 @@ case class CapabilitiesView[F[_]: Functor: Apply: Monad](model: WmsModel[F], ser
     )
 
     val getFeatureInfo = OperationType(
-      Format = "text/xml" :: "application/json" :: Nil,
+      Format = InfoFormat.all,
       DCPType = DCPType(
         HTTP(
           Get = Get(
