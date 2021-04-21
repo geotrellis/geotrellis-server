@@ -24,4 +24,9 @@ object ToMediaType {
     case OutputFormat.Jpg     => MediaType.image.jpeg
     case OutputFormat.GeoTiff => MediaType.image.tiff
   }
+
+  def apply(format: InfoFormat): MediaType = format match {
+    case InfoFormat.Json => MediaType.application.json
+    case InfoFormat.XML  => MediaType.text.xml
+  }
 }

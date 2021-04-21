@@ -33,6 +33,7 @@ import cats.Monad
 import cats.Functor
 import cats.data.NonEmptyList
 import cats.syntax.functor._
+import scalaxb.DataRecord.{__NoneXMLWriter, DataWriter}
 
 import java.net.URL
 import scala.xml.Elem
@@ -84,14 +85,34 @@ case class CapabilitiesView[F[_]: Functor: Apply: Monad](model: WmsModel[F], ser
       ) :: Nil
     )
 
+    val getFeatureInfo = OperationType(
+      Format = "text/xml" :: "application/json" :: Nil,
+      DCPType = DCPType(
+        HTTP(
+          Get = Get(
+            OnlineResource(
+              Map(
+                "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
+                  serviceUrl.toURI
+                ),
+                "@{http://www.w3.org/1999/xlink}type" -> DataRecord(
+                  xlink.Simple: xlink.TypeType
+                )
+              )
+            )
+          )
+        )
+      ) :: Nil
+    )
+
     modelAsLayer(model.parentLayerMeta, model) map { layer =>
       val capability = Capability(
         Request = Request(
           GetCapabilities = getCapabilities,
           GetMap = getMap,
-          GetFeatureInfo = None
+          GetFeatureInfo = getFeatureInfo.some
         ),
-        Exception = Exception("XML" :: "INIMAGE" :: "BLANK" :: Nil),
+        Exception = Exception("XML" :: "INIMAGE" :: "BLANK" :: "JSON" :: Nil),
         Layer = layer.some,
         _ExtendedCapabilities = extendedCapabilities
       )
@@ -232,7 +253,7 @@ object CapabilitiesView {
         MinScaleDenominator = None,
         MaxScaleDenominator = None,
         Layer = Nil,
-        attributes = Map.empty
+        attributes = Map("@queryable" -> DataRecord("1"), "@opaque" -> DataRecord("0"))
       )
     }
   }
@@ -321,7 +342,7 @@ object CapabilitiesView {
         MinScaleDenominator = None,
         MaxScaleDenominator = None,
         Layer = layers,
-        attributes = Map.empty
+        attributes = Map("@queryable" -> DataRecord("1"), "@opaque" -> DataRecord("0"))
       )
     }
   }

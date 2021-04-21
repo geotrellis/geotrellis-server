@@ -21,11 +21,11 @@ import geotrellis.server.ogc.params._
 import geotrellis.proj4.CRS
 import geotrellis.store.query._
 import geotrellis.vector.{Extent, ProjectedExtent}
-
 import cats.syntax.apply._
 import cats.syntax.option._
 import cats.data.{Validated, ValidatedNel}
 import Validated._
+import geotrellis.raster.{CellSize, RasterExtent}
 
 import scala.util.Try
 
@@ -70,6 +70,10 @@ object WmsParams {
         case OgcTimeEmpty                  => query
       }
     }
+
+    def rasterExtent: RasterExtent = RasterExtent(boundingBox, width, height)
+
+    def cellSize: CellSize = rasterExtent.cellSize
   }
 
   object GetMapParams {
@@ -120,11 +124,11 @@ object WmsParams {
 
   case class GetFeatureInfoParams(
     version: String,
-    infoFormat: String,
+    infoFormat: InfoFormat,
     queryLayers: List[String],
     i: Int,
     j: Int,
-    exceptions: Option[String],
+    exceptions: InfoFormat,
     // GetMap params
     layers: List[String],
     boundingBox: Extent,
@@ -140,6 +144,10 @@ object WmsParams {
 
     def toGetMapParamsQuery: GetMapParams =
       GetMapParams(version, layers.filter(queryLayers.contains), Nil, boundingBox, format, width, height, crs, time, params)
+
+    def rasterExtent: RasterExtent = RasterExtent(boundingBox, width, height)
+
+    def cellSize: CellSize = rasterExtent.cellSize
   }
 
   object GetFeatureInfoParams {
@@ -150,20 +158,41 @@ object WmsParams {
       (versionParam, getMap).tupled
         .andThen {
           case (version, getMap: GetMapParams) =>
-            val infoFormat  = params.validatedParam("info_format")
+            val infoFormat =
+              params
+                .validatedParam("info_format")
+                .andThen { f =>
+                  InfoFormat.fromString(f) match {
+                    case Some(format) => Valid(format).toValidatedNel
+                    case None         => Valid(InfoFormat.XML).toValidatedNel
+                  }
+                }
+
+            val exceptions =
+              params
+                .validatedOptionalParam("exceptions")
+                .andThen {
+                  case Some(f) =>
+                    InfoFormat.fromString(f) match {
+                      case Some(format) => Valid(format).toValidatedNel
+                      case None         => Valid(InfoFormat.XML).toValidatedNel
+                    }
+                  case _       => Valid(InfoFormat.XML).toValidatedNel
+                }
+
             val queryLayers = params.validatedParam[List[String]]("query_layers", { s => s.split(",").toList.some })
 
             val i = params.validatedParam[Int]("i", { s => Try(s.toInt).toOption })
             val j = params.validatedParam[Int]("j", { s => Try(s.toInt).toOption })
 
-            (infoFormat, queryLayers, i, j).mapN { case (infoFormat, queryLayers, i, j) =>
+            (infoFormat, exceptions, queryLayers, i, j).mapN { case (infoFormat, exceptions, queryLayers, i, j) =>
               GetFeatureInfoParams(
                 version,
                 infoFormat,
                 queryLayers,
                 i,
                 j,
-                None,
+                exceptions,
                 getMap.layers,
                 getMap.boundingBox,
                 getMap.format,

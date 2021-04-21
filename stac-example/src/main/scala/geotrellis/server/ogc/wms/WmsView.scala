@@ -17,10 +17,12 @@
 package geotrellis.server.ogc.wms
 
 import geotrellis.server.ogc._
+import geotrellis.server.ogc.wfs.WfsFeatureCollection
 import geotrellis.server.ogc.utils._
 import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wms.WmsParams.{GetCapabilitiesParams, GetFeatureInfoParams, GetMapParams}
 import geotrellis.vector.{io => _, _}
+import geotrellis.vector.io.json.JsonFeatureCollection
 
 import geotrellis.raster.{io => _, _}
 import com.azavea.maml.error._
@@ -43,7 +45,6 @@ import org.http4s.headers.`Content-Type`
 import scalaxb._
 
 import java.net.URL
-
 import scala.concurrent.duration._
 import scala.xml.Elem
 
@@ -155,13 +156,27 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
             }
 
       case Valid(wmsReq: GetFeatureInfoParams) =>
-        logger.debug(ansi"%bold{GetCapabilities: ${req.uri}}") >>
+        logger.debug(ansi"%bold{GetFeatureInfo: ${req.uri}}") >>
           GetFeatureInfo[F](wmsModel, rasterCache)
             .build(wmsReq)
             .flatMap {
-              case Right(f)                          => Ok(f.asJson)
-              case Left(e: LayerNotDefinedException) => NotFound(e.asJson)
-              case Left(e: InvalidPointException)    => BadRequest(e.asJson)
+              case Right(f)                          =>
+                wmsReq.infoFormat match {
+                  case InfoFormat.Json => Ok(JsonFeatureCollection(f :: Nil).asJson).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.infoFormat))))
+                  case InfoFormat.XML  =>
+                    Ok(WfsFeatureCollection.toXML(f :: Nil, wmsReq.crs, wmsReq.cellSize))
+                      .map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.infoFormat))))
+                }
+              case Left(e: LayerNotDefinedException) =>
+                wmsReq.infoFormat match {
+                  case InfoFormat.Json => NotFound(e.asJson).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.infoFormat))))
+                  case InfoFormat.XML  => NotFound(e.toXML).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.infoFormat))))
+                }
+              case Left(e: InvalidPointException)    =>
+                wmsReq.infoFormat match {
+                  case InfoFormat.Json => BadRequest(e.asJson).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.infoFormat))))
+                  case InfoFormat.XML  => BadRequest(e.toXML).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.infoFormat))))
+                }
             }
     }
   }

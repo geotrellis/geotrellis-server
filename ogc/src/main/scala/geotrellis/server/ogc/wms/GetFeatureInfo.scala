@@ -35,19 +35,18 @@ import io.circe.syntax._
 import io.circe.Json
 import com.azavea.maml.eval.ConcurrentInterpreter
 import geotrellis.raster._
-import geotrellis.vector.Feature
+import geotrellis.vector.{Feature, Geometry, Point}
 import com.github.blemale.scaffeine.Cache
 import opengis.wms._
 import opengis._
-import org.locationtech.jts.geom.Polygon
 import scalaxb._
 
 case class GetFeatureInfo[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
   model: WmsModel[F],
   rasterCache: Cache[GetMapParams, Raster[MultibandTile]]
 ) {
-  def build(params: GetFeatureInfoParams): F[Either[GetFeatureInfoException, Feature[Polygon, Map[String, Json]]]] = {
-    val re  = RasterExtent(params.boundingBox, params.width, params.height)
+  def build(params: GetFeatureInfoParams): F[Either[GetFeatureInfoException, Feature[Geometry, Json]]] = {
+    val re  = params.rasterExtent
     val res = model
       .getLayer(params.toGetMapParamsQuery)
       .flatMap { layers =>
@@ -71,7 +70,7 @@ case class GetFeatureInfo[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
                 Logger[F].debug(errs.toList.toString).as(Left(LayerNotDefinedException(errs.toList.toString, params.version))).widen
               case Left(err)            => // exceptions
                 Logger[F].error(err.stackTraceString).as(Left(LayerNotDefinedException(err.stackTraceString, params.version))).widen
-            }: F[Either[GetFeatureInfoException, Feature[Polygon, Map[String, Json]]]]
+            }: F[Either[GetFeatureInfoException, Feature[Geometry, Json]]]
           }
           .headOption
           .sequence
@@ -86,7 +85,7 @@ case class GetFeatureInfo[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
   def featureFromRaster(
     raster: Raster[MultibandTile],
     params: GetFeatureInfoParams
-  ): Either[GetFeatureInfoException, Feature[Polygon, Map[String, Json]]] = {
+  ): Either[GetFeatureInfoException, Feature[Geometry, Json]] = {
     val Dimensions(cols, rows) = raster.dimensions
 
     if ((params.i < 0 && params.i >= cols) || (params.j < 0 && params.j >= rows))
@@ -94,11 +93,8 @@ case class GetFeatureInfo[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
     else
       Right(
         Feature(
-          raster.extent.toPolygon(),
-          Map(
-            "per_band_pixel_values" ->
-            raster.tile.bands.zipWithIndex.map { case (b, i) => i.toString -> b.get(params.i, params.j).toString }.toMap.asJson
-          )
+          Point(raster.rasterExtent.gridToMap(params.i, params.j)),
+          raster.tile.bands.zipWithIndex.map { case (b, i) => s"band-$i-pixel-value" -> b.getDouble(params.i, params.j) }.toMap.asJson
         )
       )
   }

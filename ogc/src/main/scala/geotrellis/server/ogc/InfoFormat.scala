@@ -16,17 +16,22 @@
 
 package geotrellis.server.ogc
 
-import org.http4s.MediaType
+import scala.util.Try
 
-object ToMediaType {
-  def apply(format: OutputFormat): MediaType = format match {
-    case OutputFormat.Png(_)  => MediaType.image.png
-    case OutputFormat.Jpg     => MediaType.image.jpeg
-    case OutputFormat.GeoTiff => MediaType.image.tiff
-  }
+sealed trait InfoFormat {
+  def name: String
+  override def toString: String = name
+}
 
-  def apply(format: InfoFormat): MediaType = format match {
-    case InfoFormat.Json => MediaType.application.json
-    case InfoFormat.XML  => MediaType.text.xml
-  }
+object InfoFormat {
+  case object XML  extends InfoFormat { val name: String = "text/xml"         }
+  case object Json extends InfoFormat { val name: String = "application/json" }
+
+  def fromStringUnsafe(str: String): InfoFormat =
+    str match {
+      case XML.name  => XML
+      case Json.name => Json
+    }
+
+  def fromString(str: String): Option[InfoFormat] = Try(fromStringUnsafe(str)).toOption
 }
