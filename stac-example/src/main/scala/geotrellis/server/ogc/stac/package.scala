@@ -24,6 +24,8 @@ import geotrellis.raster.{EmptyName, RasterSource, SourceName, StringName}
 import geotrellis.raster.geotiff.GeoTiffPath
 import com.azavea.stac4s.{StacAsset, StacExtent}
 import com.azavea.stac4s.api.client.{SearchFilters, StacClient, Query => SQuery}
+import com.azavea.stac4s.extensions.periodic.PeriodicExtent
+import com.azavea.stac4s.syntax._
 import io.circe.syntax._
 import cats.{Applicative, Foldable, FunctorFilter}
 import cats.data.NonEmptyList
@@ -34,7 +36,7 @@ import cats.syntax.functorFilter._
 import cats.syntax.applicative._
 import eu.timepit.refined.types.string.NonEmptyString
 
-import java.time.{ZoneOffset, ZonedDateTime}
+import java.time.ZoneOffset
 
 package object stac {
   implicit class StacExtentionOps(val self: StacExtent) extends AnyVal {
@@ -42,7 +44,7 @@ package object stac {
     /** [[StacExtent]]s with no temporal component are valid. */
     def ogcTime: Option[OgcTime] = self.temporal.interval.headOption.map(_.value.flatten.map(_.atZone(ZoneOffset.UTC))).map {
       case fst :: Nil        => OgcTimeInterval(fst)
-      case fst :: snd :: Nil => OgcTimeInterval(fst, snd)
+      case fst :: snd :: Nil => OgcTimeInterval(fst, snd, self.temporal.getExtensionFields[PeriodicExtent].map(_.period.toString).toOption)
       case _                 => OgcTimeEmpty
     }
   }
