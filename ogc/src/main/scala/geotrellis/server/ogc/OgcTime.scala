@@ -47,20 +47,13 @@ object OgcTime {
       }
   }
 
-  def strictTimeMatch(time: OgcTime, dt: ZonedDateTime): Boolean =
-    time match {
-      case OgcTimePositions(list)       => list.head == dt
-      case OgcTimeInterval(start, _, _) => start == dt
-      case OgcTimeEmpty                 => true
-    }
-
   def fromString(str: String): OgcTime =
     Try(OgcTimeInterval.fromString(str)).getOrElse(OgcTimePositions(str.split(",").toList))
 
   implicit class OgcTimeOps(val self: OgcTime) extends AnyVal {
 
     /** Reformat OgcTime if possible. */
-    def format(format: OgcTimeFormat): OgcTime = {
+    def format(format: OgcTimeFormat): OgcTime =
       format match {
         case OgcTimeFormat.Interval  =>
           self match {
@@ -76,7 +69,13 @@ object OgcTime {
           }
         case OgcTimeFormat.Self      => self
       }
-    }
+
+    def strictTimeMatch(dt: ZonedDateTime): Boolean =
+      self match {
+        case OgcTimePositions(list)       => list.head == dt
+        case OgcTimeInterval(start, _, _) => start == dt
+        case OgcTimeEmpty                 => true
+      }
   }
 }
 

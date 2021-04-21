@@ -99,9 +99,9 @@ package object stac {
       if (!ignoreTime & query.nonTemporal && query.nonUniversal) {
         self.foldMap(_.time(datetimeField)) match {
           case OgcTimePositions(list)         =>
-            self.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), timeDefault.selectTime(list)))
+            self.filter(source => source.time(datetimeField).strictTimeMatch(timeDefault.selectTime(list)))
           case OgcTimeInterval(start, end, _) =>
-            self.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), timeDefault.selectTime(NonEmptyList.of(start, end))))
+            self.filter(source => source.time(datetimeField).strictTimeMatch(timeDefault.selectTime(NonEmptyList.of(start, end))))
           case OgcTimeEmpty                   => self
         }
       } else self
