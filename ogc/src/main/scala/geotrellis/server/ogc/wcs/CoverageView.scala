@@ -58,7 +58,7 @@ class CoverageView[F[_]: Functor](wcsModel: WcsModel[F], serviceUrl: URL, identi
 }
 
 object CoverageView {
-  private def extractRasterExtent(source: OgcSource, targetCRS: CRS): GridExtent[Long] =
+  private def extractGridExtent(source: OgcSource, targetCRS: CRS): GridExtent[Long] =
     source match {
       case mas: MapAlgebraSource           =>
         mas.sourcesList
@@ -148,7 +148,7 @@ object CoverageView {
             )
           ) :: uniqueCrs.flatMap {
             case crs if crs == LatLng =>
-              val lex = extractRasterExtent(source, crs).extent
+              val lex = extractGridExtent(source, crs).extent
               OwsDataRecord(
                 BoundingBoxType(
                   LowerCorner = lex.ymin :: lex.xmin :: Nil,
@@ -168,7 +168,7 @@ object CoverageView {
                 )
               ) :: Nil
             case crs                  =>
-              val lex = extractRasterExtent(source, crs).extent
+              val lex = extractGridExtent(source, crs).extent
               OwsDataRecord(
                 BoundingBoxType(
                   LowerCorner = lex.ymin :: lex.xmin :: Nil,
