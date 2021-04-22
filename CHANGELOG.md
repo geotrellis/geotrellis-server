@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Interoperability of STAC and non-STAC layers in mapalgebra layers [#309](https://github.com/geotrellis/geotrellis-server/issues/309)
 - OGC endpoints format parameter and HTTP response mime-type not matching [#255](https://github.com/geotrellis/geotrellis-server/issues/255)
 - WMS 1.3.0 Boolean representation [#332](https://github.com/geotrellis/geotrellis-server/issues/332)
+- Fix WCS projections support [#361](https://github.com/geotrellis/geotrellis-server/pull/361)
 
 ## Added
 - WCS services support configuration of `supported-projections` [#314](https://github.com/geotrellis/geotrellis-server/pull/314)
