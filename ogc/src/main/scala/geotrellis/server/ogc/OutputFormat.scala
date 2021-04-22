@@ -27,7 +27,7 @@ sealed trait OutputFormat
 
 object OutputFormat {
   case object GeoTiff extends OutputFormat { override def toString = "image/geotiff" }
-  case object Jpg     extends OutputFormat { override def toString = "image/jpg"     }
+  case object Jpg     extends OutputFormat { override def toString = "image/jpeg"    }
 
   object Png {
     final val PngEncodingRx = """image/png(?:;encoding=(\w+))?""".r
@@ -38,23 +38,23 @@ object OutputFormat {
         case GreyaPngEncoding   => "greya"
         case _: RgbPngEncoding  => "rgb"
         case _: GreyPngEncoding => "grey"
-        case _                  => ???
+        case e                  => throw new UnsupportedOperationException(s"Unsupported color encoding $e.")
       }
 
-    def stringToEncodding(enc: String): Option[PngColorEncoding] = {
+    def stringToEncodding(enc: String): Option[PngColorEncoding] =
       Option(enc) map {
         case "rgba"  => RgbaPngEncoding
         case "greya" => GreyaPngEncoding
         case "rgb"   => RgbPngEncoding(None)
         case "grey"  => GreyPngEncoding(None)
+        case e       => throw new UnsupportedOperationException(s"Unsupported color encoding $e.")
       }
-    }
   }
 
   case class Png(encoding: Option[PngColorEncoding]) extends OutputFormat {
-    override def toString =
+    override def toString: String =
       encoding match {
-        case Some(e) => s"image/png;encoding=${Png.encodingToString(e)}"
+        case Some(e) => s"image/png; encoding=${Png.encodingToString(e)}"
         case None    => "image/png"
       }
 
@@ -77,7 +77,7 @@ object OutputFormat {
       }
     }
 
-    def render(tile: Tile, cm: ColorMap) = {
+    def render(tile: Tile, cm: ColorMap): Array[Byte] = {
       val encoder = encoding match {
         case None =>
           PngEncoder(Settings(RgbaPngEncoding, PaethFilter))
@@ -124,7 +124,7 @@ object OutputFormat {
       }
   }
 
-  def fromStringUnsafe(str: String) =
+  def fromStringUnsafe(str: String): OutputFormat =
     str match {
       case "geotiff" | "geotif" | "image/geotiff" => OutputFormat.GeoTiff
 
@@ -132,8 +132,10 @@ object OutputFormat {
         val encoding = Png.stringToEncodding(enc)
         OutputFormat.Png(encoding)
 
-      case "image/jpeg" => OutputFormat.Jpg
+      case "image/jpeg" | "image/jpg" => OutputFormat.Jpg
     }
 
-  def fromString(str: String) = Try(fromStringUnsafe(str)).toOption
+  def fromString(str: String): Option[OutputFormat] = Try(fromStringUnsafe(str)).toOption
+
+  val all: List[String] = "image/png" :: "image/jpeg" :: "image/geotiff" :: Nil
 }

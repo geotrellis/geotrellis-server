@@ -19,7 +19,7 @@ package geotrellis.server.ogc.wms
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.params.ParamMap
 import geotrellis.server.ogc.style._
-import geotrellis.server.ogc.wms.WmsParams.GetMap
+import geotrellis.server.ogc.wms.WmsParams.GetMapParams
 import geotrellis.server.ogc.utils._
 import geotrellis.store.query.RepositoryM
 
@@ -41,7 +41,7 @@ case class WmsModel[F[_]: Monad](
   /** Take a specific request for a map and combine it with the relevant [[OgcSource]]
     *  to produce an [[OgcLayer]]
     */
-  def getLayer(p: GetMap): F[List[OgcLayer]] = {
+  def getLayer(p: GetMapParams): F[List[OgcLayer]] = {
     parentLayerMeta.supportedProjections
       .find(_ == p.crs)
       .fold[F[List[OgcLayer]]](List.empty[OgcLayer].pure[F]) { supportedCrs =>

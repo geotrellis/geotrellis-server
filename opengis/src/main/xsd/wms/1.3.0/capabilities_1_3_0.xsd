@@ -336,10 +336,15 @@
 				<element ref="wms:MaxScaleDenominator" minOccurs="0"/>
 				<element ref="wms:Layer" minOccurs="0" maxOccurs="unbounded"/>
 			</sequence>
-			<attribute name="queryable" type="boolean" default="0"/>
+			<!-- See https://github.com/geotrellis/geotrellis-server/pull/311#pullrequestreview-591724738 -->
+			<!-- And https://github.com/geotrellis/geotrellis-server/issues/332 -->
+			<!-- <attribute name="queryable" type="boolean" default="0"/> -->
+			<attribute name="queryable" type="string" default="0"/>
 			<attribute name="cascaded" type="nonNegativeInteger"/>
-			<attribute name="opaque" type="boolean" default="0"/>
-			<attribute name="noSubsets" type="boolean" default="0"/>
+			<!-- <attribute name="opaque" type="boolean" default="0"/> -->
+			<attribute name="opaque" type="string" default="0"/>
+			<!-- <attribute name="noSubsets" type="boolean" default="0"/> -->
+			<attribute name="noSubsets" type="string" default="0"/>
 			<attribute name="fixedWidth" type="nonNegativeInteger"/>
 			<attribute name="fixedHeight" type="nonNegativeInteger"/>
 		</complexType>
@@ -398,9 +403,14 @@
 					<attribute name="units" type="string" use="required"/>
 					<attribute name="unitSymbol" type="string"/>
 					<attribute name="default" type="string"/>
-					<attribute name="multipleValues" type="boolean"/>
-					<attribute name="nearestValue" type="boolean"/>
-					<attribute name="current" type="boolean"/>
+					<!-- See https://github.com/geotrellis/geotrellis-server/pull/311#pullrequestreview-591724738 -->
+                    <!-- And https://github.com/geotrellis/geotrellis-server/issues/332 -->
+					<!-- <attribute name="multipleValues" type="boolean"/> -->
+					<attribute name="multipleValues" type="string"/>
+					<!-- <attribute name="nearestValue" type="boolean"/> -->
+					<attribute name="nearestValue" type="string"/>
+					<!-- <attribute name="current" type="boolean"/> -->
+					<attribute name="current" type="string"/>
 				</extension>
 			</simpleContent>
 		</complexType>

@@ -17,10 +17,9 @@
 package geotrellis.server.ogc.wcs
 
 import geotrellis.server.ogc.ows.OwsDataRecord
-import geotrellis.server.ogc.URN
+import geotrellis.server.ogc.{OutputFormat, URN}
 import geotrellis.proj4.LatLng
 import geotrellis.raster.reproject.ReprojectRasterExtent
-
 import cats.Functor
 import cats.syntax.functor._
 import cats.syntax.option._
@@ -247,7 +246,7 @@ object CapabilitiesView {
           UpperCorner = wgs84extent.ymax :: wgs84extent.xmax :: Nil
         ) :: Nil,
         SupportedCRS = new URI("urn:ogc:def:crs:OGC::imageCRS") :: (uniqueCrs flatMap { crs => (URN.fromCrs(crs) map { new URI(_) }) }),
-        SupportedFormat = "image/geotiff" :: "image/jpeg" :: "image/png" :: Nil,
+        SupportedFormat = OutputFormat.all.reverse,
         coveragesummarytypeoption = DataRecord(None, "Identifier".some, src.name)
       )
     }.toList)

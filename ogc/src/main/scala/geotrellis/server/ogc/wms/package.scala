@@ -18,13 +18,19 @@ package geotrellis.server.ogc
 
 import geotrellis.server.ogc.style._
 import geotrellis.server.ogc.utils._
+
 import cats.syntax.option._
+import geotrellis.proj4.CRS
+import geotrellis.raster.CellSize
+import geotrellis.server.ogc.wfs.WfsFeatureCollection
+import geotrellis.vector.io.json.JsonFeatureCollection
+import geotrellis.vector.{Feature, Geometry}
+import io.circe.Json
 import opengis._
 import opengis.wms._
 import scalaxb._
 
 import java.net.URI
-
 import scala.xml.{Elem, NamespaceBinding, NodeSeq}
 
 package object wms {
@@ -77,6 +83,9 @@ package object wms {
   def ExtendedElement[A](key: String, records: DataRecord[A]*): Elem =
     DataRecord(None, key.some, records.map(_.toXML).foldLeft(NodeSeq.Empty)((acc, e) => acc ++ e)).toXML
 
+  def ExtendedEmptyElement[A](records: DataRecord[A]*): Elem =
+    DataRecord(None, None, records.map(_.toXML).foldLeft(NodeSeq.Empty)((acc, e) => acc ++ e)).toXML
+
   def ExtendedCapabilities[A](records: Elem*): List[DataRecord[Elem]] =
     DataRecord(
       DataRecord(
@@ -85,4 +94,12 @@ package object wms {
         DataRecord(None, "GetMap".some, records.foldLeft(NodeSeq.Empty)((acc, e) => acc ++ e)).toXML
       ).toXML
     ) :: Nil
+
+  implicit class GetFeatureInfoFeatureOps(val self: Feature[Geometry, Json]) extends AnyVal {
+    def render(infoFormat: InfoFormat, crs: CRS, cellSize: CellSize): String =
+      infoFormat match {
+        case InfoFormat.Json => JsonFeatureCollection(self :: Nil).asJson.noSpaces
+        case InfoFormat.XML  => WfsFeatureCollection.toXML(self :: Nil, crs, cellSize).toString
+      }
+  }
 }

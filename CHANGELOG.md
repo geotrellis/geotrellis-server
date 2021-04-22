@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Axis Ordering in a wms getmap [#302](https://github.com/geotrellis/geotrellis-server/issues/302)
 - Interoperability of STAC and non-STAC layers in mapalgebra layers [#309](https://github.com/geotrellis/geotrellis-server/issues/309)
 - OGC endpoints format parameter and HTTP response mime-type not matching [#255](https://github.com/geotrellis/geotrellis-server/issues/255)
+- WMS 1.3.0 Boolean representation [#332](https://github.com/geotrellis/geotrellis-server/issues/332)
 
 ## Added
 - WCS services support configuration of `supported-projections` [#314](https://github.com/geotrellis/geotrellis-server/pull/314)
@@ -24,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - OGC Services configurable time representation [#324](https://github.com/geotrellis/geotrellis-server/issues/324)
 - Default time period configurable on the WMS layer with a time dimension [#325](https://github.com/geotrellis/geotrellis-server/issues/325)
 - STAC Periodic Temporal extent support [#354](https://github.com/geotrellis/geotrellis-server/issues/354)
+- WMS GetFeatureInfo [#321](https://github.com/geotrellis/geotrellis-server/issues/321)
 
 ### Changed
 - Update GT Server STAC4S dependency [#319](https://github.com/geotrellis/geotrellis-server/issues/319)

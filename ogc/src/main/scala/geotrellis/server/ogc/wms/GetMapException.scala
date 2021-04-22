@@ -14,19 +14,8 @@
  * limitations under the License.
  */
 
-package geotrellis.server.ogc
+package geotrellis.server.ogc.wms
 
-import org.http4s.MediaType
-
-object ToMediaType {
-  def apply(format: OutputFormat): MediaType = format match {
-    case OutputFormat.Png(_)  => MediaType.image.png
-    case OutputFormat.Jpg     => MediaType.image.jpeg
-    case OutputFormat.GeoTiff => MediaType.image.tiff
-  }
-
-  def apply(format: InfoFormat): MediaType = format match {
-    case InfoFormat.Json => MediaType.application.json
-    case InfoFormat.XML  => MediaType.text.xml
-  }
-}
+sealed trait GetMapException                      extends Exception
+case class GetMapBadRequest(msg: String)          extends GetMapException
+case class GetMapInternalServerError(msg: String) extends GetMapException

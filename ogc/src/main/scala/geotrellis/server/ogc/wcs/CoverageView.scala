@@ -17,7 +17,7 @@
 package geotrellis.server.ogc.wcs
 
 import geotrellis.store.query._
-import geotrellis.server.ogc.{MapAlgebraSource, OgcSource, OgcTimeEmpty, OgcTimeInterval, OgcTimePositions, RasterOgcSource, URN}
+import geotrellis.server.ogc.{MapAlgebraSource, OgcSource, OgcTimeEmpty, OgcTimeInterval, OgcTimePositions, OutputFormat, RasterOgcSource, URN}
 import geotrellis.server.ogc.ows.OwsDataRecord
 import geotrellis.server.ogc.gml.GmlDataRecord
 import geotrellis.proj4.LatLng
@@ -28,13 +28,13 @@ import opengis.gml._
 import opengis.ows._
 import opengis.wcs._
 import opengis._
-
 import cats.Functor
 import cats.syntax.functor._
 import cats.syntax.option._
 
 import scala.xml.Elem
 import scalaxb._
+
 import java.net.{URI, URL}
 import geotrellis.proj4.CRS
 
@@ -200,9 +200,8 @@ object CoverageView {
           )
         ) :: Nil
       ),
-      SupportedCRS = new URI("urn:ogc:def:crs:OGC::imageCRS") ::
-        (uniqueCrs flatMap { proj => URN.fromCrs(proj) map { new URI(_) } }),
-      SupportedFormat = "image/geotiff" :: "image/jpeg" :: "image/png" :: Nil
+      SupportedCRS = new URI("urn:ogc:def:crs:OGC::imageCRS") :: (uniqueCrs flatMap { proj => URN.fromCrs(proj) map { new URI(_) } }),
+      SupportedFormat = OutputFormat.all.reverse
     )
   }
 

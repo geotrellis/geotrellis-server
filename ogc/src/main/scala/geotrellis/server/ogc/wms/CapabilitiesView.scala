@@ -33,6 +33,7 @@ import cats.Monad
 import cats.Functor
 import cats.data.NonEmptyList
 import cats.syntax.functor._
+import scalaxb.DataRecord.{__NoneXMLWriter, DataWriter}
 
 import java.net.URL
 import scala.xml.Elem
@@ -40,12 +41,12 @@ import scala.xml.Elem
 /** @param model Model of layers we can report
   * @param serviceUrl URL where this service can be reached with addition of `?request=` query parameter
   */
-class CapabilitiesView[F[_]: Functor: Apply: Monad](model: WmsModel[F], serviceUrl: URL, extendedCapabilities: List[DataRecord[Elem]] = Nil) {
+case class CapabilitiesView[F[_]: Functor: Apply: Monad](model: WmsModel[F], serviceUrl: URL, extendedCapabilities: List[DataRecord[Elem]] = Nil) {
   import CapabilitiesView._
 
   def toXML: F[Elem] = {
     val getCapabilities = OperationType(
-      Format = "text/xml" :: Nil,
+      Format = InfoFormat.XML.name :: Nil,
       DCPType = DCPType(
         HTTP(
           Get = Get(
@@ -65,7 +66,27 @@ class CapabilitiesView[F[_]: Functor: Apply: Monad](model: WmsModel[F], serviceU
     )
 
     val getMap = OperationType(
-      Format = "image/png" :: "image/jpeg" :: Nil,
+      Format = OutputFormat.all,
+      DCPType = DCPType(
+        HTTP(
+          Get = Get(
+            OnlineResource(
+              Map(
+                "@{http://www.w3.org/1999/xlink}href" -> DataRecord(
+                  serviceUrl.toURI
+                ),
+                "@{http://www.w3.org/1999/xlink}type" -> DataRecord(
+                  xlink.Simple: xlink.TypeType
+                )
+              )
+            )
+          )
+        )
+      ) :: Nil
+    )
+
+    val getFeatureInfo = OperationType(
+      Format = InfoFormat.all,
       DCPType = DCPType(
         HTTP(
           Get = Get(
@@ -89,9 +110,9 @@ class CapabilitiesView[F[_]: Functor: Apply: Monad](model: WmsModel[F], serviceU
         Request = Request(
           GetCapabilities = getCapabilities,
           GetMap = getMap,
-          GetFeatureInfo = None
+          GetFeatureInfo = getFeatureInfo.some
         ),
-        Exception = Exception("XML" :: "INIMAGE" :: "BLANK" :: Nil),
+        Exception = Exception("XML" :: "INIMAGE" :: "BLANK" :: "JSON" :: Nil),
         Layer = layer.some,
         _ExtendedCapabilities = extendedCapabilities
       )
@@ -232,7 +253,7 @@ object CapabilitiesView {
         MinScaleDenominator = None,
         MaxScaleDenominator = None,
         Layer = Nil,
-        attributes = Map.empty
+        attributes = Map("@queryable" -> DataRecord("1"))
       )
     }
   }
@@ -321,7 +342,7 @@ object CapabilitiesView {
         MinScaleDenominator = None,
         MaxScaleDenominator = None,
         Layer = layers,
-        attributes = Map.empty
+        attributes = Map("@queryable" -> DataRecord("1"))
       )
     }
   }
