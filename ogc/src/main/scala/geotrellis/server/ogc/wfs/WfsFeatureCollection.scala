@@ -145,7 +145,7 @@ object WfsFeatureCollection {
                     ).some
                   )
                 ).nested ++ propertiesXML(feature)
-              ) // .nestedSeq.nestedXML("Pixel_Per_Band_Feature")
+              )
             )
           )
         )
