@@ -43,19 +43,20 @@ case class GeoTiffResampleRasterSource[F[_]: Monad: UnsafeLift](
   @transient private[raster] val baseTiff: Option[F[MultibandGeoTiff]] = None
 ) extends RasterSourceF[F] {
   def resampleMethod: Option[ResampleMethod] = Some(method)
-  def name: GeoTiffPath = dataPath
+  def name: GeoTiffPath                      = dataPath
 
   // memoize tiff, not useful only in a local fs case
-  @transient lazy val tiff: MultibandGeoTiff = GeoTiffReader.readMultiband(RangeReader(dataPath.value), streaming = true)
+  @transient lazy val tiff: MultibandGeoTiff     = GeoTiffReader.readMultiband(RangeReader(dataPath.value), streaming = true)
   @transient lazy val tiffF: F[MultibandGeoTiff] = Option(baseTiff).flatten.getOrElse(UnsafeLift[F].apply(tiff))
 
-  def bandCount: F[Int] = tiffF.map(_.bandCount)
-  def cellType: F[CellType] = dstCellType.fold(tiffF.map(_.cellType))(_.pure[F])
-  def tags: F[Tags] = tiffF.map(_.tags)
+  def bandCount: F[Int]            = tiffF.map(_.bandCount)
+  def cellType: F[CellType]        = dstCellType.fold(tiffF.map(_.cellType))(_.pure[F])
+  def tags: F[Tags]                = tiffF.map(_.tags)
   def metadata: F[GeoTiffMetadata] = (name.pure[F], crs, bandCount, cellType, gridExtent, resolutions, tags).mapN(GeoTiffMetadata)
 
   /** Returns the GeoTiff head tags. */
   def attributes: F[Map[String, String]] = tags.map(_.headTags)
+
   /** Returns the GeoTiff per band tags. */
   def attributesForBand(band: Int): F[Map[String, String]] = tags.map(_.bandTags.lift(band).getOrElse(Map.empty))
 
@@ -68,7 +69,12 @@ case class GeoTiffResampleRasterSource[F[_]: Monad: UnsafeLift](
   @transient private[raster] lazy val closestTiffOverview: F[GeoTiff[MultibandTile]] =
     (tiffF, gridExtent).mapN { (tiff, gridExtent) => tiff.getClosestOverview(gridExtent.cellSize, strategy) }
 
-  def reprojection(targetCRS: CRS, resampleTarget: ResampleTarget = DefaultTarget, method: ResampleMethod = ResampleMethod.DEFAULT, strategy: OverviewStrategy = OverviewStrategy.DEFAULT): GeoTiffReprojectRasterSource[F] =
+  def reprojection(
+    targetCRS: CRS,
+    resampleTarget: ResampleTarget = DefaultTarget,
+    method: ResampleMethod = ResampleMethod.DEFAULT,
+    strategy: OverviewStrategy = OverviewStrategy.DEFAULT
+  ): GeoTiffReprojectRasterSource[F] =
     new GeoTiffReprojectRasterSource[F](dataPath, targetCRS, resampleTarget, method, strategy, targetCellType = targetCellType) {
       override lazy val gridExtent: F[GridExtent[Long]] = {
         (baseGridExtent, transform).mapN { (ge, t) =>
@@ -105,23 +111,23 @@ case class GeoTiffResampleRasterSource[F[_]: Monad: UnsafeLift](
 
         val windows = {
           for {
-            queryPixelBounds <- bounds
+            queryPixelBounds  <- bounds
             targetPixelBounds <- queryPixelBounds.intersection(gridBounds)
           } yield {
-            val targetExtent = gridExtent.extentFor(targetPixelBounds)
+            val targetExtent         = gridExtent.extentFor(targetPixelBounds)
             // Buffer the targetExtent to read a buffered area from the source tiff
             // so the resample would behave properly on borders
             // Buffer by half of CS to avoid resampling out of bounds
             val bufferedTargetExtent = targetExtent.buffer(cellSize.width / 2, cellSize.height / 2)
-            val sourcePixelBounds = closestTiffOverview.rasterExtent.gridBoundsFor(bufferedTargetExtent)
-            val targetRasterExtent = RasterExtent(targetExtent, targetPixelBounds.width.toInt, targetPixelBounds.height.toInt)
+            val sourcePixelBounds    = closestTiffOverview.rasterExtent.gridBoundsFor(bufferedTargetExtent)
+            val targetRasterExtent   = RasterExtent(targetExtent, targetPixelBounds.width.toInt, targetPixelBounds.height.toInt)
             (sourcePixelBounds, targetRasterExtent)
           }
         }.toMap
 
         geoTiffTile.crop(windows.keys.toSeq, bands.toArray).map { case (gb, tile) =>
           val targetRasterExtent = windows(gb)
-          val sourceExtent = closestTiffOverview.rasterExtent.extentFor(gb, clamp = false)
+          val sourceExtent       = closestTiffOverview.rasterExtent.extentFor(gb, clamp = false)
           Raster(tile, sourceExtent).resample(targetRasterExtent, method)
         }
       }

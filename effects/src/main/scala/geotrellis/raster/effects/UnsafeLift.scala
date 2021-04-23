@@ -49,7 +49,7 @@ object UnsafeLift {
   implicit val liftEither: UnsafeLift[Either[Throwable, *]] = new UnsafeLift[Either[Throwable, *]] {
     def apply[A](value: => A): Either[Throwable, A] = Try(value) match {
       case Success(value) => Right(value)
-      case Failure(e) => Left(e)
+      case Failure(e)     => Left(e)
     }
   }
 
