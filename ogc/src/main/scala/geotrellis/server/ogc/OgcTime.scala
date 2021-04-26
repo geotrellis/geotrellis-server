@@ -97,7 +97,7 @@ final case class OgcTimePositions(list: NonEmptyList[ZonedDateTime]) extends Ogc
     val periods =
       sorted.toList
         .sliding(2)
-        .map { case Seq(l, r, _*) => r.toEpochMilli - l.toEpochMilli }
+        .collect { case Seq(l, r, _*) => r.toEpochMilli - l.toEpochMilli }
         .toList
         .distinct
         .map(Duration.ofMillis)
@@ -176,7 +176,7 @@ object OgcTimeInterval {
     */
   implicit val ogcTimeIntervalSemigroup: Semigroup[OgcTimeInterval] = { (l, r) =>
     val times = List(l.start, l.end, r.start, r.end).sorted
-    OgcTimeInterval(times.head, times.last, None)
+    OgcTimeInterval(times.head, times.last, if(l.interval == r.interval) l.interval else None)
   }
 
   def apply(start: ZonedDateTime): OgcTimeInterval = OgcTimeInterval(start, start, None)

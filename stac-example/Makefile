@@ -8,21 +8,22 @@ postgres:
 	docker-compose up -d
 
 migrations:
-	docker run \
+	docker run --rm \
       --network stac-example_default \
-      quay.io/azavea/franklin:3cc8698 \
+      quay.io/azavea/franklin:4389d9f \
       migrate \
       --db-user franklin \
       --db-name franklin \
       --db-password franklin \
       --db-host database
 
+# -e FRANKLIN_LOG_LEVEL=DEBUG
 import-landsat-stac-collection:
-	docker run \
+	docker run --rm \
       --network stac-example_default \
       -e AWS_REGION=us-east-1 \
       -v ${PWD}/catalog:/opt/data/ \
-      quay.io/azavea/franklin:3cc8698 \
+      quay.io/azavea/franklin:4389d9f \
       import-catalog \
       --db-user franklin \
       --db-name franklin \
@@ -30,12 +31,37 @@ import-landsat-stac-collection:
       --db-host database \
       --catalog-root /opt/data/landsat-stac-collection/catalog.json
 
+import-landsat-stac-periodic-collection:
+	docker run --rm \
+      --network stac-example_default \
+      -e AWS_REGION=us-east-1 \
+      -v ${PWD}/catalog:/opt/data/ \
+      quay.io/azavea/franklin:4389d9f \
+      import-catalog \
+      --db-user franklin \
+      --db-name franklin \
+      --db-password franklin \
+      --db-host database \
+      --catalog-root /opt/data/landsat-stac-periodic-collection/catalog.json
+
+import-landsat-stac-layers:
+	docker run --rm \
+      --network stac-example_default \
+      -e AWS_REGION=us-east-1 \
+      -v ${PWD}/catalog:/opt/data/ \
+      quay.io/azavea/franklin:4389d9f \
+      import-catalog \
+      --db-user franklin \
+      --db-name franklin \
+      --db-password franklin \
+      --db-host database \
+      --catalog-root /opt/data/landsat-stac-layers/catalog.json
+
 run-franklin:
-	docker run \
+	docker run --rm \
       --network stac-example_default \
       -p 9090:9090 \
-      -d \
-      quay.io/azavea/franklin:3cc8698 \
+      quay.io/azavea/franklin:4389d9f \
       serve \
       --db-user franklin \
       --db-name franklin \
