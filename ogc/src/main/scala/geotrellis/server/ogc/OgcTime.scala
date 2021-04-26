@@ -176,7 +176,7 @@ object OgcTimeInterval {
     */
   implicit val ogcTimeIntervalSemigroup: Semigroup[OgcTimeInterval] = { (l, r) =>
     val times = List(l.start, l.end, r.start, r.end).sorted
-    OgcTimeInterval(times.head, times.last, if(l.interval == r.interval) l.interval else None)
+    OgcTimeInterval(times.head, times.last, if (l.interval == r.interval) l.interval else None)
   }
 
   def apply(start: ZonedDateTime): OgcTimeInterval = OgcTimeInterval(start, start, None)

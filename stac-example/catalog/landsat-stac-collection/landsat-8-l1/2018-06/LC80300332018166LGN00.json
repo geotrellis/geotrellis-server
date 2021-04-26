@@ -1,6 +1,6 @@
 {
   "type": "Feature",
-  "stac_version" : "1.0.0-rc.1",
+  "stac_version" : "1.0.0-rc.2",
   "stac_extensions" : [
     "eo",
     "view",

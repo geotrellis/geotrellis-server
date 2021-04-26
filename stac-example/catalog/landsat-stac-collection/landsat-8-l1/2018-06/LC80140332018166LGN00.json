@@ -1,7 +1,7 @@
 {
   "type": "Feature",
   "id": "LC80140332018166LGN00",
-  "stac_version" : "1.0.0-rc.1",
+  "stac_version" : "1.0.0-rc.2",
   "stac_extensions" : [
     "eo",
     "view",
