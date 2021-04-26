@@ -2,7 +2,7 @@
   "type": "Catalog",
   "stac_version": "1.0.0-rc.2",
   "stac_extensions": [],
-  "id": "landsat-stac-layers-catalog",
+  "id": "landsat-stac-periodic-catalog",
   "title": "STAC for Landsat data",
   "description": "STAC for Landsat data",
   "links": [
@@ -16,10 +16,6 @@
     },
     {
       "href": "./landsat-8-l1/catalog.json",
-      "rel": "child"
-    },
-    {
-      "href": "./layers/catalog.json",
       "rel": "child"
     }
   ]

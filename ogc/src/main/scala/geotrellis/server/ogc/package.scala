@@ -31,7 +31,8 @@ package object ogc {
 
   implicit class RasterOps(val self: Raster[MultibandTile]) extends AnyVal {
     def render(crs: CRS, maybeStyle: Option[OgcStyle], format: OutputFormat, hists: List[Histogram[Double]]): Array[Byte] =
-      Render.singleband(self, crs, maybeStyle, format, hists)
+      if (self.tile.bandCount == 1) Render.singleband(self, crs, maybeStyle, format, hists)
+      else Render.multiband(self, crs, maybeStyle, format, hists)
   }
 
   implicit class PeriodDurationOps(val self: PeriodDuration) extends AnyVal {

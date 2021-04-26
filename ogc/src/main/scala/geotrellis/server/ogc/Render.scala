@@ -63,4 +63,12 @@ object Render {
           case OutputFormat.GeoTiff     => GeoTiff(raster.mapTile(_.band(bandIndex = 0)), crs).toCloudOptimizedByteArray
         }
     }
+
+  def multiband(
+    raster: Raster[MultibandTile],
+    crs: CRS,
+    maybeStyle: Option[OgcStyle],
+    format: OutputFormat,
+    hists: List[Histogram[Double]]
+  ): Array[Byte] = rgba(raster, crs, maybeStyle, format, hists)
 }
