@@ -40,7 +40,7 @@ abstract class MosaicRasterSourceIO extends RasterSource {
   implicit lazy val cs: ContextShift[IO] = IO.contextShift(BlockingThreadPool.executionContext)
 
   def sources: NonEmptyList[RasterSource]
-  lazy val sourcesIO: NonEmptyList[IO[RasterSource]] = sources.map(IO.pure)
+  lazy val sourcesIO: NonEmptyList[IO[RasterSource]] = sources.map(cs.shift >> IO(_))
   def crs: CRS
   def gridExtent: GridExtent[Long]
 
@@ -86,7 +86,13 @@ abstract class MosaicRasterSourceIO extends RasterSource {
     method: ResampleMethod = ResampleMethod.DEFAULT,
     strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): RasterSource =
-    MosaicRasterSourceIO.instance(sources.map(_.reproject(targetCRS, resampleTarget, method, strategy)), targetCRS, name, attributes)
+    MosaicRasterSourceIO
+      .instance(
+        sourcesIO.parTraverse(_.map(_.reproject(targetCRS, resampleTarget, method, strategy))).unsafeRunSync(),
+        targetCRS,
+        name,
+        attributes
+      )
 
   def read(extent: Extent, bands: Seq[Int]): Option[Raster[MultibandTile]] =
     sourcesIO
@@ -131,10 +137,22 @@ abstract class MosaicRasterSourceIO extends RasterSource {
     method: ResampleMethod,
     strategy: OverviewStrategy
   ): RasterSource =
-    MosaicRasterSourceIO.instance(sources.map(_.resample(resampleTarget, method, strategy)), crs, name, attributes)
+    MosaicRasterSourceIO
+      .instance(
+        sourcesIO.parTraverse(_.map(_.resample(resampleTarget, method, strategy))).unsafeRunSync(),
+        crs,
+        name,
+        attributes
+      )
 
   def convert(targetCellType: TargetCellType): RasterSource =
-    MosaicRasterSourceIO.instance(sources.map(_.convert(targetCellType)), crs, name, attributes)
+    MosaicRasterSourceIO
+      .instance(
+        sourcesIO.parTraverse(_.map(_.convert(targetCellType))).unsafeRunSync(),
+        crs,
+        name,
+        attributes
+      )
 
   override def toString: String = s"MosaicRasterSourceFixed(${sources.toList}, $crs, $gridExtent, $name)"
 }
@@ -191,11 +209,11 @@ object MosaicRasterSourceIO {
     rasterSourceName: SourceName
   ): MosaicRasterSourceIO = {
     new MosaicRasterSourceIO {
-      val name    = rasterSourceName
-      val sources = sourcesList.map(_.reprojectToGrid(targetCRS, gridExtent))
-      val crs     = targetCRS
+      val name         = rasterSourceName
+      lazy val sources = sourcesList.map(cs.shift >> IO(_)).parTraverse(_.map(_.reprojectToGrid(targetCRS, gridExtent))).unsafeRunSync()
+      val crs          = targetCRS
 
-      def gridExtent: GridExtent[Long] = targetGridExtent
+      val gridExtent: GridExtent[Long] = targetGridExtent
     }
   }
 
@@ -205,12 +223,12 @@ object MosaicRasterSourceIO {
   def apply(sourcesList: NonEmptyList[RasterSource], targetCRS: CRS, rasterSourceName: SourceName): MosaicRasterSourceIO = {
     new MosaicRasterSourceIO {
       val name    = rasterSourceName
-      val sources = sourcesList map { _.reprojectToGrid(targetCRS, sourcesList.head.gridExtent) }
+      val sources = sourcesList.map(cs.shift >> IO(_)).parTraverse(_.map(_.reprojectToGrid(targetCRS, sourcesList.head.gridExtent))).unsafeRunSync()
       val crs     = targetCRS
       def gridExtent: GridExtent[Long] = {
-        val reprojectedSources = sources.toList
-        val combinedExtent     = reprojectedSources.map(_.extent).reduce(_ combine _)
-        val minCellSize        = reprojectedSources.map(_.cellSize).maxBy(_.resolution)
+        val reprojectedSources = sourcesIO.toList
+        val combinedExtent     = reprojectedSources.parTraverse(_.map(_.extent)).map(_.reduce(_ combine _)).unsafeRunSync()
+        val minCellSize        = reprojectedSources.parTraverse(_.map(_.cellSize)).map(_.maxBy(_.resolution)).unsafeRunSync()
         GridExtent[Long](combinedExtent, minCellSize)
       }
     }
