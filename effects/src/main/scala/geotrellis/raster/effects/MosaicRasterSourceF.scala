@@ -139,9 +139,8 @@ abstract class MosaicRasterSourceF[F[_]: Monad: Parallel] extends RasterSourceF[
   ): RasterSourceF[F] =
     MosaicRasterSourceF.instance(sources.map(_.map(_.resample(resampleTarget, method, strategy))), crs, name)
 
-  def convert(targetCellType: TargetCellType): RasterSourceF[F] = {
+  def convert(targetCellType: TargetCellType): RasterSourceF[F] =
     MosaicRasterSourceF.instance(sources.map(_.map(_.convert(targetCellType))), crs, name)
-  }
 
   override def toString: String = s"MosaicRasterSourceF[F]($sources, $crs, $gridExtent, $name)"
 }

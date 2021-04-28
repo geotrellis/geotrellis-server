@@ -1,8 +1,7 @@
 -J-Xmx2G
 -J-Xms1G
 -J-Xss5M
--J-XX:+UseConcMarkSweepGC
--J-XX:+CMSClassUnloadingEnabled
+-J-XX:+UseG1GC
 -Djava.awt.headless=true
 -Dsbt.color=always
 -Dsbt.supershell=false

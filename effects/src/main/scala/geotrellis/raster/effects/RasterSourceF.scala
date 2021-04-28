@@ -51,8 +51,8 @@ abstract class RasterSourceF[F[_]: Monad] extends RasterMetadataF[F] with Serial
     method: ResampleMethod = ResampleMethod.DEFAULT,
     strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): RasterSourceF[F] =
-    if (targetCRS == this.crs) this // TODO: Fixme, Embed would work here? how to short circuit
-    else reprojection(targetCRS, resampleTarget, method, strategy)
+    // if (targetCRS == this.crs) this // TODO: Fixme, Embed would work here? how to short circuit
+    reprojection(targetCRS, resampleTarget, method, strategy)
 
   /** Sampling grid and resolution is defined by given [[GridExtent]].
     * Resulting extent is the extent of the minimum enclosing pixel region
@@ -65,9 +65,9 @@ abstract class RasterSourceF[F[_]: Monad] extends RasterMetadataF[F] with Serial
     method: ResampleMethod = ResampleMethod.DEFAULT,
     strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): RasterSourceF[F] =
-    if (targetCRS == this.crs && grid == this.gridExtent) this // TODO: Fixme, Embed would work here? how to short circuit
-    else if (targetCRS == this.crs) resampleToGrid(grid, method, strategy) // TODO: Fixme, Embed would work here? how to short circuit
-    else reprojection(targetCRS, TargetAlignment(grid), method, strategy)
+    // if (targetCRS == this.crs && grid == this.gridExtent) this // TODO: Fixme, Embed would work here? how to short circuit
+    // else if (targetCRS == this.crs) resampleToGrid(grid, method, strategy) // TODO: Fixme, Embed would work here? how to short circuit
+    reprojection(targetCRS, TargetAlignment(grid), method, strategy)
 
   /** Sampling grid and resolution is defined by given [[RasterExtent]] region.
     * The extent of the result is also taken from given [[RasterExtent]],
@@ -80,9 +80,9 @@ abstract class RasterSourceF[F[_]: Monad] extends RasterMetadataF[F] with Serial
     method: ResampleMethod = ResampleMethod.DEFAULT,
     strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): RasterSourceF[F] =
-    if (targetCRS == this.crs && region == this.gridExtent) this
-    else if (targetCRS == this.crs) resampleToRegion(region.toGridType[Long], method, strategy)
-    else reprojection(targetCRS, TargetRegion(region.toGridType[Long]), method, strategy)
+    // if (targetCRS == this.crs && region == this.gridExtent) this // TODO: Fixme, Embed would work here? how to short circuit
+    // else if (targetCRS == this.crs) resampleToRegion(region.toGridType[Long], method, strategy) // TODO: Fixme, Embed would work here? how to short circuit
+    reprojection(targetCRS, TargetRegion(region.toGridType[Long]), method, strategy)
 
   def resample(resampleTarget: ResampleTarget, method: ResampleMethod, strategy: OverviewStrategy): RasterSourceF[F]
 
@@ -149,8 +149,8 @@ abstract class RasterSourceF[F[_]: Monad] extends RasterMetadataF[F] with Serial
 
   /** @group read
     */
-  def read(): F[Raster[MultibandTile]] =
-    (bandCount, extent).mapN { (bandCount, extent) => read(extent, 0 until bandCount) }.flatten
+  def read(): F[Raster[MultibandTile]]                =
+    (bandCount, extent).tupled >>= { case (bandCount, extent) => read(extent, 0 until bandCount) }
 
   /** @group read
     */

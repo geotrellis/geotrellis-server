@@ -360,6 +360,7 @@ lazy val effects = project
   )
 
 lazy val stac = project
+  .dependsOn(effects)
   .settings(moduleName := "geotrellis-stac")
   .settings(commonSettings)
   .settings(publishSettings)
@@ -379,6 +380,7 @@ lazy val `stac-example` = project
   .settings(moduleName := "geotrellis-server-stac-example")
   .settings(commonSettings)
   .settings(publishSettings)
+  .settings(javacOptions += "-Xmx8G")
   .settings(
     libraryDependencies ++= Seq(
       geotrellisGdal,
