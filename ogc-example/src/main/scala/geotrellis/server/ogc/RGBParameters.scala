@@ -39,8 +39,8 @@ case class RGBParameters(
 ) {
 
   def bind: Expression => Expression = {
-    case e @ RGB(children, _, _, _) =>
-      children match {
+    case e: RGB =>
+      e.children match {
         case r :: g :: b :: Nil =>
           val id: Expression => Expression = identity
           val rmap                         =
@@ -69,20 +69,20 @@ case class RGBParameters(
 object RGBParameters {
   case class Clamp(min: Double, max: Double)                                           {
     def bind: Expression => Expression = {
-      case e @ MClamp(_, _, _, _) => e.copy(min = min, max = max)
-      case e                      => e
+      case e: MClamp => e.copy(min = min, max = max)
+      case e         => e
     }
   }
   case class Normalize(oldMin: Double, oldMax: Double, newMin: Double, newMax: Double) {
     def bind: Expression => Expression = {
-      case e @ MNormalize(_, _, _, _, _, _) => e.copy(oldMin = oldMin, oldMax = oldMax, newMax = newMax, newMin = newMin)
-      case e                                => e
+      case e: MNormalize => e.copy(oldMin = oldMin, oldMax = oldMax, newMax = newMax, newMin = newMin)
+      case e             => e
     }
   }
   case class Rescale(newMin: Double, newMax: Double)                                   {
     def bind: Expression => Expression = {
-      case e @ MRescale(_, _, _, _) => e.copy(newMax = newMax, newMin = newMin)
-      case e                        => e
+      case e: MRescale => e.copy(newMax = newMax, newMin = newMin)
+      case e           => e
     }
   }
 
