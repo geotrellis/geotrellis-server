@@ -20,6 +20,7 @@ import geotrellis.server.ogc.conf._
 import geotrellis.server.ogc.wms._
 import geotrellis.server.ogc.wcs._
 import geotrellis.server.ogc.wmts._
+import geotrellis.store.util.BlockingThreadPool
 import cats.effect._
 import cats.implicits._
 import com.monovore.decline._
@@ -28,7 +29,6 @@ import org.http4s.server._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.middleware.CORS
 import org.http4s.syntax.kleisli._
-import org.http4s.client.blaze.BlazeClientBuilder
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
 import com.google.common.util.concurrent.ThreadFactoryBuilder
 import io.chrisdavenport.log4cats.Logger
@@ -90,6 +90,7 @@ object Main
               case None       => loggerSync.info(ansi"%red{Warning}: No configuration path provided. Loading defaults.")
             }
 
+            /** Server endpoints pool. */
             implicit val executionContext: ExecutionContext =
               ExecutionContext.fromExecutor(
                 Executors.newCachedThreadPool(
@@ -98,23 +99,21 @@ object Main
                     .build()
                 )
               )
-            implicit val cs: ContextShift[IO]               =
-              IO.contextShift(executionContext)
-            implicit val timer: Timer[IO]                   = IO.timer(executionContext)
 
-            val commonMiddleware: HttpMiddleware[IO] = { (routes: HttpRoutes[IO]) =>
-              CORS(routes)
-            }
+            implicit val cs: ContextShift[IO] = IO.contextShift(executionContext)
+            implicit val timer: Timer[IO]     = IO.timer(executionContext)
 
-            def logOptState[A](
-              opt: Option[A],
-              upLog: String,
-              downLog: String
-            ): IO[Unit] = opt.fold(logger.info(downLog))(_ => logger.info(upLog))
+            val commonMiddleware: HttpMiddleware[IO] = { (routes: HttpRoutes[IO]) => CORS(routes) }
+
+            def logOptState[A](opt: Option[A], upLog: String, downLog: String): IO[Unit] =
+              opt.fold(logger.info(downLog))(_ => logger.info(upLog))
 
             def createServer: Resource[IO, Server[IO]] =
               for {
                 conf         <- Conf.loadResourceF[IO](configPath)
+                /** MosaicRasterSources pool init for the graceful shutdown. */
+                blockingPool <- Resource.make(IO.delay(BlockingThreadPool.pool))(p => IO.delay(p.shutdown()))
+                /** Uses server pool. */
                 http4sClient <- Http4sBackend.usingDefaultBlazeClientBuilder[IO](Blocker.liftExecutionContext(executionContext), executionContext)
                 simpleSources = conf.layers.values.collect { case rsc: RasterSourceConf => rsc.toLayer }.toList
                 _            <- Resource.liftF(

@@ -20,10 +20,11 @@ import geotrellis.stac._
 import geotrellis.stac.raster.{StacAssetRasterSource, StacCollectionSource, StacItemAsset}
 import geotrellis.store.query._
 import geotrellis.store.query.QueryF._
-
-import geotrellis.raster.{MosaicRasterSource, RasterSource}
+import geotrellis.raster.{EmptyName, MosaicRasterSource, RasterSource}
 import geotrellis.server.ogc.OgcSource
 import geotrellis.server.ogc.conf.{OgcSourceConf, StacSourceConf}
+import geotrellis.raster.effects.MosaicRasterSourceIO
+
 import sttp.client3.SttpBackend
 import sttp.client3.UriContext
 import geotrellis.store.query
@@ -73,8 +74,13 @@ case class StacOgcRepository[F[_]: Applicative](
                   val commonCrs          = if (sources.flatMap(_.asset.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
                   val reprojectedSources = sources.map(_.reproject(commonCrs))
                   val attributes         = reprojectedSources.attributesByName
+
+                  // TODO: Fix the unsafe behavior, requires refactor of all repos and all RasterSources usages
                   val mosaicRasterSource =
-                    MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, csummary.sourceName, attributes)
+                    if (stacSourceConf.parallelMosaic)
+                      MosaicRasterSourceIO.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, csummary.sourceName, attributes)
+                    else
+                      MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, csummary.sourceName, attributes)
 
                   /** In case some of the RasterSources are not from the STAC collection, we'd need to expand the [[StacCollectionSource]] extent. */
                   StacCollectionSource(csummary.asset.expandExtentToInclude(mosaicRasterSource.extent), mosaicRasterSource).some
@@ -93,7 +99,11 @@ case class StacOgcRepository[F[_]: Applicative](
                   val reprojectedSources = sources.map(_.reproject(commonCrs))
                   val attributes         = reprojectedSources.attributesByName
 
-                  MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, attributes).some
+                  // TODO: Fix the unsafe behavior, requires refactor of all repos and all RasterSources usages
+                  if (stacSourceConf.parallelMosaic)
+                    MosaicRasterSourceIO.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, EmptyName, attributes).some
+                  else
+                    MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, EmptyName, attributes).some
                 case _           => None
               }
 

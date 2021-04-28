@@ -19,12 +19,14 @@ package geotrellis.server.ogc.conf
 import cats.{MonadThrow, SemigroupK}
 import cats.instances.list._
 import cats.syntax.semigroup._
+
 import geotrellis.proj4.CRS
 import geotrellis.server.ogc.{ows, OgcSource, OgcSourceRepository, RasterOgcSource}
 import geotrellis.server.ogc.wms.WmsParentLayerMeta
 import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
 import geotrellis.server.ogc.stac._
 import geotrellis.store.query.{Repository, RepositoryM}
+
 import sttp.client3.SttpBackend
 
 /** Each service has its own unique configuration requirements (see the below instances)

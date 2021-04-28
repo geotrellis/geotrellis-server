@@ -45,6 +45,10 @@ stac-lc8-red-us = {
   ignore-time = false // work with temporal layers as with spatial layers, false by default
   // specify the default temporal rollback, oldest by default
   time-default = "{newest | oldest | ISO compatible date time}"
+  // an experimental feature to use parallel mosaic
+  // parallelism is controled via the geotrellis.blocking-thread-pool.threads option
+  // which is set to the amount of available CPUs by default
+  parallel-mosaic = {false | true}
   styles = [
     {
       name = "red-to-blue"

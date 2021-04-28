@@ -172,7 +172,7 @@ lazy val root = project
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(noPublishSettings)
-  .aggregate(core, example, ogc, opengis, `ogc-example`, stac, `stac-example`)
+  .aggregate(core, example, ogc, opengis, `ogc-example`, effects, stac, `stac-example`)
 
 lazy val core = project
   .settings(moduleName := "geotrellis-server-core")
@@ -347,7 +347,21 @@ lazy val `ogc-example` = project
     )
   )
 
+lazy val effects = project
+  .settings(moduleName := "geotrellis-effects")
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      geotrellisRaster,
+      geotrellisStore,
+      cats.value,
+      catsEffect.value
+    )
+  )
+
 lazy val stac = project
+  .dependsOn(effects)
   .settings(moduleName := "geotrellis-stac")
   .settings(commonSettings)
   .settings(publishSettings)

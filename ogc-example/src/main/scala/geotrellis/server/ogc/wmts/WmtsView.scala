@@ -83,17 +83,17 @@ class WmtsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
             .flatMap {
               _.map { layer =>
                 val evalWmts = layer match {
-                  case sl @ SimpleTiledOgcLayer(_, _, _, _, _, _, _, _)               => LayerTms.concurrent(sl)
-                  case MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _, _, _) =>
-                    LayerTms(expr.pure[F], parameters.pure[F], ConcurrentInterpreter.DEFAULT[F])
+                  case sl: SimpleTiledOgcLayer      => LayerTms.concurrent(sl)
+                  case mas: MapAlgebraTiledOgcLayer =>
+                    LayerTms(mas.algebra.pure[F], mas.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F])
                 }
 
                 // TODO: remove this once GeoTiffRasterSource would be threadsafe
                 // ETA 6/22/2020: we're pretending everything is fine
                 val evalHisto = layer match {
-                  case sl @ SimpleTiledOgcLayer(_, _, _, _, _, _, _, _)               => LayerHistogram.concurrent(sl, 512)
-                  case MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _, _, _) =>
-                    LayerHistogram(expr.pure[F], parameters.pure[F], ConcurrentInterpreter.DEFAULT[F], 512)
+                  case sl: SimpleTiledOgcLayer      => LayerHistogram.concurrent(sl, 512)
+                  case mas: MapAlgebraTiledOgcLayer =>
+                    LayerHistogram(mas.algebra.pure[F], mas.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F], 512)
                 }
 
                 (evalWmts(0, tileCol, tileRow), evalHisto).parMapN {
