@@ -354,6 +354,7 @@ lazy val effects = project
   .settings(
     libraryDependencies ++= Seq(
       geotrellisRaster,
+      geotrellisStore,
       cats.value,
       catsEffect.value
     )
@@ -380,7 +381,6 @@ lazy val `stac-example` = project
   .settings(moduleName := "geotrellis-server-stac-example")
   .settings(commonSettings)
   .settings(publishSettings)
-  .settings(javacOptions += "-Xmx8G")
   .settings(
     libraryDependencies ++= Seq(
       geotrellisGdal,

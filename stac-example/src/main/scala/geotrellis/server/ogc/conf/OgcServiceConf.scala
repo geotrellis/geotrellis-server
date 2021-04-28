@@ -16,18 +16,17 @@
 
 package geotrellis.server.ogc.conf
 
-import cats.effect.{Async, Blocker, ContextShift}
-import cats.{MonadThrow, Parallel, SemigroupK}
+import cats.{MonadThrow, SemigroupK}
 import cats.instances.list._
 import cats.syntax.semigroup._
+
 import geotrellis.proj4.CRS
-import geotrellis.raster.effects.UnsafeLift
 import geotrellis.server.ogc.{ows, OgcSource, OgcSourceRepository, RasterOgcSource}
 import geotrellis.server.ogc.wms.WmsParentLayerMeta
 import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
 import geotrellis.server.ogc.stac._
-import geotrellis.server.ogc.stac.effects.{MapAlgebraStacOgcRepositoriesUnsafe, StacOgcRepositoriesUnsafe}
 import geotrellis.store.query.{Repository, RepositoryM}
+
 import sttp.client3.SttpBackend
 
 /** Each service has its own unique configuration requirements (see the below instances)
@@ -43,20 +42,17 @@ sealed trait OgcServiceConf {
     OgcSourceRepository(rasterLayers ++ mapAlgebraLayers)
   }
 
-  def layerSources[F[_]: SemigroupK: Parallel: UnsafeLift: MonadThrow](
+  def layerSources[F[_]: SemigroupK: MonadThrow](
     rasterOgcSources: List[RasterOgcSource],
-    client: SttpBackend[F, Any],
-    contextShift: ContextShift[F]
+    client: SttpBackend[F, Any]
   ): RepositoryM[F, List, OgcSource] = {
-    implicit val sc: ContextShift[F] = contextShift
-
     val ogcLayers            = layerDefinitions.collect { case osc: OgcSourceConf => osc }
     val stacLayers           = ogcLayers.collect { case ssc: StacSourceConf => ssc }
     val mapAlgebraConfLayers = ogcLayers.collect { case masc: MapAlgebraSourceConf => masc }
 
     layerSources(rasterOgcSources).toF[F] |+|
-    StacOgcRepositoriesUnsafe[F](stacLayers, client) |+|
-    MapAlgebraStacOgcRepositoriesUnsafe[F](mapAlgebraConfLayers, ogcLayers, client)
+    StacOgcRepositories[F](stacLayers, client) |+|
+    MapAlgebraStacOgcRepositories[F](mapAlgebraConfLayers, ogcLayers, client)
   }
 }
 
