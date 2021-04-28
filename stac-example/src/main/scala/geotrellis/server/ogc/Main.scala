@@ -111,9 +111,8 @@ object Main
             def createServer: Resource[IO, Server[IO]] =
               for {
                 conf         <- Conf.loadResourceF[IO](configPath)
-                /** MosaicRasterSources pool. */
+                /** MosaicRasterSources pool init for the graceful shutdown. */
                 blockingPool <- Resource.make(IO.delay(BlockingThreadPool.pool))(p => IO.delay(p.shutdown()))
-                blockingShift = IO.contextShift(ExecutionContext.fromExecutor(blockingPool))
                 /** Uses server pool. */
                 http4sClient <- Http4sBackend.usingDefaultBlazeClientBuilder[IO](Blocker.liftExecutionContext(executionContext), executionContext)
                 simpleSources = conf.layers.values.collect { case rsc: RasterSourceConf => rsc.toLayer }.toList
@@ -128,7 +127,7 @@ object Main
                                   WmsModel[IO](
                                     svc.serviceMetadata,
                                     svc.parentLayerMeta,
-                                    svc.layerSources(simpleSources, http4sClient, blockingShift),
+                                    svc.layerSources(simpleSources, http4sClient),
                                     ExtendedParameters.extendedParametersBinding
                                   )
                                 }
@@ -143,7 +142,7 @@ object Main
                                   WmtsModel[IO](
                                     svc.serviceMetadata,
                                     svc.tileMatrixSets,
-                                    svc.layerSources(simpleSources, http4sClient, blockingShift)
+                                    svc.layerSources(simpleSources, http4sClient)
                                   )
                                 }
                 _            <- Resource.liftF(
@@ -156,7 +155,7 @@ object Main
                 wcsModel      = conf.wcs.map { svc =>
                                   WcsModel[IO](
                                     svc.serviceMetadata,
-                                    svc.layerSources(simpleSources, http4sClient, blockingShift),
+                                    svc.layerSources(simpleSources, http4sClient),
                                     svc.supportedProjections,
                                     ExtendedParameters.extendedParametersBinding
                                   )
