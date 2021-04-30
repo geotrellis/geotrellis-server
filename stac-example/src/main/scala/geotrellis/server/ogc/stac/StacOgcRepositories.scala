@@ -16,98 +16,111 @@
 
 package geotrellis.server.ogc.stac
 
+import geotrellis.stac._
+import geotrellis.stac.raster.{StacAssetRasterSource, StacCollectionSource, StacItemAsset}
 import geotrellis.store.query._
 import geotrellis.store.query.QueryF._
-import geotrellis.raster.{MosaicRasterSource, RasterSource}
-import geotrellis.server.ogc.{OgcSource, OgcTime, OgcTimeEmpty, OgcTimeInterval, OgcTimePositions}
+import geotrellis.raster.{EmptyName, MosaicRasterSource, RasterSource}
+import geotrellis.server.ogc.OgcSource
 import geotrellis.server.ogc.conf.{OgcSourceConf, StacSourceConf}
-import geotrellis.server.ogc.utils._
-import geotrellis.stac.api.{Http4sStacClient, SearchFilters, StacClient}
-import geotrellis.store.query
-import geotrellis.stac.raster.StacAssetRasterSource
+import geotrellis.raster.effects.MosaicRasterSourceIO
 
+import sttp.client3.SttpBackend
+import sttp.client3.UriContext
+import geotrellis.store.query
+import com.azavea.stac4s.api.client.{Query => _, _}
+import cats.{Applicative, MonadThrow}
 import cats.data.NonEmptyList
-import cats.syntax.functor._
 import cats.syntax.applicative._
+import cats.syntax.apply._
 import cats.syntax.option._
 import cats.syntax.semigroup._
-import cats.effect.Sync
 import cats.instances.list._
 import higherkindness.droste.{scheme, Algebra}
-import org.http4s.Uri
-import org.http4s.client.Client
-import io.chrisdavenport.log4cats.Logger
 
-case class StacOgcRepository[F[_]: Sync: Logger](
+case class StacOgcRepository[F[_]: Applicative](
   stacSourceConf: StacSourceConf,
-  client: StacClient[F]
+  client: SttpStacClient[F]
 ) extends RepositoryM[F, List, OgcSource] {
   def store: F[List[OgcSource]] = find(query.all)
 
   def find(query: Query): F[List[OgcSource]] = {
 
-    /** Replace the actual conf name with the STAC Layer name */
-    val filters = SearchFilters.eval(query.overrideName(stacSourceConf.layer))
+    /** Replace the actual conf name with the STAC Layer name. */
+    val filters: Option[SearchFilters] =
+      SearchFilters
+        .eval(stacSourceConf.searchCriteria)(query.overrideName(stacSourceConf.searchName))
+        .map(_.copy(limit = stacSourceConf.assetLimit))
+
     filters.fold(List.empty[OgcSource].pure[F]) { filter =>
-      client
-        .search(filter.copy(limit = stacSourceConf.assetLimit))
-        .map { items =>
+      /** Query summary i.e. collection or layer summary and items and perform the matching items search. */
+      (client.summary(stacSourceConf.searchName, stacSourceConf.searchCriteria), client.search(filter))
+        .mapN { case (summary, items) =>
           val rasterSources =
             items.flatMap { item =>
               item.assets
                 .get(stacSourceConf.asset)
-                .map { itemAsset =>
-                  StacAssetRasterSource(
-                    itemAsset.withGDAL(stacSourceConf.withGDAL),
-                    item.properties
-                  )
-                }
+                .map { itemAsset => StacAssetRasterSource(StacItemAsset(itemAsset.withGDAL(stacSourceConf.withGDAL), item)) }
             }
 
-          val source: Option[RasterSource] = rasterSources match {
-            case head :: Nil => head.some
-            case head :: _   =>
-              /**
-                * By default STAC API returns all temporal items even though the time is not specified.
-                * If defaultTime configuration is set to true and the query is not temporal and not universal
-                * (meaning that it is bounded by temporal or spatial extent),
-                * we can select the first time position of the temporal layer in this case.
-                *
-                * If the layer is not temporal, no extra filtering would be applied.
-                * All non temporal items would be included into the result.
-                * Otherwise, only items that match the first time position would be returned.
-                */
-              val sources            = if (stacSourceConf.defaultTime && query.nonTemporal && query.nonUniversal) {
-                val datetimeField = stacSourceConf.datetimeField.some
-                rasterSources.map(_.time(datetimeField)).reduce(_ |+| _) match {
-                  case OgcTimePositions(list)       =>
-                    val start = list.head
-                    rasterSources.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), start))
-                  case OgcTimeInterval(start, _, _) =>
-                    rasterSources.filter(source => OgcTime.strictTimeMatch(source.time(datetimeField), start))
-                  case OgcTimeEmpty                 => rasterSources
-                }
-              } else rasterSources
-              val commonCrs          = if (sources.map(_.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
-              val reprojectedSources = sources.map(_.reproject(commonCrs))
-              MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs).some
-            case _           => None
-          }
+          summary match {
+            case csummary: CollectionSummary =>
+              val source: Option[StacCollectionSource] = rasterSources match {
+                case head :: Nil => StacCollectionSource(csummary.asset, head).some
+                case head :: _   =>
+                  /** Extra temporal layers filtering (slicing). If the layer is not temporal, no extra filtering (slicing) would be applied. */
+                  val sources            =
+                    rasterSources.timeSlice(query, stacSourceConf.timeDefault, stacSourceConf.ignoreTime, stacSourceConf.datetimeField.some)
+                  val commonCrs          = if (sources.flatMap(_.asset.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
+                  val reprojectedSources = sources.map(_.reproject(commonCrs))
+                  val attributes         = reprojectedSources.attributesByName
 
-          source.map(stacSourceConf.toLayer).toList
+                  // TODO: Fix the unsafe behavior, requires refactor of all repos and all RasterSources usages
+                  val mosaicRasterSource =
+                    if (stacSourceConf.parallelMosaic)
+                      MosaicRasterSourceIO.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, csummary.sourceName, attributes)
+                    else
+                      MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, csummary.sourceName, attributes)
+
+                  /** In case some of the RasterSources are not from the STAC collection, we'd need to expand the [[StacCollectionSource]] extent. */
+                  StacCollectionSource(csummary.asset.expandExtentToInclude(mosaicRasterSource.extent), mosaicRasterSource).some
+                case _           => None
+              }
+
+              source.map(stacSourceConf.toLayer).toList
+            case _                           =>
+              val source: Option[RasterSource] = rasterSources match {
+                case head :: Nil => head.some
+                case head :: _   =>
+                  /** Extra temporal layers filtering (slicing). If the layer is not temporal, no extra filtering (slicing) would be applied. */
+                  val sources            =
+                    rasterSources.timeSlice(query, stacSourceConf.timeDefault, stacSourceConf.ignoreTime, stacSourceConf.datetimeField.some)
+                  val commonCrs          = if (sources.flatMap(_.asset.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
+                  val reprojectedSources = sources.map(_.reproject(commonCrs))
+                  val attributes         = reprojectedSources.attributesByName
+
+                  // TODO: Fix the unsafe behavior, requires refactor of all repos and all RasterSources usages
+                  if (stacSourceConf.parallelMosaic)
+                    MosaicRasterSourceIO.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, EmptyName, attributes).some
+                  else
+                    MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, EmptyName, attributes).some
+                case _           => None
+              }
+
+              source.map(stacSourceConf.toLayer).toList
+          }
         }
     }
   }
 }
 
-case class StacOgcRepositories[F[_]: Sync: Logger](
+case class StacOgcRepositories[F[_]: MonadThrow](
   stacLayers: List[StacSourceConf],
-  client: Client[F]
+  client: SttpBackend[F, Any]
 ) extends RepositoryM[F, List, OgcSource] {
   def store: F[List[OgcSource]] = find(query.withNames(stacLayers.map(_.name).toSet))
 
-  /**
-    * At first, choose stacLayers that fit the query, because after that we'll erase their name.
+  /** At first, choose stacLayers that fit the query, because after that we'll erase their name.
     * GT Server layer conf names != the STAC Layer name
     * conf names can be different for the same STAC Layer name.
     * A name is unique per the STAC layer and an asset.
@@ -115,7 +128,7 @@ case class StacOgcRepositories[F[_]: Sync: Logger](
   def find(query: Query): F[List[OgcSource]] =
     StacOgcRepositories
       .eval(query)(stacLayers)
-      .map { conf => StacOgcRepository(conf, Http4sStacClient[F](client, Uri.unsafeFromString(conf.source))) }
+      .map { conf => StacOgcRepository(conf, SttpStacClient(client, uri"${conf.source}")) }
       .fold(RepositoryM.empty[F, List, OgcSource])(_ |+| _)
       .find(query)
 }

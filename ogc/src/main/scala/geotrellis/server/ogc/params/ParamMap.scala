@@ -17,7 +17,8 @@
 package geotrellis.server.ogc.params
 
 import geotrellis.server.ogc._
-import cats.implicits._
+
+import cats.syntax.option._
 import cats.data.{Validated, ValidatedNel}
 import Validated._
 
@@ -41,7 +42,7 @@ case class ParamMap(params: Map[String, Seq[String]]) {
   def validatedOptionalParam(field: String): ValidatedNel[ParamError, Option[String]] =
     (getParams(field) match {
       case None           => Valid(Option.empty[String])
-      case Some(v :: Nil) => Valid(Some(v))
+      case Some(v :: Nil) => Valid(v.some)
       case Some(_)        => Invalid(ParamError.RepeatedParam(field))
     }).toValidatedNel
 
@@ -54,6 +55,17 @@ case class ParamMap(params: Map[String, Seq[String]]) {
           case Failure(_) => Invalid(ParamError.ParseError(field, v))
         }
       case Some(_)        => Invalid(ParamError.RepeatedParam(field))
+    }).toValidatedNel
+
+  def validatedOptionalParam[T](field: String, parseValue: String => Option[T]): ValidatedNel[ParamError, Option[T]] =
+    (getParams(field) match {
+      case Some(v :: Nil) =>
+        parseValue(v) match {
+          case Some(valid) => Valid(valid.some)
+          case None        => Invalid(ParamError.ParseError(field, v))
+        }
+      case Some(_)        => Invalid(ParamError.RepeatedParam(field))
+      case None           => Valid(None)
     }).toValidatedNel
 
   /** Get a field that must appear only once, parse the value successfully, otherwise error */
@@ -78,17 +90,26 @@ case class ParamMap(params: Map[String, Seq[String]]) {
     }).toValidatedNel
 
   def validatedVersion(default: String): ValidatedNel[ParamError, String] =
+    validatedVersion(default, Set(default))
+
+  def validatedVersion(default: String, supportedVersions: Set[String]): ValidatedNel[ParamError, String] =
     (getParams("version") match {
-      case Some(Nil)            => Valid(default)
-      case Some(version :: Nil) => Valid(version)
-      case Some(_)              => Invalid(ParamError.RepeatedParam("version"))
-      case None                 =>
+      case Some(version :: Nil) if supportedVersions.contains(version) => Valid(version)
+      case Some(Nil)                                                   => Valid(default)
+      case Some(i :: Nil)                                              => Invalid(ParamError.InvalidValue("version", i, supportedVersions.toList))
+      case None                                                        =>
         // Can send "acceptversions" instead
         getParams("acceptversions") match {
           case Some(Nil)             =>
             Valid(default)
           case Some(versions :: Nil) =>
-            Valid(versions.split(",").max)
+            val requestedVersions = versions.split(",")
+            val intersection      = requestedVersions.toSet & supportedVersions
+            if (intersection.isEmpty) {
+              Invalid(ParamError.NoSupportedVersionError(requestedVersions.toList, supportedVersions.toList))
+            } else {
+              Valid(intersection.max)
+            }
           case Some(_)               =>
             Invalid(ParamError.RepeatedParam("acceptversions"))
           case None                  =>

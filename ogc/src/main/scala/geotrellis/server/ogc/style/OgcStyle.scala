@@ -16,17 +16,14 @@
 
 package geotrellis.server.ogc.style
 
+import geotrellis.proj4.CRS
 import geotrellis.server.ogc.OutputFormat
-
 import geotrellis.raster._
 import geotrellis.raster.histogram.Histogram
-import geotrellis.raster.render.{ColorMap, ColorRamp}
-import geotrellis.raster.render.jpg.JpgEncoder
-import geotrellis.util.np.linspace
 
 trait OgcStyle {
   def name: String
   def title: String
   def legends: List[LegendModel]
-  def renderImage(mbtile: MultibandTile, format: OutputFormat, hists: List[Histogram[Double]]): Array[Byte]
+  def renderRaster(raster: Raster[MultibandTile], crs: CRS, format: OutputFormat, hists: List[Histogram[Double]]): Array[Byte]
 }

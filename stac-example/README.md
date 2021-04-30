@@ -28,12 +28,27 @@ with the STAC Layer extension, that can be imported into [Franklin](https://azav
 stac-lc8-red-us = {
   type = "stacsourceconf"
   name = "stac-lc8-red-us" // OGC Layer name
+  with-gdal = true // to use gdal to access stac assets
   title = "Landsat LayerUS Red"
+  // GT Server can use the STAC Collection as a source or the STAC Layer
   layer = "layer-us" // STAC Layer
+  collection = "landsat-8-l1" // STAC Collection
   asset = "B4" // STAC Asset to read
   asset-limit = 1000 // Max assets returned by the STAC search request
   source = "http://localhost:9090/" // Path to the STAC API endpoint
   default-style = "red-to-blue"
+  // force time positions computation even if the range is given through the collection / layer summary
+  compute-time-positions = true
+  // optional field (can be added to all layers definitions)
+  // the default value is "self", meaning that it would use the OGC Time in a format recieved from the source
+  time-format = "{interval | positions | self}"
+  ignore-time = false // work with temporal layers as with spatial layers, false by default
+  // specify the default temporal rollback, oldest by default
+  time-default = "{newest | oldest | ISO compatible date time}"
+  // an experimental feature to use parallel mosaic
+  // parallelism is controled via the geotrellis.blocking-thread-pool.threads option
+  // which is set to the amount of available CPUs by default
+  parallel-mosaic = {false | true}
   styles = [
     {
       name = "red-to-blue"

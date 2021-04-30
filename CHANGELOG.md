@@ -6,6 +6,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.4.0] - 2021-04-30
+
+## Fixed
+- Service endpoints reject requests with unsupported version parameters [#313](https://github.com/geotrellis/geotrellis-server/pull/313)
+- Axis Ordering in a wms getmap [#302](https://github.com/geotrellis/geotrellis-server/issues/302)
+- Interoperability of STAC and non-STAC layers in mapalgebra layers [#309](https://github.com/geotrellis/geotrellis-server/issues/309)
+- OGC endpoints format parameter and HTTP response mime-type not matching [#255](https://github.com/geotrellis/geotrellis-server/issues/255)
+- WMS 1.3.0 Boolean representation [#332](https://github.com/geotrellis/geotrellis-server/issues/332)
+- Fix WCS projections support [#361](https://github.com/geotrellis/geotrellis-server/pull/361)
+- STAC-example cleanup [#363](https://github.com/geotrellis/geotrellis-server/pull/363)
+
+## Added
+- WCS services support configuration of `supported-projections` [#314](https://github.com/geotrellis/geotrellis-server/pull/314)
+- Add WCS 1.1.0 as the supported version [#330](https://github.com/geotrellis/geotrellis-server/pull/330)
+- STAC Collections support [#338](https://github.com/geotrellis/geotrellis-server/issues/338)
+- StacAssetRasterSource improvements [#326](https://github.com/geotrellis/geotrellis-server/issues/326)
+- StacCollectionRasterSource implementation [#340](https://github.com/geotrellis/geotrellis-server/issues/340)
+- WCS Rendering formats support [#195](https://github.com/geotrellis/geotrellis-server/issues/195)
+- GeoTrellis Server STAC Package [#350](https://github.com/geotrellis/geotrellis-server/issues/350)
+- STAC Collection temporal extents support [#347](https://github.com/geotrellis/geotrellis-server/issues/347)
+- OGC Services configurable time representation [#324](https://github.com/geotrellis/geotrellis-server/issues/324)
+- Default time period configurable on the WMS layer with a time dimension [#325](https://github.com/geotrellis/geotrellis-server/issues/325)
+- STAC Periodic Temporal extent support [#354](https://github.com/geotrellis/geotrellis-server/issues/354)
+- WMS GetFeatureInfo [#321](https://github.com/geotrellis/geotrellis-server/issues/321)
+- MosaicRasterSource improvements [#344](https://github.com/geotrellis/geotrellis-server/issues/344)
+
+### Changed
+- Update GT Server STAC4S dependency [#319](https://github.com/geotrellis/geotrellis-server/issues/319)
+- Unnecessary mandatory parameters on WCS 1.1.1 GetCoverage request [#306](https://github.com/geotrellis/geotrellis-server/issues/306)
+
 ## [4.3.0] - 2021-02-12
 
 ## Added
@@ -18,6 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Fixed
 - Fix STAC API TemporalExtent JSON representation [#293](https://github.com/geotrellis/geotrellis-server/pull/293)
+- XML responses in OGC services include a default namespace [#311](https://github.com/geotrellis/geotrellis-server/pull/311)
 
 ## [4.2.0] - 2020-06-23
 
@@ -111,7 +142,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Update geotrellis-contrib [#135](https://github.com/geotrellis/geotrellis-server/pull/135)
 
-[Unreleased]: https://github.com/geotrellis/geotrellis-server/compare/4.2.0...HEAD
+[Unreleased]: https://github.com/geotrellis/geotrellis-server/compare/4.3.0...HEAD
+[4.3.0]: https://github.com/geotrellis/geotrellis-server/compare/4.3.0...4.2.0
 [4.2.0]: https://github.com/geotrellis/geotrellis-server/compare/4.2.0...4.1.0
 [4.1.0]: https://github.com/geotrellis/geotrellis-server/compare/4.0.1...4.1.0
 [4.0.1]: https://github.com/geotrellis/geotrellis-server/compare/4.0.0...4.0.1

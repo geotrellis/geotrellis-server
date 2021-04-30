@@ -22,6 +22,8 @@ import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wmts.WmtsParams.{GetCapabilities, GetTile}
 import geotrellis.server.utils._
 
+import geotrellis.layer.SpatialKey
+import geotrellis.raster.Raster
 import com.azavea.maml.eval._
 import org.http4s.scalaxml._
 import org.http4s._
@@ -29,22 +31,23 @@ import org.http4s.dsl.Http4sDsl
 import org.http4s.circe._
 import _root_.io.circe.syntax._
 import cats.effect._
-import cats.{Applicative, ApplicativeError, Parallel}
+import cats.Parallel
 import cats.data.Validated.{Invalid, Valid}
 import cats.syntax.apply._
 import cats.syntax.applicative._
+import cats.syntax.functor._
 import cats.syntax.flatMap._
 import cats.syntax.applicativeError._
 import cats.syntax.parallel._
 import io.chrisdavenport.log4cats.Logger
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
+import org.http4s.headers.`Content-Type`
 
 import scala.concurrent.duration._
-
 import java.net._
 
-class WmtsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[*[_], Throwable]](
+class WmtsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
   wmtsModel: WmtsModel[F],
   serviceUrl: URL
 ) extends Http4sDsl[F] {
@@ -59,15 +62,15 @@ class WmtsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[*[_], 
 
   def responseFor(req: Request[F]): F[Response[F]] = {
     WmtsParams(req.multiParams) match {
-      case Invalid(errors)           =>
+      case Invalid(errors) =>
         val msg = ParamError.generateErrorMessage(errors.toList)
         logger.warn(msg) *> BadRequest(msg)
 
       case Valid(_: GetCapabilities) =>
         logger.debug(ansi"%bold{GetCapabilities: ${req.uri}}") *>
-        new CapabilitiesView(wmtsModel, serviceUrl).toXML flatMap (Ok(_))
+          new CapabilitiesView(wmtsModel, serviceUrl).toXML flatMap (Ok(_))
 
-      case Valid(wmtsReq: GetTile)   =>
+      case Valid(wmtsReq: GetTile) =>
         logger.debug(ansi"%bold{GetTile: ${req.uri}}")
         val tileCol   = wmtsReq.tileCol
         val tileRow   = wmtsReq.tileRow
@@ -79,17 +82,17 @@ class WmtsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[*[_], 
             .flatMap {
               _.map { layer =>
                 val evalWmts = layer match {
-                  case sl @ SimpleTiledOgcLayer(_, _, _, _, _, _, _, _)               => LayerTms.concurrent(sl)
-                  case MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _, _, _) =>
-                    LayerTms(expr.pure[F], parameters.pure[F], ConcurrentInterpreter.DEFAULT[F])
+                  case sl: SimpleTiledOgcLayer      => LayerTms.concurrent(sl)
+                  case mas: MapAlgebraTiledOgcLayer =>
+                    LayerTms(mas.algebra.pure[F], mas.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F])
                 }
 
                 // TODO: remove this once GeoTiffRasterSource would be threadsafe
                 // ETA 6/22/2020: we're pretending everything is fine
                 val evalHisto = layer match {
-                  case sl @ SimpleTiledOgcLayer(_, _, _, _, _, _, _, _)               => LayerHistogram.concurrent(sl, 512)
-                  case MapAlgebraTiledOgcLayer(_, _, _, _, parameters, expr, _, _, _) =>
-                    LayerHistogram(expr.pure[F], parameters.pure[F], ConcurrentInterpreter.DEFAULT[F], 512)
+                  case sl: SimpleTiledOgcLayer      => LayerHistogram.concurrent(sl, 512)
+                  case mas: MapAlgebraTiledOgcLayer =>
+                    LayerHistogram(mas.algebra.pure[F], mas.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F], 512)
                 }
 
                 (evalWmts(0, tileCol, tileRow), evalHisto).parMapN {
@@ -98,9 +101,10 @@ class WmtsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[*[_], 
                   case (_, Invalid(errs))            => Invalid(errs)
                 }.attempt flatMap {
                   case Right(Valid((mbtile, hists))) => // success
-                    val rendered = Render.singleband(mbtile, layer.style, wmtsReq.format, hists)
+                    val extent   = layer.layout.mapTransform(SpatialKey(tileCol, tileRow))
+                    val rendered = Raster(mbtile, extent).render(layer.crs, layer.style, wmtsReq.format, hists)
                     tileCache.put(wmtsReq, rendered)
-                    Ok(rendered)
+                    Ok(rendered).map(_.putHeaders(`Content-Type`(ToMediaType(wmtsReq.format))))
                   case Right(Invalid(errs))          => // maml-specific errors
                     logger.debug(errs.toList.toString)
                     BadRequest(errs.asJson)
@@ -113,7 +117,7 @@ class WmtsView[F[_]: Sync: Logger: Concurrent: Parallel: ApplicativeError[*[_], 
         }
 
         tileCache.getIfPresent(wmtsReq) match {
-          case Some(rendered) => Ok(rendered)
+          case Some(rendered) => Ok(rendered).map(_.putHeaders(`Content-Type`(ToMediaType(wmtsReq.format))))
           case _              => res
         }
     }

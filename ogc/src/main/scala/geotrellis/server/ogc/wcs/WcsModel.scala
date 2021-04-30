@@ -23,33 +23,24 @@ import com.azavea.maml.ast.Expression
 import cats.Functor
 import cats.syntax.functor._
 import geotrellis.store.query.RepositoryM
+import geotrellis.proj4.CRS
 
 /** This class holds all the information necessary to construct a response to a WCS request */
 case class WcsModel[F[_]: Functor](
   serviceMetadata: ows.ServiceMetadata,
   sources: RepositoryM[F, List, OgcSource],
+  supportedProjections: List[CRS],
   extendedParametersBinding: Option[ParamMap => Option[Expression => Expression]] = None
 ) {
   def getLayers(p: GetCoverageWcsParams): F[List[OgcLayer]] = {
     val filteredSources = sources.find(p.toQuery)
     filteredSources.map {
       _.map {
-        case SimpleSource(name, title, source, _, _, resampleMethod, overviewStrategy, _)               =>
-          SimpleOgcLayer(name, title, p.crs, source, None, resampleMethod, overviewStrategy)
-        case gts @ GeoTrellisOgcSource(name, title, _, _, _, resampleMethod, overviewStrategy, _)       =>
-          val source =
-            p.temporalSequence.headOption match {
-              case Some(t)                                                  => gts.sourceForTime(t)
-              case _ if p.temporalSequence.isEmpty && gts.source.isTemporal =>
-                gts.sourceForTime(gts.source.times.head)
-              case _                                                        => gts.source
-            }
-          SimpleOgcLayer(name, title, p.crs, source, None, resampleMethod, overviewStrategy)
-        case MapAlgebraSource(name, title, sources, algebra, _, _, resampleMethod, overviewStrategy, _) =>
-          val simpleLayers       = sources.mapValues { rs =>
-            SimpleOgcLayer(name, title, p.crs, rs, None, resampleMethod, overviewStrategy)
-          }
-          val extendedParameters = extendedParametersBinding.flatMap(_.apply(p.params))
+        case rs: RasterOgcSource   => rs.toLayer(p.crs, None, p.temporalSequence)
+        case mas: MapAlgebraSource =>
+          val (name, title, algebra, resampleMethod, overviewStrategy) = (mas.name, mas.title, mas.algebra, mas.resampleMethod, mas.overviewStrategy)
+          val simpleLayers                                             = mas.sources.mapValues { rs => SimpleOgcLayer(name, title, p.crs, rs, None, resampleMethod, overviewStrategy) }
+          val extendedParameters                                       = extendedParametersBinding.flatMap(_.apply(p.params))
           MapAlgebraOgcLayer(
             name,
             title,

@@ -90,6 +90,12 @@ object SampleUtils {
       case _                => None
     })
 
+  final def intersectExtents(extents: List[Extent]): Option[Extent] =
+    extents match {
+      case Nil      => None
+      case hd :: tl => intersectExtents(NEL(hd, tl))
+    }
+
   final def unionExtents(extents: NEL[Extent]): Option[Extent] =
     Some(extents.tail.foldLeft(extents.head) { (ex1, ex2) => ex1 combine ex2 })
 

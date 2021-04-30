@@ -1,6 +1,7 @@
 # GeoTrellis Server 
 
-[![CircleCI](https://circleci.com/gh/geotrellis/geotrellis-server.svg?style=svg)](https://circleci.com/gh/geotrellis/geotrellis-server) [![Join the chat at https://gitter.im/geotrellis/geotrellis](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/geotrellis/geotrellis?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![CircleCI](https://circleci.com/gh/geotrellis/geotrellis-server.svg?style=svg)](https://circleci.com/gh/geotrellis/geotrellis-server) [![Join the chat at https://gitter.im/geotrellis/geotrellis](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/geotrellis/geotrellis?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Maven Central](https://img.shields.io/maven-central/v/com.azavea.geotrellis/geotrellis-server-core_2.12)](http://search.maven.org/#search%7Cga%7C1%7com.azavea.geotrellis)
+
 
 GeoTrellis Server is a set of components designed to simplify
 viewing, processing, and serving raster data from arbitrary sources
@@ -13,16 +14,15 @@ or returned, this project aims to simplify the creation of dynamic,
 responsive layers whose transformations can be described in MAML
 ([Map Algebra Modeling Language](https://github.com/geotrellis/maml/)).
 
+### Getting Started with GeoTrellis Server
 
-### Including Geotrellis Server
+GeoTrellis Server is currently available for Scala 2.12.
 
-Current version:
- - 0.1.10
+To get started with SBT, simply add the following to your build.sbt file:
 
-Add the geotrellis-server dependency by declaring it within your
-project's `build.sbt`:
-`libraryDependencies += "com.azavea" %% "geotrellis-server-core" % "0.1.10"`
-
+```scala
+libraryDependencies += "com.azavea.geotrellis" %% "geotrellis-server-core" % "<latest version>"
+```
 
 ### High level concepts
 

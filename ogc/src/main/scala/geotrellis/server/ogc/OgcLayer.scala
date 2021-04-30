@@ -32,8 +32,7 @@ import cats.syntax.apply._
 import cats.syntax.functor._
 import io.chrisdavenport.log4cats.Logger
 
-/**
-  * OgcLayer instances are sufficient to produce visual rasters as the end product of 'get map'
+/** OgcLayer instances are sufficient to produce visual rasters as the end product of 'get map'
   *  requests. They are produced from a combination of a WMS 'GetMap'
   *  (or whatever the analogous request in whatever OGC service is being produced) and an instance
   *  of [[OgcSource]]
@@ -47,7 +46,7 @@ sealed trait OgcLayer {
   def overviewStrategy: OverviewStrategy
 }
 
-sealed trait RasterOgcLayer {
+sealed trait RasterOgcLayer extends OgcLayer {
   def source: RasterSource
 }
 
@@ -59,8 +58,7 @@ case class SimpleOgcLayer(
   style: Option[OgcStyle],
   resampleMethod: ResampleMethod,
   overviewStrategy: OverviewStrategy
-) extends OgcLayer
-    with RasterOgcLayer
+) extends RasterOgcLayer
 
 case class MapAlgebraOgcLayer(
   name: String,
@@ -74,34 +72,37 @@ case class MapAlgebraOgcLayer(
 ) extends OgcLayer
 
 object SimpleOgcLayer {
-  implicit def simpleOgcReification[F[_]: Sync: Logger]: ExtentReification[F, SimpleOgcLayer] = { self => (extent: Extent, cs: CellSize) =>
-    {
-      val targetGrid = new GridExtent[Long](extent, cs)
-      Logger[F].trace(
-        s"attempting to retrieve layer $self at extent $extent with $cs ${targetGrid.cols}x${targetGrid.rows}"
-      ) *>
-      Logger[F].trace(s"Requested extent geojson: ${extent.toGeoJson}") *> {
-        Sync[F].delay {
-          self.source
-            .reprojectToRegion(
-              self.crs,
-              targetGrid.toRasterExtent,
-              self.resampleMethod,
-              self.overviewStrategy
-            )
-            .read(extent)
-            .getOrElse {
-              Logger[F].trace(s"Unable to retrieve layer $self at extent $extent $cs")
-              Raster(MultibandTile(ArrayTile.empty(self.source.cellType, 10, 10)), extent)
-            }
+  implicit def simpleOgcReification[F[_]: Sync: Logger]: ExtentReification[F, SimpleOgcLayer] = {
+    self => (extent: Extent, cellSize: Option[CellSize]) =>
+      {
+        Logger[F].trace(
+          s"attempting to retrieve layer $self at extent $extent with $cellSize"
+        ) *>
+        Logger[F].trace(s"Requested extent geojson: ${extent.toGeoJson}") *> {
+          Sync[F].delay {
+            cellSize
+              .fold(self.source.reproject(self.crs)) { cs =>
+                self.source
+                  .reprojectToRegion(
+                    self.crs,
+                    new GridExtent[Long](extent, cs).toRasterExtent,
+                    self.resampleMethod,
+                    self.overviewStrategy
+                  )
+              }
+              .read(extent)
+              .getOrElse {
+                Logger[F].trace(s"Unable to retrieve layer $self at extent $extent $cellSize")
+                Raster(MultibandTile(ArrayTile.empty(self.source.cellType, 10, 10)), extent)
+              }
+          }
+        } <*
+        Logger[F].trace(
+          s"Successfully retrieved layer $self at extent $extent with f $cellSize"
+        ) map { raster =>
+          ProjectedRaster(raster, self.crs)
         }
-      } <*
-      Logger[F].trace(
-        s"Successfully retrieved layer $self at extent $extent with f $cs ${targetGrid.cols}x${targetGrid.rows}"
-      ) map { raster =>
-        ProjectedRaster(raster, self.crs)
       }
-    }
   }
 
   implicit def simpleOgcHasRasterExtents[F[_]: Sync]: HasRasterExtents[F, SimpleOgcLayer] = { self =>

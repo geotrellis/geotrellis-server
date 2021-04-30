@@ -30,8 +30,7 @@ import io.chrisdavenport.log4cats.Logger
 /** Provides methods for producing TMS tiles */
 object LayerTms {
 
-  /**
-    * Given an [[Expression]], a parameter map, and an interpreter, create a function
+  /** Given an [[Expression]], a parameter map, and an interpreter, create a function
     *  which takes z, x, and y coordinates and returns the corresponding tile.
     *
     * @tparam T a type whose instances can refer to layers
@@ -59,12 +58,11 @@ object LayerTms {
                       s"Retrieved parameters for TMS ($z, $x, $y): ${paramMap.toString}"
                     )
         vars      = Vars.varsWithBuffer(expr)
-        params   <- vars.toList.parTraverse {
-                      case (varName, (_, buffer)) =>
-                        val eval =
-                          implicitly[TmsReification[F, T]]
-                            .tmsReification(paramMap(varName), buffer)
-                        eval(z, x, y).map(varName -> _)
+        params   <- vars.toList.parTraverse { case (varName, (_, buffer)) =>
+                      val eval =
+                        implicitly[TmsReification[F, T]]
+                          .tmsReification(paramMap(varName), buffer)
+                      eval(z, x, y).map(varName -> _)
                     } map { _.toMap }
         reified  <- Expression.bindParams(expr, params.mapValues(RasterLit(_))) match {
                       case Valid(expression) => interpreter(expression)

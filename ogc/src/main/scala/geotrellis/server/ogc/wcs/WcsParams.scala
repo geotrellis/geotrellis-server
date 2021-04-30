@@ -16,6 +16,7 @@
 
 package geotrellis.server.ogc.wcs
 
+import geotrellis.server.ogc._
 import geotrellis.proj4.CRS
 import geotrellis.raster.{CellSize, GridExtent}
 import geotrellis.server.ogc.{OgcTime, OgcTimeInterval, OgcTimePositions, OutputFormat}
@@ -26,6 +27,7 @@ import geotrellis.vector.{Extent, ProjectedExtent}
 import cats.data.Validated._
 import cats.data.{Validated, ValidatedNel, NonEmptyList => NEL}
 import cats.syntax.apply._
+import cats.syntax.traverse._
 import cats.syntax.option._
 
 import scala.util.Try
@@ -39,8 +41,7 @@ case class GetCapabilitiesWcsParams(version: String) extends WcsParams
 
 case class DescribeCoverageWcsParams(version: String, identifiers: Seq[String]) extends WcsParams
 
-/**
-  * “EPSG:4326” or “WGS84” use the latitude first, longitude second axis order.
+/** "EPSG:4326" or "WGS84" use the latitude first, longitude second axis order.
   * According to the WCS spec for 1.1, some CRS have inverted axis
   * box:
   *  1.0.0: minx,miny,maxx,maxy
@@ -50,6 +51,8 @@ case class DescribeCoverageWcsParams(version: String, identifiers: Seq[String]) 
   *
   * Reference to QGIS: https://github.com/qgis/QGIS/blob/final-3_10_2/src/providers/wcs/qgswcsprovider.cpp#L674
   * Parameters descriptions can be also found here: https://mapserver.org/ogc/wcs_server.html
+  *
+  * WCS 1.1.1 specs URI: https://portal.opengeospatial.org/files/07-067r2
   */
 case class GetCoverageWcsParams(
   version: String,
@@ -57,13 +60,14 @@ case class GetCoverageWcsParams(
   boundingBox: Extent,
   temporalSequence: List[OgcTime],
   format: OutputFormat,
-  gridBaseCRS: CRS,
+  gridBaseCRS: Option[CRS],
   gridCS: URI,
   gridType: URI,
   // GridOrigin is BBOX minx, maxy // swapped in case of a geographic projection
-  gridOrigin: (Double, Double),
+  // It is optional, in case it is missing we can use the boundingBox corner
+  gridOrigin: Option[(Double, Double)],
   // GridOffsets is xres, yres // swapped in case of a geographic projection
-  gridOffsets: (Double, Double),
+  gridOffsets: Option[(Double, Double)],
   crs: CRS,
   params: ParamMap
 ) extends WcsParams {
@@ -82,31 +86,39 @@ case class GetCoverageWcsParams(
 
   val changeXY: Boolean = crs.isGeographic
 
-  def cellSize: CellSize =
-    if (changeXY) CellSize(-gridOffsets._1, gridOffsets._2)
-    else CellSize(gridOffsets._1, -gridOffsets._2)
+  def cellSize: Option[CellSize] =
+    if (changeXY) gridOffsets.map { case (f, s) => CellSize(-f, s) }
+    else gridOffsets.map { case (f, s) => CellSize(f, -s) }
 
-  // shrink the extent to border cells centers by half cell size
-  def extent: Extent =
-    if (changeXY)
+  /** Shrink the extent to border cells centers by half cell size.
+    * GridOrigin: default is "0,0" (KVP) or "0 0" (XML); it is the boundingBox corner.
+    */
+  def extent: Extent             =
+    if (changeXY) {
+      val (xmax, ymin) = gridOrigin.getOrElse(boundingBox.xmax -> boundingBox.ymin)
       Extent(
         boundingBox.xmin,
-        gridOrigin._2,
-        gridOrigin._1,
+        ymin,
+        xmax,
         boundingBox.ymax
-      ).buffer(cellSize.width / 2, cellSize.height / 2).swapXY
-    else
+      ).buffer(cellSize).swapXY
+    } else {
+      val (xmin, ymax) = gridOrigin.getOrElse(boundingBox.xmin -> boundingBox.ymax)
       Extent(
-        gridOrigin._1,
+        xmin,
         boundingBox.ymin,
         boundingBox.xmax,
-        gridOrigin._2
-      ).buffer(cellSize.width / 2, cellSize.height / 2)
+        ymax
+      ).buffer(cellSize)
+    }
 
-  def gridExtent: GridExtent[Long] = GridExtent[Long](extent, cellSize)
+  def gridExtent: Option[GridExtent[Long]] = cellSize.map(GridExtent[Long](extent, _))
 }
 
 object WcsParams {
+
+  val wcsVersion  = "1.1.1"
+  val wcsVersions = Set(wcsVersion, "1.1.0")
 
   /** Defines valid request types, and the WcsParams to build from them. */
   private val requestMap: Map[String, ParamMap => ValidatedNel[ParamError, WcsParams]] =
@@ -126,21 +138,21 @@ object WcsParams {
     val firstStageValidation = (serviceParam, requestParam).mapN { case (_, b) => b }
 
     firstStageValidation
-    // Further validation and building based on request type.
+      // Further validation and building based on request type.
       .andThen { request => requestMap(request)(params) }
   }
 }
 
 object GetCapabilitiesWcsParams {
   def build(params: ParamMap): ValidatedNel[ParamError, WcsParams] = {
-    val versionParam = params.validatedVersion("1.1.1")
+    val versionParam = params.validatedVersion(WcsParams.wcsVersion, WcsParams.wcsVersions)
     versionParam.map { version: String => GetCapabilitiesWcsParams(version) }
   }
 }
 
 object DescribeCoverageWcsParams {
   def build(params: ParamMap): ValidatedNel[ParamError, WcsParams] = {
-    val versionParam = params.validatedVersion("1.1.1")
+    val versionParam = params.validatedVersion(WcsParams.wcsVersion, WcsParams.wcsVersions)
 
     versionParam
       .andThen { version: String =>
@@ -158,7 +170,7 @@ object GetCoverageWcsParams {
     params.validatedParam[(Vector[Double], Option[String])](
       field,
       { bboxStr =>
-        // Usually the CRS is the 5th element in the bbox param.
+        /** Usually the CRS is the 5th element in the bbox param. */
         try {
           val v = bboxStr.split(",").toVector
           if (v.length == 4) (v.map(_.toDouble), None).some
@@ -171,36 +183,35 @@ object GetCoverageWcsParams {
     )
 
   def build(params: ParamMap): ValidatedNel[ParamError, WcsParams] = {
-    val versionParam = params.validatedVersion("1.1.1")
+    val versionParam = params.validatedVersion(WcsParams.wcsVersion, WcsParams.wcsVersions)
 
     versionParam
       .andThen { version: String =>
-        // Collected the bbox, id, and possibly the CRS in one shot.
-        // This is because the boundingbox param could contain the CRS as the 5th element.
+        /** Collected the bbox, id, and possibly the CRS in one shot.
+          * This is because the boundingbox param could contain the CRS as the 5th element.
+          */
         val idAndBboxAndCrsOption = {
-          val identifier =
-            params.validatedParam("identifier")
-
-          val bboxAndCrsOption =
-            getBboxAndCrsOption(params, "boundingbox")
-
-          (identifier, bboxAndCrsOption).mapN {
-            case (id, (bbox, crsOption)) => (id, bbox, crsOption)
-          }
+          val identifier       = params.validatedParam("identifier")
+          val bboxAndCrsOption = getBboxAndCrsOption(params, "boundingbox")
+          (identifier, bboxAndCrsOption).mapN { case (id, (bbox, crsOption)) => (id, bbox, crsOption) }
         }
 
-        val gridBaseCRS = params.validatedParam("gridbasecrs").andThen(CRSUtils.ogcToCRS)
+        /** gridBaseCRS is an optional param, in case it is missing we can always grab it from the data source. */
+        val gridBaseCRS = params.validatedOptionalParam("gridbasecrs").andThen(_.traverse(CRSUtils.ogcToCRS))
 
-        // Transform the OGC urn CRS code into a CRS.
+        /** If the CRS is not provided, than it is in the CRS of the dataset. */
         val idAndBboxAndCrs: Validated[NEL[ParamError], (String, Vector[Double], CRS)] =
           idAndBboxAndCrsOption
-            .andThen {
-              case (id, bbox, crsOption) =>
-                // If the CRS wasn't in the boundingbox parameter, pull it out of the CRS field.
-                crsOption match {
-                  case Some(crsDesc) => CRSUtils.ogcToCRS(crsDesc).map { crs => (id, bbox, crs) }
-                  case None          => gridBaseCRS.map { crs => (id, bbox, crs) }
-                }
+            .andThen { case (id, bbox, crsOption) =>
+              /** If the CRS wasn't in the boundingbox parameter, pull it out of the CRS field. */
+              crsOption match {
+                case Some(crsDesc) => CRSUtils.ogcToCRS(crsDesc).map { crs => (id, bbox, crs) }
+                case None          =>
+                  gridBaseCRS match {
+                    case Valid(Some(crs)) => gridBaseCRS.map(_ => (id, bbox, crs))
+                    case _                => Invalid(ParamError.MissingParam("BoundingBox CRS")).toValidatedNel
+                  }
+              }
             }
 
         val temporalSequenceOption = params.validatedOgcTimeSequence("timesequence")
@@ -211,28 +222,42 @@ object GetCoverageWcsParams {
             .andThen { f =>
               OutputFormat.fromString(f) match {
                 case Some(format) => Valid(format).toValidatedNel
-                case None         =>
-                  Invalid(UnsupportedFormatError(f)).toValidatedNel
+                case None         => Invalid(UnsupportedFormatError(f)).toValidatedNel
               }
             }
 
-        val gridCS     = params.validatedParam[URI]("gridcs", { s => Try(new URI(s)).toOption })
-        val gridType   = params.validatedParam[URI]("gridtype", { s => Try(new URI(s)).toOption })
-        val gridOrigin = params.validatedParam[(Double, Double)](
-          "gridorigin",
-          { s =>
-            Try {
-              val List(fst, snd) = s.split(",").map(_.toDouble).toList
-              (fst, snd)
-            }.toOption
-          }
-        )
+        /** GridCS: default is "urn:ogc:def:cs:OGC:0.0:Grid2dSquareCS" */
+        val gridCS = params
+          .validatedOptionalParam[URI]("gridcs", { s => Try(new URI(s)).toOption })
+          .map(_.getOrElse(new URI("urn:ogc:def:cs:OGC:0.0:Grid2dSquareCS")))
 
-        val gridOffsets = params.validatedParam[(Double, Double)](
+        /** GridType: default is "urn:ogc:def:method:WCS:1.1:2dSimpleGrid"
+          * (This GridType disallows rotation or skew relative to the GridBaseCRS – therefore
+          * GridOffsets has only two numbers.)
+          */
+        val gridType = params
+          .validatedOptionalParam[URI]("gridtype", { s => Try(new URI(s)).toOption })
+          .map(_.getOrElse(new URI("urn:ogc:def:method:WCS:1.1:2dSimpleGrid")))
+
+        /** GridOrigin: default is "0,0" (KVP) or "0 0" (XML); it is the boundingBox corner. */
+        val gridOrigin = params
+          .validatedOptionalParam[(Double, Double)](
+            "gridorigin",
+            { s =>
+              Try {
+                val List(fst, snd) = s.split(",").map(_.toDouble).toList
+                (fst, snd)
+              }.toOption
+            }
+          )
+
+        /** If not passed, than the original source resolution would be used. */
+        val gridOffsets = params.validatedOptionalParam[(Double, Double)](
           "gridoffsets",
           { s =>
             Try {
-              // in case 4 parameters would be passed, we care only about the first and the last only
+
+              /** In case 4 parameters would be passed, we care only about the first and the last only. */
               val list = s.split(",").map(_.toDouble).toList
               (list.head, list.last)
             }.toOption

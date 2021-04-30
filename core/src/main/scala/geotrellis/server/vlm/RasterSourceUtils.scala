@@ -68,7 +68,7 @@ trait RasterSourceUtils {
 
   implicit val overviewStrategyDecoder: Decoder[OverviewStrategy] = {
     def parse(strategy: String, input: String): OverviewStrategy =
-      Auto(Try { input.split(s"$strategy-").last.toInt }.toOption.getOrElse(0))
+      Auto(Try { input.split(s"$strategy-").last.toInt }.getOrElse(0))
 
     def parseAuto(str: String): OverviewStrategy  = parse("auto", str)
     def parseLevel(str: String): OverviewStrategy = parse("level", str)

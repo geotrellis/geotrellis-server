@@ -18,11 +18,10 @@ package geotrellis.server.ogc.style
 
 import geotrellis.server.ogc._
 
+import geotrellis.proj4.CRS
 import geotrellis.raster._
 import geotrellis.raster.histogram.Histogram
-import geotrellis.raster.render.{ColorMap, ColorRamp}
-import geotrellis.raster.render.jpg.JpgEncoder
-import geotrellis.util.np.linspace
+import geotrellis.raster.io.geotiff.GeoTiff
 
 case class InterpolatedColorMapStyle(
   name: String,
@@ -30,15 +29,16 @@ case class InterpolatedColorMapStyle(
   colorMap: InterpolatedColorMap,
   legends: List[LegendModel] = Nil
 ) extends OgcStyle {
-  def renderImage(
-    mbtile: MultibandTile,
+  def renderRaster(
+    raster: Raster[MultibandTile],
+    crs: CRS,
     format: OutputFormat,
     hists: List[Histogram[Double]]
   ): Array[Byte] = {
     format match {
-      case format: OutputFormat.Png => format.render(mbtile.band(bandIndex = 0), colorMap)
-      case OutputFormat.Jpg         => colorMap.render(mbtile.band(bandIndex = 0)).renderJpg().bytes
-      case OutputFormat.GeoTiff     => ??? // Implementation necessary
+      case format: OutputFormat.Png => format.render(raster.tile.band(bandIndex = 0), colorMap)
+      case OutputFormat.Jpg         => colorMap.render(raster.tile.band(bandIndex = 0)).renderJpg().bytes
+      case OutputFormat.GeoTiff     => GeoTiff(raster.mapTile(tile => colorMap.render(tile.band(bandIndex = 0))), crs).toCloudOptimizedByteArray
     }
   }
 }

@@ -18,6 +18,7 @@ package geotrellis.server.ogc.conf
 
 import pureconfig._
 import pureconfig.generic.auto._
+import eu.timepit.refined.pureconfig._
 import pureconfig.module.catseffect.syntax._
 import cats.effect.{Resource, Sync}
 import com.typesafe.config.ConfigFactory
@@ -25,8 +26,7 @@ import scalaxb.DataRecord
 
 import java.io.File
 
-/**
-  * The top level configuration object for all layers and styles.
+/** The top level configuration object for all layers and styles.
   * This object should be supplied by the various sections in the provided configuration. If
   * the application won't start because of a bad configuration, start here and recursively
   * descend through properties verifying that the configuration file provides sufficient

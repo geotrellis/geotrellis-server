@@ -8,22 +8,49 @@ postgres:
 	docker-compose up -d
 
 migrations:
-	docker run \
+	docker run --rm \
       --network stac-example_default \
-      quay.io/azavea/franklin:538d079 \
+      quay.io/azavea/franklin:4389d9f \
       migrate \
       --db-user franklin \
       --db-name franklin \
       --db-password franklin \
       --db-host database
 
-import-test-catalog:
-	docker run \
+# -e FRANKLIN_LOG_LEVEL=DEBUG
+import-landsat-stac-collection:
+	docker run --rm \
       --network stac-example_default \
       -e AWS_REGION=us-east-1 \
       -v ${PWD}/catalog:/opt/data/ \
-      quay.io/azavea/franklin:538d079 \
-      import \
+      quay.io/azavea/franklin:4389d9f \
+      import-catalog \
+      --db-user franklin \
+      --db-name franklin \
+      --db-password franklin \
+      --db-host database \
+      --catalog-root /opt/data/landsat-stac-collection/catalog.json
+
+import-landsat-stac-periodic-collection:
+	docker run --rm \
+      --network stac-example_default \
+      -e AWS_REGION=us-east-1 \
+      -v ${PWD}/catalog:/opt/data/ \
+      quay.io/azavea/franklin:4389d9f \
+      import-catalog \
+      --db-user franklin \
+      --db-name franklin \
+      --db-password franklin \
+      --db-host database \
+      --catalog-root /opt/data/landsat-stac-periodic-collection/catalog.json
+
+import-landsat-stac-layers:
+	docker run --rm \
+      --network stac-example_default \
+      -e AWS_REGION=us-east-1 \
+      -v ${PWD}/catalog:/opt/data/ \
+      quay.io/azavea/franklin:4389d9f \
+      import-catalog \
       --db-user franklin \
       --db-name franklin \
       --db-password franklin \
@@ -31,11 +58,10 @@ import-test-catalog:
       --catalog-root /opt/data/landsat-stac-layers/catalog.json
 
 run-franklin:
-	docker run \
+	docker run --rm \
       --network stac-example_default \
       -p 9090:9090 \
-      -d \
-      quay.io/azavea/franklin:538d079 \
+      quay.io/azavea/franklin:4389d9f \
       serve \
       --db-user franklin \
       --db-name franklin \
@@ -45,4 +71,4 @@ run-franklin:
 run-geotrellis-server: assembly
 	java -jar ${PWD}/target/scala-2.12/geotrellis-stac-example.jar --public-url http://localhost:9000
 
-run: postgres migrations import-test-catalog run-franklin run-geotrellis-server
+run: postgres migrations import-landsat-stac-collection run-franklin run-geotrellis-server

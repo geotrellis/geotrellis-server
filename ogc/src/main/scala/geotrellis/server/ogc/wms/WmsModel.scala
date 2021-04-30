@@ -19,10 +19,11 @@ package geotrellis.server.ogc.wms
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.params.ParamMap
 import geotrellis.server.ogc.style._
-import geotrellis.server.ogc.wms.WmsParams.GetMap
+import geotrellis.server.ogc.wms.WmsParams.GetMapParams
 import geotrellis.server.ogc.utils._
-import com.azavea.maml.ast.Expression
 import geotrellis.store.query.RepositoryM
+
+import com.azavea.maml.ast.Expression
 import cats.Monad
 import cats.syntax.functor._
 import cats.syntax.applicative._
@@ -40,7 +41,7 @@ case class WmsModel[F[_]: Monad](
   /** Take a specific request for a map and combine it with the relevant [[OgcSource]]
     *  to produce an [[OgcLayer]]
     */
-  def getLayer(p: GetMap): F[List[OgcLayer]] = {
+  def getLayer(p: GetMapParams): F[List[OgcLayer]] = {
     parentLayerMeta.supportedProjections
       .find(_ == p.crs)
       .fold[F[List[OgcLayer]]](List.empty[OgcLayer].pure[F]) { supportedCrs =>
@@ -51,11 +52,14 @@ case class WmsModel[F[_]: Monad](
               source.styles.find(_.name == name)
             }
             source match {
-              case MapAlgebraSource(name, title, rasterSources, algebra, _, _, resampleMethod, overviewStrategy, _) =>
-                val simpleLayers       = rasterSources.mapValues { rs =>
+              case rs: RasterOgcSource   => rs.toLayer(supportedCrs, style, p.time :: Nil)
+              case mas: MapAlgebraSource =>
+                val (name, title, algebra, resampleMethod, overviewStrategy) =
+                  (mas.name, mas.title, mas.algebra, mas.resampleMethod, mas.overviewStrategy)
+                val simpleLayers                                             = mas.sources.mapValues { rs =>
                   SimpleOgcLayer(name, title, supportedCrs, rs, style, resampleMethod, overviewStrategy)
                 }
-                val extendedParameters = extendedParametersBinding.flatMap(_.apply(p.params))
+                val extendedParameters                                       = extendedParametersBinding.flatMap(_.apply(p.params))
                 MapAlgebraOgcLayer(
                   name,
                   title,
@@ -66,16 +70,6 @@ case class WmsModel[F[_]: Monad](
                   resampleMethod,
                   overviewStrategy
                 )
-              case SimpleSource(name, title, rasterSource, _, _, resampleMethod, overviewStrategy, _)               =>
-                SimpleOgcLayer(name, title, supportedCrs, rasterSource, style, resampleMethod, overviewStrategy)
-              case gts @ GeoTrellisOgcSource(name, title, _, _, _, resampleMethod, overviewStrategy, _)             =>
-                val source = p.time match {
-                  case t if t.nonEmpty            => gts.sourceForTime(t)
-                  case _ if gts.source.isTemporal =>
-                    gts.sourceForTime(gts.source.times.head)
-                  case _                          => gts.source
-                }
-                SimpleOgcLayer(name, title, supportedCrs, source, style, resampleMethod, overviewStrategy)
             }
           }
         }

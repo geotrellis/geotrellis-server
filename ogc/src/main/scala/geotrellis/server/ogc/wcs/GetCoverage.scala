@@ -38,27 +38,28 @@ import io.chrisdavenport.log4cats.Logger
 
 import scala.concurrent.duration._
 
-class GetCoverage[F[_]: Logger: Sync: Concurrent: Parallel](wcsModel: WcsModel[F]) {
+class GetCoverage[F[_]: Concurrent: Parallel: Logger](wcsModel: WcsModel[F]) {
   def renderLayers(params: GetCoverageWcsParams): F[Option[Array[Byte]]] = {
-    val re = params.gridExtent
+    val e  = params.extent
+    val cs = params.cellSize
     wcsModel
       .getLayers(params)
       .flatMap {
         _.headOption
           .map {
-            case so @ SimpleOgcLayer(_, _, _, _, _, _, _)                    =>
+            case so: SimpleOgcLayer      =>
               LayerExtent.concurrent[F, SimpleOgcLayer](so)
-            case MapAlgebraOgcLayer(_, _, _, simpleLayers, algebra, _, _, _) =>
+            case mal: MapAlgebraOgcLayer =>
               LayerExtent(
-                algebra.pure[F],
-                simpleLayers.pure[F],
+                mal.algebra.pure[F],
+                mal.parameters.pure[F],
                 ConcurrentInterpreter.DEFAULT[F]
               )
           }
           .traverse { eval =>
-            eval(re.extent, re.cellSize) map {
+            eval(e, cs) map {
               case Valid(mbtile) =>
-                val bytes = GeoTiff(Raster(mbtile, re.extent), params.crs).toByteArray
+                val bytes = Raster(mbtile, e).render(params.crs, None, params.format, Nil)
                 requestCache.put(params, bytes)
                 bytes
               case Invalid(errs) => throw MamlException(errs)
@@ -68,8 +69,7 @@ class GetCoverage[F[_]: Logger: Sync: Concurrent: Parallel](wcsModel: WcsModel[F
 
   }
 
-  /**
-    * QGIS appears to sample WCS service by placing low and high resolution requests at coverage center.
+  /** QGIS appears to sample WCS service by placing low and high resolution requests at coverage center.
     * These sampling requests happen for every actual WCS request, we can get really great cache hit rates.
     */
   lazy val requestCache: Cache[GetCoverageWcsParams, Array[Byte]] =
@@ -84,7 +84,7 @@ class GetCoverage[F[_]: Logger: Sync: Concurrent: Parallel](wcsModel: WcsModel[F
       case Some(bytes) =>
         Logger[F].trace(s"GetCoverage cache HIT: $params") *> bytes.pure[F]
 
-      case _           =>
+      case _ =>
         Logger[F].trace(s"GetCoverage cache MISS: $params") >>= { _ =>
           renderLayers(params).flatMap {
             case Some(bytes) => bytes.pure[F]
@@ -99,7 +99,7 @@ class GetCoverage[F[_]: Logger: Sync: Concurrent: Parallel](wcsModel: WcsModel[F
                       // return the actual tile
                       // TODO: handle it in a proper way, how to get information about the bands amount?
                       val tile = ArrayTile.empty(IntCellType, 1, 1)
-                      GeoTiff(Raster(MultibandTile(tile, tile, tile), params.extent), params.crs).toByteArray.pure[F]
+                      Raster(MultibandTile(tile, tile, tile), params.extent).render(params.crs, None, params.format, Nil).pure[F]
                     case _       => Logger[F].error(s"No tile found for the $params request.") *> Array[Byte]().pure[F]
                   }
                 }

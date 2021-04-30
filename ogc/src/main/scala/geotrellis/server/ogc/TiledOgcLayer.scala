@@ -31,8 +31,7 @@ import com.azavea.maml.ast._
 import cats.effect._
 import cats.data.{NonEmptyList => NEL}
 
-/**
-  * Layer instances are sufficent to produce displayed the end product of 'get map'
+/** Layer instances are sufficent to produce displayed the end product of 'get map'
   *  requests. They are produced in [[RasterSourcesModel]] from a combination of a WMS 'GetMap'
   *  (or whatever the analogous request in whatever OGC service is being produced) and an instance
   *  of [[OgcSource]]
@@ -71,24 +70,28 @@ case class MapAlgebraTiledOgcLayer(
 ) extends TiledOgcLayer
 
 object SimpleTiledOgcLayer {
-  implicit def simpleTiledExtentReification[F[_]: Sync]: ExtentReification[F, SimpleTiledOgcLayer] = { self => (extent: Extent, cs: CellSize) =>
-    Sync[F].delay {
-      val raster: Raster[MultibandTile] = self.source
-        .reprojectToRegion(
-          self.crs,
-          new GridExtent[Long](extent, cs).toRasterExtent,
-          method = self.resampleMethod,
-          strategy = self.overviewStrategy
-        )
-        .read(extent)
-        .getOrElse(
-          throw new Exception(
-            s"Unable to retrieve layer $self at extent $extent with cell size of $cs"
-          )
-        )
-
-      ProjectedRaster(raster, self.crs)
-    }
+  implicit def simpleTiledExtentReification[F[_]: Sync]: ExtentReification[F, SimpleTiledOgcLayer] = {
+    self => (extent: Extent, cellSize: Option[CellSize]) =>
+      Sync[F].delay {
+        val raster: Raster[MultibandTile] =
+          cellSize
+            .fold(self.source.reproject(self.crs)) { cs =>
+              self.source
+                .reprojectToRegion(
+                  self.crs,
+                  new GridExtent[Long](extent, cs).toRasterExtent,
+                  method = self.resampleMethod,
+                  strategy = self.overviewStrategy
+                )
+            }
+            .read(extent)
+            .getOrElse(
+              throw new Exception(
+                s"Unable to retrieve layer $self at extent $extent with cell size of $cellSize"
+              )
+            )
+        ProjectedRaster(raster, self.crs)
+      }
   }
 
   implicit def simpleTiledReification[F[_]: Sync]: TmsReification[F, SimpleTiledOgcLayer] = { (self, buffer) => (z: Int, x: Int, y: Int) =>

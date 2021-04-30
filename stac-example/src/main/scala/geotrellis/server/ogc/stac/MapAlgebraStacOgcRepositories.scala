@@ -16,24 +16,24 @@
 
 package geotrellis.server.ogc.stac
 
-import geotrellis.server.ogc.{OgcSource, SimpleSource}
-import geotrellis.server.ogc.conf.{MapAlgebraSourceConf, StacSourceConf}
+import geotrellis.server.ogc.{OgcSource, RasterOgcSource}
+import geotrellis.server.ogc.conf.{MapAlgebraSourceConf, OgcSourceConf, RasterSourceConf, StacSourceConf}
 import geotrellis.store.query
 import geotrellis.store.query._
+import geotrellis.server.ogc._
 
-import cats.effect.Sync
+import cats.{Functor, MonadThrow}
 import cats.syntax.functor._
 import cats.syntax.semigroup._
 import cats.instances.list._
-import org.http4s.client.Client
-import io.chrisdavenport.log4cats.Logger
+import sttp.client3.SttpBackend
 
-case class MapAlgebraStacOgcRepository[F[_]: Sync](
+case class MapAlgebraStacOgcRepository[F[_]: Functor](
   mapAlgebraSourceConf: MapAlgebraSourceConf,
-  stacSourceConfs: List[StacSourceConf],
+  ogcSourceConfs: List[OgcSourceConf],
   repository: RepositoryM[F, List, OgcSource]
 ) extends RepositoryM[F, List, OgcSource] {
-  private val names = stacSourceConfs.map(_.name).distinct
+  private val names = ogcSourceConfs.map(_.name).distinct
 
   def store: F[List[OgcSource]] = find(query.all)
 
@@ -41,21 +41,20 @@ case class MapAlgebraStacOgcRepository[F[_]: Sync](
     /** Replace the OGC layer name with its STAC Layer name */
     repository
       .find(names.map(query.overrideName).fold(nothing)(_ or _))
-      .map(_.collect { case ss: SimpleSource => ss })
+      .map(_.collect { case rs: RasterOgcSource => rs })
       .map(mapAlgebraSourceConf.modelOpt(_).toList)
       .widen
 }
 
-case class MapAlgebraStacOgcRepositories[F[_]: Sync: Logger](
+case class MapAlgebraStacOgcRepositories[F[_]: MonadThrow](
   mapAlgebraConfLayers: List[MapAlgebraSourceConf],
-  stacLayers: List[StacSourceConf],
-  client: Client[F]
+  ogcLayers: List[OgcSourceConf],
+  client: SttpBackend[F, Any]
 ) extends RepositoryM[F, List, OgcSource] {
   def store: F[List[OgcSource]] =
     find(query.withNames(mapAlgebraConfLayers.map(_.name).toSet))
 
-  /**
-    * At first, choose stacLayers that fit the query, because after that we'll erase their name.
+  /** At first, choose stacLayers that fit the query, because after that we'll erase their name.
     * GT Server layer conf names != the STAC Layer name
     * conf names can be different for the same STAC Layer name.
     * A name is unique per the STAC layer and an asset.
@@ -68,8 +67,14 @@ case class MapAlgebraStacOgcRepositories[F[_]: Sync: Logger](
         val layerNames = conf.listParams(conf.algebra)
 
         /** Get all ogc layers that are required for the MAML expression evaluation */
-        val stacLayersFiltered = stacLayers.filter(l => layerNames.contains(l.name))
-        MapAlgebraStacOgcRepository[F](conf, stacLayersFiltered, StacOgcRepositories[F](stacLayersFiltered, client))
+        val ogcLayersFiltered = ogcLayers.filter(l => layerNames.contains(l.name))
+        val stacLayers        = ogcLayersFiltered.collect { case ssc: StacSourceConf => ssc }
+        val rasterLayers      =
+          if (stacLayers.nonEmpty) ogcLayersFiltered.collect { case ssc: RasterSourceConf => ssc.toLayer }
+          else Nil
+        val repositories      = OgcSourceRepository(rasterLayers).toF[F] |+| StacOgcRepositories[F](stacLayers, client)
+
+        MapAlgebraStacOgcRepository[F](conf, ogcLayersFiltered, repositories)
       }
       .fold(RepositoryM.empty[F, List, OgcSource])(_ |+| _)
       .find(query)
