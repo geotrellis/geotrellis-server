@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.4.0] - 2021-04-30
+
 ## Fixed
 - Service endpoints reject requests with unsupported version parameters [#313](https://github.com/geotrellis/geotrellis-server/pull/313)
 - Axis Ordering in a wms getmap [#302](https://github.com/geotrellis/geotrellis-server/issues/302)
