@@ -356,7 +356,8 @@ lazy val effects = project
       geotrellisRaster,
       geotrellisStore,
       cats.value,
-      catsEffect.value
+      catsEffect.value,
+      log4cats
     )
   )
 
