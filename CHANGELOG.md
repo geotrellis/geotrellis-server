@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Added
 - Add MosaicRasterSourceIO logging [#366](https://github.com/geotrellis/geotrellis-server/pull/366)
+- Use tofu.Mid for the enchanced logging [#367](https://github.com/geotrellis/geotrellis-server/pull/367)
 
 ## Fixed
 - WMS Parent Layer default time should be omitted [#368](https://github.com/geotrellis/geotrellis-server/pull/368)

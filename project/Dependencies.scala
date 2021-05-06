@@ -75,4 +75,5 @@ object Dependencies {
   val refinedPureconfig    = "eu.timepit"                            %% "refined-pureconfig"          % refinedVer
   val threetenExtra        = "org.threeten"                           % "threeten-extra"              % "1.6.0"
   val ansiColors212        = "org.backuity"                          %% "ansi-interpolator"           % "1.1.0"  % Provided
+  val tofuCore             = "tf.tofu"                               %% "tofu-core"                   % "0.10.2"
 }

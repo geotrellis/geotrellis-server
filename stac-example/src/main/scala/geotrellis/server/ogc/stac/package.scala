@@ -19,28 +19,30 @@ package geotrellis.server.ogc
 import geotrellis.stac._
 import geotrellis.server.ogc.utils._
 import geotrellis.store.query._
-
 import geotrellis.raster.{EmptyName, RasterSource, SourceName, StringName}
 import geotrellis.raster.geotiff.GeoTiffPath
+
 import com.azavea.stac4s.{StacAsset, StacExtent}
 import com.azavea.stac4s.api.client.{SearchFilters, StacClient, Query => SQuery}
 import com.azavea.stac4s.extensions.periodic.PeriodicExtent
 import com.azavea.stac4s.syntax._
 import io.circe.syntax._
-import cats.{Applicative, Foldable, Functor, FunctorFilter, Monad}
+import cats.{Applicative, Foldable, Functor, FunctorFilter}
 import cats.data.NonEmptyList
 import cats.syntax.either._
 import cats.syntax.foldable._
-import cats.syntax.functor._
 import cats.syntax.functorFilter._
 import cats.syntax.applicative._
 import cats.syntax.functor._
 import cats.syntax.option._
+import cats.tagless.{ApplyK, Derive}
 import eu.timepit.refined.types.string.NonEmptyString
 
 import java.time.ZoneOffset
 
 package object stac {
+  implicit val stacClientApplyK: ApplyK[StacClient] = Derive.applyK
+
   implicit class StacExtentionOps(val self: StacExtent) extends AnyVal {
 
     /** [[StacExtent]]s with no temporal component are valid. */
