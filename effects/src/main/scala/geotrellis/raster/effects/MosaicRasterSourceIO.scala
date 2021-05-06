@@ -16,12 +16,16 @@
 
 package geotrellis.raster.effects
 
+import io.chrisdavenport.log4cats.Logger
+import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+
 import geotrellis.raster.{MosaicRasterSource => MosaicRasterSourceS, _}
 import geotrellis.vector._
 import geotrellis.raster.resample._
 import geotrellis.proj4.CRS
 import geotrellis.raster.io.geotiff.OverviewStrategy
-import cats.implicits._
+import cats.syntax.parallel._
+import cats.syntax.flatMap._
 import cats.data.NonEmptyList
 import cats.effect.{ContextShift, IO}
 import geotrellis.store.util.BlockingThreadPool
@@ -38,6 +42,7 @@ import geotrellis.store.util.BlockingThreadPool
 abstract class MosaicRasterSourceIO extends RasterSource {
 
   implicit lazy val cs: ContextShift[IO] = IO.contextShift(BlockingThreadPool.executionContext)
+  implicit val logger: Logger[IO]        = Slf4jLogger.getLogger
 
   def sources: NonEmptyList[RasterSource]
   lazy val sourcesIO: NonEmptyList[IO[RasterSource]] = sources.map(cs.shift >> IO(_))
@@ -58,7 +63,11 @@ abstract class MosaicRasterSourceIO extends RasterSource {
 
   def cellType: CellType =
     sourcesIO
-      .parTraverse(_.map(_.cellType))
+      .parTraverse(_.flatMap { rs =>
+        logger
+          .trace(s"${rs.name}::cellType: ${Thread.currentThread().getName}")
+          .as(rs.cellType)
+      })
       .map(_.toList.reduce(_ union _))
       .unsafeRunSync()
 
@@ -73,7 +82,15 @@ abstract class MosaicRasterSourceIO extends RasterSource {
     *
     * @see [[geotrellis.raster.RasterSource.resolutions]]
     */
-  def resolutions: List[CellSize] = sourcesIO.parTraverse(_.map(_.resolutions)).map(_.reduce).unsafeRunSync()
+  def resolutions: List[CellSize] =
+    sourcesIO
+      .parTraverse(_.flatMap { rs =>
+        logger
+          .trace(s"${rs.name}::resolutions: ${Thread.currentThread().getName}")
+          .as(rs.resolutions)
+      })
+      .map(_.reduce)
+      .unsafeRunSync()
 
   /** Create a new MosaicRasterSourceFixed with sources transformed according to the provided
     * crs, options, and strategy, and a new crs
@@ -96,7 +113,13 @@ abstract class MosaicRasterSourceIO extends RasterSource {
 
   def read(extent: Extent, bands: Seq[Int]): Option[Raster[MultibandTile]] =
     sourcesIO
-      .parTraverse { _.map { _.read(extent, bands) } }
+      .parTraverse {
+        _.flatMap { rs =>
+          logger
+            .trace(s"${rs.name}::read($extent, $bands): ${Thread.currentThread().getName}")
+            .as(rs.read(extent, bands))
+        }
+      }
       .map(_.reduce)
       .unsafeRunSync()
 
@@ -127,7 +150,13 @@ abstract class MosaicRasterSourceIO extends RasterSource {
     }
 
     sourcesIO
-      .parTraverse { _.map(rs => rs.read(relativeGridBounds(bounds, rs.extent), bands)) }
+      .parTraverse {
+        _.flatMap { rs =>
+          logger
+            .trace(s"${rs.name}::read($bounds, $bands): ${Thread.currentThread().getName}")
+            .as(rs.read(relativeGridBounds(bounds, rs.extent), bands))
+        }
+      }
       .map(_.reduce)
       .unsafeRunSync()
   }

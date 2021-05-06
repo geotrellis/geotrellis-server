@@ -11,6 +11,7 @@
   <logger name="org.http4s" level="${HTTP4S_LOG_LEVEL:-WARN}"/>
   <logger name="org.http4s.blaze.channel.nio1" level="${BLAZE_NIO_LOG_LEVEL:-WARN}"/>
   <logger name="software.amazon.awssdk" level="${AWS_SDK_LOG_LEVEL:-WARN}"/>
+  <logger name="geotrellis.raster.effects" level="${GT_MOSAIC_LOG_LEVEL:-DEBUG}" />
 
   <root level="DEBUG">
     <appender-ref ref="STDOUT" />
