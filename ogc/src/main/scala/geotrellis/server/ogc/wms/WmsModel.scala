@@ -36,6 +36,7 @@ case class WmsModel[F[_]: Monad](
   sources: RepositoryM[F, List, OgcSource],
   extendedParametersBinding: Option[ParamMap => Option[Expression => Expression]] = None
 ) {
+
   def time: F[OgcTime] = sources.store.map(_.map(_.time)).map(_.reduce(_ |+| _))
 
   /** Take a specific request for a map and combine it with the relevant [[OgcSource]]
