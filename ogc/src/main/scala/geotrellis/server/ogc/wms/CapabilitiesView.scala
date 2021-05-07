@@ -312,25 +312,23 @@ object CapabilitiesView {
         // TODO: bounding box for global layer
         BoundingBox = Nil,
         Dimension = time match {
-          case tp @ OgcTimePositions(nel)        =>
+          case tp: OgcTimePositions =>
             Dimension(
               tp.toString,
               Map(
-                "@name"    -> DataRecord("time"),
-                "@units"   -> DataRecord("ISO8601"),
-                "@default" -> DataRecord(nel.head.toInstant.toString)
+                "@name"  -> DataRecord("time"),
+                "@units" -> DataRecord("ISO8601")
               )
             ) :: Nil
-          case ti @ OgcTimeInterval(start, _, _) =>
+          case ti: OgcTimeInterval  =>
             Dimension(
               ti.toString,
               Map(
-                "@name"    -> DataRecord("time"),
-                "@units"   -> DataRecord("ISO8601"),
-                "@default" -> DataRecord(start.toString)
+                "@name"  -> DataRecord("time"),
+                "@units" -> DataRecord("ISO8601")
               )
             ) :: Nil
-          case OgcTimeEmpty                      => Nil
+          case OgcTimeEmpty         => Nil
         },
         Attribution = None,
         AuthorityURL = Nil,
