@@ -147,7 +147,7 @@ object CoverageView {
               )
             )
           ) :: uniqueCrs.flatMap {
-            case crs if crs == LatLng =>
+            case crs if crs == LatLng    =>
               val lex = extractGridExtent(source, crs).extent
               OwsDataRecord(
                 BoundingBoxType(
@@ -167,12 +167,24 @@ object CoverageView {
                   )
                 )
               ) :: Nil
-            case crs                  =>
+            case crs if crs.isGeographic =>
               val lex = extractGridExtent(source, crs).extent
               OwsDataRecord(
                 BoundingBoxType(
                   LowerCorner = lex.ymin :: lex.xmin :: Nil,
                   UpperCorner = lex.ymax :: lex.xmax :: Nil,
+                  attributes = Map(
+                    "@crs"        -> DataRecord(new URI(URN.unsafeFromCrs(crs))),
+                    "@dimensions" -> DataRecord(BigInt(2))
+                  )
+                )
+              ) :: Nil
+            case crs                     =>
+              val lex = extractGridExtent(source, crs).extent
+              OwsDataRecord(
+                BoundingBoxType(
+                  LowerCorner = lex.xmin :: lex.ymin :: Nil,
+                  UpperCorner = lex.xmax :: lex.ymax :: Nil,
                   attributes = Map(
                     "@crs"        -> DataRecord(new URI(URN.unsafeFromCrs(crs))),
                     "@dimensions" -> DataRecord(BigInt(2))
