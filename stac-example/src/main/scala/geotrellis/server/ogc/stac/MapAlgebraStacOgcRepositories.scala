@@ -21,11 +21,11 @@ import geotrellis.server.ogc.conf.{MapAlgebraSourceConf, OgcSourceConf, RasterSo
 import geotrellis.store.query
 import geotrellis.store.query._
 import geotrellis.server.ogc._
-
 import cats.{Functor, MonadThrow}
 import cats.syntax.functor._
 import cats.syntax.semigroup._
 import cats.instances.list._
+import io.chrisdavenport.log4cats.Logger
 import sttp.client3.SttpBackend
 
 case class MapAlgebraStacOgcRepository[F[_]: Functor](
@@ -46,7 +46,7 @@ case class MapAlgebraStacOgcRepository[F[_]: Functor](
       .widen
 }
 
-case class MapAlgebraStacOgcRepositories[F[_]: MonadThrow](
+case class MapAlgebraStacOgcRepositories[F[_]: MonadThrow: Logger](
   mapAlgebraConfLayers: List[MapAlgebraSourceConf],
   ogcLayers: List[OgcSourceConf],
   client: SttpBackend[F, Any]

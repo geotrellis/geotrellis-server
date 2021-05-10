@@ -399,7 +399,8 @@ lazy val `stac-example` = project
       sttpHttp4s,
       refinedCats,
       refinedPureconfig,
-      ansiColors212
+      ansiColors212,
+      tofuCore
     ),
     excludeDependencies ++= Seq(
       // log4j brought in via uzaygezen is a pain for us

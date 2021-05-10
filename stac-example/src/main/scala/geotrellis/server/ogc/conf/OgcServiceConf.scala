@@ -19,14 +19,13 @@ package geotrellis.server.ogc.conf
 import cats.{MonadThrow, SemigroupK}
 import cats.instances.list._
 import cats.syntax.semigroup._
-
 import geotrellis.proj4.CRS
 import geotrellis.server.ogc.{ows, OgcSource, OgcSourceRepository, RasterOgcSource}
 import geotrellis.server.ogc.wms.WmsParentLayerMeta
 import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
 import geotrellis.server.ogc.stac._
 import geotrellis.store.query.{Repository, RepositoryM}
-
+import io.chrisdavenport.log4cats.Logger
 import sttp.client3.SttpBackend
 
 /** Each service has its own unique configuration requirements (see the below instances)
@@ -42,7 +41,7 @@ sealed trait OgcServiceConf {
     OgcSourceRepository(rasterLayers ++ mapAlgebraLayers)
   }
 
-  def layerSources[F[_]: SemigroupK: MonadThrow](
+  def layerSources[F[_]: SemigroupK: MonadThrow: Logger](
     rasterOgcSources: List[RasterOgcSource],
     client: SttpBackend[F, Any]
   ): RepositoryM[F, List, OgcSource] = {
