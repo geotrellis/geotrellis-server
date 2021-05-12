@@ -16,12 +16,14 @@
 
 package geotrellis.stac.raster
 
+import geotrellis.stac._
 import geotrellis.proj4.{CRS, Transform}
-import geotrellis.raster.io.geotiff.OverviewStrategy
 import geotrellis.raster._
+import geotrellis.raster.io.geotiff.OverviewStrategy
 import geotrellis.vector.Extent
 import geotrellis.raster.reproject.{Reproject, ReprojectRasterExtent}
 import geotrellis.raster.resample.ResampleMethod
+
 import cats.syntax.option._
 import cats.syntax.flatMap._
 import cats.instances.option._
@@ -61,8 +63,7 @@ class StacAssetReprojectRasterSource(
   def bandCount: Int                                    = asset.bandCount.getOrElse(underlyingReprojected.bandCount)
   def cellType: CellType                                = underlyingReprojected.cellType
   def resolutions: List[CellSize]                       = underlyingReprojected.resolutions
-  def attributes: Map[String, String]                   =
-    asset.item.properties.toMap.mapValues(_.as[String].toOption).collect { case (k, v) if v.nonEmpty => k -> v.get }
+  def attributes: Map[String, String]                   = asset.item.properties.toMap
   def attributesForBand(band: Int): Map[String, String] = Map.empty
 
   def reprojection(

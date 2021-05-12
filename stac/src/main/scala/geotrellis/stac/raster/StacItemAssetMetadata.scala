@@ -16,6 +16,7 @@
 
 package geotrellis.stac.raster
 
+import geotrellis.stac._
 import geotrellis.proj4.CRS
 import geotrellis.raster.{CellSize, CellType, GridExtent, RasterMetadata, SourceName}
 
@@ -28,7 +29,6 @@ case class StacItemAssetMetadata(
   resolutions: List[CellSize],
   stacItemAsset: StacItemAsset
 ) extends RasterMetadata {
-  def attributes: Map[String, String]                   =
-    stacItemAsset.item.properties.toMap.mapValues(_.as[String].toOption).collect { case (k, v) if v.nonEmpty => k -> v.get }
+  def attributes: Map[String, String]                   = stacItemAsset.item.properties.toMap
   def attributesForBand(band: Int): Map[String, String] = Map.empty
 }

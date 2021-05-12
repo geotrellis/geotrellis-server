@@ -17,14 +17,17 @@
 package geotrellis
 
 import geotrellis.stac.raster.{StacAssetOps, StacItemOps}
-import com.azavea.stac4s.{SpatialExtent, StacAsset, StacCollection, StacExtent, StacItem, TwoDimBbox}
-import io.circe.generic.extras.Configuration
 import geotrellis.raster.{EmptyName, GridExtent, MosaicRasterSource, RasterSource, SourceName, StringName}
 import geotrellis.proj4.CRS
-import geotrellis.vector._
+import geotrellis.vector.{io => _, _}
+
+import com.azavea.stac4s.{ItemProperties, SpatialExtent, StacAsset, StacCollection, StacExtent, StacItem, TwoDimBbox}
 import cats.syntax.either._
 import cats.syntax.semigroup._
 import cats.data.NonEmptyList
+import io.circe.Json
+import io.circe.syntax._
+import io.circe.generic.extras.Configuration
 
 package object stac {
   implicit lazy val configuration: Configuration = Configuration.default.withSnakeCaseMemberNames
@@ -76,5 +79,13 @@ package object stac {
 
     def instance(sourcesList: NonEmptyList[RasterSource], targetCRS: CRS, stacAttributes: Map[String, String]): MosaicRasterSource =
       instance(sourcesList, targetCRS, EmptyName, stacAttributes)
+  }
+
+  implicit class ItemPropertiesOps(val self: ItemProperties) extends AnyVal {
+    def toMap: Map[String, String] = self.asJson.asObject
+      .map(_.toMap)
+      .getOrElse(Map.empty[String, Json])
+      .mapValues(_.as[String].toOption)
+      .collect { case (k, v) if v.nonEmpty => k -> v.get }
   }
 }
