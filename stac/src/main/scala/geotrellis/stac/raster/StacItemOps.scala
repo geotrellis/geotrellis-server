@@ -17,13 +17,14 @@
 package geotrellis.stac.raster
 
 import geotrellis.stac.extensions.proj.{ProjItemExtension, ProjTransform}
+import geotrellis.raster.{CellSize, Dimensions, GridExtent, RasterExtent}
+import geotrellis.proj4.{CRS, LatLng}
+import geotrellis.vector._
+
 import com.azavea.stac4s.StacItem
 import com.azavea.stac4s.extensions.eo.EOItemExtension
 import com.azavea.stac4s.syntax._
 import com.azavea.stac4s.extensions.ExtensionResult
-import geotrellis.raster.{CellSize, Dimensions, GridExtent, RasterExtent}
-import geotrellis.proj4.{CRS, LatLng}
-import geotrellis.vector._
 import cats.syntax.apply._
 
 case class StacItemOps(self: StacItem) {
@@ -51,7 +52,7 @@ case class StacItemOps(self: StacItem) {
   def transform: Option[ProjTransform] = projExtensionOption.flatMap(_.transform)
 
   // https://github.com/radiantearth/stac-spec/blob/v1.0.0-rc.1/item-spec/common-metadata.md#gsd
-  def gsd: Option[Double] = self.properties("gsd").flatMap(_.as[Double].toOption)
+  def gsd: Option[Double] = self.properties.gsd
 
   // the cellSize can be extracted from the transform object or derived from the given extent and shape
   def cellSize: Option[CellSize] =

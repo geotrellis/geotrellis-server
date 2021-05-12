@@ -16,10 +16,12 @@
 
 package geotrellis.stac.raster
 
+import geotrellis.stac._
 import geotrellis.proj4.CRS
-import geotrellis.raster.io.geotiff.OverviewStrategy
 import geotrellis.raster._
+import geotrellis.raster.io.geotiff.OverviewStrategy
 import geotrellis.vector.Extent
+
 import cats.syntax.option._
 import cats.syntax.flatMap._
 import cats.instances.option._
@@ -37,8 +39,7 @@ class StacAssetRasterSource(
   def cellType: CellType                                = underlying.cellType
   def gridExtent: GridExtent[Long]                      = asset.gridExtent.getOrElse(underlying.gridExtent)
   def resolutions: List[CellSize]                       = underlying.resolutions
-  def attributes: Map[String, String]                   =
-    asset.item.properties.toMap.mapValues(_.as[String].toOption).collect { case (k, v) if v.nonEmpty => k -> v.get }
+  def attributes: Map[String, String]                   = asset.item.properties.toMap
   def attributesForBand(band: Int): Map[String, String] = Map.empty
   def metadata: StacItemAssetMetadata                   = StacItemAssetMetadata(name, crs, bandCount, cellType, gridExtent, resolutions, asset)
 
