@@ -134,6 +134,8 @@ object OgcTimePositions {
       case _            => OgcTimeEmpty
     }
   def apply(times: List[String])(implicit d: DummyImplicit): OgcTime = apply(times.map(ZonedDateTime.parse))
+
+  def parse(times: List[String]): Try[OgcTime] = Try(apply(times.map(ZonedDateTime.parse)))
 }
 
 /** Represents the TimeInterval used in TimeSequence requests
@@ -202,4 +204,6 @@ object OgcTimeInterval {
       case _                           => throw new UnsupportedOperationException("Unsupported string format for OgcTimeInterval")
     }
   }
+
+  def parse(timeString: String): Try[OgcTimeInterval] = Try(fromString(timeString))
 }

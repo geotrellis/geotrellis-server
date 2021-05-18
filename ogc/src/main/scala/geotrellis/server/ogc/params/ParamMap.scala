@@ -17,9 +17,9 @@
 package geotrellis.server.ogc.params
 
 import geotrellis.server.ogc._
-
 import cats.syntax.option._
-import cats.data.{Validated, ValidatedNel}
+import cats.syntax.traverse._
+import cats.data.{NonEmptyList, Validated, ValidatedNel}
 import Validated._
 
 import scala.util.{Failure, Success, Try}
@@ -118,12 +118,27 @@ case class ParamMap(params: Map[String, Seq[String]]) {
         }
     }).toValidatedNel
 
-  def validatedOgcTimeSequence(field: String): ValidatedNel[ParamError, List[OgcTime]] =
-    validatedOptionalParam(field).map {
-      case Some(timeString) if timeString.contains("/") => timeString.split(",").map(OgcTimeInterval.fromString).toList
-      case Some(timeString)                             => OgcTimePositions(timeString.split(",").toList) :: Nil
-      case None                                         => List.empty[OgcTime]
+  def validatedOgcTimeSequence(field: String): ValidatedNel[ParamError, List[OgcTime]] = {
+    validatedOptionalParam(field).andThen {
+      case Some(timeString) if timeString.contains("/") =>
+        timeString
+          .split(",")
+          .map(OgcTimeInterval.parse)
+          .toList
+          .sequence match {
+          case Success(list) => Valid(list)
+          case Failure(e)    => Invalid(NonEmptyList.of(ParamError.ParseError(field, e.getMessage)))
+        }
+      case Some(timeString)                             =>
+        OgcTimePositions
+          .parse(timeString.split(",").toList)
+          .map(_ :: Nil) match {
+          case Success(list) => Valid(list)
+          case Failure(e)    => Invalid(NonEmptyList.of(ParamError.ParseError(field, e.getMessage)))
+        }
+      case None                                         => Valid(Nil)
     }
+  }
 
   def validatedOgcTime(field: String): ValidatedNel[ParamError, OgcTime] =
     validatedOgcTimeSequence(field).map(_.headOption.getOrElse(OgcTimeEmpty))
