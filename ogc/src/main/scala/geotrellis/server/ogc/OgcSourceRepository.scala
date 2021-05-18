@@ -46,7 +46,7 @@ object OgcSourceRepository {
         _.filter {
           _.time match {
             case OgcTimePositions(list)         =>
-              val sorted = list.toList.sorted
+              val sorted = list.sorted
               val start  = sorted.head
               val end    = sorted.last
               t1 <= start && start <= t2 || t1 <= end && end <= t2

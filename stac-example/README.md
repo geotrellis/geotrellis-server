@@ -37,11 +37,11 @@ stac-lc8-red-us = {
   asset-limit = 1000 // Max assets returned by the STAC search request
   source = "http://localhost:9090/" // Path to the STAC API endpoint
   default-style = "red-to-blue"
-  // force time positions computation even if the range is given through the collection / layer summary
-  compute-time-positions = true
+  // force time positions fetch from items even if the range is given through the collection / layer summary
+  fetch-time-positions = true
   // optional field (can be added to all layers definitions)
-  // the default value is "self", meaning that it would use the OGC Time in a format recieved from the source
-  time-format = "{interval | positions | self}"
+  // the default value is "default", meaning that it would use the OGC Time in a format recieved from the source
+  time-format = "{interval | positions | default}"
   ignore-time = false // work with temporal layers as with spatial layers, false by default
   // specify the default temporal rollback, oldest by default
   time-default = "{newest | oldest | ISO compatible date time}"

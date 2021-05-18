@@ -17,7 +17,7 @@
 package geotrellis.server.ogc
 
 import cats.data.NonEmptyList
-import cats.{Monoid, Order, Semigroup}
+import cats.{Monoid, Semigroup}
 import cats.syntax.semigroup._
 import jp.ne.opt.chronoscala.Imports._
 import org.threeten.extra.PeriodDuration
@@ -67,7 +67,7 @@ object OgcTime {
             case positions: OgcTimePositions => positions
             case _                           => self
           }
-        case OgcTimeFormat.Self      => self
+        case OgcTimeFormat.Default   => self
       }
 
     def strictTimeMatch(dt: ZonedDateTime): Boolean =
@@ -75,6 +75,16 @@ object OgcTime {
         case OgcTimePositions(list)       => list.head == dt
         case OgcTimeInterval(start, _, _) => start == dt
         case OgcTimeEmpty                 => true
+      }
+
+    def sorted: OgcTime =
+      self match {
+        case OgcTimeEmpty                          => OgcTimeEmpty
+        case OgcTimePositions(list)                => OgcTimePositions(list.sorted)
+        case OgcTimeInterval(start, end, interval) =>
+          val List(s, e) = List(start, end).sorted
+          OgcTimeInterval(s, e, interval)
+
       }
   }
 }
@@ -88,8 +98,6 @@ case object OgcTimeEmpty extends OgcTime {
 
 /** Represents the TimePosition used in TimeSequence requests */
 final case class OgcTimePositions(list: NonEmptyList[ZonedDateTime]) extends OgcTime {
-  import OgcTimePositions._
-
   def sorted: NonEmptyList[ZonedDateTime] = list.sorted
 
   /** Compute (if possible) the period of the [[ZonedDateTime]] lists. */
@@ -114,8 +122,6 @@ final case class OgcTimePositions(list: NonEmptyList[ZonedDateTime]) extends Ogc
 }
 
 object OgcTimePositions {
-  implicit val timeOrder: Order[ZonedDateTime] = Order.fromOrdering
-
   implicit val ogcTimePositionsSemigroup: Semigroup[OgcTimePositions] = { (l, r) =>
     OgcTimePositions((l.list ::: r.list).distinct.sorted)
   }

@@ -20,9 +20,15 @@ import geotrellis.proj4.CRS
 import geotrellis.raster.{CellSize, Histogram, MultibandTile, Raster}
 import geotrellis.server.ogc.style.OgcStyle
 import geotrellis.vector.Extent
+import cats.Order
 import org.threeten.extra.PeriodDuration
+import jp.ne.opt.chronoscala.Imports._
+
+import java.time.ZonedDateTime
 
 package object ogc {
+  implicit val ZonedDateTimeOrder: Order[ZonedDateTime] = Order.fromOrdering[ZonedDateTime]
+
   implicit class ExtentOps(val self: Extent) extends AnyVal {
     def swapXY: Extent                             = Extent(xmin = self.ymin, ymin = self.xmin, xmax = self.ymax, ymax = self.xmax)
     def buffer(cellSize: CellSize): Extent         = self.buffer(cellSize.width / 2, cellSize.height / 2)
