@@ -112,11 +112,11 @@ object Main
               for {
                 conf         <- Conf.loadResourceF[IO](configPath)
                 /** MosaicRasterSources pool init for the graceful shutdown. */
-                blockingPool <- Resource.make(IO.delay(BlockingThreadPool.pool))(p => IO.delay(p.shutdown()))
+                // blockingPool <- Resource.make(IO.delay(BlockingThreadPool.pool))(p => IO.delay(p.shutdown()))
                 /** Uses server pool. */
                 http4sClient <- Http4sBackend.usingDefaultBlazeClientBuilder[IO](Blocker.liftExecutionContext(executionContext), executionContext)
                 simpleSources = conf.layers.values.collect { case rsc: RasterSourceConf => rsc.toLayer }.toList
-                _            <- Resource.liftF(
+                _            <- Resource.eval(
                                   logOptState(
                                     conf.wms,
                                     ansi"%green{WMS configuration detected}, starting Web Map Service",
@@ -131,7 +131,7 @@ object Main
                                     ExtendedParameters.extendedParametersBinding
                                   )
                                 }
-                _            <- Resource.liftF(
+                _            <- Resource.eval(
                                   logOptState(
                                     conf.wmts,
                                     ansi"%green{WMTS configuration detected}, starting Web Map Tiling Service",
@@ -145,7 +145,7 @@ object Main
                                     svc.layerSources(simpleSources, http4sClient)
                                   )
                                 }
-                _            <- Resource.liftF(
+                _            <- Resource.eval(
                                   logOptState(
                                     conf.wcs,
                                     ansi"%green{WCS configuration detected}, starting Web Coverage Service",

@@ -43,11 +43,13 @@ object OgcTimeDefault {
   }
 
   implicit class OgcTimeDefaultOps(val self: OgcTimeDefault) extends AnyVal {
-    def selectTime(list: NonEmptyList[ZonedDateTime]): ZonedDateTime =
+    def selectTime(list: NonEmptyList[ZonedDateTime]): ZonedDateTime = {
+      lazy val sorted = list.sorted
       self match {
-        case OgcTimeDefault.Oldest  => list.head
-        case OgcTimeDefault.Newest  => list.last
+        case OgcTimeDefault.Oldest  => sorted.head
+        case OgcTimeDefault.Newest  => sorted.last
         case OgcTimeDefault.Time(t) => t
       }
+    }
   }
 }

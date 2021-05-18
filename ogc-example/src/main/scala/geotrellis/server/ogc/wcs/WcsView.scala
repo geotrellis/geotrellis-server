@@ -153,9 +153,7 @@ class WcsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
     WcsParams(req.multiParams) match {
       case Validated.Invalid(errors) =>
         val msg = ParamError.generateErrorMessage(errors.toList)
-        logger.warn(s"""Error parsing parameters: ${msg}""") *> BadRequest(
-          s"""Error parsing parameters: ${msg}"""
-        )
+        logger.warn(msg) >> BadRequest(msg)
 
       case Validated.Valid(wcsParams) =>
         wcsParams match {

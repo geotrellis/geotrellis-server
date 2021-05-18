@@ -95,7 +95,7 @@ case class SimpleSource(
   timeFormat: OgcTimeFormat
 ) extends RasterOgcSource {
   val timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest
-  lazy val time: OgcTime          = source.time(timeMetadataKey).format(timeFormat)
+  lazy val time: OgcTime          = source.time(timeMetadataKey).format(timeFormat).sorted
 
   def toLayer(crs: CRS, style: Option[OgcStyle], temporalSequence: List[OgcTime]): SimpleOgcLayer =
     SimpleOgcLayer(name, title, crs, source, style, resampleMethod, overviewStrategy)
@@ -123,8 +123,8 @@ case class GeoTrellisOgcSource(
       temporalSequence.headOption match {
         case Some(t) if t.nonEmpty                              => sourceForTime(t)
         case _ if temporalSequence.isEmpty && source.isTemporal =>
-          val sorted = source.times
-          val time   = timeDefault match {
+          lazy val sorted = source.times.sorted
+          val time        = timeDefault match {
             case OgcTimeDefault.Oldest   => sorted.head
             case OgcTimeDefault.Newest   => sorted.last
             case OgcTimeDefault.Time(dt) => dt
@@ -155,7 +155,7 @@ case class GeoTrellisOgcSource(
 
   lazy val time: OgcTime =
     if (!source.isTemporal) OgcTimeEmpty
-    else OgcTimePositions(source.times).format(timeFormat)
+    else OgcTimePositions(source.times).format(timeFormat).sorted
 
   /** If temporal, try to match in the following order:
     *
@@ -273,7 +273,7 @@ case class MapAlgebraSource(
     new GridExtent[Long](nativeExtent, cellSize)
   }
 
-  val time: OgcTime = ogcSources.values.toList.map(_.time).foldLeft[OgcTime](OgcTimeEmpty)(_ |+| _).format(timeFormat)
+  val time: OgcTime = ogcSources.values.toList.map(_.time).foldLeft[OgcTime](OgcTimeEmpty)(_ |+| _).format(timeFormat).sorted
 
   val attributes: Map[String, String]  = Map.empty
   lazy val nativeCrs: Set[CRS]         = ogcSourcesList.flatMap(_.nativeCrs).toSet

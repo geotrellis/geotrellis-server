@@ -38,13 +38,13 @@ case class StacOgcSource(
   resampleMethod: ResampleMethod,
   overviewStrategy: OverviewStrategy,
   timeMetadataKey: Option[String],
-  computeTimePositions: Boolean,
+  fetchTimePositions: Boolean,
   timeFormat: OgcTimeFormat,
   timeDefault: OgcTimeDefault
 ) extends RasterOgcSource {
 
   lazy val time: OgcTime = {
-    val summaryTime = if (!computeTimePositions) stacSource.stacExtent.ogcTime else None
+    val summaryTime = if (!fetchTimePositions) stacSource.stacExtent.ogcTime else None
     summaryTime
       .orElse(
         attributes
@@ -53,6 +53,7 @@ case class StacOgcSource(
       )
       .getOrElse(source.time(timeMetadataKey))
       .format(timeFormat)
+      .sorted
   }
 
   def source: RasterSource = stacSource.source

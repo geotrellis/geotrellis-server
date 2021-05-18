@@ -32,7 +32,7 @@ object OgcTimeFormat {
   case object Interval extends OgcTimeFormat
 
   /** Don't change the internal [[OgcTime]] representation. */
-  case object Self extends OgcTimeFormat
+  case object Default extends OgcTimeFormat
 
   private implicit val config: Configuration            = Configuration.default.copy(transformConstructorNames = _.toLowerCase)
   implicit val ogcTimeFormatCodec: Codec[OgcTimeFormat] = deriveEnumerationCodec

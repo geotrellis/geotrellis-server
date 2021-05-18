@@ -52,8 +52,8 @@ object Dependencies {
   val http4sDsl            = http4sVer("dsl")
   val http4sXml            = http4sVer("scala-xml")
   val jaxbApi              = "javax.xml.bind"                         % "jaxb-api"                    % jaxbApiVer
-  val kindProjector        = "org.typelevel"                         %% "kind-projector"              % "0.11.3"
-  val semanticdbScalac     = "org.scalameta"                          % "semanticdb-scalac"           % "4.4.10"
+  val kindProjector        = "org.typelevel"                         %% "kind-projector"              % "0.13.0"
+  val semanticdbScalac     = "org.scalameta"                          % "semanticdb-scalac"           % "4.4.18"
   val log4cats             = "io.chrisdavenport"                     %% "log4cats-slf4j"              % "1.1.1"
   val mamlJvm              = "com.azavea.geotrellis"                 %% "maml-jvm"                    % "0.6.1"
   val pureConfig           = "com.github.pureconfig"                 %% "pureconfig"                  % "0.14.1"

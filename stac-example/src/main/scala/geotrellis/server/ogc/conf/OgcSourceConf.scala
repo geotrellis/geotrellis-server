@@ -55,9 +55,9 @@ case class StacSourceConf(
   overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
   ignoreTime: Boolean = false,
   datetimeField: String = "datetime",
-  timeFormat: OgcTimeFormat = OgcTimeFormat.Self,
+  timeFormat: OgcTimeFormat = OgcTimeFormat.Default,
   timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest,
-  computeTimePositions: Boolean = false,
+  fetchTimePositions: Boolean = false,
   withGDAL: Boolean = false,
   parallelMosaic: Boolean = false
 ) extends OgcSourceConf {
@@ -88,7 +88,7 @@ case class StacSourceConf(
       resampleMethod,
       overviewStrategy,
       datetimeField.some,
-      computeTimePositions,
+      fetchTimePositions,
       timeFormat,
       timeDefault
     )
@@ -113,7 +113,7 @@ case class RasterSourceConf(
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
   overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
   datetimeField: String = SimpleSource.TimeFieldDefault,
-  timeFormat: OgcTimeFormat = OgcTimeFormat.Self,
+  timeFormat: OgcTimeFormat = OgcTimeFormat.Default,
   timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest
 ) extends OgcSourceConf {
   def toLayer: RasterOgcSource =
@@ -155,7 +155,7 @@ case class MapAlgebraSourceConf(
   styles: List[StyleConf],
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
   overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
-  timeFormat: OgcTimeFormat = OgcTimeFormat.Self,
+  timeFormat: OgcTimeFormat = OgcTimeFormat.Default,
   timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest
 ) extends OgcSourceConf {
   def listParams(expr: Expression): List[String] = {
