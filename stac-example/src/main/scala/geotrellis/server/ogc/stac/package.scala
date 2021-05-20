@@ -21,14 +21,15 @@ import geotrellis.server.ogc.utils._
 import geotrellis.store.query._
 import geotrellis.raster.{EmptyName, RasterSource, SourceName, StringName}
 import geotrellis.raster.geotiff.GeoTiffPath
-
+import geotrellis.server.ogc.stac.util.logging.StacClientLoggingMid
 import com.azavea.stac4s.{StacAsset, StacExtent}
-import com.azavea.stac4s.api.client.{SearchFilters, StacClient, Query => SQuery}
+import com.azavea.stac4s.api.client.{SearchFilters, StacClient, StreamingClient, StreamingStacClient, Query => SQuery}
 import com.azavea.stac4s.extensions.periodic.PeriodicExtent
 import com.azavea.stac4s.syntax._
 import io.circe.syntax._
 import cats.{Applicative, Foldable, Functor, FunctorFilter}
 import cats.data.NonEmptyList
+import cats.effect.Sync
 import cats.syntax.either._
 import cats.syntax.foldable._
 import cats.syntax.functorFilter._
@@ -37,11 +38,17 @@ import cats.syntax.functor._
 import cats.syntax.option._
 import cats.tagless.{ApplyK, Derive}
 import eu.timepit.refined.types.string.NonEmptyString
+import fs2.Stream
 
 import java.time.ZoneOffset
 
 package object stac {
-  implicit val stacClientApplyK: ApplyK[StacClient] = Derive.applyK
+  implicit def stacClientApplyK[F[_]]: ApplyK[StreamingStacClient[*[_], Stream[F, *]]] = Derive.applyK[StreamingStacClient[*[_], Stream[F, *]]]
+  implicit def streamingStacClientApplyK[F[_]]: ApplyK[StreamingStacClient[F, *[_]]]   = Derive.applyK[StreamingStacClient[F, *[_]]]
+
+  implicit class StreamingStacClientOps[F[_]](val self: StreamingClient[F]) extends AnyVal {
+    def withLogging(implicit sync: Sync[F]): StreamingClient[F] = StacClientLoggingMid.attachAll(self)
+  }
 
   implicit class StacExtentionOps(val self: StacExtent) extends AnyVal {
 

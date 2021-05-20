@@ -48,6 +48,9 @@ class Http4sStacClientSpec extends IOSpec {
     ignore("should handle the search query") {
       withClient[IO].apply { client =>
         client.search
+          .take(30)
+          .compile
+          .toList
           .map(_.map(_.getExtensionFields[LayerItemExtension]))
           .map { list =>
             list shouldBe List(
@@ -59,7 +62,7 @@ class Http4sStacClientSpec extends IOSpec {
 
     ignore("should handle the collections query") {
       withClient[IO].apply { client =>
-        client.collections.map { list => println(list); true shouldBe true }
+        client.collections.take(30).compile.toList.map { list => println(list); true shouldBe true }
       }
     }
 

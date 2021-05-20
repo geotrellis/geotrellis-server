@@ -18,29 +18,30 @@ package geotrellis.server.ogc.stac
 
 import geotrellis.stac._
 import geotrellis.stac.raster.{StacAssetRasterSource, StacCollectionSource, StacItemAsset}
+import geotrellis.store.query
 import geotrellis.store.query._
 import geotrellis.store.query.QueryF._
 import geotrellis.raster.{EmptyName, MosaicRasterSource, RasterSource}
 import geotrellis.server.ogc.OgcSource
 import geotrellis.server.ogc.conf.{OgcSourceConf, StacSourceConf}
 import geotrellis.raster.effects.MosaicRasterSourceIO
+
 import sttp.client3.SttpBackend
 import sttp.client3.UriContext
-import geotrellis.store.query
 import com.azavea.stac4s.api.client.{Query => _, _}
-import cats.{Applicative, MonadThrow}
 import cats.data.NonEmptyList
+import cats.effect.Sync
 import cats.syntax.applicative._
 import cats.syntax.apply._
 import cats.syntax.option._
 import cats.syntax.semigroup._
 import cats.instances.list._
 import higherkindness.droste.{scheme, Algebra}
-import io.chrisdavenport.log4cats.Logger
 
-case class StacOgcRepository[F[_]: Applicative](
+/** Sync is required to compile [[fs2.Stream]] */
+case class StacOgcRepository[F[_]: Sync](
   stacSourceConf: StacSourceConf,
-  client: StacClient[F]
+  client: StreamingClient[F]
 ) extends RepositoryM[F, List, OgcSource] {
   def store: F[List[OgcSource]] = find(query.all)
 
@@ -50,11 +51,12 @@ case class StacOgcRepository[F[_]: Applicative](
     val filters: Option[SearchFilters] =
       SearchFilters
         .eval(stacSourceConf.searchCriteria)(query.overrideName(stacSourceConf.searchName))
-        .map(_.copy(limit = stacSourceConf.assetLimit))
 
     filters.fold(List.empty[OgcSource].pure[F]) { filter =>
       /** Query summary i.e. collection or layer summary and items and perform the matching items search. */
-      (client.summary(stacSourceConf.searchName, stacSourceConf.searchCriteria), client.search(filter))
+      val summary = client.summary(stacSourceConf.searchName, stacSourceConf.searchCriteria)
+      val items   = stacSourceConf.assetLimit.fold(client.search(filter))(limit => client.search(filter).take(limit.value))
+      (summary, items.compile.toList)
         .mapN { case (summary, items) =>
           val rasterSources =
             items.flatMap { item =>
@@ -114,7 +116,7 @@ case class StacOgcRepository[F[_]: Applicative](
   }
 }
 
-case class StacOgcRepositories[F[_]: MonadThrow: Logger](
+case class StacOgcRepositories[F[_]: Sync](
   stacLayers: List[StacSourceConf],
   client: SttpBackend[F, Any]
 ) extends RepositoryM[F, List, OgcSource] {
@@ -128,7 +130,7 @@ case class StacOgcRepositories[F[_]: MonadThrow: Logger](
   def find(query: Query): F[List[OgcSource]] =
     StacOgcRepositories
       .eval(query)(stacLayers)
-      .map { conf => StacOgcRepository(conf, StacClientLoggingMid[F] attach SttpStacClient(client, uri"${conf.source}")) }
+      .map { conf => StacOgcRepository(conf, SttpStacClient(client, uri"${conf.source}").withLogging) }
       .fold(RepositoryM.empty[F, List, OgcSource])(_ |+| _)
       .find(query)
 }

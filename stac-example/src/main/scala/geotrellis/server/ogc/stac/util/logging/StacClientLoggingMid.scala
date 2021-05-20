@@ -14,50 +14,40 @@
  * limitations under the License.
  */
 
-package geotrellis.server.ogc.stac
+package geotrellis.server.ogc.stac.util.logging
 
-import com.azavea.stac4s.{StacCollection, StacItem}
-import com.azavea.stac4s.api.client.{SearchFilters, StacClient, StacClientF}
+import geotrellis.server.ogc.stac._
 
-import cats.FlatMap
+import cats.effect.Sync
 import cats.syntax.flatMap._
-import tofu.higherKind.Mid
+import com.azavea.stac4s.api.client.{SearchFilters, StreamingClient, StreamingStacClient, StreamingStacClientF}
+import com.azavea.stac4s.{StacCollection, StacItem}
 import eu.timepit.refined.types.string.NonEmptyString
-import io.chrisdavenport.log4cats.Logger
+import fs2.Stream
+import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.circe.syntax._
+import tofu.higherKind.Mid
 
-final class StacClientLoggingMid[F[_]: FlatMap: Logger] extends StacClientF[Mid[F, *], SearchFilters] {
-  val logger = Logger[F]
+final class StacClientLoggingMid[F[_]: Sync] extends StreamingStacClientF[Mid[F, *], Stream[F, *], SearchFilters] {
+  val logger = Slf4jLogger.getLoggerFromClass(this.getClass)
 
-  def search: Mid[F, List[StacItem]] =
-    res =>
-      logger.trace(s"search all endpoint call") >>
-      res.flatTap(items => logger.trace(s"retrieved items: ${items.asJson}"))
+  def search: Stream[F, StacItem] = Stream.empty
 
-  def search(filter: SearchFilters): Mid[F, List[StacItem]] =
-    res =>
-      logger.trace(s"search ${filter.asJson} endpoint call") >>
-      res.flatTap(items => logger.trace(s"retrieved items: ${items.asJson}"))
+  def search(filter: SearchFilters): Stream[F, StacItem] = Stream.empty
 
-  def collections: Mid[F, List[StacCollection]] =
-    res =>
-      logger.trace(s"collections all endpoint call") >>
-      res.flatTap(collections => logger.trace(s"retrieved collections: ${collections.asJson}"))
+  def collections: Stream[F, StacCollection] = Stream.empty
+
+  def items(collectionId: NonEmptyString): Stream[F, StacItem] = Stream.empty
 
   def collection(collectionId: NonEmptyString): Mid[F, StacCollection] =
     res =>
       logger.trace(s"collections collectionId: $collectionId endpoint call") >>
       res.flatTap(collection => logger.trace(s"retrieved collection: ${collection.asJson}"))
 
-  def items(collectionId: NonEmptyString): Mid[F, List[StacItem]] =
-    res =>
-      logger.trace(s"items by collectionId: $collectionId endpoint call") >>
-      res.flatTap(items => logger.trace(s"retrieved items: ${items.asJson}"))
-
   def item(collectionId: NonEmptyString, itemId: NonEmptyString): Mid[F, StacItem] =
     res =>
       logger.trace(s"item by collectionId: $collectionId and itemId: $itemId endpoint call") >>
-      res.flatTap(items => logger.trace(s"retrieved items: ${items.asJson}"))
+      res.flatTap(item => logger.trace(s"retrieved item: ${item.asJson}"))
 
   def itemCreate(collectionId: NonEmptyString, item: StacItem): Mid[F, StacItem] =
     res =>
@@ -71,5 +61,11 @@ final class StacClientLoggingMid[F[_]: FlatMap: Logger] extends StacClientF[Mid[
 }
 
 object StacClientLoggingMid {
-  def apply[F[_]: FlatMap: Logger]: StacClient[Mid[F, *]] = new StacClientLoggingMid[F]
+  def apply[F[_]: Sync]: StreamingStacClient[Mid[F, *], Stream[F, *]] = new StacClientLoggingMid[F]
+
+  def attachAll[F[_]: Sync](client: StreamingClient[F]): StreamingClient[F] =
+    Mid
+      .attach[StreamingStacClient[*[_], fs2.Stream[F, *]], F](StacClientLoggingMid[F])(
+        Mid.attach(StreamingStacClientLoggingMid[F])(client)
+      )
 }

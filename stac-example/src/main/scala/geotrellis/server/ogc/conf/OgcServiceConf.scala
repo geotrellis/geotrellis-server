@@ -16,7 +16,8 @@
 
 package geotrellis.server.ogc.conf
 
-import cats.{MonadThrow, SemigroupK}
+import cats.effect.Sync
+import cats.SemigroupK
 import cats.instances.list._
 import cats.syntax.semigroup._
 import geotrellis.proj4.CRS
@@ -41,7 +42,7 @@ sealed trait OgcServiceConf {
     OgcSourceRepository(rasterLayers ++ mapAlgebraLayers)
   }
 
-  def layerSources[F[_]: SemigroupK: MonadThrow: Logger](
+  def layerSources[F[_]: SemigroupK: Sync: Logger](
     rasterOgcSources: List[RasterOgcSource],
     client: SttpBackend[F, Any]
   ): RepositoryM[F, List, OgcSource] = {
