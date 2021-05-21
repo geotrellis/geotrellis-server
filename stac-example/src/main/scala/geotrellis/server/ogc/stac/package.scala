@@ -23,7 +23,7 @@ import geotrellis.raster.{EmptyName, RasterSource, SourceName, StringName}
 import geotrellis.raster.geotiff.GeoTiffPath
 import geotrellis.server.ogc.stac.util.logging.StacClientLoggingMid
 import com.azavea.stac4s.{StacAsset, StacExtent}
-import com.azavea.stac4s.api.client.{SearchFilters, StacClient, StreamingClient, StreamingStacClient, Query => SQuery}
+import com.azavea.stac4s.api.client.{SearchFilters, StacClient, StreamingStacClientFS2, StreamingStacClient, Query => SQuery}
 import com.azavea.stac4s.extensions.periodic.PeriodicExtent
 import com.azavea.stac4s.syntax._
 import io.circe.syntax._
@@ -46,8 +46,8 @@ package object stac {
   implicit def stacClientApplyK[F[_]]: ApplyK[StreamingStacClient[*[_], Stream[F, *]]] = Derive.applyK[StreamingStacClient[*[_], Stream[F, *]]]
   implicit def streamingStacClientApplyK[F[_]]: ApplyK[StreamingStacClient[F, *[_]]]   = Derive.applyK[StreamingStacClient[F, *[_]]]
 
-  implicit class StreamingStacClientOps[F[_]](val self: StreamingClient[F]) extends AnyVal {
-    def withLogging(implicit sync: Sync[F]): StreamingClient[F] = StacClientLoggingMid.attachAll(self)
+  implicit class StreamingStacClientOps[F[_]](val self: StreamingStacClientFS2[F]) extends AnyVal {
+    def withLogging(implicit sync: Sync[F]): StreamingStacClientFS2[F] = StacClientLoggingMid.attachAll(self)
   }
 
   implicit class StacExtentionOps(val self: StacExtent) extends AnyVal {
