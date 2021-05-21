@@ -32,6 +32,7 @@ import cats.{Applicative, Foldable, Functor, FunctorFilter}
 import cats.data.NonEmptyList
 import cats.effect.Sync
 import cats.syntax.either._
+
 import cats.syntax.foldable._
 import cats.syntax.functorFilter._
 import cats.syntax.applicative._
@@ -47,23 +48,18 @@ import java.time.ZoneOffset
 package object stac {
 
   /** Syntax to attach two [[Mid]] instances (each for a separate param) to a service with two type params. */
-  implicit class MidOps2[U[_[_], _[_]], F[_], G[_]](val u: U[F, G]) extends AnyVal {
-    def attach2(mf: U[Mid[F, *], G])(mg: U[F, Mid[G, *]])(implicit af: ApplyK[U[F, *[_]]], ag: ApplyK[U[*[_], G]]): U[F, G] =
-      Mid.attach[U[*[_], G], F](mf)(Mid.attach[U[F, *[_]], G](mg)(u))
-  }
-
-  implicit class MidOps3[U[_[_], _[_], _], F[_], G[_], A](val u: U[F, G, A]) extends AnyVal {
-    def attach2(mf: U[Mid[F, *], G, A])(mg: U[F, Mid[G, *], A])(implicit af: ApplyK[U[F, *[_], A]], ag: ApplyK[U[*[_], G, A]]): U[F, G, A] =
-      Mid.attach[U[*[_], G, A], F](mf)(Mid.attach[U[F, *[_], A], G](mg)(u))
-  }
-
   implicit class MidOps3Tuple[U[_[_], _[_], _], F[_], G[_], A](val mfg: (U[Mid[F, *], G, A], U[F, Mid[G, *], A])) extends AnyVal {
     def attach(u: U[F, G, A])(implicit af: ApplyK[U[F, *[_], A]], ag: ApplyK[U[*[_], G, A]]): U[F, G, A] =
       Mid.attach[U[*[_], G, A], F](mfg._1)(Mid.attach[U[F, *[_], A], G](mfg._2)(u))
   }
 
-  implicit def stacClientApplyK[F[_]]: ApplyK[StreamingStacClient[*[_], Stream[F, *]]] = Derive.applyK[StreamingStacClient[*[_], Stream[F, *]]]
-  implicit def streamingStacClientApplyK[F[_]]: ApplyK[StreamingStacClient[F, *[_]]]   = Derive.applyK[StreamingStacClient[F, *[_]]]
+  implicit class MidOps3TupleReverse[U[_[_], _[_], _], F[_], G[_], A](val mfg: (U[F, Mid[G, *], A], U[Mid[F, *], G, A])) extends AnyVal {
+    def attach(u: U[F, G, A])(implicit af: ApplyK[U[F, *[_], A]], ag: ApplyK[U[*[_], G, A]]): U[F, G, A] =
+      mfg.swap attach u
+  }
+
+  implicit def stacClientApplyKF[F[_]]: ApplyK[StreamingStacClient[*[_], Stream[F, *]]] = Derive.applyK[StreamingStacClient[*[_], Stream[F, *]]]
+  implicit def stacClientApplyKG[F[_]]: ApplyK[StreamingStacClient[F, *[_]]]            = Derive.applyK[StreamingStacClient[F, *[_]]]
 
   implicit class StreamingStacClientOps[F[_]](val self: StreamingStacClientFS2[F]) extends AnyVal {
     def withLogging(implicit sync: Sync[F]): StreamingStacClientFS2[F] = (StacClientLoggingMid[F], StreamingStacClientLoggingMid[F]) attach self
