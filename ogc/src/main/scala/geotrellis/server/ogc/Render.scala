@@ -23,6 +23,7 @@ import geotrellis.raster._
 import geotrellis.raster.io.geotiff.tags.codes.ColorSpace
 import geotrellis.raster.io.geotiff.{GeoTiff, GeoTiffOptions, MultibandGeoTiff}
 import geotrellis.raster.render.png._
+import cats.syntax.option._
 
 object Render {
   def rgb(raster: Raster[MultibandTile], crs: CRS, maybeStyle: Option[OgcStyle], format: OutputFormat, hists: List[Histogram[Double]]): Array[Byte] =
@@ -41,7 +42,7 @@ object Render {
       case Some(style) => style.renderRaster(raster, crs, format, hists)
       case None        =>
         format match {
-          case format: OutputFormat.Png => OutputFormat.Png(Some(RgbaPngEncoding)).render(raster.tile.color())
+          case format: OutputFormat.Png => OutputFormat.Png(Some(RgbaPngEncoding)).render(raster.tile.withNoData(0d.some).color())
           case OutputFormat.Jpg         => raster.tile.color().renderJpg.bytes
           case OutputFormat.GeoTiff     => MultibandGeoTiff(raster, crs, GeoTiffOptions(colorSpace = ColorSpace.RGB)).toCloudOptimizedByteArray
         }
