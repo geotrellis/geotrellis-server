@@ -19,7 +19,7 @@ object Dependencies {
 
   val dispatchVer  = "0.11.3"
   val gtVer        = "3.6.0"
-  val stac4sVer    = "0.4.0"
+  val stac4sVer    = "0.4.0-9-gb8eb735-SNAPSHOT"
   val jaxbApiVer   = "2.3.1"
   val refinedVer   = "0.9.20"
   val shapelessVer = "2.3.3"
@@ -63,7 +63,7 @@ object Dependencies {
   val scalatest            = "org.scalatest"                         %% "scalatest"                   % "3.2.5"  % Test
   val scalacheck           = "org.scalacheck"                        %% "scalacheck"                  % "1.14.0" % Test
   val scalacheckCats       = "io.chrisdavenport"                     %% "cats-scalacheck"             % "0.1.1"  % Test
-  val sttpHttp4s           = "com.softwaremill.sttp.client3"         %% "http4s-backend"              % "3.1.6"
+  val sttpHttp4s           = "com.softwaremill.sttp.client3"         %% "http4s-ce2-backend"          % "3.3.4"
   val macrosParadise       = "org.scalamacros"                        % "paradise"                    % "2.1.1"
   val scalaParser          = "org.scala-lang.modules"                %% "scala-parser-combinators"    % "1.1.2"
   val shapeless            = "com.chuusai"                           %% "shapeless"                   % shapelessVer
