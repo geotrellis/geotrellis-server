@@ -98,7 +98,7 @@ class GetCoverage[F[_]: Concurrent: Parallel: Logger](wcsModel: WcsModel[F]) {
                       // STAC search will return an empty list, however QGIS may expect a test pixel to
                       // return the actual tile
                       // TODO: handle it in a proper way, how to get information about the bands amount?
-                      val tile = ArrayTile.empty(IntCellType, 1, 1)
+                      val tile = ArrayTile.empty(IntUserDefinedNoDataCellType(0), 1, 1)
                       Raster(MultibandTile(tile, tile, tile), params.extent).render(params.crs, None, params.format, Nil).pure[F]
                     case _       => Logger[F].error(s"No tile found for the $params request.") *> Array[Byte]().pure[F]
                   }

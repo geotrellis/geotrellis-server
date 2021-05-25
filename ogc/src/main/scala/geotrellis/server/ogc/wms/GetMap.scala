@@ -101,7 +101,7 @@ case class GetMap[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
                 .flatMap {
                   _.headOption match {
                     case Some(_) =>
-                      val tile   = ArrayTile(Array(0, 0), 1, 1)
+                      val tile   = ArrayTile.empty(IntUserDefinedNoDataCellType(0), 1, 1)
                       val raster = Raster(MultibandTile(tile, tile, tile), params.boundingBox)
                       Right(raster.render(params.crs, None, params.format, Nil)).pure[F].widen
                     case _       =>

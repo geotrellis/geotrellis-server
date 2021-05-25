@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Changed
 - OgcTime logic cleanup [#371](https://github.com/geotrellis/geotrellis-server/pull/371)
+- Change RGB nodata handling [#373](https://github.com/geotrellis/geotrellis-server/pull/373)
 
 ## [4.4.0] - 2021-04-30
 
