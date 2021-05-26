@@ -48,6 +48,7 @@ case class StacSourceConf(
   source: String,
   asset: String,
   assetLimit: Option[NonNegInt],
+  pageLimit: Option[NonNegInt],
   defaultStyle: Option[String],
   styles: List[StyleConf],
   commonCrs: CRS = WebMercator,
