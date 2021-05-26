@@ -51,6 +51,7 @@ case class StacOgcRepository[F[_]: Sync](
     val filters: Option[SearchFilters] =
       SearchFilters
         .eval(stacSourceConf.searchCriteria)(query.overrideName(stacSourceConf.searchName))
+        .map(_.copy(limit = stacSourceConf.pageLimit))
 
     filters.fold(List.empty[OgcSource].pure[F]) { filter =>
       /** Query summary i.e. collection or layer summary and items and perform the matching items search. */
