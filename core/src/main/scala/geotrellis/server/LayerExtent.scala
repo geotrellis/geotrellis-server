@@ -34,7 +34,8 @@ object LayerExtent {
   def apply[F[_]: Logger: Parallel: Monad, T: ExtentReification[F, *]](
     getExpression: F[Expression],
     getParams: F[Map[String, T]],
-    interpreter: Interpreter[F]
+    interpreter: Interpreter[F],
+    cellType: Option[CellType]
   ): (Extent, Option[CellSize]) => F[Interpreted[MultibandTile]] = {
     val logger = Logger[F]
     (extent: Extent, cellSize: Option[CellSize]) => {
@@ -58,6 +59,7 @@ object LayerExtent {
                     }
       } yield reified
         .andThen(_.as[MultibandTile])
+        .andThen(res => Valid(cellType.fold(res)(res.interpretAs)))
         .map { tile => cellSize.fold(tile) { cs => tile.crop(RasterExtent(extent, cs).gridBoundsFor(extent)) } }
     }
   }
@@ -66,25 +68,42 @@ object LayerExtent {
     mkExpr: Map[String, T] => Expression,
     getParams: F[Map[String, T]],
     interpreter: Interpreter[F]
-  ) = apply[F, T](getParams.map(mkExpr(_)), getParams, interpreter)
+  ): (Extent, Option[CellSize]) => F[Interpreted[MultibandTile]] = apply[F, T](getParams.map(mkExpr(_)), getParams, interpreter, None)
 
   /** Provide an expression and expect arguments to fulfill its needs */
   def curried[F[_]: Logger: Parallel: Monad, T: ExtentReification[F, *]](
     expr: Expression,
-    interpreter: Interpreter[F]
+    interpreter: Interpreter[F],
+    cellType: Option[CellType]
   ): (Map[String, T], Extent, Option[CellSize]) => F[Interpreted[MultibandTile]] =
     (paramMap: Map[String, T], extent: Extent, cellsize: Option[CellSize]) => {
       val eval =
-        apply[F, T](expr.pure[F], paramMap.pure[F], interpreter)
+        apply[F, T](expr.pure[F], paramMap.pure[F], interpreter, cellType)
       eval(extent, cellsize)
     }
 
-  /** The identity endpoint (for simple display of raster) */
   def concurrent[F[_]: Logger: Parallel: Monad: Concurrent, T: ExtentReification[F, *]](
+    getExpression: F[Expression],
+    getParams: F[Map[String, T]],
+    interpreter: Interpreter[F]
+  ): (Extent, Option[CellSize]) => F[Interpreted[MultibandTile]] =
+    apply(getExpression, getParams, interpreter, None)
+
+  /** The identity endpoint (for simple display of raster) */
+  def withCellType[F[_]: Logger: Parallel: Monad: Concurrent, T: ExtentReification[F, *]](
+    param: T,
+    cellType: CellType
+  ): (Extent, Option[CellSize]) => F[Interpreted[MultibandTile]] =
+    (extent: Extent, cellsize: Option[CellSize]) => {
+      val eval = curried(RasterVar("identity"), ConcurrentInterpreter.DEFAULT, cellType.some)
+      eval(Map("identity" -> param), extent, cellsize)
+    }
+
+  def identity[F[_]: Logger: Parallel: Monad: Concurrent, T: ExtentReification[F, *]](
     param: T
   ): (Extent, Option[CellSize]) => F[Interpreted[MultibandTile]] =
     (extent: Extent, cellsize: Option[CellSize]) => {
-      val eval = curried(RasterVar("identity"), ConcurrentInterpreter.DEFAULT)
+      val eval = curried(RasterVar("identity"), ConcurrentInterpreter.DEFAULT, None)
       eval(Map("identity" -> param), extent, cellsize)
     }
 }

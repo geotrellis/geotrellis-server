@@ -73,7 +73,7 @@ object LayerHistogram {
       _               <- logger.trace(
                            s"[LayerHistogram] Largest cell size of provided layers calculated: $cellSize"
                          )
-      mbtileForExtent  = LayerExtent(getExpression, getParams, interpreter)
+      mbtileForExtent  = LayerExtent(getExpression, getParams, interpreter, None)
       _               <- intersectionO traverse { intersection =>
                            logger.trace(
                              s"[LayerHistogram] calculating histogram from (approximately) ${intersection.area / (cellSize.width * cellSize.height)} cells"
