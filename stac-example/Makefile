@@ -5,7 +5,7 @@ assembly:
 	cd ../; ./sbt "project stac-example" assembly
 
 postgres:
-	docker-compose up -d
+	docker compose up -d
 
 migrations:
 	docker run --rm \
