@@ -1,6 +1,6 @@
 {
   "type": "Catalog",
-  "stac_version": "1.0.0-rc.2",
+  "stac_version": "1.0.0",
   "stac_extensions": [],
   "id": "landsat-stac-periodic-catalog",
   "title": "STAC for Landsat data",

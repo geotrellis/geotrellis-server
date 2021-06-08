@@ -17,11 +17,12 @@
 package geotrellis.server.ogc.stac.util.logging
 
 import cats.effect.Sync
-import com.azavea.stac4s.api.client.{SearchFilters, StreamingStacClient, StreamingStacClientF}
+import com.azavea.stac4s.api.client.{ETag, SearchFilters, StreamingStacClient, StreamingStacClientF}
 import com.azavea.stac4s.{StacCollection, StacItem}
 import eu.timepit.refined.types.string.NonEmptyString
 import fs2.Stream
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import io.circe.Json
 import io.circe.syntax._
 import tofu.higherKind.Mid
 
@@ -50,11 +51,17 @@ final class StreamingStacClientLoggingMid[F[_]: Sync] extends StreamingStacClien
 
   def collection(collectionId: NonEmptyString): F[StacCollection] = ???
 
-  def item(collectionId: NonEmptyString, itemId: NonEmptyString): F[StacItem] = ???
-
-  def itemCreate(collectionId: NonEmptyString, item: StacItem): F[StacItem] = ???
-
   def collectionCreate(collection: StacCollection): F[StacCollection] = ???
+
+  def item(collectionId: NonEmptyString, itemId: NonEmptyString): F[ETag[StacItem]] = ???
+
+  def itemCreate(collectionId: NonEmptyString, item: StacItem): F[ETag[StacItem]] = ???
+
+  def itemUpdate(collectionId: NonEmptyString, item: ETag[StacItem]): F[ETag[StacItem]] = ???
+
+  def itemPatch(collectionId: NonEmptyString, itemId: NonEmptyString, patch: ETag[Json]): F[ETag[StacItem]] = ???
+
+  def itemDelete(collectionId: NonEmptyString, itemId: NonEmptyString): F[Either[String, String]] = ???
 }
 
 object StreamingStacClientLoggingMid {

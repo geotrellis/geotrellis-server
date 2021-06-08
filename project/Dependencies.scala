@@ -6,20 +6,20 @@ object Dependencies {
   def catsVersion(module: String) =
     Def.setting {
       module match {
-        case "core"   => "org.typelevel" %% s"cats-$module" % "2.4.2"
-        case "effect" => "org.typelevel" %% s"cats-$module" % "2.3.3"
+        case "core"   => "org.typelevel" %% s"cats-$module" % "2.6.1"
+        case "effect" => "org.typelevel" %% s"cats-$module" % "2.5.1"
       }
     }
 
-  def circeVersion(module: String) = Def.setting { "io.circe" %% s"circe-$module" % "0.13.0" }
-  def http4sVer(module: String)    = Def.setting { "org.http4s" %% s"http4s-$module" % "0.21.20" }
+  def circeVersion(module: String) = Def.setting { "io.circe" %% s"circe-$module" % "0.14.1" }
+  def http4sVer(module: String)    = Def.setting { "org.http4s" %% s"http4s-$module" % "0.21.24" }
 
-  val crossScalaVer = List("2.12.13")
+  val crossScalaVer = List("2.12.14")
   val scalaVer      = crossScalaVer.head
 
   val dispatchVer  = "0.11.3"
   val gtVer        = "3.6.0"
-  val stac4sVer    = "0.4.0-9-gb8eb735-SNAPSHOT"
+  val stac4sVer    = "0.5.0-8-gaab61a6-SNAPSHOT"
   val jaxbApiVer   = "2.3.1"
   val refinedVer   = "0.9.20"
   val shapelessVer = "2.3.3"
@@ -30,11 +30,11 @@ object Dependencies {
   val circeShapes          = circeVersion("shapes")
   val circeGeneric         = circeVersion("generic")
   val circeGenericExtras   = circeVersion("generic-extras")
-  val circeOptics          = Def.setting { "io.circe" %% "circe-optics" % "0.13.0" }
+  val circeOptics          = Def.setting { "io.circe" %% "circe-optics" % "0.14.1" }
   val circeParser          = circeVersion("parser")
   val circeRefined         = circeVersion("refined")
   val circeJava8           = circeVersion("java8")
-  val commonsIO            = "commons-io"                             % "commons-io"                  % "2.8.0"
+  val commonsIO            = "commons-io"                             % "commons-io"                  % "2.9.0"
   val concHashMap          = "com.googlecode.concurrentlinkedhashmap" % "concurrentlinkedhashmap-lru" % "1.4.2"
   val decline              = "com.monovore"                          %% "decline"                     % "1.4.0"
   val geotrellisRaster     = "org.locationtech.geotrellis"           %% "geotrellis-raster"           % gtVer
@@ -53,17 +53,17 @@ object Dependencies {
   val http4sXml            = http4sVer("scala-xml")
   val jaxbApi              = "javax.xml.bind"                         % "jaxb-api"                    % jaxbApiVer
   val kindProjector        = "org.typelevel"                         %% "kind-projector"              % "0.13.0"
-  val semanticdbScalac     = "org.scalameta"                          % "semanticdb-scalac"           % "4.4.18"
+  val semanticdbScalac     = "org.scalameta"                          % "semanticdb-scalac"           % "4.4.21"
   val log4cats             = "io.chrisdavenport"                     %% "log4cats-slf4j"              % "1.1.1"
   val mamlJvm              = "com.azavea.geotrellis"                 %% "maml-jvm"                    % "0.6.1"
   val pureConfig           = "com.github.pureconfig"                 %% "pureconfig"                  % "0.14.1"
   val pureConfigCatsEffect = "com.github.pureconfig"                 %% "pureconfig-cats-effect"      % "0.14.1"
-  val scaffeine            = "com.github.blemale"                    %% "scaffeine"                   % "4.0.2"
+  val scaffeine            = "com.github.blemale"                    %% "scaffeine"                   % "4.1.0"
   val scalaXml             = "org.scala-lang.modules"                %% "scala-xml"                   % "1.3.0"
-  val scalatest            = "org.scalatest"                         %% "scalatest"                   % "3.2.5"  % Test
+  val scalatest            = "org.scalatest"                         %% "scalatest"                   % "3.2.9"  % Test
   val scalacheck           = "org.scalacheck"                        %% "scalacheck"                  % "1.14.0" % Test
   val scalacheckCats       = "io.chrisdavenport"                     %% "cats-scalacheck"             % "0.1.1"  % Test
-  val sttpHttp4s           = "com.softwaremill.sttp.client3"         %% "http4s-ce2-backend"          % "3.3.4"
+  val sttpHttp4s           = "com.softwaremill.sttp.client3"         %% "http4s-ce2-backend"          % "3.3.6"
   val macrosParadise       = "org.scalamacros"                        % "paradise"                    % "2.1.1"
   val scalaParser          = "org.scala-lang.modules"                %% "scala-parser-combinators"    % "1.1.2"
   val shapeless            = "com.chuusai"                           %% "shapeless"                   % shapelessVer

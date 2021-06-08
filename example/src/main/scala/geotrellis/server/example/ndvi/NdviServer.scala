@@ -49,7 +49,7 @@ object NdviServer extends IOApp {
   val createServer: Resource[IO, Server[IO]] = {
     for {
       conf             <- ExampleConf.loadResourceF[IO](None)
-      _                <- Resource.liftF {
+      _                <- Resource.eval {
                             logger.info(
                               s"Initializing NDVI service at ${conf.http.interface}:${conf.http.port}/"
                             )
@@ -57,7 +57,7 @@ object NdviServer extends IOApp {
       mamlNdviRendering = new NdviService[IO, GeoTiffNode](
                             ConcurrentInterpreter.DEFAULT
                           )
-      server           <- BlazeServerBuilder[IO]
+      server           <- BlazeServerBuilder[IO](executionContext)
                             .enableHttp2(true)
                             .bindHttp(conf.http.port, conf.http.interface)
                             .withHttpApp(

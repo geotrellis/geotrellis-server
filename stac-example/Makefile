@@ -10,7 +10,7 @@ postgres:
 migrations:
 	docker run --rm \
       --network stac-example_default \
-      quay.io/azavea/franklin:367cdc7 \
+      quay.io/azavea/franklin:1574674 \
       migrate \
       --db-user franklin \
       --db-name franklin \
@@ -23,7 +23,7 @@ import-landsat-stac-collection:
       --network stac-example_default \
       -e AWS_REGION=us-east-1 \
       -v ${PWD}/catalog:/opt/data/ \
-      quay.io/azavea/franklin:367cdc7 \
+      quay.io/azavea/franklin:1574674 \
       import-catalog \
       --db-user franklin \
       --db-name franklin \
@@ -36,7 +36,7 @@ import-landsat-stac-periodic-collection:
       --network stac-example_default \
       -e AWS_REGION=us-east-1 \
       -v ${PWD}/catalog:/opt/data/ \
-      quay.io/azavea/franklin:367cdc7 \
+      quay.io/azavea/franklin:1574674 \
       import-catalog \
       --db-user franklin \
       --db-name franklin \
@@ -49,7 +49,7 @@ import-landsat-stac-layers:
       --network stac-example_default \
       -e AWS_REGION=us-east-1 \
       -v ${PWD}/catalog:/opt/data/ \
-      quay.io/azavea/franklin:367cdc7 \
+      quay.io/azavea/franklin:1574674 \
       import-catalog \
       --db-user franklin \
       --db-name franklin \
@@ -61,7 +61,7 @@ run-franklin:
 	docker run --rm \
       --network stac-example_default \
       -p 9090:9090 \
-      quay.io/azavea/franklin:367cdc7 \
+      quay.io/azavea/franklin:1574674 \
       serve \
       --db-user franklin \
       --db-name franklin \
