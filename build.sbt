@@ -50,7 +50,8 @@ lazy val commonSettings = Seq(
     "osgeo-snapshots" at "https://repo.osgeo.org/repository/snapshot/",
     "osgeo-releases" at "https://repo.osgeo.org/repository/release/",
     "eclipse-releases" at "https://repo.eclipse.org/content/groups/releases",
-    "eclipse-snapshots" at "https://repo.eclipse.org/content/groups/snapshots"
+    "eclipse-snapshots" at "https://repo.eclipse.org/content/groups/snapshots",
+    "jitpack" at "https://jitpack.io"
   ),
   addCompilerPlugin(kindProjector cross CrossVersion.full),
   addCompilerPlugin(macrosParadise cross CrossVersion.full),

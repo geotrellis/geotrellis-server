@@ -51,7 +51,7 @@ object Conf {
     }
 
   def loadResourceF[F[_]: Sync](configPath: Option[String]): Resource[F, Conf] =
-    Resource.liftF(loadF[F](configPath))
+    Resource.eval(loadF[F](configPath))
 
   // This is a work-around to use pureconfig to read scalaxb generated case classes
   // DataRecord should never be specified from configuration, this satisfied the resolution
