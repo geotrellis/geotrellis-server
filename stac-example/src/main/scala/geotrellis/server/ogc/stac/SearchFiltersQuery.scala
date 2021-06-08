@@ -21,7 +21,7 @@ import geotrellis.store.query.{Query, QueryF}
 import geotrellis.proj4.LatLng
 
 import com.azavea.stac4s.{Bbox, TwoDimBbox}
-import com.azavea.stac4s.jvmTypes.TemporalExtent
+import com.azavea.stac4s.TemporalExtent
 import com.azavea.stac4s.api.client.{SearchFilters, StacClient, Superset}
 import io.circe.syntax._
 import higherkindness.droste.{scheme, Algebra}
@@ -58,14 +58,10 @@ object SearchFiltersQuery {
       TwoDimBbox(xmin, ymin, xmax, ymax)
     }
 
-    implicit val temporalExtentSemigroup: Semigroup[TemporalExtent] = { (left, right) =>
-      val (lmin, lmax) = left.value.min  -> left.value.max
-      val (rmin, rmax) = right.value.min -> right.value.max
-      TemporalExtent.unsafeFrom(
-        List(
-          List(lmin, rmin).max,
-          List(lmax, rmax).min
-        )
+    implicit val temporalExtentSemigroup: Semigroup[TemporalExtent] = { case (TemporalExtent(lstart, lend), TemporalExtent(rstart, rend)) =>
+      TemporalExtent(
+        (lstart.toList ::: rstart.toList).sorted.lastOption,
+        (lend.toList ::: rend.toList).sorted.headOption
       )
     }
 
@@ -98,14 +94,10 @@ object SearchFiltersQuery {
       TwoDimBbox(xmin, ymin, xmax, ymax)
     }
 
-    implicit val temporalExtentSemigroup: Semigroup[TemporalExtent] = { (left, right) =>
-      val (lmin, lmax) = left.value.min  -> left.value.max
-      val (rmin, rmax) = right.value.min -> right.value.max
-      TemporalExtent.unsafeFrom(
-        List(
-          List(lmin, rmin).min,
-          List(lmax, rmax).max
-        )
+    implicit val temporalExtentSemigroup: Semigroup[TemporalExtent] = { case (TemporalExtent(lstart, lend), TemporalExtent(rstart, rend)) =>
+      TemporalExtent(
+        (lstart.toList ::: rstart.toList).sorted.headOption,
+        (lend.toList ::: rend.toList).sorted.lastOption
       )
     }
 

@@ -53,7 +53,7 @@ workflows:
                 - /^(.*)$/
       - "openjdk8-scala2.12.14_deploy":
           requires:
-            - "openjdk8-scala2.12.13"
+            - "openjdk8-scala2.12.14"
           filters:
             tags:
               only:

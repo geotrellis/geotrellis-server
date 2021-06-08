@@ -6,8 +6,8 @@ object Dependencies {
   def catsVersion(module: String) =
     Def.setting {
       module match {
-        case "core"   => "org.typelevel" %% s"cats-$module" % "2.4.2"
-        case "effect" => "org.typelevel" %% s"cats-$module" % "2.3.3"
+        case "core"   => "org.typelevel" %% s"cats-$module" % "2.6.1"
+        case "effect" => "org.typelevel" %% s"cats-$module" % "2.5.1"
       }
     }
 
