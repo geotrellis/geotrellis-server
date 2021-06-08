@@ -66,7 +66,7 @@ class NdviService[F[_]: Sync: Logger: Parallel, T: Encoder: Decoder: TmsReificat
       )
     )
 
-  final val eval = LayerTms.curried(ndvi, interpreter)
+  final val eval = LayerTms.curried(ndvi, interpreter, None)
 
   // http://0.0.0.0:9000/{z}/{x}/{y}.png?red=geotiffnodeojson&nir=geotiffnodejson
   def routes: HttpRoutes[F] =

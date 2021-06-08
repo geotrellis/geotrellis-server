@@ -31,7 +31,7 @@ class NoDataHandlingTest extends AnyFunSuite with Matchers with TileAsSourceImpl
   implicit val cs = cats.effect.IO.contextShift(ExecutionContext.global)
 
   val expr = Addition(List(RasterVar("t1"), RasterVar("t2")))
-  val eval = LayerTms.curried(expr, ConcurrentInterpreter.DEFAULT[IO])
+  val eval = LayerTms.curried(expr, ConcurrentInterpreter.DEFAULT[IO], None)
 
   test(
     "NODATA should be respected - user-defined, integer-based source celltype"

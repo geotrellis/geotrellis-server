@@ -28,7 +28,7 @@ class LayerExtentTest extends AnyFunSuite with Matchers {
 
   test("ability to read a selected extent") {
     val rt        = ResourceTile("8x8.tif")
-    val eval      = LayerExtent.concurrent[IO, ResourceTile](rt)
+    val eval      = LayerExtent.identity[IO, ResourceTile](rt)
     // We'll sample such that the bottom row (from 56 to 64) are excised from the result
     val sampled   = eval(Extent(0, 1, 8, 8), CellSize(1, 1).some).unsafeRunSync
     val sample    = sampled.toOption.get.band(0).toArray()
