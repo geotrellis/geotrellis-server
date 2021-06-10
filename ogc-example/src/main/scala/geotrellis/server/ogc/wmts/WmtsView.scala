@@ -85,7 +85,7 @@ class WmtsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
                 val evalWmts = layer match {
                   case sl: SimpleTiledOgcLayer      => LayerTms.withCellType(sl, sl.source.cellType)
                   case mas: MapAlgebraTiledOgcLayer =>
-                    LayerTms.concurrent(mas.algebra.pure[F], mas.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F])
+                    LayerTms(mas.algebra.pure[F], mas.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F], mas.targetCellType)
                 }
 
                 // TODO: remove this once GeoTiffRasterSource would be threadsafe

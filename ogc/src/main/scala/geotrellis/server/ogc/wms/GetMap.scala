@@ -52,7 +52,7 @@ case class GetMap[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
             val evalExtent = layer match {
               case sl: SimpleOgcLayer     => LayerExtent.withCellType(sl, sl.source.cellType)
               case ml: MapAlgebraOgcLayer =>
-                LayerExtent.concurrent(ml.algebra.pure[F], ml.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F])
+                LayerExtent(ml.algebra.pure[F], ml.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F], ml.targetCellType)
             }
 
             val evalHisto = layer match {

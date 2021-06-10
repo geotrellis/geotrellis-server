@@ -66,7 +66,8 @@ case class MapAlgebraTiledOgcLayer(
   algebra: Expression,
   style: Option[OgcStyle],
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
+  targetCellType: Option[CellType] = None
 ) extends TiledOgcLayer
 
 object SimpleTiledOgcLayer {

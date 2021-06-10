@@ -49,7 +49,8 @@ case class WcsModel[F[_]: Functor](
             algebra.bindExtendedParameters(extendedParameters),
             None,
             resampleMethod,
-            overviewStrategy
+            overviewStrategy,
+            mas.targetCellType
           )
       }
     }

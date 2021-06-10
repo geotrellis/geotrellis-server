@@ -48,7 +48,8 @@ class GetCoverage[F[_]: Concurrent: Parallel: Logger](wcsModel: WcsModel[F]) {
         _.headOption
           .map {
             case so: SimpleOgcLayer      => LayerExtent.withCellType(so, so.source.cellType)
-            case mal: MapAlgebraOgcLayer => LayerExtent.concurrent(mal.algebra.pure[F], mal.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F])
+            case mal: MapAlgebraOgcLayer =>
+              LayerExtent(mal.algebra.pure[F], mal.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F], mal.targetCellType)
           }
           .traverse { eval =>
             eval(e, cs) map {

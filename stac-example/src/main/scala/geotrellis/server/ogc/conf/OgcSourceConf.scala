@@ -17,8 +17,7 @@
 package geotrellis.server.ogc.conf
 
 import geotrellis.server.ogc.stac.{ByCollection, ByLayer, StacSearchCriteria}
-
-import geotrellis.raster.RasterSource
+import geotrellis.raster.{CellType, RasterSource}
 import geotrellis.raster.io.geotiff.OverviewStrategy
 import geotrellis.raster.resample._
 import geotrellis.server.ogc._
@@ -157,7 +156,8 @@ case class MapAlgebraSourceConf(
   resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
   overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
   timeFormat: OgcTimeFormat = OgcTimeFormat.Default,
-  timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest
+  timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest,
+  targetCellType: Option[CellType] = None
 ) extends OgcSourceConf {
   def listParams(expr: Expression): List[String] = {
     def eval(subExpr: Expression): List[String] =
@@ -192,7 +192,8 @@ case class MapAlgebraSourceConf(
       resampleMethod,
       overviewStrategy,
       timeFormat,
-      timeDefault
+      timeDefault,
+      targetCellType
     )
   }
 
@@ -210,7 +211,8 @@ case class MapAlgebraSourceConf(
         resampleMethod,
         overviewStrategy,
         timeFormat,
-        timeDefault
+        timeDefault,
+        targetCellType
       ).some
     else None
   }

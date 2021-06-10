@@ -68,7 +68,8 @@ case class MapAlgebraOgcLayer(
   algebra: Expression,
   style: Option[OgcStyle],
   resampleMethod: ResampleMethod,
-  overviewStrategy: OverviewStrategy
+  overviewStrategy: OverviewStrategy,
+  targetCellType: Option[CellType]
 ) extends OgcLayer
 
 object SimpleOgcLayer {

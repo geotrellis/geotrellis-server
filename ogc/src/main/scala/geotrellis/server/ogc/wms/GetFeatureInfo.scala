@@ -54,7 +54,8 @@ case class GetFeatureInfo[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
           .map { layer =>
             val evalExtent = layer match {
               case sl: SimpleOgcLayer     => LayerExtent.withCellType(sl, sl.source.cellType)
-              case ml: MapAlgebraOgcLayer => LayerExtent.concurrent(ml.algebra.pure[F], ml.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F])
+              case ml: MapAlgebraOgcLayer =>
+                LayerExtent(ml.algebra.pure[F], ml.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F], ml.targetCellType)
             }
 
             evalExtent(re.extent, re.cellSize.some).map {
