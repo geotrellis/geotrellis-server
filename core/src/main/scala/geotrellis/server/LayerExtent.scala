@@ -98,12 +98,4 @@ object LayerExtent {
       val eval = curried(RasterVar("identity"), ConcurrentInterpreter.DEFAULT, cellType.some)
       eval(Map("identity" -> param), extent, cellsize)
     }
-
-  def identity[F[_]: Logger: Parallel: Monad: Concurrent, T: ExtentReification[F, *]](
-    param: T
-  ): (Extent, Option[CellSize]) => F[Interpreted[MultibandTile]] =
-    (extent: Extent, cellsize: Option[CellSize]) => {
-      val eval = curried(RasterVar("identity"), ConcurrentInterpreter.DEFAULT, None)
-      eval(Map("identity" -> param), extent, cellsize)
-    }
 }

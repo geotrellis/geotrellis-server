@@ -223,7 +223,8 @@ case class MapAlgebraSource(
   resampleMethod: ResampleMethod,
   overviewStrategy: OverviewStrategy,
   timeFormat: OgcTimeFormat,
-  timeDefault: OgcTimeDefault
+  timeDefault: OgcTimeDefault,
+  targetCellType: Option[CellType]
 ) extends OgcSource {
   // each of the underlying ogcSources uses it's own timeMetadataKey
   val timeMetadataKey: Option[String] = None

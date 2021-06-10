@@ -110,12 +110,4 @@ object LayerTms {
       val eval = curried[F, T](RasterVar("identity"), ConcurrentInterpreter.DEFAULT, cellType.some)
       eval(Map("identity" -> param), z, x, y)
     }
-
-  def identity[F[_]: Logger: Parallel: Monad: Concurrent, T: TmsReification[F, *]](
-    param: T
-  ): (Int, Int, Int) => F[Interpreted[MultibandTile]] =
-    (z: Int, x: Int, y: Int) => {
-      val eval = curried[F, T](RasterVar("identity"), ConcurrentInterpreter.DEFAULT, None)
-      eval(Map("identity" -> param), z, x, y)
-    }
 }
