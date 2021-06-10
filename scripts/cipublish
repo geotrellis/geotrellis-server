@@ -19,9 +19,9 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     else
         echo "Publishing artifacts to Sonatype"
         if [[ -n "${CIRCLE_TAG}" ]]; then
-            ./sbt ";++${SCALA_VERSION:-2.12.12};compile;sonatypeOpen ${CIRCLE_BUILD_NUM};publish;sonatypeRelease"
+            ./sbt ";++${SCALA_VERSION};compile;sonatypeOpen ${CIRCLE_BUILD_NUM};publish;sonatypeRelease"
         else
-            ./sbt ";++${SCALA_VERSION:-2.12.12};compile;publish"
+            ./sbt ";++${SCALA_VERSION};compile;publish"
         fi
     fi
 fi

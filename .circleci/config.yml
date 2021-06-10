@@ -1,74 +1,85 @@
-aliases:
-  - &restore_sbt_cache
-    key: sbt-cache-{{ checksum "/tmp/scala_version" }}
+version: 2.1
 
-  - &save_sbt_cache
-    key: sbt-cache-{{ checksum "/tmp/scala_version" }}-{{ epoch }}
-    paths:
-      - "~/.ivy2/cache"
-      - "~/.cache/coursier"
-      - "~/.sbt"
-      - "~/.m2"
-
-  - &run_cibuild
-    - checkout
-    - run: echo "${SCALA_VERSION}" > /tmp/scala_version
-    - restore_cache: *restore_sbt_cache
-    - run:
-        name: Executing cibuild
-        command: ./scripts/cibuild
-    - save_cache: *save_sbt_cache
-
-  - &run_cipublish
-    - checkout
-    - run: echo "${SCALA_VERSION}" > /tmp/scala_version
-    - restore_cache: *restore_sbt_cache
-    - run:
-        name: "Import signing key"
-        command: |
-          gpg --keyserver keyserver.ubuntu.com \
-            --recv-keys "0x${GPG_KEY_ID}" && \
-          echo "${GPG_KEY}" | base64 -d > signing_key.asc && \
-          gpg --import signing_key.asc
-    - run:
-        name: Executing cipublish
-        command: ./scripts/cipublish
-
-  # Build environments
-  - &openjdk8-scala2_12_14_environment
+executors:
+  executor-openjdk8:
     docker:
       - image: circleci/openjdk:8-jdk
-    environment:
-      SCALA_VERSION: 2.12.14
+        environment:
+          # https://circleci.com/docs/2.0/java-oom/
+          _JAVA_OPTIONS: "-Xms128m -Xmx2g"
 
-version: 2
+jobs:
+  openjdk8-build:
+    parameters:
+      scala-version:
+        type: string
+    executor: executor-openjdk8
+    environment:
+      SCALA_VERSION: << parameters.scala-version >>
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - sbt-cache-{{ checksum "project/Dependencies.scala" }}
+      - run:
+          name: Executing cibuild
+          command: ./scripts/cibuild
+      - save_cache:
+          key: sbt-cache-{{ checksum "project/Dependencies.scala" }}
+          paths:
+            - "~/.ivy2/cache"
+            - "~/.cache/coursier"
+            - "~/.sbt"
+            - "~/.m2"
+
+  openjdk8-deploy:
+    parameters:
+      scala-version:
+        type: string
+    executor: executor-openjdk8
+    environment:
+      SCALA_VERSION: << parameters.scala-version >>
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - sbt-cache-{{ checksum "project/Dependencies.scala" }}
+      - run:
+          name: "Import signing key"
+          command: |
+            gpg --keyserver keyserver.ubuntu.com \
+              --recv-keys "0x${GPG_KEY_ID}" && \
+            echo "${GPG_KEY}" | base64 -d > signing_key.asc && \
+            gpg --import signing_key.asc
+      - run:
+          name: Executing cipublish
+          command: ./scripts/cipublish
+
 workflows:
-  version: 2
   build:
     jobs:
-      - "openjdk8-scala2.12.14":
-          filters: # required since `openjdk8-scala2.12.14_deploy` has tag filters AND requires `openjdk8-scala2.12.14`
-            tags:
-              only:
-                - /^(.*)$/
-      - "openjdk8-scala2.12.14_deploy":
-          requires:
-            - "openjdk8-scala2.12.14"
+      - openjdk8-build:
+          matrix:
+            parameters:
+              scala-version: ["2.12.14"]
+          # required since openjdk8-deploy has tag filters AND requires
+          # openjdk8
+          # https://circleci.com/docs/2.0/workflows/#executing-workflows-for-a-git-tag
           filters:
             tags:
               only:
-                - /^(.*)$/
+                - /^(v.*)$/
+      - openjdk8-deploy:
+          matrix:
+            parameters:
+              scala-version: ["2.12.14"]
+          context: sonatype-azavea-signing-key
+          requires:
+            - openjdk8-build
+          filters:
+            tags:
+              only:
+                - /^(v.*)$/
             branches:
               only:
-                - develop
-                - /release\/.*/
-                - /hotfix\/.*/
-
-jobs:
-  "openjdk8-scala2.12.14":
-    <<: *openjdk8-scala2_12_14_environment
-    steps: *run_cibuild
-
-  "openjdk8-scala2.12.14_deploy":
-    <<: *openjdk8-scala2_12_14_environment
-    steps: *run_cipublish
+                - main
