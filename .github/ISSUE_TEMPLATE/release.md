@@ -7,10 +7,7 @@ assignees: ''
 
 ---
 
-- [ ] Start a new release branch:
-```bash
-$ git flow release start X.Y.Z
-```
+- [ ] Make sure `main` is up-to-date: `git checkout -f main && git pull origin main`
 - [ ] Rotate `CHANGELOG.md` (following [Keep a Changelog](https://keepachangelog.com/) principles)
 - [ ] Ensure outstanding changes are committed:
 ```bash
@@ -18,14 +15,10 @@ $ git status # Is the git staging area clean?
 $ git add CHANGELOG.md
 $ git commit -m "X.Y.Z"
 ```
-- [ ] Publish the release branch:
+- [ ] Make and push an annotated tag for your release and push `main`:
 ```bash
-$ git flow release publish X.Y.Z
+$ git tag -s -a vX.Y.Z -m "Release version <version>"
+$ git push origin --tags
+$ git push origin main
 ```
 - [ ] Ensure that CI checks pass
-- [ ] Finish and publish the release branch:
-    - When prompted, keep default commit messages
-    - Use `X.Y.Z` as the tag message
-```bash
-$ git flow release finish -p X.Y.Z 
-```
