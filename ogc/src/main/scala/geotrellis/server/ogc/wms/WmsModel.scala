@@ -69,7 +69,8 @@ case class WmsModel[F[_]: Monad](
                   algebra.bindExtendedParameters(extendedParameters),
                   style,
                   resampleMethod,
-                  overviewStrategy
+                  overviewStrategy,
+                  mas.targetCellType
                 )
             }
           }

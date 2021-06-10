@@ -20,7 +20,7 @@ import geotrellis.server.ogc.wms.wmsScope
 import geotrellis.server.ogc.style._
 import geotrellis.proj4.CRS
 import geotrellis.vector.Extent
-import geotrellis.raster.{resample, ResampleMethod, TileLayout}
+import geotrellis.raster.{resample, CellType, ResampleMethod, TileLayout}
 import geotrellis.raster.render.{ColorMap, ColorRamp}
 import com.azavea.maml.ast._
 import com.azavea.maml.ast.codec.tree._
@@ -193,4 +193,7 @@ package object conf {
 
   implicit val ogcTimeDefaultReader: ConfigReader[OgcTimeDefault] =
     ConfigReader[String].emap { _.asJson.as[OgcTimeDefault].leftMap(e => ExceptionThrown(e.fillInStackTrace())) }
+
+  implicit val cellTypeReader: ConfigReader[CellType] =
+    ConfigReader[String].emap { _.asJson.as[CellType].leftMap(e => ExceptionThrown(e.fillInStackTrace())) }
 }
