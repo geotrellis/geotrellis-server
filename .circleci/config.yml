@@ -73,7 +73,6 @@ workflows:
           matrix:
             parameters:
               scala-version: ["2.12.14"]
-          context: sonatype-azavea-signing-key
           requires:
             - openjdk8-build
           filters:
