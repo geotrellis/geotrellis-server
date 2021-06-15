@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - WMS Parent Layer default time should be omitted [#368](https://github.com/geotrellis/geotrellis-server/pull/368)
 - Fix WCS DescribeCoverage extents axis ordering [#369](https://github.com/geotrellis/geotrellis-server/pull/369)
 - Fix TIFF CellType of identity MAML Layers [#375](https://github.com/geotrellis/geotrellis-server/pull/375)
+- Fix InterpolatedColorMap.render function [#381](https://github.com/geotrellis/geotrellis-server/pull/381)
 
 ## Changed
 - OgcTime logic cleanup [#371](https://github.com/geotrellis/geotrellis-server/pull/371)

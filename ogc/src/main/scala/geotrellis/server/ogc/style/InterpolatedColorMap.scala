@@ -30,18 +30,23 @@ case class InterpolatedColorMap(
 
   def interpolate: Double => Int = { dbl: Double => interpolation(poles, clipDefinition)(dbl) }
 
-  def render(tile: Tile): Tile =
+  def render(tile: Tile): Tile = {
+    // IntCellType is used to store interpolated colors, since the source cellType can have not enough bits to encode interpolated colors.
+    // See https://github.com/locationtech/geotrellis/blob/v3.6.0/raster/src/main/scala/geotrellis/raster/render/ColorMap.scala#L164-L176
+    val result = ArrayTile.empty(IntCellType, tile.cols, tile.rows)
     if (tile.cellType.isFloatingPoint) {
-      tile.mapDouble { cellValue: Double =>
-        if (isData(cellValue)) interpolate(cellValue)
-        else 0
+      tile.foreachDouble { (col, row, z) =>
+        if (isData(z)) result.setDouble(col, row, interpolate(z))
+        else result.setDouble(col, row, 0d)
       }
     } else {
-      tile.map { cellValue: Int =>
-        if (isData(cellValue)) interpolate(cellValue)
-        else 0
+      tile.foreach { (col, row, z) =>
+        if (isData(z)) result.setDouble(col, row, interpolate(z))
+        else result.set(col, row, 0)
       }
     }
+    result
+  }
 }
 
 object InterpolatedColorMap {
