@@ -68,7 +68,7 @@ workflows:
           filters:
             tags:
               only:
-                - /^(v.*)$/
+                - /^(.*)$/
       - openjdk8-deploy:
           matrix:
             parameters:
@@ -78,7 +78,7 @@ workflows:
           filters:
             tags:
               only:
-                - /^(v.*)$/
+                - /^(.*)$/
             branches:
               only:
                 - main
