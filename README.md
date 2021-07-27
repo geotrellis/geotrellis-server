@@ -1,6 +1,6 @@
 # GeoTrellis Server 
 
-[![CircleCI](https://circleci.com/gh/geotrellis/geotrellis-server.svg?style=svg)](https://circleci.com/gh/geotrellis/geotrellis-server) [![Join the chat at https://gitter.im/geotrellis/geotrellis](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/geotrellis/geotrellis?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Maven Central](https://img.shields.io/maven-central/v/com.azavea.geotrellis/geotrellis-server-core_2.12)](http://search.maven.org/#search%7Cga%7C1%7com.azavea.geotrellis)
+[![CircleCI](https://circleci.com/gh/geotrellis/geotrellis-server.svg?style=svg)](https://circleci.com/gh/geotrellis/geotrellis-server) [![Join the chat at https://gitter.im/geotrellis/geotrellis](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/geotrellis/geotrellis?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Maven Central](https://img.shields.io/maven-central/v/com.azavea.geotrellis/geotrellis-server-core_2.12)](http://search.maven.org/#search%7Cga%7C1%7com.azavea.geotrellis) [![Snapshots](https://img.shields.io/nexus/s/https/oss.sonatype.org/com.azavea.geotrellis/geotrellis-server-core_2.12.svg)](https://oss.sonatype.org/content/repositories/snapshots/com/azavea/geotrellis/geotrellis-server-core_2.12/)
 
 
 GeoTrellis Server is a set of components designed to simplify
