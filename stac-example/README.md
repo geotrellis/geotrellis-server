@@ -4,7 +4,7 @@ This project allows to use [STAC API](https://github.com/radiantearth/stac-api-s
 GeoTrellis server translates input OGC queries into STAC queries and reads
 requested items assets respectively.
 
-GeoTrellis server requires the [STAC Layer extension](https://github.com/azavea/stac4s/tree/master/docs/stac-spec/extensions/layer) usage. 
+GeoTrellis server can also take advantage of the the [STAC Layer extension](https://github.com/azavea/stac-layer), but does not require it. 
 
 ### Project description
 
