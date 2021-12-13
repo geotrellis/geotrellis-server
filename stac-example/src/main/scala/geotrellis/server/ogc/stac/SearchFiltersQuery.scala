@@ -120,17 +120,17 @@ object SearchFiltersQuery {
   import geotrellis.store.query.QueryF._
   def algebra(searchCriteria: StacSearchCriteria): Algebra[QueryF, Option[SearchFilters]] =
     Algebra {
-      case Nothing()          => None
-      case All()              => SearchFilters().some
-      case WithName(name)     =>
+      case Nothing() => None
+      case All()     => SearchFilters().some
+      case WithName(name) =>
         searchCriteria match {
           case ByCollection => SearchFilters(collections = List(name)).some
           case ByLayer      => SearchFilters(query = Map("layer:ids" -> List(Superset(NonEmptyVector.one(name.asJson))))).some
         }
-      case WithNames(names)   =>
+      case WithNames(names) =>
         searchCriteria match {
           case ByCollection => SearchFilters(collections = names.toList).some
-          case ByLayer      =>
+          case ByLayer =>
             SearchFilters(query = Map("layer:ids" -> List(Superset(NonEmptyVector.fromVectorUnsafe(names.map(_.asJson).toVector))))).some
         }
       case At(t, _)           => SearchFilters(datetime = TemporalExtent(t.toInstant, t.toInstant).some).some
@@ -140,20 +140,19 @@ object SearchFiltersQuery {
       case And(l, r)          => import IntersectionSemigroup._; l |+| r
       case Or(l, r)           => import UnionSemigroup._; l |+| r
       // unsupported nodes
-      case _                  => SearchFilters().some
+      case _ => SearchFilters().some
     }
 
-  def algebraStacSummary[F[_]: Applicative](searchCriteria: StacSearchCriteria): Algebra[QueryF, StacClient[F] => F[StacSummary]] = {
+  def algebraStacSummary[F[_]: Applicative](searchCriteria: StacSearchCriteria): Algebra[QueryF, StacClient[F] => F[StacSummary]] =
     searchCriteria match {
       case ByLayer => Algebra { case _ => _ => EmptySummary.pure[F].widen }
-      case _       =>
+      case _ =>
         Algebra {
           case WithName(name)   => _.collection(NonEmptyString.unsafeFrom(name)).map(CollectionSummary)
           case WithNames(names) => _.collection(NonEmptyString.unsafeFrom(names.head)).map(CollectionSummary)
           case _                => _ => EmptySummary.pure[F].widen
         }
     }
-  }
 
   def extractName: Algebra[QueryF, List[String]] =
     Algebra {

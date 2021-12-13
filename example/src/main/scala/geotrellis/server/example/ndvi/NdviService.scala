@@ -39,7 +39,7 @@ import cats.implicits._
 import java.net.URLDecoder
 
 class NdviService[F[_]: Sync: Logger: Parallel, T: Encoder: Decoder: TmsReification[F, *]](
-  interpreter: Interpreter[F]
+    interpreter: Interpreter[F]
 ) extends Http4sDsl[F] {
   val logger = Logger[F]
 
@@ -52,7 +52,7 @@ class NdviService[F[_]: Sync: Logger: Parallel, T: Encoder: Decoder: TmsReificat
   }
 
   implicit val redQueryParamDecoder: QueryParamDecoder[T] =
-    QueryParamDecoder[String].map { str => decode[T](URLDecoder.decode(str, "UTF-8")).right.get }
+    QueryParamDecoder[String].map(str => decode[T](URLDecoder.decode(str, "UTF-8")).right.get)
   object RedQueryParamMatcher extends QueryParamDecoderMatcher[T]("red")
   object NirQueryParamMatcher extends QueryParamDecoderMatcher[T]("nir")
 
@@ -84,7 +84,7 @@ class NdviService[F[_]: Sync: Logger: Parallel, T: Encoder: Decoder: TmsReificat
           case Right(Invalid(errs)) =>
             logger.debug(errs.toList.toString) *>
               BadRequest(errs.asJson)
-          case Left(err)            =>
+          case Left(err) =>
             logger.debug(err.toString) *>
               InternalServerError(err.toString)
         }

@@ -48,13 +48,13 @@ case class ParamMap(params: Map[String, Seq[String]]) {
 
   def validatedOptionalParamDouble(field: String): ValidatedNel[ParamError, Option[Double]] =
     (getParams(field) match {
-      case None           => Valid(Option.empty[Double])
+      case None => Valid(Option.empty[Double])
       case Some(v :: Nil) =>
-        Try { java.lang.Double.parseDouble(v) } match {
+        Try(java.lang.Double.parseDouble(v)) match {
           case Success(d) => Valid(d.some)
           case Failure(_) => Invalid(ParamError.ParseError(field, v))
         }
-      case Some(_)        => Invalid(ParamError.RepeatedParam(field))
+      case Some(_) => Invalid(ParamError.RepeatedParam(field))
     }).toValidatedNel
 
   def validatedOptionalParam[T](field: String, parseValue: String => Option[T]): ValidatedNel[ParamError, Option[T]] =
@@ -64,8 +64,8 @@ case class ParamMap(params: Map[String, Seq[String]]) {
           case Some(valid) => Valid(valid.some)
           case None        => Invalid(ParamError.ParseError(field, v))
         }
-      case Some(_)        => Invalid(ParamError.RepeatedParam(field))
-      case None           => Valid(None)
+      case Some(_) => Invalid(ParamError.RepeatedParam(field))
+      case None    => Valid(None)
     }).toValidatedNel
 
   /** Get a field that must appear only once, parse the value successfully, otherwise error */
@@ -76,8 +76,8 @@ case class ParamMap(params: Map[String, Seq[String]]) {
           case Some(valid) => Valid(valid)
           case None        => Invalid(ParamError.ParseError(field, v))
         }
-      case Some(_)        => Invalid(ParamError.RepeatedParam(field))
-      case None           => Invalid(ParamError.MissingParam(field))
+      case Some(_) => Invalid(ParamError.RepeatedParam(field))
+      case None    => Invalid(ParamError.MissingParam(field))
     }).toValidatedNel
 
   /** Get a field that must appear only once, and should be one of a list of values, otherwise error */
@@ -100,7 +100,7 @@ case class ParamMap(params: Map[String, Seq[String]]) {
       case None                                                        =>
         // Can send "acceptversions" instead
         getParams("acceptversions") match {
-          case Some(Nil)             =>
+          case Some(Nil) =>
             Valid(default)
           case Some(versions :: Nil) =>
             val requestedVersions = versions.split(",")
@@ -110,15 +110,15 @@ case class ParamMap(params: Map[String, Seq[String]]) {
             } else {
               Valid(intersection.max)
             }
-          case Some(_)               =>
+          case Some(_) =>
             Invalid(ParamError.RepeatedParam("acceptversions"))
-          case None                  =>
+          case None =>
             // Version string is optional, reply with highest supported version if omitted
             Valid(default)
         }
     }).toValidatedNel
 
-  def validatedOgcTimeSequence(field: String): ValidatedNel[ParamError, List[OgcTime]] = {
+  def validatedOgcTimeSequence(field: String): ValidatedNel[ParamError, List[OgcTime]] =
     validatedOptionalParam(field).andThen {
       case Some(timeString) if timeString.contains("/") =>
         timeString
@@ -129,16 +129,15 @@ case class ParamMap(params: Map[String, Seq[String]]) {
           case Success(list) => Valid(list)
           case Failure(e)    => Invalid(NonEmptyList.of(ParamError.ParseError(field, e.getMessage)))
         }
-      case Some(timeString)                             =>
+      case Some(timeString) =>
         OgcTimePositions
           .parse(timeString.split(",").toList)
           .map(_ :: Nil) match {
           case Success(list) => Valid(list)
           case Failure(e)    => Invalid(NonEmptyList.of(ParamError.ParseError(field, e.getMessage)))
         }
-      case None                                         => Valid(Nil)
+      case None => Valid(Nil)
     }
-  }
 
   def validatedOgcTime(field: String): ValidatedNel[ParamError, OgcTime] =
     validatedOgcTimeSequence(field).map(_.headOption.getOrElse(OgcTimeEmpty))

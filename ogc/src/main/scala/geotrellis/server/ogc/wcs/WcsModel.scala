@@ -27,20 +27,20 @@ import geotrellis.proj4.CRS
 
 /** This class holds all the information necessary to construct a response to a WCS request */
 case class WcsModel[F[_]: Functor](
-  serviceMetadata: ows.ServiceMetadata,
-  sources: RepositoryM[F, List, OgcSource],
-  supportedProjections: List[CRS],
-  extendedParametersBinding: Option[ParamMap => Option[Expression => Expression]] = None
+    serviceMetadata: ows.ServiceMetadata,
+    sources: RepositoryM[F, List, OgcSource],
+    supportedProjections: List[CRS],
+    extendedParametersBinding: Option[ParamMap => Option[Expression => Expression]] = None
 ) {
   def getLayers(p: GetCoverageWcsParams): F[List[OgcLayer]] = {
     val filteredSources = sources.find(p.toQuery)
     filteredSources.map {
       _.map {
-        case rs: RasterOgcSource   => rs.toLayer(p.crs, None, p.temporalSequence)
+        case rs: RasterOgcSource => rs.toLayer(p.crs, None, p.temporalSequence)
         case mas: MapAlgebraSource =>
           val (name, title, algebra, resampleMethod, overviewStrategy) = (mas.name, mas.title, mas.algebra, mas.resampleMethod, mas.overviewStrategy)
-          val simpleLayers                                             = mas.sources.mapValues { rs => SimpleOgcLayer(name, title, p.crs, rs, None, resampleMethod, overviewStrategy) }
-          val extendedParameters                                       = extendedParametersBinding.flatMap(_.apply(p.params))
+          val simpleLayers       = mas.sources.mapValues(rs => SimpleOgcLayer(name, title, p.crs, rs, None, resampleMethod, overviewStrategy))
+          val extendedParameters = extendedParametersBinding.flatMap(_.apply(p.params))
           MapAlgebraOgcLayer(
             name,
             title,

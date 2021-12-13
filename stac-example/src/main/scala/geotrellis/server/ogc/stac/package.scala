@@ -23,7 +23,7 @@ import geotrellis.raster.{EmptyName, RasterSource, SourceName, StringName}
 import geotrellis.raster.geotiff.GeoTiffPath
 import geotrellis.server.ogc.stac.util.logging.{StacClientLoggingMid, StreamingStacClientLoggingMid}
 import com.azavea.stac4s.{StacAsset, StacExtent, TemporalExtent}
-import com.azavea.stac4s.api.client.{SearchFilters, StacClient, StreamingStacClient, StreamingStacClientFS2, Query => SQuery}
+import com.azavea.stac4s.api.client.{Query => SQuery, SearchFilters, StacClient, StreamingStacClient, StreamingStacClientFS2}
 import com.azavea.stac4s.extensions.periodic.PeriodicExtent
 import com.azavea.stac4s.syntax._
 import io.circe.syntax._
@@ -109,25 +109,24 @@ package object stac {
 
   implicit class RasterSourcesQueryOps[G[_]: Foldable: FunctorFilter, T <: RasterSource](val self: G[T]) {
 
-    /** A helper function that filters raster sources in case the STAC Layer is temporal and it is not taken into account in the query.
-      *
-      * By default STAC API returns all temporal items even though the time is not specified.
-      * If ignoreTime configuration is set to false and the query is not temporal and not universal
-      * (meaning that it is bounded by temporal or spatial extent),
-      * we can select the first time position of the temporal layer in this case.
-      *
-      * If the layer is not temporal, no extra filtering would be applied.
-      * All non temporal items would be included into the result.
-      * Otherwise, only items that match the first time position would be returned.
-      */
+    /**
+     * A helper function that filters raster sources in case the STAC Layer is temporal and it is not taken into account in the query.
+     *
+     * By default STAC API returns all temporal items even though the time is not specified. If ignoreTime configuration is set to false and the query
+     * is not temporal and not universal (meaning that it is bounded by temporal or spatial extent), we can select the first time position of the
+     * temporal layer in this case.
+     *
+     * If the layer is not temporal, no extra filtering would be applied. All non temporal items would be included into the result. Otherwise, only
+     * items that match the first time position would be returned.
+     */
     def timeSlice(query: Query, timeDefault: OgcTimeDefault, ignoreTime: Boolean, datetimeField: Option[String]): G[T] =
       if (!ignoreTime & query.nonTemporal && query.nonUniversal) {
         self.foldMap(_.time(datetimeField)) match {
-          case OgcTimePositions(list)         =>
+          case OgcTimePositions(list) =>
             self.filter(source => source.time(datetimeField).strictTimeMatch(timeDefault.selectTime(list)))
           case OgcTimeInterval(start, end, _) =>
             self.filter(source => source.time(datetimeField).strictTimeMatch(timeDefault.selectTime(NonEmptyList.of(start, end))))
-          case OgcTimeEmpty                   => self
+          case OgcTimeEmpty => self
         }
       } else self
 
@@ -143,30 +142,29 @@ package object stac {
 
   implicit class RasterSourcesMQueryOps[M[_]: Functor, G[_]: Foldable: FunctorFilter: Functor, T <: RasterSource](val self: G[M[T]]) {
 
-    /** A helper function that filters raster sources in case the STAC Layer is temporal and it is not taken into account in the query.
-      *
-      * By default STAC API returns all temporal items even though the time is not specified.
-      * If ignoreTime configuration is set to false and the query is not temporal and not universal
-      * (meaning that it is bounded by temporal or spatial extent),
-      * we can select the first time position of the temporal layer in this case.
-      *
-      * If the layer is not temporal, no extra filtering would be applied.
-      * All non temporal items would be included into the result.
-      * Otherwise, only items that match the first time position would be returned.
-      */
+    /**
+     * A helper function that filters raster sources in case the STAC Layer is temporal and it is not taken into account in the query.
+     *
+     * By default STAC API returns all temporal items even though the time is not specified. If ignoreTime configuration is set to false and the query
+     * is not temporal and not universal (meaning that it is bounded by temporal or spatial extent), we can select the first time position of the
+     * temporal layer in this case.
+     *
+     * If the layer is not temporal, no extra filtering would be applied. All non temporal items would be included into the result. Otherwise, only
+     * items that match the first time position would be returned.
+     */
 
     def timeSlice(query: Query, timeDefault: OgcTimeDefault, ignoreTime: Boolean, datetimeField: Option[String]): G[M[Option[T]]] =
       if (!ignoreTime & query.nonTemporal && query.nonUniversal) {
         self.map { sourceM =>
           sourceM.map { source =>
             source.time(datetimeField) match {
-              case t @ OgcTimePositions(list)         =>
+              case t @ OgcTimePositions(list) =>
                 if (t.strictTimeMatch(timeDefault.selectTime(list))) source.some
                 else None
               case t @ OgcTimeInterval(start, end, _) =>
                 if (t.strictTimeMatch(timeDefault.selectTime(NonEmptyList.of(start, end)))) source.some
                 else None
-              case OgcTimeEmpty                       => source.some
+              case OgcTimeEmpty => source.some
             }
           }
         }

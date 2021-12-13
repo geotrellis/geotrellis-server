@@ -33,18 +33,18 @@ sealed trait OgcSourceConf {
 }
 
 case class RasterSourceConf(
-  name: String,
-  title: String,
-  source: String,
-  defaultStyle: Option[String],
-  styles: List[StyleConf],
-  resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
-  datetimeField: String = SimpleSource.TimeFieldDefault,
-  timeFormat: OgcTimeFormat = OgcTimeFormat.Default,
-  timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest
+    name: String,
+    title: String,
+    source: String,
+    defaultStyle: Option[String],
+    styles: List[StyleConf],
+    resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+    overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
+    datetimeField: String = SimpleSource.TimeFieldDefault,
+    timeFormat: OgcTimeFormat = OgcTimeFormat.Default,
+    timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest
 ) extends OgcSourceConf {
-  def toLayer: RasterOgcSource = {
+  def toLayer: RasterOgcSource =
     GeoTrellisPath
       .parseOption(source)
       .fold[RasterOgcSource](
@@ -73,36 +73,35 @@ case class RasterSourceConf(
           timeDefault
         )
       )
-  }
 }
 
 case class MapAlgebraSourceConf(
-  name: String,
-  title: String,
-  algebra: Expression,
-  defaultStyle: Option[String],
-  styles: List[StyleConf],
-  resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
-  timeFormat: OgcTimeFormat = OgcTimeFormat.Default,
-  timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest,
-  targetCellType: Option[CellType] = None
+    name: String,
+    title: String,
+    algebra: Expression,
+    defaultStyle: Option[String],
+    styles: List[StyleConf],
+    resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+    overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
+    timeFormat: OgcTimeFormat = OgcTimeFormat.Default,
+    timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest,
+    targetCellType: Option[CellType] = None
 ) extends OgcSourceConf {
   private def listParams(expr: Expression): List[String] = {
     def eval(subExpr: Expression): List[String] =
       subExpr match {
         case v: Variable =>
           List(v.name)
-        case _           =>
+        case _ =>
           subExpr.children.flatMap(eval)
       }
     eval(expr)
   }
 
-  /** Given a list of all available `SimpleSourceConf` instances in the global [[Conf]] object,
-    *  attempt to produce the parameter bindings necessary for evaluating the MAML [[Expression]]
-    *  in the algebra field
-    */
+  /**
+   * Given a list of all available `SimpleSourceConf` instances in the global [[Conf]] object, attempt to produce the parameter bindings necessary for
+   * evaluating the MAML [[Expression]] in the algebra field
+   */
   def model(possibleSources: List[RasterOgcSource]): MapAlgebraSource = {
     val layerNames = listParams(algebra)
     val sourceList = layerNames.map { name =>

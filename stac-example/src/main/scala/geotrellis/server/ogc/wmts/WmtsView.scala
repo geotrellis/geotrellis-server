@@ -48,8 +48,8 @@ import scala.concurrent.duration._
 import java.net._
 
 class WmtsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
-  wmtsModel: WmtsModel[F],
-  serviceUrl: URL
+    wmtsModel: WmtsModel[F],
+    serviceUrl: URL
 ) extends Http4sDsl[F] {
   val logger = Logger[F]
 
@@ -60,7 +60,7 @@ class WmtsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
       .maximumSize(500)
       .build[GetTile, Array[Byte]]()
 
-  def responseFor(req: Request[F]): F[Response[F]] = {
+  def responseFor(req: Request[F]): F[Response[F]] =
     WmtsParams(req.multiParams) match {
       case Invalid(errors) =>
         val msg = ParamError.generateErrorMessage(errors.toList)
@@ -76,13 +76,13 @@ class WmtsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
         val tileRow   = wmtsReq.tileRow
         val layerName = wmtsReq.layer
 
-        val res = {
+        val res =
           wmtsModel
             .getLayer(wmtsReq)
             .flatMap {
               _.map { layer =>
                 val evalWmts = layer match {
-                  case sl: SimpleTiledOgcLayer      => LayerTms.withCellType(sl, sl.source.cellType)
+                  case sl: SimpleTiledOgcLayer => LayerTms.withCellType(sl, sl.source.cellType)
                   case mas: MapAlgebraTiledOgcLayer =>
                     LayerTms(mas.algebra.pure[F], mas.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F], mas.targetCellType)
                 }
@@ -90,7 +90,7 @@ class WmtsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
                 // TODO: remove this once GeoTiffRasterSource would be threadsafe
                 // ETA 6/22/2020: we're pretending everything is fine
                 val evalHisto = layer match {
-                  case sl: SimpleTiledOgcLayer      => LayerHistogram.concurrent(sl, 512)
+                  case sl: SimpleTiledOgcLayer => LayerHistogram.concurrent(sl, 512)
                   case mas: MapAlgebraTiledOgcLayer =>
                     LayerHistogram(mas.algebra.pure[F], mas.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F], 512)
                 }
@@ -105,21 +105,19 @@ class WmtsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
                     val rendered = Raster(mbtile, extent).render(layer.crs, layer.style, wmtsReq.format, hists)
                     tileCache.put(wmtsReq, rendered)
                     Ok(rendered).map(_.putHeaders(`Content-Type`(ToMediaType(wmtsReq.format))))
-                  case Right(Invalid(errs))          => // maml-specific errors
+                  case Right(Invalid(errs)) => // maml-specific errors
                     logger.debug(errs.toList.toString)
                     BadRequest(errs.asJson)
-                  case Left(err)                     => // exceptions
+                  case Left(err) => // exceptions
                     logger.error(err.stackTraceString)
                     InternalServerError(err.stackTraceString)
                 }
               }.headOption.getOrElse(BadRequest(s"Layer ($layerName) not found"))
             }
-        }
 
         tileCache.getIfPresent(wmtsReq) match {
           case Some(rendered) => Ok(rendered).map(_.putHeaders(`Content-Type`(ToMediaType(wmtsReq.format))))
           case _              => res
         }
     }
-  }
 }

@@ -23,13 +23,13 @@ import cats.data.{NonEmptyList => NEL}
 import org.scalatest.funsuite.AnyFunSuite
 import org.scalatest.matchers.should.Matchers
 
-/** There are various possible relationships between extents of raster, we need to have union and
-  *  intersection strategies which handle each of them appropriately
-  *
-  * case 1: all extents share some intersection extent
-  * case 2: some intersections exist among the extents but no single shared extent
-  * case 3: no intersection among the extents
-  */
+/**
+ * There are various possible relationships between extents of raster, we need to have union and intersection strategies which handle each of them
+ * appropriately
+ *
+ * case 1: all extents share some intersection extent case 2: some intersections exist among the extents but no single shared extent case 3: no
+ * intersection among the extents
+ */
 class ExtentMergeStrategyTest extends AnyFunSuite with Matchers {
 
   test("total overlap - intersection") {

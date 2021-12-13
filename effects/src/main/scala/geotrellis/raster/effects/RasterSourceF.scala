@@ -35,50 +35,53 @@ abstract class RasterSourceF[F[_]: Monad] extends RasterMetadataF[F] with Serial
   def metadata: F[_ <: RasterMetadata]
 
   protected def reprojection(
-    targetCRS: CRS,
-    resampleTarget: ResampleTarget = DefaultTarget,
-    method: ResampleMethod = ResampleMethod.DEFAULT,
-    strategy: OverviewStrategy = OverviewStrategy.DEFAULT
+      targetCRS: CRS,
+      resampleTarget: ResampleTarget = DefaultTarget,
+      method: ResampleMethod = ResampleMethod.DEFAULT,
+      strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): RasterSourceF[F]
 
-  /** Reproject to different CRS with explicit sampling reprojectOptions.
-    * @see [[geotrellis.raster.reproject.Reproject]]
-    * @group reproject
-    */
+  /**
+   * Reproject to different CRS with explicit sampling reprojectOptions.
+   * @see
+   *   [[geotrellis.raster.reproject.Reproject]]
+   * @group reproject
+   */
   def reproject(
-    targetCRS: CRS,
-    resampleTarget: ResampleTarget = DefaultTarget,
-    method: ResampleMethod = ResampleMethod.DEFAULT,
-    strategy: OverviewStrategy = OverviewStrategy.DEFAULT
+      targetCRS: CRS,
+      resampleTarget: ResampleTarget = DefaultTarget,
+      method: ResampleMethod = ResampleMethod.DEFAULT,
+      strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): RasterSourceF[F] =
     // if (targetCRS == this.crs) this // TODO: Fixme, Embed would work here? how to short circuit
     reprojection(targetCRS, resampleTarget, method, strategy)
 
-  /** Sampling grid and resolution is defined by given [[GridExtent]].
-    * Resulting extent is the extent of the minimum enclosing pixel region
-    *   of the data footprint in the target grid.
-    * @group reproject a
-    */
+  /**
+   * Sampling grid and resolution is defined by given [[GridExtent]]. Resulting extent is the extent of the minimum enclosing pixel region of the data
+   * footprint in the target grid.
+   * @group reproject
+   * a
+   */
   def reprojectToGrid(
-    targetCRS: CRS,
-    grid: GridExtent[Long],
-    method: ResampleMethod = ResampleMethod.DEFAULT,
-    strategy: OverviewStrategy = OverviewStrategy.DEFAULT
+      targetCRS: CRS,
+      grid: GridExtent[Long],
+      method: ResampleMethod = ResampleMethod.DEFAULT,
+      strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): RasterSourceF[F] =
     // if (targetCRS == this.crs && grid == this.gridExtent) this // TODO: Fixme, Embed would work here? how to short circuit
     // else if (targetCRS == this.crs) resampleToGrid(grid, method, strategy) // TODO: Fixme, Embed would work here? how to short circuit
     reprojection(targetCRS, TargetAlignment(grid), method, strategy)
 
-  /** Sampling grid and resolution is defined by given [[RasterExtent]] region.
-    * The extent of the result is also taken from given [[RasterExtent]],
-    *   this region may be larger or smaller than the footprint of the data
-    * @group reproject
-    */
+  /**
+   * Sampling grid and resolution is defined by given [[RasterExtent]] region. The extent of the result is also taken from given [[RasterExtent]],
+   * this region may be larger or smaller than the footprint of the data
+   * @group reproject
+   */
   def reprojectToRegion(
-    targetCRS: CRS,
-    region: RasterExtent,
-    method: ResampleMethod = ResampleMethod.DEFAULT,
-    strategy: OverviewStrategy = OverviewStrategy.DEFAULT
+      targetCRS: CRS,
+      region: RasterExtent,
+      method: ResampleMethod = ResampleMethod.DEFAULT,
+      strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): RasterSourceF[F] =
     // if (targetCRS == this.crs && region == this.gridExtent) this // TODO: Fixme, Embed would work here? how to short circuit
     // else if (targetCRS == this.crs) resampleToRegion(region.toGridType[Long], method, strategy) // TODO: Fixme, Embed would work here? how to short circuit
@@ -86,97 +89,106 @@ abstract class RasterSourceF[F[_]: Monad] extends RasterMetadataF[F] with Serial
 
   def resample(resampleTarget: ResampleTarget, method: ResampleMethod, strategy: OverviewStrategy): RasterSourceF[F]
 
-  /** Sampling grid is defined of the footprint of the data with resolution implied by column and row count.
-    * @group resample
-    */
+  /**
+   * Sampling grid is defined of the footprint of the data with resolution implied by column and row count.
+   * @group resample
+   */
   def resample(
-    targetCols: Long,
-    targetRows: Long,
-    method: ResampleMethod = ResampleMethod.DEFAULT,
-    strategy: OverviewStrategy = OverviewStrategy.DEFAULT
+      targetCols: Long,
+      targetRows: Long,
+      method: ResampleMethod = ResampleMethod.DEFAULT,
+      strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): RasterSourceF[F] =
     resample(TargetDimensions(targetCols, targetRows), method, strategy)
 
-  /** Sampling grid and resolution is defined by given [[GridExtent]].
-    * Resulting extent is the extent of the minimum enclosing pixel region
-    *  of the data footprint in the target grid.
-    * @group resample
-    */
+  /**
+   * Sampling grid and resolution is defined by given [[GridExtent]]. Resulting extent is the extent of the minimum enclosing pixel region of the data
+   * footprint in the target grid.
+   * @group resample
+   */
   def resampleToGrid(
-    grid: GridExtent[Long],
-    method: ResampleMethod = ResampleMethod.DEFAULT,
-    strategy: OverviewStrategy = OverviewStrategy.DEFAULT
+      grid: GridExtent[Long],
+      method: ResampleMethod = ResampleMethod.DEFAULT,
+      strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): RasterSourceF[F] =
     resample(TargetAlignment(grid), method, strategy)
 
-  /** Sampling grid and resolution is defined by given [[RasterExtent]] region.
-    * The extent of the result is also taken from given [[RasterExtent]],
-    *   this region may be larger or smaller than the footprint of the data
-    * @group resample
-    */
+  /**
+   * Sampling grid and resolution is defined by given [[RasterExtent]] region. The extent of the result is also taken from given [[RasterExtent]],
+   * this region may be larger or smaller than the footprint of the data
+   * @group resample
+   */
   def resampleToRegion(
-    region: GridExtent[Long],
-    method: ResampleMethod = ResampleMethod.DEFAULT,
-    strategy: OverviewStrategy = OverviewStrategy.DEFAULT
+      region: GridExtent[Long],
+      method: ResampleMethod = ResampleMethod.DEFAULT,
+      strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): RasterSourceF[F] =
     resample(TargetRegion(region), method, strategy)
 
-  /** Reads a window for the extent.
-    * Return extent may be smaller than requested extent around raster edges.
-    * May return None if the requested extent does not overlap the raster extent.
-    * @group read
-    */
+  /**
+   * Reads a window for the extent. Return extent may be smaller than requested extent around raster edges. May return None if the requested extent
+   * does not overlap the raster extent.
+   * @group read
+   */
   @throws[IndexOutOfBoundsException]("if requested bands do not exist")
   def read(extent: Extent, bands: Seq[Int]): F[Raster[MultibandTile]]
 
-  /** Reads a window for pixel bounds.
-    * Return extent may be smaller than requested extent around raster edges.
-    * May return None if the requested extent does not overlap the raster extent.
-    * @group read
-    */
+  /**
+   * Reads a window for pixel bounds. Return extent may be smaller than requested extent around raster edges. May return None if the requested extent
+   * does not overlap the raster extent.
+   * @group read
+   */
   @throws[IndexOutOfBoundsException]("if requested bands do not exist")
   def read(bounds: GridBounds[Long], bands: Seq[Int]): F[Raster[MultibandTile]]
 
-  /** @group read
-    */
+  /**
+   * @group read
+   */
   def read(extent: Extent): F[Raster[MultibandTile]] =
     bandCount >>= { bandCount => read(extent, 0 until bandCount) }
 
-  /** @group read
-    */
+  /**
+   * @group read
+   */
   def read(bounds: GridBounds[Long]): F[Raster[MultibandTile]] =
     bandCount >>= { bandCount => read(bounds, 0 until bandCount) }
 
-  /** @group read
-    */
-  def read(): F[Raster[MultibandTile]]                =
+  /**
+   * @group read
+   */
+  def read(): F[Raster[MultibandTile]] =
     (bandCount, extent).tupled >>= { case (bandCount, extent) => read(extent, 0 until bandCount) }
 
-  /** @group read
-    */
+  /**
+   * @group read
+   */
   def read(bands: Seq[Int]): F[Raster[MultibandTile]] =
     extent >>= (read(_, bands))
 
-  /** @group read
-    */
+  /**
+   * @group read
+   */
   def readExtents(extents: Traversable[Extent], bands: Seq[Int]): F[Iterator[Raster[MultibandTile]]] =
     extents.toList.traverse(read(_, bands)).map(_.toIterator)
 
-  /** @group read
-    */
+  /**
+   * @group read
+   */
   def readExtents(extents: Traversable[Extent]): F[Iterator[Raster[MultibandTile]]] =
     bandCount >>= { bandCount => readExtents(extents, 0 until bandCount) }
 
-  /** @group read
-    */
+  /**
+   * @group read
+   */
   def readBounds(bounds: Traversable[GridBounds[Long]], bands: Seq[Int]): F[Iterator[Raster[MultibandTile]]] =
     bounds.toList.traverse(read(_, bands)).map(_.toIterator)
 
-  /** @group read
-    */
+  /**
+   * @group read
+   */
   def readBounds(bounds: Traversable[GridBounds[Long]]): F[Iterator[Raster[MultibandTile]]] =
     bounds.toList
-      .traverse { bounds => bandCount >>= { bandCount => read(bounds, 0 until bandCount) } }
+      .traverse(bounds => bandCount >>= { bandCount => read(bounds, 0 until bandCount) })
       .map(_.toIterator)
 
   private[raster] def targetCellType: Option[TargetCellType]
@@ -191,20 +203,21 @@ abstract class RasterSourceF[F[_]: Monad] extends RasterMetadataF[F] with Serial
     targetCellType match {
       case Some(target: TargetCellType) =>
         (raster: Raster[MultibandTile]) => target(raster)
-      case _                            =>
+      case _ =>
         (raster: Raster[MultibandTile]) => raster
     }
 
   def convert(targetCellType: TargetCellType): RasterSourceF[F]
 
-  /** Converts the values within the RasterSource from one [[CellType]] to another.
-    *
-    *  Note:
-    *
-    *  [[GDALRasterSource]] differs in how it converts data from the other RasterSources.
-    *  Please see the convert docs for [[GDALRasterSource]] for more information.
-    *  @group convert
-    */
+  /**
+   * Converts the values within the RasterSource from one [[CellType]] to another.
+   *
+   * Note:
+   *
+   * [[GDALRasterSource]] differs in how it converts data from the other RasterSources. Please see the convert docs for [[GDALRasterSource]] for more
+   * information.
+   * @group convert
+   */
   def convert(targetCellType: CellType): RasterSourceF[F] =
     convert(ConvertTargetCellType(targetCellType))
 

@@ -24,11 +24,10 @@ import geotrellis.raster.io.geotiff.{GeoTiffOptions, MultibandGeoTiff}
 import geotrellis.server.ogc.OutputFormat
 
 case class RGBStyle(name: String, title: String, legends: List[LegendModel] = Nil) extends OgcStyle {
-  def renderRaster(raster: Raster[MultibandTile], crs: CRS, format: OutputFormat, hists: List[Histogram[Double]]): Array[Byte] = {
+  def renderRaster(raster: Raster[MultibandTile], crs: CRS, format: OutputFormat, hists: List[Histogram[Double]]): Array[Byte] =
     format match {
       case _: OutputFormat.Png  => raster.tile.renderPng()
       case OutputFormat.Jpg     => raster.tile.renderJpg()
       case OutputFormat.GeoTiff => MultibandGeoTiff(raster, crs, GeoTiffOptions(colorSpace = ColorSpace.RGB)).toCloudOptimizedByteArray
     }
-  }
 }

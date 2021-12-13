@@ -29,14 +29,14 @@ sealed trait StyleConf {
 
 /** Styling in which a color scheme is known but not the values that these colors should map to */
 final case class ColorRampConf(
-  name: String,
-  title: String,
-  colors: ColorRamp,
-  stops: Option[Int],
-  minRender: Option[Double],
-  maxRender: Option[Double],
-  clampWithColor: Boolean = false,
-  legends: List[LegendModel] = Nil
+    name: String,
+    title: String,
+    colors: ColorRamp,
+    stops: Option[Int],
+    minRender: Option[Double],
+    maxRender: Option[Double],
+    clampWithColor: Boolean = false,
+    legends: List[LegendModel] = Nil
 ) extends StyleConf {
   def toStyle: OgcStyle =
     ColorRampStyle(name, title, colors, stops, minRender, maxRender, clampWithColor, legends)
@@ -44,20 +44,20 @@ final case class ColorRampConf(
 
 /** Styling in which both a color scheme and the data-to-color mapping is known */
 final case class ColorMapConf(
-  name: String,
-  title: String,
-  colorMap: ColorMap,
-  legends: List[LegendModel] = Nil
+    name: String,
+    title: String,
+    colorMap: ColorMap,
+    legends: List[LegendModel] = Nil
 ) extends StyleConf {
   def toStyle: OgcStyle =
     ColorMapStyle(name, title, colorMap, legends)
 }
 
 final case class InterpolatedColorMapConf(
-  name: String,
-  title: String,
-  colorMap: InterpolatedColorMap,
-  legends: List[LegendModel] = Nil
+    name: String,
+    title: String,
+    colorMap: InterpolatedColorMap,
+    legends: List[LegendModel] = Nil
 ) extends StyleConf {
   def toStyle: OgcStyle =
     InterpolatedColorMapStyle(name, title, colorMap, legends)

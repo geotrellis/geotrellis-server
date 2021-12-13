@@ -25,7 +25,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.{Assertion, Assertions}
 
 trait IOSpec extends AsyncFunSpec with Assertions with Matchers {
-  override implicit val executionContext      = BlockingThreadPool.executionContext
+  implicit override val executionContext      = BlockingThreadPool.executionContext
   implicit val contextShift: ContextShift[IO] = IO.contextShift(executionContext)
   implicit val timer: Timer[IO]               = IO.timer(executionContext)
   implicit val logger: Logger[IO]             = Slf4jLogger.getLogger[IO]

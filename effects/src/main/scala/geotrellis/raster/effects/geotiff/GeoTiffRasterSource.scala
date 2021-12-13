@@ -36,9 +36,9 @@ import cats.syntax.option._
 import cats.instances.list._
 
 case class GeoTiffRasterSource[F[_]: Monad: UnsafeLift](
-  dataPath: GeoTiffPath,
-  private[raster] val targetCellType: Option[TargetCellType] = None,
-  @transient private[raster] val baseTiff: Option[F[MultibandGeoTiff]] = None
+    dataPath: GeoTiffPath,
+    private[raster] val targetCellType: Option[TargetCellType] = None,
+    @transient private[raster] val baseTiff: Option[F[MultibandGeoTiff]] = None
 ) extends RasterSourceF[F] {
   def name: GeoTiffPath = dataPath
 
@@ -60,13 +60,13 @@ case class GeoTiffRasterSource[F[_]: Monad: UnsafeLift](
   def crs: F[CRS] = tiffF.map(_.crs)
 
   lazy val gridExtent: F[GridExtent[Long]] = tiffF.map(_.rasterExtent.toGridType[Long])
-  lazy val resolutions: F[List[CellSize]]  = tiffF.map { tiff => tiff.cellSize :: tiff.overviews.map(_.cellSize) }
+  lazy val resolutions: F[List[CellSize]]  = tiffF.map(tiff => tiff.cellSize :: tiff.overviews.map(_.cellSize))
 
   def reprojection(
-    targetCRS: CRS,
-    resampleTarget: ResampleTarget = DefaultTarget,
-    method: ResampleMethod = ResampleMethod.DEFAULT,
-    strategy: OverviewStrategy = OverviewStrategy.DEFAULT
+      targetCRS: CRS,
+      resampleTarget: ResampleTarget = DefaultTarget,
+      method: ResampleMethod = ResampleMethod.DEFAULT,
+      strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): GeoTiffReprojectRasterSource[F] =
     GeoTiffReprojectRasterSource(dataPath, targetCRS, resampleTarget, method, strategy, targetCellType = targetCellType, baseTiff = tiffF.some)
 
@@ -98,16 +98,16 @@ case class GeoTiffRasterSource[F[_]: Monad: UnsafeLift](
     }
 
   def read(bounds: GridBounds[Long], bands: Seq[Int]): F[Raster[MultibandTile]] =
-    readBounds(List(bounds), bands) >>= (iter => tiffF.map { _.synchronized(iter.next) })
+    readBounds(List(bounds), bands) >>= (iter => tiffF.map(_.synchronized(iter.next)))
 
   override def readExtents(extents: Traversable[Extent], bands: Seq[Int]): F[Iterator[Raster[MultibandTile]]] = {
-    val bounds: F[List[GridBounds[Long]]] = extents.toList.traverse { e => gridExtent.map(_.gridBoundsFor(e, clamp = true)) }
+    val bounds: F[List[GridBounds[Long]]] = extents.toList.traverse(e => gridExtent.map(_.gridBoundsFor(e, clamp = true)))
     bounds >>= (readBounds(_, bands))
   }
 
   override def readBounds(bounds: Traversable[GridBounds[Long]], bands: Seq[Int]): F[Iterator[Raster[MultibandTile]]] =
     (tiffF, gridBounds, gridExtent).tupled >>= { case (tiff, gridBounds, gridExtent) =>
-      val geoTiffTile                              = tiff.tile.asInstanceOf[GeoTiffMultibandTile]
+      val geoTiffTile = tiff.tile.asInstanceOf[GeoTiffMultibandTile]
       val intersectingBounds: Seq[GridBounds[Int]] =
         bounds.flatMap(_.intersection(gridBounds)).toSeq.map(_.toGridType[Int])
 

@@ -27,15 +27,15 @@ import cats.syntax.option._
 import cats.syntax.apply._
 
 case class RGBParameters(
-  clampRed: Option[Clamp],
-  clampGreen: Option[Clamp],
-  clampBlue: Option[Clamp],
-  normalizeRed: Option[Normalize],
-  normalizeGreen: Option[Normalize],
-  normalizeBlue: Option[Normalize],
-  rescaleRed: Option[Rescale],
-  rescaleGreen: Option[Rescale],
-  rescaleBlue: Option[Rescale]
+    clampRed: Option[Clamp],
+    clampGreen: Option[Clamp],
+    clampBlue: Option[Clamp],
+    normalizeRed: Option[Normalize],
+    normalizeGreen: Option[Normalize],
+    normalizeBlue: Option[Normalize],
+    rescaleRed: Option[Rescale],
+    rescaleGreen: Option[Rescale],
+    rescaleBlue: Option[Rescale]
 ) {
 
   def bind: Expression => Expression = {
@@ -43,23 +43,23 @@ case class RGBParameters(
       e.children match {
         case r :: g :: b :: Nil =>
           val id: Expression => Expression = identity
-          val rmap                         =
+          val rmap =
             clampRed.map(_.bind).getOrElse(id) andThen
-            normalizeRed.map(_.bind).getOrElse(id) andThen
-            rescaleRed.map(_.bind).getOrElse(id)
+              normalizeRed.map(_.bind).getOrElse(id) andThen
+              rescaleRed.map(_.bind).getOrElse(id)
 
           val gmap =
             clampGreen.map(_.bind).getOrElse(id) andThen
-            normalizeGreen.map(_.bind).getOrElse(id) andThen
-            rescaleGreen.map(_.bind).getOrElse(id)
+              normalizeGreen.map(_.bind).getOrElse(id) andThen
+              rescaleGreen.map(_.bind).getOrElse(id)
 
           val bmap =
             clampBlue.map(_.bind).getOrElse(id) andThen
-            normalizeBlue.map(_.bind).getOrElse(id) andThen
-            rescaleBlue.map(_.bind).getOrElse(id)
+              normalizeBlue.map(_.bind).getOrElse(id) andThen
+              rescaleBlue.map(_.bind).getOrElse(id)
 
           e.copy(children = rmap(r) :: gmap(g) :: bmap(b) :: Nil)
-        case _                  => e
+        case _ => e
       }
 
     case e => e
@@ -67,7 +67,7 @@ case class RGBParameters(
 }
 
 object RGBParameters {
-  case class Clamp(min: Double, max: Double)                                           {
+  case class Clamp(min: Double, max: Double) {
     def bind: Expression => Expression = {
       case e: MClamp => e.copy(min = min, max = max)
       case e         => e
@@ -79,7 +79,7 @@ object RGBParameters {
       case e             => e
     }
   }
-  case class Rescale(newMin: Double, newMax: Double)                                   {
+  case class Rescale(newMin: Double, newMax: Double) {
     def bind: Expression => Expression = {
       case e: MRescale => e.copy(newMax = newMax, newMin = newMin)
       case e           => e
@@ -112,7 +112,7 @@ object RGBParameters {
     } match {
       case (rc, rn, rr) :: (gc, gn, gr) :: (bc, bn, br) :: Nil =>
         RGBParameters(rc, gc, bc, rn, gn, bn, rr, gr, br).some
-      case _                                                   => None
+      case _ => None
     }
 
   def extendedParametersBinding: Option[ParamMap => Option[Expression => Expression]] =

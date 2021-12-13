@@ -42,18 +42,18 @@ import opengis._
 import scalaxb._
 
 case class GetFeatureInfo[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
-  model: WmsModel[F],
-  rasterCache: Cache[GetMapParams, Raster[MultibandTile]]
+    model: WmsModel[F],
+    rasterCache: Cache[GetMapParams, Raster[MultibandTile]]
 ) {
   def build(params: GetFeatureInfoParams): F[Either[GetFeatureInfoException, Feature[Geometry, Json]]] = {
-    val re  = params.rasterExtent
+    val re = params.rasterExtent
     val res = model
       .getLayer(params.toGetMapParamsQuery)
       .flatMap { layers =>
         layers
           .map { layer =>
             val evalExtent = layer match {
-              case sl: SimpleOgcLayer     => LayerExtent.withCellType(sl, sl.source.cellType)
+              case sl: SimpleOgcLayer => LayerExtent.withCellType(sl, sl.source.cellType)
               case ml: MapAlgebraOgcLayer =>
                 LayerExtent(ml.algebra.pure[F], ml.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F], ml.targetCellType)
             }
@@ -68,7 +68,7 @@ case class GetFeatureInfo[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
                 featureFromRaster(raster, params).pure[F].widen
               case Right(Invalid(errs)) => // maml-specific errors
                 Logger[F].debug(errs.toList.toString).as(Left(LayerNotDefinedException(errs.toList.toString, params.version))).widen
-              case Left(err)            => // exceptions
+              case Left(err) => // exceptions
                 Logger[F].error(err.stackTraceString).as(Left(LayerNotDefinedException(err.stackTraceString, params.version))).widen
             }: F[Either[GetFeatureInfoException, Feature[Geometry, Json]]]
           }
@@ -78,13 +78,13 @@ case class GetFeatureInfo[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
 
     rasterCache.getIfPresent(params.toGetMapParams) match {
       case Some(raster) => featureFromRaster(raster, params).pure[F]
-      case _            => res.map { _.getOrElse(Left(LayerNotDefinedException(s"Layers ${params.queryLayers} not found", params.version))) }
+      case _            => res.map(_.getOrElse(Left(LayerNotDefinedException(s"Layers ${params.queryLayers} not found", params.version))))
     }
   }
 
   def featureFromRaster(
-    raster: Raster[MultibandTile],
-    params: GetFeatureInfoParams
+      raster: Raster[MultibandTile],
+      params: GetFeatureInfoParams
   ): Either[GetFeatureInfoException, Feature[Geometry, Json]] = {
     val Dimensions(cols, rows) = raster.dimensions
 

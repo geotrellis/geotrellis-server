@@ -35,7 +35,7 @@ case class StacItemOps(self: StacItem) {
   private def projExtensionOption: Option[ProjItemExtension] = projExtension.toOption
 
   def bandCount: Option[Int] = eoExtensionOption.map(_.bands.length)
-  def crs: Option[CRS]       =
+  def crs: Option[CRS] =
     projExtensionOption
       .flatMap(_.epsgCode)
       .map(CRS.fromEpsgCode)

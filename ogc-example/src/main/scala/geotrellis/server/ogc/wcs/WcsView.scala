@@ -42,8 +42,8 @@ import scalaxb._
 import java.net._
 
 class WcsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
-  wcsModel: WcsModel[F],
-  serviceUrl: URL
+    wcsModel: WcsModel[F],
+    serviceUrl: URL
 ) extends Http4sDsl[F] {
   val logger = Logger[F]
 
@@ -142,14 +142,14 @@ class WcsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
       case Right(res) =>
         logger.info(s"response ${res.toString}")
         Ok(res).map(_.putHeaders(`Content-Type`(ToMediaType(format))))
-      case Left(err)  =>
+      case Left(err) =>
         logger.error(err.stackTraceString)
         InternalServerError(err.stackTraceString)
     }
 
   private val getCoverage = new GetCoverage(wcsModel)
 
-  def responseFor(req: Request[F]): F[Response[F]] = {
+  def responseFor(req: Request[F]): F[Response[F]] =
     WcsParams(req.multiParams) match {
       case Validated.Invalid(errors) =>
         val msg = ParamError.generateErrorMessage(errors.toList)
@@ -175,10 +175,7 @@ class WcsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
               getCoverage <- getCoverage.build(p).attempt
               result      <- handleError(getCoverage, p.format)
               _           <- logger.debug(s"getcoverage result: $result")
-            } yield {
-              result
-            }
+            } yield result
         }
     }
-  }
 }

@@ -28,7 +28,7 @@ object ExampleConf {
   case class Http(interface: String, port: Int)
   case class Auth(signingKey: String)
 
-  lazy val load: ExampleConf                                        = ConfigSource.default.loadOrThrow[ExampleConf]
+  lazy val load: ExampleConf = ConfigSource.default.loadOrThrow[ExampleConf]
   def loadF[F[_]: Sync](configPath: Option[String]): F[ExampleConf] =
     ConfigSource
       .fromConfig(ConfigFactory.load(configPath.getOrElse("application.conf")))

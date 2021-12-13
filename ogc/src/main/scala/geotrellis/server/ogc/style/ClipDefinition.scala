@@ -34,7 +34,7 @@ object ClipDefinition {
       case "clip-left"  => ClipLeft.some
       case "clip-right" => ClipRight.some
       case "clip-both"  => ClipBoth.some
-      case _            =>
+      case _ =>
         logger.warn(s"Unable to deserialize string as ClipDefinition $str")
         None
     }

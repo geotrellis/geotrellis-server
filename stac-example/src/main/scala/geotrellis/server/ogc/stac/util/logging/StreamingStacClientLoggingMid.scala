@@ -32,22 +32,27 @@ final class StreamingStacClientLoggingMid[F[_]: Sync] extends StreamingStacClien
   def search: Mid[Stream[F, *], StacItem] =
     res =>
       Stream.eval(logger.trace("streaming search all endpoint call")) >>
-      res.evalTap(item => logger.trace(s"retrieved item: ${item.asJson}"))
+        res.evalTap(item => logger.trace(s"retrieved item: ${item.asJson}"))
 
   def search(filter: SearchFilters): Mid[Stream[F, *], StacItem] =
     res =>
       Stream.eval(logger.trace(s"streaming search ${filter.asJson} endpoint call")) >>
-      res.evalTap(item => logger.trace(s"retrieved item: ${item.asJson}"))
+        res.evalTap(item => logger.trace(s"retrieved item: ${item.asJson}"))
+
+  def search(filter: Option[SearchFilters]): Mid[Stream[F, *], StacItem] =
+    res =>
+      Stream.eval(logger.trace(s"streaming search ${filter.asJson} endpoint call")) >>
+        res.evalTap(item => logger.trace(s"retrieved item: ${item.asJson}"))
 
   def collections: Mid[Stream[F, *], StacCollection] =
     res =>
       Stream.eval(logger.trace("collections all endpoint call")) >>
-      res.evalTap(item => logger.trace(s"retrieved collection: ${item.asJson}"))
+        res.evalTap(item => logger.trace(s"retrieved collection: ${item.asJson}"))
 
   def items(collectionId: NonEmptyString): Mid[Stream[F, *], StacItem] =
     res =>
       Stream.eval(logger.trace(s"items by collectionId: $collectionId endpoint call")) >>
-      res.evalTap(item => logger.trace(s"retrieved item: ${item.asJson}"))
+        res.evalTap(item => logger.trace(s"retrieved item: ${item.asJson}"))
 
   def collection(collectionId: NonEmptyString): F[StacCollection] = ???
 

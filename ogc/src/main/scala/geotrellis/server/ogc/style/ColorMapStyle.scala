@@ -26,15 +26,14 @@ import geotrellis.raster.render.ColorMap
 
 case class ColorMapStyle(name: String, title: String, colorMap: ColorMap, legends: List[LegendModel] = Nil) extends OgcStyle {
   def renderRaster(
-    raster: Raster[MultibandTile],
-    crs: CRS,
-    format: OutputFormat,
-    hists: List[Histogram[Double]]
-  ): Array[Byte] = {
+      raster: Raster[MultibandTile],
+      crs: CRS,
+      format: OutputFormat,
+      hists: List[Histogram[Double]]
+  ): Array[Byte] =
     format match {
       case format: OutputFormat.Png => format.render(raster.tile.band(bandIndex = 0), colorMap)
       case OutputFormat.Jpg         => raster.tile.band(bandIndex = 0).renderJpg(colorMap).bytes
       case OutputFormat.GeoTiff     => GeoTiff(raster.mapTile(_.band(bandIndex = 0).color(colorMap)), crs).toCloudOptimizedByteArray
     }
-  }
 }

@@ -45,8 +45,8 @@ class HillshadeSpec extends AnyFunSpec with Matchers {
   // https://github.com/geotrellis/geotrellis-server/issues/150
   describe("HillshadeSpec") {
     ignore("RasterSource reproject hillshade") {
-      val uri    = "gt+s3://azavea-datahub/catalog?layer=us-ned-tms-epsg3857&zoom=14&band_count=1"
-      val rs     = new GeoTrellisRasterSource(uri)
+      val uri = "gt+s3://azavea-datahub/catalog?layer=us-ned-tms-epsg3857&zoom=14&band_count=1"
+      val rs  = new GeoTrellisRasterSource(uri)
       val raster =
         rs.reprojectToRegion(
           LatLng,

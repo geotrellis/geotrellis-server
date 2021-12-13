@@ -61,7 +61,7 @@ workflows:
       - openjdk8-build:
           matrix:
             parameters:
-              scala-version: ["2.12.14"]
+              scala-version: ["2.12.15"]
           # required since openjdk8-deploy has tag filters AND requires
           # openjdk8
           # https://circleci.com/docs/2.0/workflows/#executing-workflows-for-a-git-tag
@@ -72,7 +72,7 @@ workflows:
       - openjdk8-deploy:
           matrix:
             parameters:
-              scala-version: ["2.12.14"]
+              scala-version: ["2.12.15"]
           requires:
             - openjdk8-build
           filters:

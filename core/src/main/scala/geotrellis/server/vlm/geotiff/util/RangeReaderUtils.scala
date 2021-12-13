@@ -36,15 +36,15 @@ object RangeReaderUtils {
     IO {
       val javaUri = new URI(uri)
 
-      /** Links can be signed for instance via HMAC-SHA,
-        * it means that request signature can be specific at least to the METHOD
-        * (GET and HEAD requests would have different auth signature)
-        *
-        * AWS S3 would return 403 as each METHOD has a different signature,
-        * see: https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
-        *
-        * In all cases there are some query params force GET method usage
-        */
+      /**
+       * Links can be signed for instance via HMAC-SHA, it means that request signature can be specific at least to the METHOD (GET and HEAD requests
+       * would have different auth signature)
+       *
+       * AWS S3 would return 403 as each METHOD has a different signature, see:
+       * https://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html
+       *
+       * In all cases there are some query params force GET method usage
+       */
       val noQueryParams =
         URLEncodedUtils.parse(uri, Charset.forName("UTF-8")).isEmpty
 

@@ -32,11 +32,10 @@ import cats.syntax.apply._
 import cats.syntax.functor._
 import io.chrisdavenport.log4cats.Logger
 
-/** OgcLayer instances are sufficient to produce visual rasters as the end product of 'get map'
-  *  requests. They are produced from a combination of a WMS 'GetMap'
-  *  (or whatever the analogous request in whatever OGC service is being produced) and an instance
-  *  of [[OgcSource]]
-  */
+/**
+ * OgcLayer instances are sufficient to produce visual rasters as the end product of 'get map' requests. They are produced from a combination of a WMS
+ * 'GetMap' (or whatever the analogous request in whatever OGC service is being produced) and an instance of [[OgcSource]]
+ */
 sealed trait OgcLayer {
   def name: String
   def title: String
@@ -51,34 +50,33 @@ sealed trait RasterOgcLayer extends OgcLayer {
 }
 
 case class SimpleOgcLayer(
-  name: String,
-  title: String,
-  crs: CRS,
-  source: RasterSource,
-  style: Option[OgcStyle],
-  resampleMethod: ResampleMethod,
-  overviewStrategy: OverviewStrategy
+    name: String,
+    title: String,
+    crs: CRS,
+    source: RasterSource,
+    style: Option[OgcStyle],
+    resampleMethod: ResampleMethod,
+    overviewStrategy: OverviewStrategy
 ) extends RasterOgcLayer
 
 case class MapAlgebraOgcLayer(
-  name: String,
-  title: String,
-  crs: CRS,
-  parameters: Map[String, SimpleOgcLayer],
-  algebra: Expression,
-  style: Option[OgcStyle],
-  resampleMethod: ResampleMethod,
-  overviewStrategy: OverviewStrategy,
-  targetCellType: Option[CellType]
+    name: String,
+    title: String,
+    crs: CRS,
+    parameters: Map[String, SimpleOgcLayer],
+    algebra: Expression,
+    style: Option[OgcStyle],
+    resampleMethod: ResampleMethod,
+    overviewStrategy: OverviewStrategy,
+    targetCellType: Option[CellType]
 ) extends OgcLayer
 
 object SimpleOgcLayer {
   implicit def simpleOgcReification[F[_]: Sync: Logger]: ExtentReification[F, SimpleOgcLayer] = {
     self => (extent: Extent, cellSize: Option[CellSize]) =>
-      {
-        Logger[F].trace(
-          s"attempting to retrieve layer $self at extent $extent with $cellSize"
-        ) *>
+      Logger[F].trace(
+        s"attempting to retrieve layer $self at extent $extent with $cellSize"
+      ) *>
         Logger[F].trace(s"Requested extent geojson: ${extent.toGeoJson}") *> {
           Sync[F].delay {
             cellSize
@@ -103,7 +101,6 @@ object SimpleOgcLayer {
         ) map { raster =>
           ProjectedRaster(raster, self.crs)
         }
-      }
   }
 
   implicit def simpleOgcHasRasterExtents[F[_]: Sync]: HasRasterExtents[F, SimpleOgcLayer] = { self =>

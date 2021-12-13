@@ -394,6 +394,8 @@ lazy val `stac-example` = project
       logback,
       pureConfig,
       pureConfigCatsEffect,
+      pureConfigGeneric,
+      pureConfigMacros,
       scaffeine,
       scalatest,
       decline,

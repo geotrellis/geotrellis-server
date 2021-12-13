@@ -40,8 +40,8 @@ import higherkindness.droste.{scheme, Algebra}
 
 /** Sync is required to compile [[fs2.Stream]] */
 case class StacOgcRepository[F[_]: Sync](
-  stacSourceConf: StacSourceConf,
-  client: StreamingStacClientFS2[F]
+    stacSourceConf: StacSourceConf,
+    client: StreamingStacClientFS2[F]
 ) extends RepositoryM[F, List, OgcSource] {
   def store: F[List[OgcSource]] = find(query.all)
 
@@ -63,7 +63,7 @@ case class StacOgcRepository[F[_]: Sync](
             items.flatMap { item =>
               item.assets
                 .get(stacSourceConf.asset)
-                .map { itemAsset => StacAssetRasterSource(StacItemAsset(itemAsset.withGDAL(stacSourceConf.withGDAL), item)) }
+                .map(itemAsset => StacAssetRasterSource(StacItemAsset(itemAsset.withGDAL(stacSourceConf.withGDAL), item)))
             }
 
           summary match {
@@ -72,7 +72,7 @@ case class StacOgcRepository[F[_]: Sync](
                 case head :: Nil => StacCollectionSource(csummary.asset, head).some
                 case head :: _   =>
                   /** Extra temporal layers filtering (slicing). If the layer is not temporal, no extra filtering (slicing) would be applied. */
-                  val sources            =
+                  val sources =
                     rasterSources.timeSlice(query, stacSourceConf.timeDefault, stacSourceConf.ignoreTime, stacSourceConf.datetimeField.some)
                   val commonCrs          = if (sources.flatMap(_.asset.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
                   val reprojectedSources = sources.map(_.reproject(commonCrs))
@@ -87,16 +87,16 @@ case class StacOgcRepository[F[_]: Sync](
 
                   /** In case some of the RasterSources are not from the STAC collection, we'd need to expand the [[StacCollectionSource]] extent. */
                   StacCollectionSource(csummary.asset.expandExtentToInclude(mosaicRasterSource.extent), mosaicRasterSource).some
-                case _           => None
+                case _ => None
               }
 
               source.map(stacSourceConf.toLayer).toList
-            case _                           =>
+            case _ =>
               val source: Option[RasterSource] = rasterSources match {
                 case head :: Nil => head.some
                 case head :: _   =>
                   /** Extra temporal layers filtering (slicing). If the layer is not temporal, no extra filtering (slicing) would be applied. */
-                  val sources            =
+                  val sources =
                     rasterSources.timeSlice(query, stacSourceConf.timeDefault, stacSourceConf.ignoreTime, stacSourceConf.datetimeField.some)
                   val commonCrs          = if (sources.flatMap(_.asset.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
                   val reprojectedSources = sources.map(_.reproject(commonCrs))
@@ -107,7 +107,7 @@ case class StacOgcRepository[F[_]: Sync](
                     MosaicRasterSourceIO.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, EmptyName, attributes).some
                   else
                     MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, EmptyName, attributes).some
-                case _           => None
+                case _ => None
               }
 
               source.map(stacSourceConf.toLayer).toList
@@ -118,20 +118,19 @@ case class StacOgcRepository[F[_]: Sync](
 }
 
 case class StacOgcRepositories[F[_]: Sync](
-  stacLayers: List[StacSourceConf],
-  client: SttpBackend[F, Any]
+    stacLayers: List[StacSourceConf],
+    client: SttpBackend[F, Any]
 ) extends RepositoryM[F, List, OgcSource] {
   def store: F[List[OgcSource]] = find(query.withNames(stacLayers.map(_.name).toSet))
 
-  /** At first, choose stacLayers that fit the query, because after that we'll erase their name.
-    * GT Server layer conf names != the STAC Layer name
-    * conf names can be different for the same STAC Layer name.
-    * A name is unique per the STAC layer and an asset.
-    */
+  /**
+   * At first, choose stacLayers that fit the query, because after that we'll erase their name. GT Server layer conf names != the STAC Layer name conf
+   * names can be different for the same STAC Layer name. A name is unique per the STAC layer and an asset.
+   */
   def find(query: Query): F[List[OgcSource]] =
     StacOgcRepositories
       .eval(query)(stacLayers)
-      .map { conf => StacOgcRepository(conf, SttpStacClient(client, uri"${conf.source}").withLogging) }
+      .map(conf => StacOgcRepository(conf, SttpStacClient(client, uri"${conf.source}").withLogging))
       .fold(RepositoryM.empty[F, List, OgcSource])(_ |+| _)
       .find(query)
 }
@@ -140,13 +139,13 @@ object StacOgcRepositories {
   def algebra[T <: OgcSourceConf]: Algebra[QueryF, List[T] => List[T]] =
     Algebra {
       case Nothing()        => _ => Nil
-      case WithName(name)   => _.filter { _.name == name }
-      case WithNames(names) => _.filter { c => names.contains(c.name) }
-      case And(e1, e2)      =>
+      case WithName(name)   => _.filter(_.name == name)
+      case WithNames(names) => _.filter(c => names.contains(c.name))
+      case And(e1, e2) =>
         list =>
           val left = e1(list); left intersect e2(left)
-      case Or(e1, e2)       => list => e1(list) ++ e2(list)
-      case _                => identity
+      case Or(e1, e2) => list => e1(list) ++ e2(list)
+      case _          => identity
     }
 
   def eval[T <: OgcSourceConf](query: Query)(list: List[T]): List[T] =

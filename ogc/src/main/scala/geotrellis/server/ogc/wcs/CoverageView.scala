@@ -40,7 +40,7 @@ import geotrellis.proj4.CRS
 
 class CoverageView[F[_]: Functor](wcsModel: WcsModel[F], serviceUrl: URL, identifiers: Seq[String]) {
   def toXML: F[Elem] = {
-    val sources                                     = if (identifiers == Nil) wcsModel.sources.store else wcsModel.sources.find(withNames(identifiers.toSet))
+    val sources = if (identifiers == Nil) wcsModel.sources.store else wcsModel.sources.find(withNames(identifiers.toSet))
     val sourcesMap: F[Map[String, List[OgcSource]]] = sources.map(_.groupBy(_.name))
     val coverageTypeMap                             = sourcesMap.map(_.mapValues(CoverageView.sourceDescription(wcsModel.supportedProjections, _)))
     coverageTypeMap.map { coverageType =>
@@ -60,7 +60,7 @@ class CoverageView[F[_]: Functor](wcsModel: WcsModel[F], serviceUrl: URL, identi
 object CoverageView {
   private def extractGridExtent(source: OgcSource, targetCRS: CRS): GridExtent[Long] =
     source match {
-      case mas: MapAlgebraSource           =>
+      case mas: MapAlgebraSource =>
         mas.sourcesList
           .map { rs =>
             ReprojectRasterExtent(
@@ -71,7 +71,7 @@ object CoverageView {
             )
           }
           .reduce { (re1, re2) =>
-            val e  = re1.extent combine re2.extent
+            val e = re1.extent combine re2.extent
             val cs =
               if (re1.cellSize.resolution < re2.cellSize.resolution)
                 re1.cellSize
@@ -95,25 +95,20 @@ object CoverageView {
     val ex               = re.extent
     val Dimensions(w, h) = re.dimensions
 
-    /** WCS expects this very specific format for its time strings, which is not quite (TM)
-      * what Java's toString method returns. Instead we convert to Instant.toString, which
-      * does conform.
-      *
-      * The [ISO 8601:2000] syntax for dates and times may be summarized by the following template
-      * (see Annex D of the OGC Web Map Service [OGC 06-042]):
-      * ccyy-mm-ddThh:mm:ss.sssZ
-      * Where
-      * ― ccyy-mm-dd is the date (a four-digit year, and a two-digit month and day);
-      * ― Tis a separator between the data and time strings;
-      * ― hh:mm:ss.sss is the time (a two-digit hour and minute, and fractional seconds);
-      * ― Z represents the Coordinated Universal Time (UTC or ―zulu‖) time zone.
-      *
-      * This was excerpted from "WCS Implementation Standard 1.1" available at:
-      * https://portal.ogc.org/files/07-067r5
-      */
+    /**
+     * WCS expects this very specific format for its time strings, which is not quite (TM) what Java's toString method returns. Instead we convert to
+     * Instant.toString, which does conform.
+     *
+     * The [ISO 8601:2000] syntax for dates and times may be summarized by the following template (see Annex D of the OGC Web Map Service [OGC
+     * 06-042]): ccyy-mm-ddThh:mm:ss.sssZ Where ― ccyy-mm-dd is the date (a four-digit year, and a two-digit month and day); ― Tis a separator between
+     * the data and time strings; ― hh:mm:ss.sss is the time (a two-digit hour and minute, and fractional seconds); ― Z represents the Coordinated
+     * Universal Time (UTC or ―zulu‖) time zone.
+     *
+     * This was excerpted from "WCS Implementation Standard 1.1" available at: https://portal.ogc.org/files/07-067r5
+     */
     val temporalDomain: Option[TimeSequenceType] = {
       val records = source.time match {
-        case otp: OgcTimePositions               => otp.toList.map(p => GmlDataRecord(TimePositionType(p)))
+        case otp: OgcTimePositions => otp.toList.map(p => GmlDataRecord(TimePositionType(p)))
         case OgcTimeInterval(start, end, period) =>
           GmlDataRecord(
             wcs.TimePeriodType(
@@ -122,7 +117,7 @@ object CoverageView {
               TimeResolution = period.map(_.toString)
             )
           ) :: Nil
-        case OgcTimeEmpty                        => Nil
+        case OgcTimeEmpty => Nil
       }
       if (records.nonEmpty) TimeSequenceType(records).some else None
     }
@@ -147,7 +142,7 @@ object CoverageView {
               )
             )
           ) :: uniqueCrs.flatMap {
-            case crs if crs == LatLng    =>
+            case crs if crs == LatLng =>
               val lex = extractGridExtent(source, crs).extent
               OwsDataRecord(
                 BoundingBoxType(
@@ -179,7 +174,7 @@ object CoverageView {
                   )
                 )
               ) :: Nil
-            case crs                     =>
+            case crs =>
               val lex = extractGridExtent(source, crs).extent
               OwsDataRecord(
                 BoundingBoxType(
@@ -226,15 +221,15 @@ object CoverageView {
   }
 
   def apply[F[_]: Functor](
-    wcsModel: WcsModel[F],
-    serviceUrl: URL
+      wcsModel: WcsModel[F],
+      serviceUrl: URL
   ): CoverageView[F] =
     new CoverageView(wcsModel, serviceUrl, Nil)
 
   def apply[F[_]: Functor](
-    wcsModel: WcsModel[F],
-    serviceUrl: URL,
-    params: DescribeCoverageWcsParams
+      wcsModel: WcsModel[F],
+      serviceUrl: URL,
+      params: DescribeCoverageWcsParams
   ): CoverageView[F] =
     new CoverageView[F](wcsModel, serviceUrl, params.identifiers)
 }

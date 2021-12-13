@@ -29,14 +29,14 @@ import cats.syntax.flatMap._
 import cats.instances.option._
 
 class StacAssetReprojectRasterSource(
-  val asset: StacItemAsset,
-  val crs: CRS,
-  val resampleTarget: ResampleTarget = DefaultTarget,
-  val resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-  val strategy: OverviewStrategy = OverviewStrategy.DEFAULT,
-  val errorThreshold: Double = 0.125,
-  private[geotrellis] val targetCellType: Option[TargetCellType] = None,
-  @transient underlyingRS: => Option[RasterSource] = None
+    val asset: StacItemAsset,
+    val crs: CRS,
+    val resampleTarget: ResampleTarget = DefaultTarget,
+    val resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+    val strategy: OverviewStrategy = OverviewStrategy.DEFAULT,
+    val errorThreshold: Double = 0.125,
+    private[geotrellis] val targetCellType: Option[TargetCellType] = None,
+    @transient underlyingRS: => Option[RasterSource] = None
 ) extends RasterSource {
   @transient private lazy val underlying            = underlyingRS.getOrElse(RasterSource(asset.href))
   @transient private lazy val underlyingReprojected = underlying.reproject(crs, resampleTarget, resampleMethod, strategy)
@@ -67,10 +67,10 @@ class StacAssetReprojectRasterSource(
   def attributesForBand(band: Int): Map[String, String] = Map.empty
 
   def reprojection(
-    targetCRS: CRS,
-    resampleTarget: ResampleTarget,
-    method: ResampleMethod,
-    strategy: OverviewStrategy
+      targetCRS: CRS,
+      resampleTarget: ResampleTarget,
+      method: ResampleMethod,
+      strategy: OverviewStrategy
   ): StacAssetReprojectRasterSource =
     StacAssetReprojectRasterSource(asset, targetCRS, resampleTarget, method, strategy, targetCellType = targetCellType, underlyingRS = underlyingRS)
 
@@ -100,14 +100,14 @@ class StacAssetReprojectRasterSource(
 
 object StacAssetReprojectRasterSource {
   def apply(
-    asset: StacItemAsset,
-    crs: CRS,
-    resampleTarget: ResampleTarget = DefaultTarget,
-    resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-    strategy: OverviewStrategy = OverviewStrategy.DEFAULT,
-    errorThreshold: Double = 0.125,
-    targetCellType: Option[TargetCellType] = None,
-    underlyingRS: => Option[RasterSource] = None
+      asset: StacItemAsset,
+      crs: CRS,
+      resampleTarget: ResampleTarget = DefaultTarget,
+      resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+      strategy: OverviewStrategy = OverviewStrategy.DEFAULT,
+      errorThreshold: Double = 0.125,
+      targetCellType: Option[TargetCellType] = None,
+      underlyingRS: => Option[RasterSource] = None
   ): StacAssetReprojectRasterSource =
     new StacAssetReprojectRasterSource(asset, crs, resampleTarget, resampleMethod, strategy, errorThreshold, targetCellType, underlyingRS)
 }

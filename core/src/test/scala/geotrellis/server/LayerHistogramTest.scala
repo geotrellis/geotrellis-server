@@ -25,8 +25,8 @@ class LayerHistogramTest extends AnyFunSuite with Matchers {
 
   // This test works when the chosen sampling strategy is to work from the corners
   ignore("extents sampled from within overall extent") {
-    val rt          = ResourceTile("8x8.tif")
-    val samples     =
+    val rt = ResourceTile("8x8.tif")
+    val samples =
       LayerHistogram.concurrent[IO, ResourceTile](rt, 4).unsafeRunSync
     val sampleCount = samples.toOption.get.head.statistics.get.dataCells
     assert(sampleCount == 4, s"Expected 4 cells in histogram, got $sampleCount")
@@ -35,8 +35,8 @@ class LayerHistogramTest extends AnyFunSuite with Matchers {
   test(
     "histogram samples the total extent when budget is equal to the cell count"
   ) {
-    val rt          = ResourceTile("8x8.tif")
-    val samples     =
+    val rt = ResourceTile("8x8.tif")
+    val samples =
       LayerHistogram.concurrent[IO, ResourceTile](rt, 64).unsafeRunSync
     val sampleCount = samples.toOption.get.head.statistics.get.dataCells
     assert(
@@ -46,8 +46,8 @@ class LayerHistogramTest extends AnyFunSuite with Matchers {
   }
 
   test("histogram samples the total extent when budget too big") {
-    val rt          = ResourceTile("8x8.tif")
-    val samples     =
+    val rt = ResourceTile("8x8.tif")
+    val samples =
       LayerHistogram.concurrent[IO, ResourceTile](rt, 128).unsafeRunSync
     val sampleCount = samples.toOption.get.head.statistics.get.dataCells
     assert(

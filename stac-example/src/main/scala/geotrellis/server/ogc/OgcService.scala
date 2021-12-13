@@ -30,10 +30,10 @@ import org.log4s.getLogger
 import java.net.URL
 
 class OgcService[F[_]: Concurrent: Parallel: Logger](
-  wmsModel: Option[WmsModel[F]],
-  wcsModel: Option[WcsModel[F]],
-  wmtsModel: Option[WmtsModel[F]],
-  serviceUrl: URL
+    wmsModel: Option[WmsModel[F]],
+    wcsModel: Option[WcsModel[F]],
+    wmtsModel: Option[WmtsModel[F]],
+    serviceUrl: URL
 ) extends Http4sDsl[F] {
   val logger = getLogger
 
@@ -48,12 +48,12 @@ class OgcService[F[_]: Concurrent: Parallel: Logger](
 
   def routes: HttpRoutes[F] =
     HttpRoutes.of[F] {
-      case req @ GET -> Root if req.params.exists((isWcsReq _).tupled)  =>
+      case req @ GET -> Root if req.params.exists((isWcsReq _).tupled) =>
         logger.trace(s"WCS: $req")
         wcsView
           .map(_.responseFor(req))
           .getOrElse(NotFound())
-      case req @ GET -> Root if req.params.exists((isWmsReq _).tupled)  =>
+      case req @ GET -> Root if req.params.exists((isWmsReq _).tupled) =>
         logger.trace(s"WMS: $req")
         wmsView
           .map(_.responseFor(req))
@@ -63,7 +63,7 @@ class OgcService[F[_]: Concurrent: Parallel: Logger](
         wmtsView
           .map(_.responseFor(req))
           .getOrElse(NotFound())
-      case req                                                          =>
+      case req =>
         logger.warn(s"""Recv'd UNHANDLED request: $req""")
         NotFound()
     }

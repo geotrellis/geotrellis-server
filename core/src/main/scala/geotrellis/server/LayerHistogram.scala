@@ -44,82 +44,79 @@ object LayerHistogram {
 
   // Provide IOs for both expression and params, get back a tile
   def apply[F[_]: Logger: Parallel: Monad, T: ExtentReification[F, *]: HasRasterExtents[F, *]](
-    getExpression: F[Expression],
-    getParams: F[Map[String, T]],
-    interpreter: Interpreter[F],
-    maxCells: Int
+      getExpression: F[Expression],
+      getParams: F[Map[String, T]],
+      interpreter: Interpreter[F],
+      maxCells: Int
   ): F[Interpreted[List[Histogram[Double]]]] = {
     val logger = Logger[F]
     for {
-      params          <- getParams
-      rasterExtents   <- NEL
-                           .fromListUnsafe(params.values.toList)
-                           .traverse(HasRasterExtents[F, T].rasterExtents(_))
-                           .map(_.flatten)
-      extents         <- NEL
-                           .fromListUnsafe(params.values.toList)
-                           .traverse(
-                             HasRasterExtents[F, T]
-                               .rasterExtents(_)
-                               .map(z => z.map(_.extent).reduce)
-                           )
-      intersectionO    = SampleUtils.intersectExtents(extents)
-      _               <- intersectionO traverse { intersection =>
-                           logger.trace(
-                             s"[LayerHistogram] Intersection of provided layer extents calculated: $intersection"
-                           )
-                         }
-      cellSize         = SampleUtils.chooseLargestCellSize(rasterExtents, maxCells)
-      _               <- logger.trace(
-                           s"[LayerHistogram] Largest cell size of provided layers calculated: $cellSize"
-                         )
-      mbtileForExtent  = LayerExtent(getExpression, getParams, interpreter, None)
-      _               <- intersectionO traverse { intersection =>
-                           logger.trace(
-                             s"[LayerHistogram] calculating histogram from (approximately) ${intersection.area / (cellSize.width * cellSize.height)} cells"
-                           )
-                         }
+      params <- getParams
+      rasterExtents <- NEL
+        .fromListUnsafe(params.values.toList)
+        .traverse(HasRasterExtents[F, T].rasterExtents(_))
+        .map(_.flatten)
+      extents <- NEL
+        .fromListUnsafe(params.values.toList)
+        .traverse(
+          HasRasterExtents[F, T]
+            .rasterExtents(_)
+            .map(z => z.map(_.extent).reduce)
+        )
+      intersectionO = SampleUtils.intersectExtents(extents)
+      _ <- intersectionO traverse { intersection =>
+        logger.trace(
+          s"[LayerHistogram] Intersection of provided layer extents calculated: $intersection"
+        )
+      }
+      cellSize = SampleUtils.chooseLargestCellSize(rasterExtents, maxCells)
+      _ <- logger.trace(
+        s"[LayerHistogram] Largest cell size of provided layers calculated: $cellSize"
+      )
+      mbtileForExtent = LayerExtent(getExpression, getParams, interpreter, None)
+      _ <- intersectionO traverse { intersection =>
+        logger.trace(
+          s"[LayerHistogram] calculating histogram from (approximately) ${intersection.area / (cellSize.width * cellSize.height)} cells"
+        )
+      }
       interpretedTile <- intersectionO traverse { intersection =>
-                           mbtileForExtent(intersection, cellSize.some)
-                         }
-    } yield {
-      interpretedTile.map { mbtileValidated =>
-        mbtileValidated.map { mbTile =>
-          mbTile.bands.map { band =>
-            StreamingHistogram.fromTile(band)
-          }.toList
-        }
-      } getOrElse { ??? }
-    }
+        mbtileForExtent(intersection, cellSize.some)
+      }
+    } yield interpretedTile.map { mbtileValidated =>
+      mbtileValidated.map { mbTile =>
+        mbTile.bands.map { band =>
+          StreamingHistogram.fromTile(band)
+        }.toList
+      }
+    } getOrElse ???
   }
 
   def generateExpression[F[_]: Logger: Parallel: Monad, T: ExtentReification[F, *]: HasRasterExtents[F, *]](
-    mkExpr: Map[String, T] => Expression,
-    getParams: F[Map[String, T]],
-    interpreter: Interpreter[F],
-    maxCells: Int
+      mkExpr: Map[String, T] => Expression,
+      getParams: F[Map[String, T]],
+      interpreter: Interpreter[F],
+      maxCells: Int
   ): F[Interpreted[List[Histogram[Double]]]] =
     apply[F, T](getParams.map(mkExpr(_)), getParams, interpreter, maxCells)
 
   /** Provide an expression and expect arguments to fulfill its needs */
   def curried[F[_]: Logger: Parallel: Monad, T: ExtentReification[F, *]: HasRasterExtents[F, *]](
-    expr: Expression,
-    interpreter: Interpreter[F],
-    maxCells: Int
+      expr: Expression,
+      interpreter: Interpreter[F],
+      maxCells: Int
   ): Map[String, T] => F[Interpreted[List[Histogram[Double]]]] =
-    (paramMap: Map[String, T]) => {
+    (paramMap: Map[String, T]) =>
       apply[F, T](
         expr.pure[F],
         paramMap.pure[F],
         interpreter,
         maxCells
       )
-    }
 
   /** The identity endpoint (for simple display of raster) */
   def concurrent[F[_]: Logger: Parallel: Monad: Concurrent, T: ExtentReification[F, *]: HasRasterExtents[F, *]](
-    param: T,
-    maxCells: Int
+      param: T,
+      maxCells: Int
   ): F[Interpreted[List[Histogram[Double]]]] = {
     val eval =
       curried[F, T](

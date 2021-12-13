@@ -38,7 +38,7 @@ import java.util.UUID
 import scala.util.Try
 
 class PersistenceService[F[_]: Sync: Logger: ApplicativeError[*[_], Throwable], S: MamlStore[F, *], T: TmsReification[F, *]: Decoder](
-  val store: S
+    val store: S
 ) extends Http4sDsl[F] {
   val logger = Logger[F]
 
@@ -64,19 +64,19 @@ class PersistenceService[F[_]: Sync: Logger: ApplicativeError[*[_], Throwable], 
       case req @ POST -> Root / IdVar(key) =>
         (for {
           expr <- req.as[Expression]
-          _    <- logger.info(
-                    s"Attempting to store expression (${req.bodyText}) at key ($key)"
-                  )
-          res  <- MamlStore[F, S].putMaml(store, key, expr)
+          _ <- logger.info(
+            s"Attempting to store expression (${req.bodyText}) at key ($key)"
+          )
+          res <- MamlStore[F, S].putMaml(store, key, expr)
         } yield res).attempt flatMap {
-          case Right(created)                                                                  =>
+          case Right(created) =>
             Created()
           case Left(InvalidMessageBodyFailure(_, _)) | Left(MalformedMessageBodyFailure(_, _)) =>
             req.bodyText.compile.toList flatMap { reqBody =>
               BadRequest(s"""Unable to parse ${reqBody
                 .mkString("")} as a MAML expression""")
             }
-          case Left(err)                                                                       =>
+          case Left(err) =>
             logger.debug(err.toString)
             InternalServerError(err.toString)
         }

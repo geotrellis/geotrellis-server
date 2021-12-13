@@ -37,7 +37,7 @@ case class GTLayerNode(catalog: URI, layer: String) {
 
   lazy val (maxZoom, allMetadata): (Int, Map[Int, Option[TileLayerMetadata[SpatialKey]]]) = {
     val attributeStore = AttributeStore(catalog)
-    val zs             =
+    val zs =
       attributeStore.layerIds
         .groupBy(_.name)
         .apply(layer)
@@ -65,7 +65,7 @@ object GTLayerNode {
 
   implicit val uriEncoder: Encoder[URI] = Encoder.encodeString.contramap[URI](_.toString)
 
-  implicit val uriDecoder: Decoder[URI] = Decoder[String].emap { str => Right(URI.create(str)) }
+  implicit val uriDecoder: Decoder[URI] = Decoder[String].emap(str => Right(URI.create(str)))
 
   implicit def gtLayerNodeRasterExtents[F[_]: Sync]: HasRasterExtents[F, GTLayerNode] = { self =>
     Sync[F].delay {
@@ -98,7 +98,7 @@ object GTLayerNode {
       def p2t(p: (Int, Int)): Tile =
         values.get(SpatialKey(p._1 + x, p._2 + y)).get
 
-      val nbhd        = (
+      val nbhd = (
         p2t((-1, -1)),
         p2t((0, -1)),
         p2t((1, -1)),
@@ -118,47 +118,44 @@ object GTLayerNode {
         nbhd._7,
         nbhd._8
       )
-      val tile        = TileWithNeighbors(
+      val tile = TileWithNeighbors(
         values.get(SpatialKey(x, y)).get,
         Some(neighboring)
       ).withBuffer(buffer)
-      val ex          =
+      val ex =
         self.allMetadata(z).get.layout.mapTransform(SpatialKey(x, y))
 
       ProjectedRaster(MultibandTile(tile), ex, self.crs)
     }
   }
 
-  implicit def gtLayerNodeExtentReification[F[_]: Sync]: ExtentReification[F, GTLayerNode] = {
-    self =>
-      { (ex: Extent, cellSize: Option[CellSize]) =>
-        Sync[F].delay {
-          def csToDiag(cs: CellSize) = math.sqrt(cs.width * cs.width + cs.height * cs.height)
+  implicit def gtLayerNodeExtentReification[F[_]: Sync]: ExtentReification[F, GTLayerNode] = { self => (ex: Extent, cellSize: Option[CellSize]) =>
+    Sync[F].delay {
+      def csToDiag(cs: CellSize) = math.sqrt(cs.width * cs.width + cs.height * cs.height)
 
-          val reqDiag = cellSize.map(csToDiag)
-          val z       = self.allMetadata
-            .mapValues { md =>
-              val mdDiag = csToDiag(md.get.cellSize)
-              mdDiag - reqDiag.getOrElse(mdDiag)
-            }
-            .filter(_._2 <= 0)
-            .map(_._1)
-            .toList
-            .sortBy { i =>
-              -i
-            }
-            .headOption
-            .getOrElse(self.maxZoom)
-          val raster  = self.collectionReader
-            .query[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](
-              LayerId(self.layer, z)
-            )
-            .where(Intersects(ex))
-            .result
-            .stitch
-            .crop(ex)
-          ProjectedRaster(MultibandTile(raster.tile), raster.extent, self.crs)
+      val reqDiag = cellSize.map(csToDiag)
+      val z = self.allMetadata
+        .mapValues { md =>
+          val mdDiag = csToDiag(md.get.cellSize)
+          mdDiag - reqDiag.getOrElse(mdDiag)
         }
-      }
+        .filter(_._2 <= 0)
+        .map(_._1)
+        .toList
+        .sortBy { i =>
+          -i
+        }
+        .headOption
+        .getOrElse(self.maxZoom)
+      val raster = self.collectionReader
+        .query[SpatialKey, Tile, TileLayerMetadata[SpatialKey]](
+          LayerId(self.layer, z)
+        )
+        .where(Intersects(ex))
+        .result
+        .stitch
+        .crop(ex)
+      ProjectedRaster(MultibandTile(raster.tile), raster.extent, self.crs)
+    }
   }
 }

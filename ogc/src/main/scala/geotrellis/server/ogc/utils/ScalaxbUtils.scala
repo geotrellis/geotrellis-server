@@ -22,7 +22,7 @@ import scala.xml.XML
 import scala.xml.Elem
 
 object ScalaxbUtils {
-  def toXML[A](record: DataRecord[A], dropValue: Boolean = false): Elem = {
+  def toXML[A](record: DataRecord[A], dropValue: Boolean = false): Elem =
     if (!dropValue) (record.namespace, record.key, record.value) match {
       case (None, Some(k), _)    => XML.loadString(s"<$k>${record.value}</$k>")
       case (Some(n), Some(k), _) => XML.loadString(s"<$n:$k>${record.value}</$n:$k>")
@@ -34,5 +34,4 @@ object ScalaxbUtils {
         case (Some(n), Some(k), _) => XML.loadString(s"<$n:$k/>")
         case _                     => throw new IllegalArgumentException(s"The passed record $record should contain namespace or key.")
       }
-  }
 }

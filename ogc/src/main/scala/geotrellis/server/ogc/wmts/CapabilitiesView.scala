@@ -33,9 +33,12 @@ import scalaxb._
 import java.net.{URI, URL}
 import scala.xml.Elem
 
-/** @param wmtsModel WmtsModel of layers and tile matrices we can report
-  * @param serviceUrl URL where this service can be reached with addition of `?request=` query parameter
-  */
+/**
+ * @param wmtsModel
+ *   WmtsModel of layers and tile matrices we can report
+ * @param serviceUrl
+ *   URL where this service can be reached with addition of `?request=` query parameter
+ */
 class CapabilitiesView[F[_]: Monad](wmtsModel: WmtsModel[F], serviceUrl: URL) {
   import CapabilitiesView._
 
@@ -184,7 +187,7 @@ object CapabilitiesView {
 
   implicit class OgcSourceMethods(val self: OgcSource) {
     def toLayerType(tileMatrixSet: List[GeotrellisTileMatrixSet]): LayerType = {
-      val wgs84extent: Extent                      = ReprojectRasterExtent(self.nativeRE, self.nativeCrs.head, LatLng).extent
+      val wgs84extent: Extent = ReprojectRasterExtent(self.nativeRE, self.nativeCrs.head, LatLng).extent
       val tileMatrixLimits: List[TileMatrixLimits] = tileMatrixSet.flatMap { tms =>
         tms.tileMatrix.map { tm =>
           val gridBounds = tm.layout.mapTransform(ReprojectRasterExtent(self.nativeRE, self.nativeCrs.head, tms.supportedCrs).extent)

@@ -47,7 +47,7 @@ class GetCoverage[F[_]: Concurrent: Parallel: Logger](wcsModel: WcsModel[F]) {
       .flatMap {
         _.headOption
           .map {
-            case so: SimpleOgcLayer      => LayerExtent.withCellType(so, so.source.cellType)
+            case so: SimpleOgcLayer => LayerExtent.withCellType(so, so.source.cellType)
             case mal: MapAlgebraOgcLayer =>
               LayerExtent(mal.algebra.pure[F], mal.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F], mal.targetCellType)
           }
@@ -64,9 +64,10 @@ class GetCoverage[F[_]: Concurrent: Parallel: Logger](wcsModel: WcsModel[F]) {
 
   }
 
-  /** QGIS appears to sample WCS service by placing low and high resolution requests at coverage center.
-    * These sampling requests happen for every actual WCS request, we can get really great cache hit rates.
-    */
+  /**
+   * QGIS appears to sample WCS service by placing low and high resolution requests at coverage center. These sampling requests happen for every
+   * actual WCS request, we can get really great cache hit rates.
+   */
   lazy val requestCache: Cache[GetCoverageWcsParams, Array[Byte]] =
     Scaffeine()
       .recordStats()
@@ -74,8 +75,8 @@ class GetCoverage[F[_]: Concurrent: Parallel: Logger](wcsModel: WcsModel[F]) {
       .maximumSize(32)
       .build()
 
-  def build(params: GetCoverageWcsParams): F[Array[Byte]] = {
-    Sync[F].delay { requestCache.getIfPresent(params) } >>= {
+  def build(params: GetCoverageWcsParams): F[Array[Byte]] =
+    Sync[F].delay(requestCache.getIfPresent(params)) >>= {
       case Some(bytes) =>
         Logger[F].trace(s"GetCoverage cache HIT: $params") *> bytes.pure[F]
 
@@ -83,7 +84,7 @@ class GetCoverage[F[_]: Concurrent: Parallel: Logger](wcsModel: WcsModel[F]) {
         Logger[F].trace(s"GetCoverage cache MISS: $params") >>= { _ =>
           renderLayers(params).flatMap {
             case Some(bytes) => bytes.pure[F]
-            case None        =>
+            case None =>
               wcsModel.sources
                 .find(withName(params.identifier))
                 .flatMap {
@@ -95,12 +96,11 @@ class GetCoverage[F[_]: Concurrent: Parallel: Logger](wcsModel: WcsModel[F]) {
                       // TODO: handle it in a proper way, how to get information about the bands amount?
                       val tile = ArrayTile.empty(IntUserDefinedNoDataCellType(0), 1, 1)
                       Raster(MultibandTile(tile, tile, tile), params.extent).render(params.crs, None, params.format, Nil).pure[F]
-                    case _       => Logger[F].error(s"No tile found for the $params request.") *> Array[Byte]().pure[F]
+                    case _ => Logger[F].error(s"No tile found for the $params request.") *> Array[Byte]().pure[F]
                   }
                 }
           }
         }
 
     }
-  }
 }

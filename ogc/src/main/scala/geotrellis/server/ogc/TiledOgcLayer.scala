@@ -31,11 +31,10 @@ import com.azavea.maml.ast._
 import cats.effect._
 import cats.data.{NonEmptyList => NEL}
 
-/** Layer instances are sufficent to produce displayed the end product of 'get map'
-  *  requests. They are produced in [[RasterSourcesModel]] from a combination of a WMS 'GetMap'
-  *  (or whatever the analogous request in whatever OGC service is being produced) and an instance
-  *  of [[OgcSource]]
-  */
+/**
+ * Layer instances are sufficent to produce displayed the end product of 'get map' requests. They are produced in [[RasterSourcesModel]] from a
+ * combination of a WMS 'GetMap' (or whatever the analogous request in whatever OGC service is being produced) and an instance of [[OgcSource]]
+ */
 sealed trait TiledOgcLayer {
   def name: String
   def title: String
@@ -47,27 +46,27 @@ sealed trait TiledOgcLayer {
 }
 
 case class SimpleTiledOgcLayer(
-  name: String,
-  title: String,
-  crs: CRS,
-  layout: LayoutDefinition,
-  source: RasterSource,
-  style: Option[OgcStyle],
-  resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
+    name: String,
+    title: String,
+    crs: CRS,
+    layout: LayoutDefinition,
+    source: RasterSource,
+    style: Option[OgcStyle],
+    resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+    overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
 ) extends TiledOgcLayer
 
 case class MapAlgebraTiledOgcLayer(
-  name: String,
-  title: String,
-  crs: CRS,
-  layout: LayoutDefinition,
-  parameters: Map[String, SimpleTiledOgcLayer],
-  algebra: Expression,
-  style: Option[OgcStyle],
-  resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
-  targetCellType: Option[CellType] = None
+    name: String,
+    title: String,
+    crs: CRS,
+    layout: LayoutDefinition,
+    parameters: Map[String, SimpleTiledOgcLayer],
+    algebra: Expression,
+    style: Option[OgcStyle],
+    resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+    overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
+    targetCellType: Option[CellType] = None
 ) extends TiledOgcLayer
 
 object SimpleTiledOgcLayer {

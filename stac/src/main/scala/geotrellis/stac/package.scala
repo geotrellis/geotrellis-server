@@ -58,10 +58,10 @@ package object stac {
 
   implicit class MosaicRasterSourceOps(val self: MosaicRasterSource.type) extends AnyVal {
     def instance(
-      sourcesList: NonEmptyList[RasterSource],
-      targetCRS: CRS,
-      sourceName: SourceName,
-      stacAttributes: Map[String, String]
+        sourcesList: NonEmptyList[RasterSource],
+        targetCRS: CRS,
+        sourceName: SourceName,
+        stacAttributes: Map[String, String]
     ): MosaicRasterSource = {
       val combinedExtent     = sourcesList.map(_.extent).toList.reduce(_ combine _)
       val minCellSize        = sourcesList.map(_.cellSize).toList.maxBy(_.resolution)
