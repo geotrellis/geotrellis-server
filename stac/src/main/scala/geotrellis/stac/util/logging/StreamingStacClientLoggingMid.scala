@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package geotrellis.server.ogc.stac.util.logging
+package geotrellis.stac.util.logging
 
 import cats.effect.Sync
 import com.azavea.stac4s.api.client.{ETag, SearchFilters, StreamingStacClient, StreamingStacClientF}

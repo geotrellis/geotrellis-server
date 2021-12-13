@@ -4,7 +4,7 @@ import de.heikoseeberger.sbtheader._
 
 import Dependencies._
 
-scalaVersion := scalaVer
+scalaVersion             := scalaVer
 ThisBuild / scalaVersion := scalaVer
 
 val currentYear = java.time.Year.now.getValue.toString
@@ -22,7 +22,7 @@ lazy val commonSettings = Seq(
     else
       git.gitDescribedVersion.value.get
   },
-  scalaVersion := scalaVer,
+  scalaVersion       := scalaVer,
   crossScalaVersions := crossScalaVer,
   scalacOptions := Seq(
     "-deprecation",
@@ -38,7 +38,7 @@ lazy val commonSettings = Seq(
     "-Ypartial-unification",
     "-Xmacro-settings:materialize-derivations"
     // "-Yrangepos",            // required by SemanticDB compiler plugin
-    //"-Ywarn-unused-import",  // required by `RemoveUnused` rule
+    // "-Ywarn-unused-import",  // required by `RemoveUnused` rule
   ),
   resolvers ++= Seq(
     Resolver
@@ -59,18 +59,18 @@ lazy val commonSettings = Seq(
   shellPrompt := { s =>
     Project.extract(s).currentProject.id + " > "
   },
-  run / fork := true,
-  outputStrategy := Some(StdoutOutput),
-  assembly / test := {},
+  run / fork              := true,
+  outputStrategy          := Some(StdoutOutput),
+  assembly / test         := {},
   Compile / doc / sources := (Compile / doc / sources).value,
   assembly / assemblyMergeStrategy := {
-    case "reference.conf"              => MergeStrategy.concat
-    case "application.conf"            => MergeStrategy.concat
+    case "reference.conf"   => MergeStrategy.concat
+    case "application.conf" => MergeStrategy.concat
     case PathList("META-INF", xs @ _*) =>
       xs match {
-        case ("MANIFEST.MF" :: Nil)                                                                                     =>
+        case ("MANIFEST.MF" :: Nil) =>
           MergeStrategy.discard
-        case ("services" :: _ :: Nil)                                                                                   =>
+        case ("services" :: _ :: Nil) =>
           MergeStrategy.concat
         case ("javax.media.jai.registryFile.jai" :: Nil) | ("registryFile.jai" :: Nil) | ("registryFile.jaiext" :: Nil) =>
           MergeStrategy.concat
@@ -78,10 +78,10 @@ lazy val commonSettings = Seq(
             if name.endsWith(".RSA") || name.endsWith(".DSA") || name
               .endsWith(".SF") =>
           MergeStrategy.discard
-        case _                                                                                                          =>
+        case _ =>
           MergeStrategy.first
       }
-    case _                             => MergeStrategy.first
+    case _ => MergeStrategy.first
   },
   headerLicense := Some(
     HeaderLicense.ALv2(java.time.Year.now.getValue.toString, "Azavea")
@@ -89,11 +89,9 @@ lazy val commonSettings = Seq(
   headerMappings := Map(
     FileType.scala -> CommentStyle.cStyleBlockComment.copy(
       commentCreator = { (text, existingText) =>
-        {
-          // preserve year of old headers
-          val newText = CommentStyle.cStyleBlockComment.commentCreator.apply(text, existingText)
-          existingText.flatMap(_ => existingText.map(_.trim)).getOrElse(newText)
-        }
+        // preserve year of old headers
+        val newText = CommentStyle.cStyleBlockComment.commentCreator.apply(text, existingText)
+        existingText.flatMap(_ => existingText.map(_.trim)).getOrElse(newText)
       }
     )
   ),
@@ -103,21 +101,21 @@ lazy val commonSettings = Seq(
 )
 
 lazy val noPublishSettings = Seq(
-  publish := {},
-  publishLocal := {},
+  publish         := {},
+  publishLocal    := {},
   publishArtifact := false
 )
 
 lazy val publishSettings = Seq(
-  organization := "com.azavea.geotrellis",
-  organizationName := "GeoTrellis",
+  organization         := "com.azavea.geotrellis",
+  organizationName     := "GeoTrellis",
   organizationHomepage := Some(new URL("https://geotrellis.io/")),
   description := "GeoTrellis Server is a set of components designed to simplify viewing, processing, and serving raster data from arbitrary sources with an emphasis on doing so in a functional style.",
   Test / publishArtifact := false
 ) ++ sonatypeSettings ++ credentialSettings
 
 lazy val sonatypeSettings = Seq(
-  publishMavenStyle := true,
+  publishMavenStyle   := true,
   sonatypeProfileName := "com.azavea",
   sonatypeProjectHosting := Some(
     GitHubHosting(
@@ -204,7 +202,7 @@ lazy val example = project
   .settings(noPublishSettings)
   .dependsOn(core)
   .settings(
-    moduleName := "geotrellis-server-example",
+    moduleName                 := "geotrellis-server-example",
     assembly / assemblyJarName := "geotrellis-server-example.jar",
     libraryDependencies ++= Seq(
       http4sDsl.value,
@@ -250,8 +248,8 @@ lazy val opengis = project
     )
   )
   .settings(
-    Compile / scalaxb / scalaxbDispatchVersion := dispatchVer,
-    Compile / scalaxb / scalaxbPackageName := "generated",
+    Compile / scalaxb / scalaxbDispatchVersion     := dispatchVer,
+    Compile / scalaxb / scalaxbPackageName         := "generated",
     Compile / scalaxb / scalaxbProtocolPackageName := Some("opengis"),
     Compile / scalaxb / scalaxbPackageNames := Map(
       uri("http://www.w3.org/1999/xlink")           -> "xlink",
@@ -374,7 +372,8 @@ lazy val stac = project
       circeGenericExtras.value,
       geotrellisRaster,
       stac4sCore,
-      stac4sClient
+      stac4sClient,
+      tofuCore
     )
   )
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package geotrellis.server.ogc.stac.util.logging
+package geotrellis.stac.util.logging
 
 import cats.effect.Sync
 import cats.syntax.flatMap._

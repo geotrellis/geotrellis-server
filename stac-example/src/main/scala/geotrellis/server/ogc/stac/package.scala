@@ -21,47 +21,24 @@ import geotrellis.server.ogc.utils._
 import geotrellis.store.query._
 import geotrellis.raster.{EmptyName, RasterSource, SourceName, StringName}
 import geotrellis.raster.geotiff.GeoTiffPath
-import geotrellis.server.ogc.stac.util.logging.{StacClientLoggingMid, StreamingStacClientLoggingMid}
 import com.azavea.stac4s.{StacAsset, StacExtent, TemporalExtent}
-import com.azavea.stac4s.api.client.{Query => SQuery, SearchFilters, StacClient, StreamingStacClient, StreamingStacClientFS2}
+import com.azavea.stac4s.api.client.{Query => SQuery, SearchFilters, StacClient}
 import com.azavea.stac4s.extensions.periodic.PeriodicExtent
 import com.azavea.stac4s.syntax._
 import io.circe.syntax._
 import cats.{Applicative, Foldable, Functor, FunctorFilter}
 import cats.data.NonEmptyList
-import cats.effect.Sync
 import cats.syntax.either._
 import cats.syntax.foldable._
 import cats.syntax.functorFilter._
 import cats.syntax.applicative._
 import cats.syntax.functor._
 import cats.syntax.option._
-import cats.tagless.{ApplyK, Derive}
 import eu.timepit.refined.types.string.NonEmptyString
-import fs2.Stream
-import tofu.higherKind.Mid
 
 import java.time.ZoneOffset
 
 package object stac {
-
-  /** Syntax to attach two [[Mid]] instances (each for a separate param) to a service with two type params. */
-  implicit class MidOps3Tuple[U[_[_], _[_], _], F[_], G[_], A](val mfg: (U[Mid[F, *], G, A], U[F, Mid[G, *], A])) extends AnyVal {
-    def attach(u: U[F, G, A])(implicit af: ApplyK[U[F, *[_], A]], ag: ApplyK[U[*[_], G, A]]): U[F, G, A] =
-      Mid.attach[U[*[_], G, A], F](mfg._1)(Mid.attach[U[F, *[_], A], G](mfg._2)(u))
-  }
-
-  implicit class MidOps3TupleReverse[U[_[_], _[_], _], F[_], G[_], A](val mfg: (U[F, Mid[G, *], A], U[Mid[F, *], G, A])) extends AnyVal {
-    def attach(u: U[F, G, A])(implicit af: ApplyK[U[F, *[_], A]], ag: ApplyK[U[*[_], G, A]]): U[F, G, A] =
-      mfg.swap attach u
-  }
-
-  implicit def stacClientApplyKF[F[_]]: ApplyK[StreamingStacClient[*[_], Stream[F, *]]] = Derive.applyK[StreamingStacClient[*[_], Stream[F, *]]]
-  implicit def stacClientApplyKG[F[_]]: ApplyK[StreamingStacClient[F, *[_]]]            = Derive.applyK[StreamingStacClient[F, *[_]]]
-
-  implicit class StreamingStacClientOps[F[_]](val self: StreamingStacClientFS2[F]) extends AnyVal {
-    def withLogging(implicit sync: Sync[F]): StreamingStacClientFS2[F] = (StacClientLoggingMid[F], StreamingStacClientLoggingMid[F]) attach self
-  }
 
   implicit class StacExtentionOps(val self: StacExtent) extends AnyVal {
 

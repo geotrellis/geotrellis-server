@@ -18,6 +18,7 @@ package geotrellis.server.ogc.stac
 
 import geotrellis.stac._
 import geotrellis.stac.raster.{StacAssetRasterSource, StacCollectionSource, StacItemAsset}
+import geotrellis.stac.util.logging.syntax._
 import geotrellis.store.query
 import geotrellis.store.query._
 import geotrellis.store.query.QueryF._

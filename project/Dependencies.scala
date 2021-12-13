@@ -11,8 +11,8 @@ object Dependencies {
       }
     }
 
-  def circeVersion(module: String) = Def.setting { "io.circe" %% s"circe-$module" % "0.14.1" }
-  def http4sVer(module: String)    = Def.setting { "org.http4s" %% s"http4s-$module" % "0.21.31" }
+  def circeVersion(module: String) = Def.setting("io.circe" %% s"circe-$module" % "0.14.1")
+  def http4sVer(module: String)    = Def.setting("org.http4s" %% s"http4s-$module" % "0.21.31")
 
   val crossScalaVer = List("2.12.15")
   val scalaVer      = crossScalaVer.head
@@ -30,7 +30,7 @@ object Dependencies {
   val circeShapes          = circeVersion("shapes")
   val circeGeneric         = circeVersion("generic")
   val circeGenericExtras   = circeVersion("generic-extras")
-  val circeOptics          = Def.setting { "io.circe" %% "circe-optics" % "0.14.1" }
+  val circeOptics          = Def.setting("io.circe" %% "circe-optics" % "0.14.1")
   val circeParser          = circeVersion("parser")
   val circeRefined         = circeVersion("refined")
   val circeJava8           = circeVersion("java8")
@@ -62,7 +62,7 @@ object Dependencies {
   val pureConfigMacros     = "com.github.pureconfig"                 %% "pureconfig-macros"           % "0.14.1"
   val scaffeine            = "com.github.blemale"                    %% "scaffeine"                   % "5.1.1"
   val scalaXml             = "org.scala-lang.modules"                %% "scala-xml"                   % "1.3.0"
-  val scalatest            = "org.scalatest"                         %% "scalatest"                   % "3.2.10"  % Test
+  val scalatest            = "org.scalatest"                         %% "scalatest"                   % "3.2.10" % Test
   val scalacheck           = "org.scalacheck"                        %% "scalacheck"                  % "1.14.0" % Test
   val scalacheckCats       = "io.chrisdavenport"                     %% "cats-scalacheck"             % "0.1.1"  % Test
   val sttpHttp4s           = "com.softwaremill.sttp.client3"         %% "http4s-ce2-backend"          % "3.3.9"
