@@ -30,9 +30,9 @@ import cats.instances.option._
 
 /** This class holds all the information necessary to construct a response to a WMTS request */
 case class WmtsModel[F[_]: Monad](
-    serviceMetadata: ows.ServiceMetadata,
-    matrices: List[GeotrellisTileMatrixSet],
-    sources: RepositoryM[F, List, OgcSource]
+  serviceMetadata: ows.ServiceMetadata,
+  matrices: List[GeotrellisTileMatrixSet],
+  sources: RepositoryM[F, List, OgcSource]
 ) {
 
   val matrixSetLookup: Map[String, GeotrellisTileMatrixSet] =

@@ -53,21 +53,21 @@ case class DescribeCoverageWcsParams(version: String, identifiers: Seq[String]) 
  * WCS 1.1.1 specs URI: https://portal.opengeospatial.org/files/07-067r2
  */
 case class GetCoverageWcsParams(
-    version: String,
-    identifier: String,
-    boundingBox: Extent,
-    temporalSequence: List[OgcTime],
-    format: OutputFormat,
-    gridBaseCRS: Option[CRS],
-    gridCS: URI,
-    gridType: URI,
-    // GridOrigin is BBOX minx, maxy // swapped in case of a geographic projection
-    // It is optional, in case it is missing we can use the boundingBox corner
-    gridOrigin: Option[(Double, Double)],
-    // GridOffsets is xres, yres // swapped in case of a geographic projection
-    gridOffsets: Option[(Double, Double)],
-    crs: CRS,
-    params: ParamMap
+  version: String,
+  identifier: String,
+  boundingBox: Extent,
+  temporalSequence: List[OgcTime],
+  format: OutputFormat,
+  gridBaseCRS: Option[CRS],
+  gridCS: URI,
+  gridType: URI,
+  // GridOrigin is BBOX minx, maxy // swapped in case of a geographic projection
+  // It is optional, in case it is missing we can use the boundingBox corner
+  gridOrigin: Option[(Double, Double)],
+  // GridOffsets is xres, yres // swapped in case of a geographic projection
+  gridOffsets: Option[(Double, Double)],
+  crs: CRS,
+  params: ParamMap
 ) extends WcsParams {
 
   def toQuery: Query = {

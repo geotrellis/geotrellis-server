@@ -45,8 +45,8 @@ import scala.concurrent.duration._
 import scala.xml.Elem
 
 class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
-    wmsModel: WmsModel[F],
-    serviceUrl: URL
+  wmsModel: WmsModel[F],
+  serviceUrl: URL
 ) extends Http4sDsl[F] {
   val logger = Logger[F]
 

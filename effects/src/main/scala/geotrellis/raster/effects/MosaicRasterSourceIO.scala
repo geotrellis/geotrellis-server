@@ -102,10 +102,10 @@ abstract class MosaicRasterSourceIO extends RasterSource {
    *   [[geotrellis.raster.RasterSource.reproject]]
    */
   def reprojection(
-      targetCRS: CRS,
-      resampleTarget: ResampleTarget = DefaultTarget,
-      method: ResampleMethod = ResampleMethod.DEFAULT,
-      strategy: OverviewStrategy = OverviewStrategy.DEFAULT
+    targetCRS: CRS,
+    resampleTarget: ResampleTarget = DefaultTarget,
+    method: ResampleMethod = ResampleMethod.DEFAULT,
+    strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): RasterSource =
     MosaicRasterSourceIO
       .instance(
@@ -167,9 +167,9 @@ abstract class MosaicRasterSourceIO extends RasterSource {
   }
 
   def resample(
-      resampleTarget: ResampleTarget,
-      method: ResampleMethod,
-      strategy: OverviewStrategy
+    resampleTarget: ResampleTarget,
+    method: ResampleMethod,
+    strategy: OverviewStrategy
   ): RasterSource =
     MosaicRasterSourceIO
       .instance(
@@ -198,11 +198,11 @@ object MosaicRasterSourceIO {
    * also known.
    */
   def instance(
-      sourcesList: NonEmptyList[RasterSource],
-      targetCRS: CRS,
-      targetGridExtent: GridExtent[Long],
-      sourceName: SourceName,
-      stacAttributes: Map[String, String]
+    sourcesList: NonEmptyList[RasterSource],
+    targetCRS: CRS,
+    targetGridExtent: GridExtent[Long],
+    sourceName: SourceName,
+    stacAttributes: Map[String, String]
   ): MosaicRasterSourceIO =
     new MosaicRasterSourceIO {
       val sources: NonEmptyList[RasterSource]      = sourcesList
@@ -217,10 +217,10 @@ object MosaicRasterSourceIO {
    * sourcesList.
    */
   def instance(
-      sourcesList: NonEmptyList[RasterSource],
-      targetCRS: CRS,
-      sourceName: SourceName,
-      stacAttributes: Map[String, String]
+    sourcesList: NonEmptyList[RasterSource],
+    targetCRS: CRS,
+    sourceName: SourceName,
+    stacAttributes: Map[String, String]
   ): MosaicRasterSourceIO = {
     val combinedExtent     = sourcesList.map(_.extent).toList.reduce(_ combine _)
     val minCellSize        = sourcesList.map(_.cellSize).toList.maxBy(_.resolution)
@@ -239,10 +239,10 @@ object MosaicRasterSourceIO {
     apply(sourcesList, targetCRS, targetGridExtent, EmptyName)
 
   def apply(
-      sourcesList: NonEmptyList[RasterSource],
-      targetCRS: CRS,
-      targetGridExtent: GridExtent[Long],
-      rasterSourceName: SourceName
+    sourcesList: NonEmptyList[RasterSource],
+    targetCRS: CRS,
+    targetGridExtent: GridExtent[Long],
+    rasterSourceName: SourceName
   ): MosaicRasterSourceIO =
     new MosaicRasterSourceIO {
       val name         = rasterSourceName

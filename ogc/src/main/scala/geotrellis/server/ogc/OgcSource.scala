@@ -84,15 +84,15 @@ trait RasterOgcSource extends OgcSource {
  * An imagery source with a [[RasterSource]] that defines its capacities
  */
 case class SimpleSource(
-    name: String,
-    title: String,
-    source: RasterSource,
-    defaultStyle: Option[String],
-    styles: List[OgcStyle],
-    resampleMethod: ResampleMethod,
-    overviewStrategy: OverviewStrategy,
-    timeMetadataKey: Option[String],
-    timeFormat: OgcTimeFormat
+  name: String,
+  title: String,
+  source: RasterSource,
+  defaultStyle: Option[String],
+  styles: List[OgcStyle],
+  resampleMethod: ResampleMethod,
+  overviewStrategy: OverviewStrategy,
+  timeMetadataKey: Option[String],
+  timeFormat: OgcTimeFormat
 ) extends RasterOgcSource {
   val timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest
   lazy val time: OgcTime          = source.time(timeMetadataKey).format(timeFormat).sorted
@@ -106,16 +106,16 @@ object SimpleSource {
 }
 
 case class GeoTrellisOgcSource(
-    name: String,
-    title: String,
-    sourceUri: String,
-    defaultStyle: Option[String],
-    styles: List[OgcStyle],
-    resampleMethod: ResampleMethod,
-    overviewStrategy: OverviewStrategy,
-    timeMetadataKey: Option[String],
-    timeFormat: OgcTimeFormat,
-    timeDefault: OgcTimeDefault
+  name: String,
+  title: String,
+  sourceUri: String,
+  defaultStyle: Option[String],
+  styles: List[OgcStyle],
+  resampleMethod: ResampleMethod,
+  overviewStrategy: OverviewStrategy,
+  timeMetadataKey: Option[String],
+  timeFormat: OgcTimeFormat,
+  timeDefault: OgcTimeDefault
 ) extends RasterOgcSource {
 
   def toLayer(crs: CRS, style: Option[OgcStyle], temporalSequence: List[OgcTime]): SimpleOgcLayer = {
@@ -195,13 +195,13 @@ case class GeoTrellisOgcSource(
 }
 
 case class MapAlgebraSourceMetadata(
-    name: SourceName,
-    crs: CRS,
-    bandCount: Int,
-    cellType: CellType,
-    gridExtent: GridExtent[Long],
-    resolutions: List[CellSize],
-    sources: Map[String, RasterMetadata]
+  name: SourceName,
+  crs: CRS,
+  bandCount: Int,
+  cellType: CellType,
+  gridExtent: GridExtent[Long],
+  resolutions: List[CellSize],
+  sources: Map[String, RasterMetadata]
 ) extends RasterMetadata {
 
   /** MapAlgebra metadata usually doesn't contain a metadata that is common for all RasterSources */
@@ -213,17 +213,17 @@ case class MapAlgebraSourceMetadata(
  * A complex layer, constructed from an [[Expression]] and one or more [[RasterSource]] mappings which allow evaluation of said [[Expression]]
  */
 case class MapAlgebraSource(
-    name: String,
-    title: String,
-    ogcSources: Map[String, RasterOgcSource],
-    algebra: Expression,
-    defaultStyle: Option[String],
-    styles: List[OgcStyle],
-    resampleMethod: ResampleMethod,
-    overviewStrategy: OverviewStrategy,
-    timeFormat: OgcTimeFormat,
-    timeDefault: OgcTimeDefault,
-    targetCellType: Option[CellType]
+  name: String,
+  title: String,
+  ogcSources: Map[String, RasterOgcSource],
+  algebra: Expression,
+  defaultStyle: Option[String],
+  styles: List[OgcStyle],
+  resampleMethod: ResampleMethod,
+  overviewStrategy: OverviewStrategy,
+  timeFormat: OgcTimeFormat,
+  timeDefault: OgcTimeDefault,
+  targetCellType: Option[CellType]
 ) extends OgcSource {
   // each of the underlying ogcSources uses it's own timeMetadataKey
   val timeMetadataKey: Option[String] = None

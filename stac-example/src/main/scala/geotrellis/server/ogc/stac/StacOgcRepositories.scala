@@ -41,8 +41,8 @@ import higherkindness.droste.{scheme, Algebra}
 
 /** Sync is required to compile [[fs2.Stream]] */
 case class StacOgcRepository[F[_]: Sync](
-    stacSourceConf: StacSourceConf,
-    client: StreamingStacClientFS2[F]
+  stacSourceConf: StacSourceConf,
+  client: StreamingStacClientFS2[F]
 ) extends RepositoryM[F, List, OgcSource] {
   def store: F[List[OgcSource]] = find(query.all)
 
@@ -119,8 +119,8 @@ case class StacOgcRepository[F[_]: Sync](
 }
 
 case class StacOgcRepositories[F[_]: Sync](
-    stacLayers: List[StacSourceConf],
-    client: SttpBackend[F, Any]
+  stacLayers: List[StacSourceConf],
+  client: SttpBackend[F, Any]
 ) extends RepositoryM[F, List, OgcSource] {
   def store: F[List[OgcSource]] = find(query.withNames(stacLayers.map(_.name).toSet))
 

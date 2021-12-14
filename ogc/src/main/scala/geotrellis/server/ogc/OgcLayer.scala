@@ -50,25 +50,25 @@ sealed trait RasterOgcLayer extends OgcLayer {
 }
 
 case class SimpleOgcLayer(
-    name: String,
-    title: String,
-    crs: CRS,
-    source: RasterSource,
-    style: Option[OgcStyle],
-    resampleMethod: ResampleMethod,
-    overviewStrategy: OverviewStrategy
+  name: String,
+  title: String,
+  crs: CRS,
+  source: RasterSource,
+  style: Option[OgcStyle],
+  resampleMethod: ResampleMethod,
+  overviewStrategy: OverviewStrategy
 ) extends RasterOgcLayer
 
 case class MapAlgebraOgcLayer(
-    name: String,
-    title: String,
-    crs: CRS,
-    parameters: Map[String, SimpleOgcLayer],
-    algebra: Expression,
-    style: Option[OgcStyle],
-    resampleMethod: ResampleMethod,
-    overviewStrategy: OverviewStrategy,
-    targetCellType: Option[CellType]
+  name: String,
+  title: String,
+  crs: CRS,
+  parameters: Map[String, SimpleOgcLayer],
+  algebra: Expression,
+  style: Option[OgcStyle],
+  resampleMethod: ResampleMethod,
+  overviewStrategy: OverviewStrategy,
+  targetCellType: Option[CellType]
 ) extends OgcLayer
 
 object SimpleOgcLayer {

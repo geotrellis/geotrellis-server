@@ -30,10 +30,10 @@ import org.log4s.getLogger
 import java.net.URL
 
 class OgcService[F[_]: Concurrent: Parallel: Logger](
-    wmsModel: Option[WmsModel[F]],
-    wcsModel: Option[WcsModel[F]],
-    wmtsModel: Option[WmtsModel[F]],
-    serviceUrl: URL
+  wmsModel: Option[WmsModel[F]],
+  wcsModel: Option[WcsModel[F]],
+  wmtsModel: Option[WmtsModel[F]],
+  serviceUrl: URL
 ) extends Http4sDsl[F] {
   val logger = getLogger
 

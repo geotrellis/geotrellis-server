@@ -35,10 +35,10 @@ abstract class RasterSourceF[F[_]: Monad] extends RasterMetadataF[F] with Serial
   def metadata: F[_ <: RasterMetadata]
 
   protected def reprojection(
-      targetCRS: CRS,
-      resampleTarget: ResampleTarget = DefaultTarget,
-      method: ResampleMethod = ResampleMethod.DEFAULT,
-      strategy: OverviewStrategy = OverviewStrategy.DEFAULT
+    targetCRS: CRS,
+    resampleTarget: ResampleTarget = DefaultTarget,
+    method: ResampleMethod = ResampleMethod.DEFAULT,
+    strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): RasterSourceF[F]
 
   /**
@@ -48,10 +48,10 @@ abstract class RasterSourceF[F[_]: Monad] extends RasterMetadataF[F] with Serial
    * @group reproject
    */
   def reproject(
-      targetCRS: CRS,
-      resampleTarget: ResampleTarget = DefaultTarget,
-      method: ResampleMethod = ResampleMethod.DEFAULT,
-      strategy: OverviewStrategy = OverviewStrategy.DEFAULT
+    targetCRS: CRS,
+    resampleTarget: ResampleTarget = DefaultTarget,
+    method: ResampleMethod = ResampleMethod.DEFAULT,
+    strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): RasterSourceF[F] =
     // if (targetCRS == this.crs) this // TODO: Fixme, Embed would work here? how to short circuit
     reprojection(targetCRS, resampleTarget, method, strategy)
@@ -63,10 +63,10 @@ abstract class RasterSourceF[F[_]: Monad] extends RasterMetadataF[F] with Serial
    * a
    */
   def reprojectToGrid(
-      targetCRS: CRS,
-      grid: GridExtent[Long],
-      method: ResampleMethod = ResampleMethod.DEFAULT,
-      strategy: OverviewStrategy = OverviewStrategy.DEFAULT
+    targetCRS: CRS,
+    grid: GridExtent[Long],
+    method: ResampleMethod = ResampleMethod.DEFAULT,
+    strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): RasterSourceF[F] =
     // if (targetCRS == this.crs && grid == this.gridExtent) this // TODO: Fixme, Embed would work here? how to short circuit
     // else if (targetCRS == this.crs) resampleToGrid(grid, method, strategy) // TODO: Fixme, Embed would work here? how to short circuit
@@ -78,10 +78,10 @@ abstract class RasterSourceF[F[_]: Monad] extends RasterMetadataF[F] with Serial
    * @group reproject
    */
   def reprojectToRegion(
-      targetCRS: CRS,
-      region: RasterExtent,
-      method: ResampleMethod = ResampleMethod.DEFAULT,
-      strategy: OverviewStrategy = OverviewStrategy.DEFAULT
+    targetCRS: CRS,
+    region: RasterExtent,
+    method: ResampleMethod = ResampleMethod.DEFAULT,
+    strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): RasterSourceF[F] =
     // if (targetCRS == this.crs && region == this.gridExtent) this // TODO: Fixme, Embed would work here? how to short circuit
     // else if (targetCRS == this.crs) resampleToRegion(region.toGridType[Long], method, strategy) // TODO: Fixme, Embed would work here? how to short circuit
@@ -94,10 +94,10 @@ abstract class RasterSourceF[F[_]: Monad] extends RasterMetadataF[F] with Serial
    * @group resample
    */
   def resample(
-      targetCols: Long,
-      targetRows: Long,
-      method: ResampleMethod = ResampleMethod.DEFAULT,
-      strategy: OverviewStrategy = OverviewStrategy.DEFAULT
+    targetCols: Long,
+    targetRows: Long,
+    method: ResampleMethod = ResampleMethod.DEFAULT,
+    strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): RasterSourceF[F] =
     resample(TargetDimensions(targetCols, targetRows), method, strategy)
 
@@ -107,9 +107,9 @@ abstract class RasterSourceF[F[_]: Monad] extends RasterMetadataF[F] with Serial
    * @group resample
    */
   def resampleToGrid(
-      grid: GridExtent[Long],
-      method: ResampleMethod = ResampleMethod.DEFAULT,
-      strategy: OverviewStrategy = OverviewStrategy.DEFAULT
+    grid: GridExtent[Long],
+    method: ResampleMethod = ResampleMethod.DEFAULT,
+    strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): RasterSourceF[F] =
     resample(TargetAlignment(grid), method, strategy)
 
@@ -119,9 +119,9 @@ abstract class RasterSourceF[F[_]: Monad] extends RasterMetadataF[F] with Serial
    * @group resample
    */
   def resampleToRegion(
-      region: GridExtent[Long],
-      method: ResampleMethod = ResampleMethod.DEFAULT,
-      strategy: OverviewStrategy = OverviewStrategy.DEFAULT
+    region: GridExtent[Long],
+    method: ResampleMethod = ResampleMethod.DEFAULT,
+    strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): RasterSourceF[F] =
     resample(TargetRegion(region), method, strategy)
 

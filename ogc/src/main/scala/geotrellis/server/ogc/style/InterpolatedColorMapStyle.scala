@@ -24,16 +24,16 @@ import geotrellis.raster.histogram.Histogram
 import geotrellis.raster.io.geotiff.GeoTiff
 
 case class InterpolatedColorMapStyle(
-    name: String,
-    title: String,
-    colorMap: InterpolatedColorMap,
-    legends: List[LegendModel] = Nil
+  name: String,
+  title: String,
+  colorMap: InterpolatedColorMap,
+  legends: List[LegendModel] = Nil
 ) extends OgcStyle {
   def renderRaster(
-      raster: Raster[MultibandTile],
-      crs: CRS,
-      format: OutputFormat,
-      hists: List[Histogram[Double]]
+    raster: Raster[MultibandTile],
+    crs: CRS,
+    format: OutputFormat,
+    hists: List[Histogram[Double]]
   ): Array[Byte] =
     format match {
       case format: OutputFormat.Png => format.render(raster.tile.band(bandIndex = 0), colorMap)

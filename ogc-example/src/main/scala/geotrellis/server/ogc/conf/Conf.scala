@@ -34,10 +34,10 @@ import java.io.File
  * https://pureconfig.github.io/docs/supporting-new-types.html for more examples and explanation of ConfigReader instances.
  */
 case class Conf(
-    layers: Map[String, OgcSourceConf],
-    wms: Option[WmsConf],
-    wmts: Option[WmtsConf],
-    wcs: Option[WcsConf]
+  layers: Map[String, OgcSourceConf],
+  wms: Option[WmsConf],
+  wmts: Option[WmtsConf],
+  wcs: Option[WcsConf]
 )
 
 object Conf {

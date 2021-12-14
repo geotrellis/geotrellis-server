@@ -40,26 +40,26 @@ sealed trait OgcSourceConf {
 }
 
 case class StacSourceConf(
-    name: String,
-    layer: Option[String],
-    collection: Option[String],
-    title: String,
-    source: String,
-    asset: String,
-    assetLimit: Option[NonNegInt],
-    pageLimit: Option[NonNegInt],
-    defaultStyle: Option[String],
-    styles: List[StyleConf],
-    commonCrs: CRS = WebMercator,
-    resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-    overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
-    ignoreTime: Boolean = false,
-    datetimeField: String = "datetime",
-    timeFormat: OgcTimeFormat = OgcTimeFormat.Default,
-    timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest,
-    fetchTimePositions: Boolean = false,
-    withGDAL: Boolean = false,
-    parallelMosaic: Boolean = false
+  name: String,
+  layer: Option[String],
+  collection: Option[String],
+  title: String,
+  source: String,
+  asset: String,
+  assetLimit: Option[NonNegInt],
+  pageLimit: Option[NonNegInt],
+  defaultStyle: Option[String],
+  styles: List[StyleConf],
+  commonCrs: CRS = WebMercator,
+  resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
+  ignoreTime: Boolean = false,
+  datetimeField: String = "datetime",
+  timeFormat: OgcTimeFormat = OgcTimeFormat.Default,
+  timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest,
+  fetchTimePositions: Boolean = false,
+  withGDAL: Boolean = false,
+  parallelMosaic: Boolean = false
 ) extends OgcSourceConf {
 
   /** By default the search would happen across collections. */
@@ -105,16 +105,16 @@ object StacSourceConf {
 }
 
 case class RasterSourceConf(
-    name: String,
-    title: String,
-    source: String,
-    defaultStyle: Option[String],
-    styles: List[StyleConf],
-    resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-    overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
-    datetimeField: String = SimpleSource.TimeFieldDefault,
-    timeFormat: OgcTimeFormat = OgcTimeFormat.Default,
-    timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest
+  name: String,
+  title: String,
+  source: String,
+  defaultStyle: Option[String],
+  styles: List[StyleConf],
+  resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
+  datetimeField: String = SimpleSource.TimeFieldDefault,
+  timeFormat: OgcTimeFormat = OgcTimeFormat.Default,
+  timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest
 ) extends OgcSourceConf {
   def toLayer: RasterOgcSource =
     GeoTrellisPath
@@ -148,16 +148,16 @@ case class RasterSourceConf(
 }
 
 case class MapAlgebraSourceConf(
-    name: String,
-    title: String,
-    algebra: Expression,
-    defaultStyle: Option[String],
-    styles: List[StyleConf],
-    resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-    overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
-    timeFormat: OgcTimeFormat = OgcTimeFormat.Default,
-    timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest,
-    targetCellType: Option[CellType] = None
+  name: String,
+  title: String,
+  algebra: Expression,
+  defaultStyle: Option[String],
+  styles: List[StyleConf],
+  resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
+  timeFormat: OgcTimeFormat = OgcTimeFormat.Default,
+  timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest,
+  targetCellType: Option[CellType] = None
 ) extends OgcSourceConf {
   def listParams(expr: Expression): List[String] = {
     def eval(subExpr: Expression): List[String] =

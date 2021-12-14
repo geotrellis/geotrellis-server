@@ -36,9 +36,9 @@ import cats.syntax.option._
 import cats.instances.list._
 
 case class GeoTiffRasterSource[F[_]: Monad: UnsafeLift](
-    dataPath: GeoTiffPath,
-    private[raster] val targetCellType: Option[TargetCellType] = None,
-    @transient private[raster] val baseTiff: Option[F[MultibandGeoTiff]] = None
+  dataPath: GeoTiffPath,
+  private[raster] val targetCellType: Option[TargetCellType] = None,
+  @transient private[raster] val baseTiff: Option[F[MultibandGeoTiff]] = None
 ) extends RasterSourceF[F] {
   def name: GeoTiffPath = dataPath
 
@@ -63,10 +63,10 @@ case class GeoTiffRasterSource[F[_]: Monad: UnsafeLift](
   lazy val resolutions: F[List[CellSize]]  = tiffF.map(tiff => tiff.cellSize :: tiff.overviews.map(_.cellSize))
 
   def reprojection(
-      targetCRS: CRS,
-      resampleTarget: ResampleTarget = DefaultTarget,
-      method: ResampleMethod = ResampleMethod.DEFAULT,
-      strategy: OverviewStrategy = OverviewStrategy.DEFAULT
+    targetCRS: CRS,
+    resampleTarget: ResampleTarget = DefaultTarget,
+    method: ResampleMethod = ResampleMethod.DEFAULT,
+    strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): GeoTiffReprojectRasterSource[F] =
     GeoTiffReprojectRasterSource(dataPath, targetCRS, resampleTarget, method, strategy, targetCellType = targetCellType, baseTiff = tiffF.some)
 

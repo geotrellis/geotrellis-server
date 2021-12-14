@@ -97,10 +97,10 @@ abstract class MosaicRasterSourceF[F[_]: Monad: Parallel] extends RasterSourceF[
    *   [[geotrellis.raster.RasterSource.reproject]]
    */
   def reprojection(
-      targetCRS: CRS,
-      resampleTarget: ResampleTarget = DefaultTarget,
-      method: ResampleMethod = ResampleMethod.DEFAULT,
-      strategy: OverviewStrategy = OverviewStrategy.DEFAULT
+    targetCRS: CRS,
+    resampleTarget: ResampleTarget = DefaultTarget,
+    method: ResampleMethod = ResampleMethod.DEFAULT,
+    strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): RasterSourceF[F] =
     MosaicRasterSourceF.instance(sources.map(_.map(_.reproject(targetCRS, resampleTarget, method, strategy))), targetCRS.pure[F], name)
 
@@ -138,9 +138,9 @@ abstract class MosaicRasterSourceF[F[_]: Monad: Parallel] extends RasterSourceF[
   }
 
   def resample(
-      resampleTarget: ResampleTarget,
-      method: ResampleMethod,
-      strategy: OverviewStrategy
+    resampleTarget: ResampleTarget,
+    method: ResampleMethod,
+    strategy: OverviewStrategy
   ): RasterSourceF[F] =
     MosaicRasterSourceF.instance(sources.map(_.map(_.resample(resampleTarget, method, strategy))), crs, name)
 
@@ -176,10 +176,10 @@ object MosaicRasterSourceF {
    * also known.
    */
   def instanceGridExtent[F[_]: Monad: Parallel](
-      sourcesList: F[NonEmptyList[RasterSourceF[F]]],
-      targetCRS: F[CRS],
-      targetGridExtent: F[GridExtent[Long]],
-      sourceName: SourceName
+    sourcesList: F[NonEmptyList[RasterSourceF[F]]],
+    targetCRS: F[CRS],
+    targetGridExtent: F[GridExtent[Long]],
+    sourceName: SourceName
   ): MosaicRasterSourceF[F] =
     new MosaicRasterSourceF[F] {
       val sources: F[NonEmptyList[RasterSourceF[F]]] = sourcesList
@@ -193,9 +193,9 @@ object MosaicRasterSourceF {
    * sourcesList.
    */
   def instance[F[_]: Monad: Parallel](
-      sourcesList: F[NonEmptyList[RasterSourceF[F]]],
-      targetCRS: F[CRS],
-      sourceName: SourceName = EmptyName
+    sourcesList: F[NonEmptyList[RasterSourceF[F]]],
+    targetCRS: F[CRS],
+    sourceName: SourceName = EmptyName
   ): MosaicRasterSourceF[F] = {
     val combinedExtent     = sourcesList >>= { _.parTraverse(_.extent).map(_.toList.reduce(_ combine _)) }
     val minCellSize        = sourcesList >>= { _.parTraverse(_.cellSize).map(_.toList.maxBy(_.resolution)) }
@@ -205,10 +205,10 @@ object MosaicRasterSourceF {
 
   /** All apply methods reproject the input sourcesList to the targetGridExtent */
   def applyGridExtent[F[_]: Monad: Parallel](
-      sourcesList: F[NonEmptyList[RasterSourceF[F]]],
-      targetCRS: F[CRS],
-      targetGridExtent: F[GridExtent[Long]],
-      rasterSourceName: SourceName = EmptyName
+    sourcesList: F[NonEmptyList[RasterSourceF[F]]],
+    targetCRS: F[CRS],
+    targetGridExtent: F[GridExtent[Long]],
+    rasterSourceName: SourceName = EmptyName
   ): MosaicRasterSourceF[F] =
     new MosaicRasterSourceF[F] {
       val name: SourceName = rasterSourceName
@@ -221,9 +221,9 @@ object MosaicRasterSourceF {
     }
 
   def apply[F[_]: Monad: Parallel](
-      sourcesList: F[NonEmptyList[RasterSourceF[F]]],
-      targetCRS: F[CRS],
-      rasterSourceName: SourceName
+    sourcesList: F[NonEmptyList[RasterSourceF[F]]],
+    targetCRS: F[CRS],
+    rasterSourceName: SourceName
   ): MosaicRasterSourceF[F] =
     new MosaicRasterSourceF[F] {
       val name: SourceName = rasterSourceName

@@ -46,10 +46,10 @@ object LayerTms {
    *   a function from (Int, Int, Int) to a Tile corresponding to the Param provided
    */
   def apply[F[_]: Logger: Parallel: Monad, T: TmsReification[F, *]](
-      getExpression: F[Expression],
-      getParams: F[Map[String, T]],
-      interpreter: Interpreter[F],
-      cellType: Option[CellType]
+    getExpression: F[Expression],
+    getParams: F[Map[String, T]],
+    interpreter: Interpreter[F],
+    cellType: Option[CellType]
   ): (Int, Int, Int) => F[Interpreted[MultibandTile]] = { (z: Int, x: Int, y: Int) =>
     for {
       expr <- getExpression
@@ -79,16 +79,16 @@ object LayerTms {
    * Provide a function to produce an expression given a set of arguments and an F for getting arguments; getting back a tile
    */
   def generateExpression[F[_]: Logger: Parallel: Monad, T: TmsReification[F, *]](
-      mkExpr: Map[String, T] => Expression,
-      getParams: F[Map[String, T]],
-      interpreter: Interpreter[F]
+    mkExpr: Map[String, T] => Expression,
+    getParams: F[Map[String, T]],
+    interpreter: Interpreter[F]
   ): (Int, Int, Int) => F[Interpreted[MultibandTile]] = apply[F, T](getParams.map(mkExpr(_)), getParams, interpreter, None)
 
   /** Provide an expression and expect arguments to fulfill its needs */
   def curried[F[_]: Logger: Parallel: Monad, T: TmsReification[F, *]](
-      expr: Expression,
-      interpreter: Interpreter[F],
-      cellType: Option[CellType]
+    expr: Expression,
+    interpreter: Interpreter[F],
+    cellType: Option[CellType]
   ): (Map[String, T], Int, Int, Int) => F[Interpreted[MultibandTile]] =
     (paramMap: Map[String, T], z: Int, x: Int, y: Int) => {
       val eval = apply[F, T](expr.pure[F], paramMap.pure[F], interpreter, cellType)
@@ -97,16 +97,16 @@ object LayerTms {
 
   /** The identity endpoint (for simple display of raster) */
   def concurrent[F[_]: Logger: Parallel: Monad: Concurrent, T: TmsReification[F, *]](
-      getExpression: F[Expression],
-      getParams: F[Map[String, T]],
-      interpreter: Interpreter[F]
+    getExpression: F[Expression],
+    getParams: F[Map[String, T]],
+    interpreter: Interpreter[F]
   ): (Int, Int, Int) => F[Interpreted[MultibandTile]] =
     apply(getExpression, getParams, interpreter, None)
 
   /** The identity endpoint (for simple display of raster) */
   def withCellType[F[_]: Logger: Parallel: Monad: Concurrent, T: TmsReification[F, *]](
-      param: T,
-      cellType: CellType
+    param: T,
+    cellType: CellType
   ): (Int, Int, Int) => F[Interpreted[MultibandTile]] =
     (z: Int, x: Int, y: Int) => {
       val eval = curried[F, T](RasterVar("identity"), ConcurrentInterpreter.DEFAULT, cellType.some)
@@ -114,7 +114,7 @@ object LayerTms {
     }
 
   def identity[F[_]: Logger: Parallel: Monad: Concurrent, T: TmsReification[F, *]](
-      param: T
+    param: T
   ): (Int, Int, Int) => F[Interpreted[MultibandTile]] =
     (z: Int, x: Int, y: Int) => {
       val eval = curried[F, T](RasterVar("identity"), ConcurrentInterpreter.DEFAULT, None)

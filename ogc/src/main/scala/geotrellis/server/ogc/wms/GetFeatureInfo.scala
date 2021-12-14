@@ -42,8 +42,8 @@ import opengis._
 import scalaxb._
 
 case class GetFeatureInfo[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
-    model: WmsModel[F],
-    rasterCache: Cache[GetMapParams, Raster[MultibandTile]]
+  model: WmsModel[F],
+  rasterCache: Cache[GetMapParams, Raster[MultibandTile]]
 ) {
   def build(params: GetFeatureInfoParams): F[Either[GetFeatureInfoException, Feature[Geometry, Json]]] = {
     val re = params.rasterExtent
@@ -83,8 +83,8 @@ case class GetFeatureInfo[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
   }
 
   def featureFromRaster(
-      raster: Raster[MultibandTile],
-      params: GetFeatureInfoParams
+    raster: Raster[MultibandTile],
+    params: GetFeatureInfoParams
   ): Either[GetFeatureInfoException, Feature[Geometry, Json]] = {
     val Dimensions(cols, rows) = raster.dimensions
 

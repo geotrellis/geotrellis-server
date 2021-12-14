@@ -35,12 +35,12 @@ import cats.syntax.applicative._
 import cats.syntax.option._
 
 case class GeoTiffResampleRasterSource[F[_]: Monad: UnsafeLift](
-    dataPath: GeoTiffPath,
-    resampleTarget: ResampleTarget,
-    method: ResampleMethod = ResampleMethod.DEFAULT,
-    val strategy: OverviewStrategy = OverviewStrategy.DEFAULT,
-    private[raster] val targetCellType: Option[TargetCellType] = None,
-    @transient private[raster] val baseTiff: Option[F[MultibandGeoTiff]] = None
+  dataPath: GeoTiffPath,
+  resampleTarget: ResampleTarget,
+  method: ResampleMethod = ResampleMethod.DEFAULT,
+  val strategy: OverviewStrategy = OverviewStrategy.DEFAULT,
+  private[raster] val targetCellType: Option[TargetCellType] = None,
+  @transient private[raster] val baseTiff: Option[F[MultibandGeoTiff]] = None
 ) extends RasterSourceF[F] {
   def resampleMethod: Option[ResampleMethod] = Some(method)
   def name: GeoTiffPath                      = dataPath
@@ -70,10 +70,10 @@ case class GeoTiffResampleRasterSource[F[_]: Monad: UnsafeLift](
     (tiffF, gridExtent).mapN((tiff, gridExtent) => tiff.getClosestOverview(gridExtent.cellSize, strategy))
 
   def reprojection(
-      targetCRS: CRS,
-      resampleTarget: ResampleTarget = DefaultTarget,
-      method: ResampleMethod = ResampleMethod.DEFAULT,
-      strategy: OverviewStrategy = OverviewStrategy.DEFAULT
+    targetCRS: CRS,
+    resampleTarget: ResampleTarget = DefaultTarget,
+    method: ResampleMethod = ResampleMethod.DEFAULT,
+    strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): GeoTiffReprojectRasterSource[F] =
     new GeoTiffReprojectRasterSource[F](dataPath, targetCRS, resampleTarget, method, strategy, targetCellType = targetCellType) {
       override lazy val gridExtent: F[GridExtent[Long]] =

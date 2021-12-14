@@ -38,21 +38,21 @@ sealed trait OgcServiceConf {
 
 /** WMS Service configuration */
 case class WmsConf(
-    parentLayerMeta: WmsParentLayerMeta,
-    serviceMetadata: opengis.wms.Service,
-    layerDefinitions: List[OgcSourceConf]
+  parentLayerMeta: WmsParentLayerMeta,
+  serviceMetadata: opengis.wms.Service,
+  layerDefinitions: List[OgcSourceConf]
 ) extends OgcServiceConf
 
 /** WMTS Service configuration */
 case class WmtsConf(
-    serviceMetadata: ows.ServiceMetadata,
-    layerDefinitions: List[OgcSourceConf],
-    tileMatrixSets: List[GeotrellisTileMatrixSet]
+  serviceMetadata: ows.ServiceMetadata,
+  layerDefinitions: List[OgcSourceConf],
+  tileMatrixSets: List[GeotrellisTileMatrixSet]
 ) extends OgcServiceConf
 
 /** WCS Service configuration */
 case class WcsConf(
-    serviceMetadata: ows.ServiceMetadata,
-    layerDefinitions: List[OgcSourceConf],
-    supportedProjections: List[CRS]
+  serviceMetadata: ows.ServiceMetadata,
+  layerDefinitions: List[OgcSourceConf],
+  supportedProjections: List[CRS]
 ) extends OgcServiceConf

@@ -49,11 +49,11 @@ object Render {
     }
 
   def singleband(
-      raster: Raster[MultibandTile],
-      crs: CRS,
-      maybeStyle: Option[OgcStyle],
-      format: OutputFormat,
-      hists: List[Histogram[Double]]
+    raster: Raster[MultibandTile],
+    crs: CRS,
+    maybeStyle: Option[OgcStyle],
+    format: OutputFormat,
+    hists: List[Histogram[Double]]
   ): Array[Byte] =
     maybeStyle match {
       case Some(style) => style.renderRaster(raster, crs, format, hists)
@@ -66,10 +66,10 @@ object Render {
     }
 
   def multiband(
-      raster: Raster[MultibandTile],
-      crs: CRS,
-      maybeStyle: Option[OgcStyle],
-      format: OutputFormat,
-      hists: List[Histogram[Double]]
+    raster: Raster[MultibandTile],
+    crs: CRS,
+    maybeStyle: Option[OgcStyle],
+    format: OutputFormat,
+    hists: List[Histogram[Double]]
   ): Array[Byte] = rgba(raster, crs, maybeStyle, format, hists)
 }

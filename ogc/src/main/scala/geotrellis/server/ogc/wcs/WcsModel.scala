@@ -27,10 +27,10 @@ import geotrellis.proj4.CRS
 
 /** This class holds all the information necessary to construct a response to a WCS request */
 case class WcsModel[F[_]: Functor](
-    serviceMetadata: ows.ServiceMetadata,
-    sources: RepositoryM[F, List, OgcSource],
-    supportedProjections: List[CRS],
-    extendedParametersBinding: Option[ParamMap => Option[Expression => Expression]] = None
+  serviceMetadata: ows.ServiceMetadata,
+  sources: RepositoryM[F, List, OgcSource],
+  supportedProjections: List[CRS],
+  extendedParametersBinding: Option[ParamMap => Option[Expression => Expression]] = None
 ) {
   def getLayers(p: GetCoverageWcsParams): F[List[OgcLayer]] = {
     val filteredSources = sources.find(p.toQuery)

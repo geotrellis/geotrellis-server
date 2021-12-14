@@ -39,7 +39,7 @@ import cats.implicits._
 import java.net.URLDecoder
 
 class NdviService[F[_]: Sync: Logger: Parallel, T: Encoder: Decoder: TmsReification[F, *]](
-    interpreter: Interpreter[F]
+  interpreter: Interpreter[F]
 ) extends Http4sDsl[F] {
   val logger = Logger[F]
 
