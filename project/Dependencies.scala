@@ -19,9 +19,9 @@ object Dependencies {
 
   val dispatchVer  = "0.11.3"
   val gtVer        = "3.6.0"
-  val stac4sVer    = "0.7.2"
+  val stac4sVer    = "0.6.2"
   val jaxbApiVer   = "2.3.1"
-  val refinedVer   = "0.9.28"
+  val refinedVer   = "0.9.23"
   val shapelessVer = "2.3.3"
 
   val cats                 = catsVersion("core")
@@ -58,8 +58,6 @@ object Dependencies {
   val mamlJvm              = "com.azavea.geotrellis"                 %% "maml-jvm"                    % "0.6.1"
   val pureConfig           = "com.github.pureconfig"                 %% "pureconfig"                  % "0.14.1"
   val pureConfigCatsEffect = "com.github.pureconfig"                 %% "pureconfig-cats-effect"      % "0.14.1"
-  val pureConfigGeneric    = "com.github.pureconfig"                 %% "pureconfig-generic"          % "0.14.1"
-  val pureConfigMacros     = "com.github.pureconfig"                 %% "pureconfig-macros"           % "0.14.1"
   val scaffeine            = "com.github.blemale"                    %% "scaffeine"                   % "5.1.1"
   val scalaXml             = "org.scala-lang.modules"                %% "scala-xml"                   % "1.3.0"
   val scalatest            = "org.scalatest"                         %% "scalatest"                   % "3.2.10" % Test
@@ -78,4 +76,5 @@ object Dependencies {
   val threetenExtra        = "org.threeten"                           % "threeten-extra"              % "1.7.0"
   val ansiColors212        = "org.backuity"                          %% "ansi-interpolator"           % "1.1.0"  % Provided
   val tofuCore             = "tf.tofu"                               %% "tofu-core"                   % "0.10.3"
+  val azureStorage         = "com.azure"                              % "azure-storage-blob"          % "12.14.2"
 }

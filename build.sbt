@@ -171,7 +171,7 @@ lazy val root = project
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(noPublishSettings)
-  .aggregate(core, example, ogc, opengis, `ogc-example`, effects, stac, `stac-example`)
+  .aggregate(core, example, ogc, opengis, `ogc-example`, effects, stac, `stac-example`, azure)
 
 lazy val core = project
   .settings(moduleName := "geotrellis-server-core")
@@ -360,6 +360,17 @@ lazy val effects = project
     )
   )
 
+lazy val azure = project
+  .settings(moduleName := "geotrellis-azure")
+  .settings(commonSettings)
+  .settings(publishSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      geotrellisRaster,
+      azureStorage
+    )
+  )
+
 lazy val stac = project
   .dependsOn(effects)
   .settings(moduleName := "geotrellis-stac")
@@ -378,7 +389,7 @@ lazy val stac = project
   )
 
 lazy val `stac-example` = project
-  .dependsOn(ogc, stac)
+  .dependsOn(ogc, stac, azure)
   .settings(moduleName := "geotrellis-server-stac-example")
   .settings(commonSettings)
   .settings(publishSettings)
@@ -393,8 +404,6 @@ lazy val `stac-example` = project
       logback,
       pureConfig,
       pureConfigCatsEffect,
-      pureConfigGeneric,
-      pureConfigMacros,
       scaffeine,
       scalatest,
       decline,
