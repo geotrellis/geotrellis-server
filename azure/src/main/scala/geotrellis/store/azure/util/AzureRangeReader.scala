@@ -25,7 +25,7 @@ import geotrellis.util.RangeReader
 import java.io.ByteArrayOutputStream
 import java.net.URI
 
-class AzureRangeReader(uri: AzureUri, blobServiceClient: BlobServiceClient) extends RangeReader {
+class AzureRangeReader(uri: AzureURI, blobServiceClient: BlobServiceClient) extends RangeReader {
   @transient lazy val blobContainerClient: BlobContainerClient = blobServiceClient.getBlobContainerClient(uri.getContainer)
   @transient lazy val blobClient: BlobClient                   = blobContainerClient.getBlobClient(uri.getPath)
 
@@ -49,7 +49,7 @@ class AzureRangeReader(uri: AzureUri, blobServiceClient: BlobServiceClient) exte
 }
 
 object AzureRangeReader {
-  def apply(uri: AzureUri, blobServiceClient: BlobServiceClient): AzureRangeReader =
+  def apply(uri: AzureURI, blobServiceClient: BlobServiceClient): AzureRangeReader =
     new AzureRangeReader(uri, blobServiceClient)
 
   def apply(path: String, blobServiceClient: BlobServiceClient): AzureRangeReader =
