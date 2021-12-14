@@ -221,15 +221,15 @@ object CoverageView {
   }
 
   def apply[F[_]: Functor](
-      wcsModel: WcsModel[F],
-      serviceUrl: URL
+    wcsModel: WcsModel[F],
+    serviceUrl: URL
   ): CoverageView[F] =
     new CoverageView(wcsModel, serviceUrl, Nil)
 
   def apply[F[_]: Functor](
-      wcsModel: WcsModel[F],
-      serviceUrl: URL,
-      params: DescribeCoverageWcsParams
+    wcsModel: WcsModel[F],
+    serviceUrl: URL,
+    params: DescribeCoverageWcsParams
   ): CoverageView[F] =
     new CoverageView[F](wcsModel, serviceUrl, params.identifiers)
 }

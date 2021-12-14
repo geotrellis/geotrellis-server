@@ -44,10 +44,10 @@ object LayerHistogram {
 
   // Provide IOs for both expression and params, get back a tile
   def apply[F[_]: Logger: Parallel: Monad, T: ExtentReification[F, *]: HasRasterExtents[F, *]](
-      getExpression: F[Expression],
-      getParams: F[Map[String, T]],
-      interpreter: Interpreter[F],
-      maxCells: Int
+    getExpression: F[Expression],
+    getParams: F[Map[String, T]],
+    interpreter: Interpreter[F],
+    maxCells: Int
   ): F[Interpreted[List[Histogram[Double]]]] = {
     val logger = Logger[F]
     for {
@@ -92,18 +92,18 @@ object LayerHistogram {
   }
 
   def generateExpression[F[_]: Logger: Parallel: Monad, T: ExtentReification[F, *]: HasRasterExtents[F, *]](
-      mkExpr: Map[String, T] => Expression,
-      getParams: F[Map[String, T]],
-      interpreter: Interpreter[F],
-      maxCells: Int
+    mkExpr: Map[String, T] => Expression,
+    getParams: F[Map[String, T]],
+    interpreter: Interpreter[F],
+    maxCells: Int
   ): F[Interpreted[List[Histogram[Double]]]] =
     apply[F, T](getParams.map(mkExpr(_)), getParams, interpreter, maxCells)
 
   /** Provide an expression and expect arguments to fulfill its needs */
   def curried[F[_]: Logger: Parallel: Monad, T: ExtentReification[F, *]: HasRasterExtents[F, *]](
-      expr: Expression,
-      interpreter: Interpreter[F],
-      maxCells: Int
+    expr: Expression,
+    interpreter: Interpreter[F],
+    maxCells: Int
   ): Map[String, T] => F[Interpreted[List[Histogram[Double]]]] =
     (paramMap: Map[String, T]) =>
       apply[F, T](
@@ -115,8 +115,8 @@ object LayerHistogram {
 
   /** The identity endpoint (for simple display of raster) */
   def concurrent[F[_]: Logger: Parallel: Monad: Concurrent, T: ExtentReification[F, *]: HasRasterExtents[F, *]](
-      param: T,
-      maxCells: Int
+    param: T,
+    maxCells: Int
   ): F[Interpreted[List[Histogram[Double]]]] = {
     val eval =
       curried[F, T](

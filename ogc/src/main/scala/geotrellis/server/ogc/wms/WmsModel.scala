@@ -31,10 +31,10 @@ import cats.syntax.semigroup._
 
 /** This class holds all the information necessary to construct a response to a WMS request */
 case class WmsModel[F[_]: Monad](
-    serviceMeta: opengis.wms.Service,
-    parentLayerMeta: WmsParentLayerMeta,
-    sources: RepositoryM[F, List, OgcSource],
-    extendedParametersBinding: Option[ParamMap => Option[Expression => Expression]] = None
+  serviceMeta: opengis.wms.Service,
+  parentLayerMeta: WmsParentLayerMeta,
+  sources: RepositoryM[F, List, OgcSource],
+  extendedParametersBinding: Option[ParamMap => Option[Expression => Expression]] = None
 ) {
 
   def time: F[OgcTime] = sources.store.map(_.map(_.time)).map(_.reduce(_ |+| _))

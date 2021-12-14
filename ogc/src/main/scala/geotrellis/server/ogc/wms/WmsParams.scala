@@ -38,9 +38,9 @@ object WmsParams {
   val wmsVersion = "1.3.0"
 
   final case class GetCapabilitiesParams(
-      version: String,
-      format: Option[String],
-      updateSequence: Option[String]
+    version: String,
+    format: Option[String],
+    updateSequence: Option[String]
   ) extends WmsParams
 
   object GetCapabilitiesParams {
@@ -50,16 +50,16 @@ object WmsParams {
   }
 
   case class GetMapParams(
-      version: String,
-      layers: List[String],
-      styles: List[String],
-      boundingBox: Extent,
-      format: OutputFormat,
-      width: Int,
-      height: Int,
-      crs: CRS,
-      time: OgcTime,
-      params: ParamMap
+    version: String,
+    layers: List[String],
+    styles: List[String],
+    boundingBox: Extent,
+    format: OutputFormat,
+    width: Int,
+    height: Int,
+    crs: CRS,
+    time: OgcTime,
+    params: ParamMap
   ) extends WmsParams {
     def toQuery: Query = {
       val layer = layers.headOption.map(withName).getOrElse(nothing)
@@ -122,21 +122,21 @@ object WmsParams {
   }
 
   case class GetFeatureInfoParams(
-      version: String,
-      infoFormat: InfoFormat,
-      queryLayers: List[String],
-      i: Int, // col
-      j: Int, // row
-      exceptions: InfoFormat,
-      // GetMap params
-      layers: List[String],
-      boundingBox: Extent,
-      format: OutputFormat,
-      width: Int,
-      height: Int,
-      crs: CRS,
-      time: OgcTime,
-      params: ParamMap
+    version: String,
+    infoFormat: InfoFormat,
+    queryLayers: List[String],
+    i: Int, // col
+    j: Int, // row
+    exceptions: InfoFormat,
+    // GetMap params
+    layers: List[String],
+    boundingBox: Extent,
+    format: OutputFormat,
+    width: Int,
+    height: Int,
+    crs: CRS,
+    time: OgcTime,
+    params: ParamMap
   ) extends WmsParams {
     def toGetMapParams: GetMapParams =
       GetMapParams(version, layers, Nil, boundingBox, format, width, height, crs, time, params)

@@ -33,16 +33,16 @@ sealed trait OgcSourceConf {
 }
 
 case class RasterSourceConf(
-    name: String,
-    title: String,
-    source: String,
-    defaultStyle: Option[String],
-    styles: List[StyleConf],
-    resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-    overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
-    datetimeField: String = SimpleSource.TimeFieldDefault,
-    timeFormat: OgcTimeFormat = OgcTimeFormat.Default,
-    timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest
+  name: String,
+  title: String,
+  source: String,
+  defaultStyle: Option[String],
+  styles: List[StyleConf],
+  resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
+  datetimeField: String = SimpleSource.TimeFieldDefault,
+  timeFormat: OgcTimeFormat = OgcTimeFormat.Default,
+  timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest
 ) extends OgcSourceConf {
   def toLayer: RasterOgcSource =
     GeoTrellisPath
@@ -76,16 +76,16 @@ case class RasterSourceConf(
 }
 
 case class MapAlgebraSourceConf(
-    name: String,
-    title: String,
-    algebra: Expression,
-    defaultStyle: Option[String],
-    styles: List[StyleConf],
-    resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-    overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
-    timeFormat: OgcTimeFormat = OgcTimeFormat.Default,
-    timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest,
-    targetCellType: Option[CellType] = None
+  name: String,
+  title: String,
+  algebra: Expression,
+  defaultStyle: Option[String],
+  styles: List[StyleConf],
+  resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
+  timeFormat: OgcTimeFormat = OgcTimeFormat.Default,
+  timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest,
+  targetCellType: Option[CellType] = None
 ) extends OgcSourceConf {
   private def listParams(expr: Expression): List[String] = {
     def eval(subExpr: Expression): List[String] =

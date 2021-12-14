@@ -31,17 +31,17 @@ import geotrellis.vector.{Extent, ProjectedExtent}
  * An imagery source with a [[RasterSource]] that defines its capacities
  */
 case class StacOgcSource(
-    name: String,
-    title: String,
-    stacSource: StacSource[StacCollection],
-    defaultStyle: Option[String],
-    styles: List[OgcStyle],
-    resampleMethod: ResampleMethod,
-    overviewStrategy: OverviewStrategy,
-    timeMetadataKey: Option[String],
-    fetchTimePositions: Boolean,
-    timeFormat: OgcTimeFormat,
-    timeDefault: OgcTimeDefault
+  name: String,
+  title: String,
+  stacSource: StacSource[StacCollection],
+  defaultStyle: Option[String],
+  styles: List[OgcStyle],
+  resampleMethod: ResampleMethod,
+  overviewStrategy: OverviewStrategy,
+  timeMetadataKey: Option[String],
+  fetchTimePositions: Boolean,
+  timeFormat: OgcTimeFormat,
+  timeDefault: OgcTimeDefault
 ) extends RasterOgcSource {
 
   lazy val time: OgcTime = {

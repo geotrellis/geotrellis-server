@@ -31,9 +31,9 @@ import io.chrisdavenport.log4cats.Logger
 import sttp.client3.SttpBackend
 
 case class MapAlgebraStacOgcRepository[F[_]: Functor](
-    mapAlgebraSourceConf: MapAlgebraSourceConf,
-    ogcSourceConfs: List[OgcSourceConf],
-    repository: RepositoryM[F, List, OgcSource]
+  mapAlgebraSourceConf: MapAlgebraSourceConf,
+  ogcSourceConfs: List[OgcSourceConf],
+  repository: RepositoryM[F, List, OgcSource]
 ) extends RepositoryM[F, List, OgcSource] {
   private val names = ogcSourceConfs.map(_.name).distinct
 
@@ -49,9 +49,9 @@ case class MapAlgebraStacOgcRepository[F[_]: Functor](
 }
 
 case class MapAlgebraStacOgcRepositories[F[_]: Sync: Logger](
-    mapAlgebraConfLayers: List[MapAlgebraSourceConf],
-    ogcLayers: List[OgcSourceConf],
-    client: SttpBackend[F, Any]
+  mapAlgebraConfLayers: List[MapAlgebraSourceConf],
+  ogcLayers: List[OgcSourceConf],
+  client: SttpBackend[F, Any]
 ) extends RepositoryM[F, List, OgcSource] {
   def store: F[List[OgcSource]] =
     find(query.withNames(mapAlgebraConfLayers.map(_.name).toSet))

@@ -27,15 +27,15 @@ import cats.syntax.option._
 import cats.syntax.apply._
 
 case class RGBParameters(
-    clampRed: Option[Clamp],
-    clampGreen: Option[Clamp],
-    clampBlue: Option[Clamp],
-    normalizeRed: Option[Normalize],
-    normalizeGreen: Option[Normalize],
-    normalizeBlue: Option[Normalize],
-    rescaleRed: Option[Rescale],
-    rescaleGreen: Option[Rescale],
-    rescaleBlue: Option[Rescale]
+  clampRed: Option[Clamp],
+  clampGreen: Option[Clamp],
+  clampBlue: Option[Clamp],
+  normalizeRed: Option[Normalize],
+  normalizeGreen: Option[Normalize],
+  normalizeBlue: Option[Normalize],
+  rescaleRed: Option[Rescale],
+  rescaleGreen: Option[Rescale],
+  rescaleBlue: Option[Rescale]
 ) {
 
   def bind: Expression => Expression = {

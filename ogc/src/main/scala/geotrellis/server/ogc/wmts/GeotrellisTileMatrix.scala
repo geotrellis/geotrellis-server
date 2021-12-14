@@ -26,11 +26,11 @@ import opengis.wmts.TileMatrix
 
 /** Relates Geotrellis Extent and TileLayout to a corresponding OGC Tile Matrix */
 case class GeotrellisTileMatrix(
-    identifier: String,
-    extent: Extent,
-    tileLayout: TileLayout,
-    title: Option[String] = None,
-    `abstract`: Option[String] = None
+  identifier: String,
+  extent: Extent,
+  tileLayout: TileLayout,
+  title: Option[String] = None,
+  `abstract`: Option[String] = None
 ) {
   val layout: LayoutDefinition = LayoutDefinition(extent, tileLayout)
   require(layout.cellSize.width == layout.cellSize.height, s"Layout definition cell size width must be same as height: ${layout.cellSize}")

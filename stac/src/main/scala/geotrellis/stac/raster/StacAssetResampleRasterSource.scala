@@ -29,12 +29,12 @@ import cats.syntax.flatMap._
 import cats.instances.option._
 
 class StacAssetResampleRasterSource(
-    val asset: StacItemAsset,
-    val resampleTarget: ResampleTarget,
-    val resampleMethod: ResampleMethod,
-    val strategy: OverviewStrategy,
-    private[geotrellis] val targetCellType: Option[TargetCellType],
-    @transient underlyingRS: => Option[RasterSource]
+  val asset: StacItemAsset,
+  val resampleTarget: ResampleTarget,
+  val resampleMethod: ResampleMethod,
+  val strategy: OverviewStrategy,
+  private[geotrellis] val targetCellType: Option[TargetCellType],
+  @transient underlyingRS: => Option[RasterSource]
 ) extends RasterSource {
   @transient private lazy val underlying          = underlyingRS.getOrElse(RasterSource(asset.href))
   @transient private lazy val underlyingResampled = underlying.resample(resampleTarget, resampleMethod, strategy)
@@ -51,10 +51,10 @@ class StacAssetResampleRasterSource(
   def attributesForBand(band: Int): Map[String, String] = Map.empty
 
   def reprojection(
-      targetCRS: CRS,
-      resampleTarget: ResampleTarget,
-      method: ResampleMethod,
-      strategy: OverviewStrategy
+    targetCRS: CRS,
+    resampleTarget: ResampleTarget,
+    method: ResampleMethod,
+    strategy: OverviewStrategy
   ): StacAssetReprojectRasterSource =
     new StacAssetReprojectRasterSource(
       asset,
@@ -101,12 +101,12 @@ class StacAssetResampleRasterSource(
 
 object StacAssetResampleRasterSource {
   def apply(
-      asset: StacItemAsset,
-      resampleTarget: ResampleTarget,
-      resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-      strategy: OverviewStrategy = OverviewStrategy.DEFAULT,
-      targetCellType: Option[TargetCellType] = None,
-      underlyingRS: => Option[RasterSource] = None
+    asset: StacItemAsset,
+    resampleTarget: ResampleTarget,
+    resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+    strategy: OverviewStrategy = OverviewStrategy.DEFAULT,
+    targetCellType: Option[TargetCellType] = None,
+    underlyingRS: => Option[RasterSource] = None
   ): StacAssetResampleRasterSource =
     new StacAssetResampleRasterSource(asset, resampleTarget, resampleMethod, strategy, targetCellType, underlyingRS)
 }

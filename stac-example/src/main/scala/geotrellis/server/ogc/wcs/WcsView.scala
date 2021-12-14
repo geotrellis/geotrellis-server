@@ -42,8 +42,8 @@ import scalaxb._
 import java.net._
 
 class WcsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
-    wcsModel: WcsModel[F],
-    serviceUrl: URL
+  wcsModel: WcsModel[F],
+  serviceUrl: URL
 ) extends Http4sDsl[F] {
   val logger = Logger[F]
 

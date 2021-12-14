@@ -46,27 +46,27 @@ sealed trait TiledOgcLayer {
 }
 
 case class SimpleTiledOgcLayer(
-    name: String,
-    title: String,
-    crs: CRS,
-    layout: LayoutDefinition,
-    source: RasterSource,
-    style: Option[OgcStyle],
-    resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-    overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
+  name: String,
+  title: String,
+  crs: CRS,
+  layout: LayoutDefinition,
+  source: RasterSource,
+  style: Option[OgcStyle],
+  resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
 ) extends TiledOgcLayer
 
 case class MapAlgebraTiledOgcLayer(
-    name: String,
-    title: String,
-    crs: CRS,
-    layout: LayoutDefinition,
-    parameters: Map[String, SimpleTiledOgcLayer],
-    algebra: Expression,
-    style: Option[OgcStyle],
-    resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-    overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
-    targetCellType: Option[CellType] = None
+  name: String,
+  title: String,
+  crs: CRS,
+  layout: LayoutDefinition,
+  parameters: Map[String, SimpleTiledOgcLayer],
+  algebra: Expression,
+  style: Option[OgcStyle],
+  resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT,
+  targetCellType: Option[CellType] = None
 ) extends TiledOgcLayer
 
 object SimpleTiledOgcLayer {

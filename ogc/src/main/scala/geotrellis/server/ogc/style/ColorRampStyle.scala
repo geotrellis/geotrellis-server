@@ -26,14 +26,14 @@ import geotrellis.raster.render.ColorRamp
 import geotrellis.util.np.linspace
 
 case class ColorRampStyle(
-    name: String,
-    title: String,
-    colorRamp: ColorRamp,
-    stops: Option[Int],
-    minRender: Option[Double],
-    maxRender: Option[Double],
-    clampWithColor: Boolean = false,
-    legends: List[LegendModel] = Nil
+  name: String,
+  title: String,
+  colorRamp: ColorRamp,
+  stops: Option[Int],
+  minRender: Option[Double],
+  maxRender: Option[Double],
+  clampWithColor: Boolean = false,
+  legends: List[LegendModel] = Nil
 ) extends OgcStyle {
   lazy val logger = org.log4s.getLogger
   def breaks(hists: List[Histogram[Double]], numBreaks: Int): Array[Double] = {
@@ -53,10 +53,10 @@ case class ColorRampStyle(
   }
 
   def renderRaster(
-      raster: Raster[MultibandTile],
-      crs: CRS,
-      format: OutputFormat,
-      hists: List[Histogram[Double]]
+    raster: Raster[MultibandTile],
+    crs: CRS,
+    format: OutputFormat,
+    hists: List[Histogram[Double]]
   ): Array[Byte] = {
     // The number of stops between each provided break
     val numStops: Int = stops.getOrElse(colorRamp.colors.length)

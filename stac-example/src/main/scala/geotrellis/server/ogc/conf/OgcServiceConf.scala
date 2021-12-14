@@ -43,8 +43,8 @@ sealed trait OgcServiceConf {
   }
 
   def layerSources[F[_]: SemigroupK: Sync: Logger](
-      rasterOgcSources: List[RasterOgcSource],
-      client: SttpBackend[F, Any]
+    rasterOgcSources: List[RasterOgcSource],
+    client: SttpBackend[F, Any]
   ): RepositoryM[F, List, OgcSource] = {
     val ogcLayers            = layerDefinitions.collect { case osc: OgcSourceConf => osc }
     val stacLayers           = ogcLayers.collect { case ssc: StacSourceConf => ssc }
@@ -58,21 +58,21 @@ sealed trait OgcServiceConf {
 
 /** WMS Service configuration */
 case class WmsConf(
-    parentLayerMeta: WmsParentLayerMeta,
-    serviceMetadata: opengis.wms.Service,
-    layerDefinitions: List[OgcSourceConf]
+  parentLayerMeta: WmsParentLayerMeta,
+  serviceMetadata: opengis.wms.Service,
+  layerDefinitions: List[OgcSourceConf]
 ) extends OgcServiceConf
 
 /** WMTS Service configuration */
 case class WmtsConf(
-    serviceMetadata: ows.ServiceMetadata,
-    layerDefinitions: List[OgcSourceConf],
-    tileMatrixSets: List[GeotrellisTileMatrixSet]
+  serviceMetadata: ows.ServiceMetadata,
+  layerDefinitions: List[OgcSourceConf],
+  tileMatrixSets: List[GeotrellisTileMatrixSet]
 ) extends OgcServiceConf
 
 /** WCS Service configuration */
 case class WcsConf(
-    serviceMetadata: ows.ServiceMetadata,
-    layerDefinitions: List[OgcSourceConf],
-    supportedProjections: List[CRS]
+  serviceMetadata: ows.ServiceMetadata,
+  layerDefinitions: List[OgcSourceConf],
+  supportedProjections: List[CRS]
 ) extends OgcServiceConf

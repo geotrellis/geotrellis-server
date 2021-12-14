@@ -38,9 +38,9 @@ import geotrellis.store.query.withName
 import com.github.blemale.scaffeine.Cache
 
 case class GetMap[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
-    model: WmsModel[F],
-    tileCache: Cache[GetMapParams, Array[Byte]],
-    histoCache: Cache[OgcLayer, Interpreted[List[Histogram[Double]]]]
+  model: WmsModel[F],
+  tileCache: Cache[GetMapParams, Array[Byte]],
+  histoCache: Cache[OgcLayer, Interpreted[List[Histogram[Double]]]]
 ) {
   def build(params: GetMapParams): F[Either[GetMapException, Array[Byte]]] = {
     val re = RasterExtent(params.boundingBox, params.width, params.height)

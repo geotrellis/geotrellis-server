@@ -38,7 +38,7 @@ import java.util.UUID
 import scala.util.Try
 
 class PersistenceService[F[_]: Sync: Logger: ApplicativeError[*[_], Throwable], S: MamlStore[F, *], T: TmsReification[F, *]: Decoder](
-    val store: S
+  val store: S
 ) extends Http4sDsl[F] {
   val logger = Logger[F]
 

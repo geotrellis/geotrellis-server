@@ -33,11 +33,11 @@ import cats.effect._
 import java.net.URI
 
 case class GeoTiffNode(
-    uri: URI,
-    band: Int,
-    celltype: Option[CellType],
-    resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-    overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
+  uri: URI,
+  band: Int,
+  celltype: Option[CellType],
+  resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
 )
 
 object GeoTiffNode extends RasterSourceUtils {
@@ -63,8 +63,8 @@ object GeoTiffNode extends RasterSourceUtils {
       }.toArray
 
       def tmsReification(
-          self: GeoTiffNode,
-          buffer: Int
+        self: GeoTiffNode,
+        buffer: Int
       ): (Int, Int, Int) => F[ProjectedRaster[MultibandTile]] =
         (z: Int, x: Int, y: Int) =>
           Sync[F].delay {

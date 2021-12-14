@@ -20,13 +20,13 @@ import geotrellis.proj4.CRS
 import geotrellis.raster.{CellSize, CellType, GridExtent, RasterMetadata, SourceName}
 
 case class EmptyMetadata(
-    name: SourceName,
-    crs: CRS,
-    bandCount: Int,
-    cellType: CellType,
-    gridExtent: GridExtent[Long],
-    resolutions: List[CellSize],
-    attributes: Map[String, String]
+  name: SourceName,
+  crs: CRS,
+  bandCount: Int,
+  cellType: CellType,
+  gridExtent: GridExtent[Long],
+  resolutions: List[CellSize],
+  attributes: Map[String, String]
 ) extends RasterMetadata {
   def attributesForBand(band: Int): Map[String, String] = Map.empty
 }

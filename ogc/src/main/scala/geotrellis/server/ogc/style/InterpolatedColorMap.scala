@@ -23,8 +23,8 @@ import scala.math._
 import java.util.Arrays.binarySearch
 
 case class InterpolatedColorMap(
-    poles: Map[Double, Int],
-    clipDefinition: ClipDefinition
+  poles: Map[Double, Int],
+  clipDefinition: ClipDefinition
 ) {
   import InterpolatedColorMap._
 

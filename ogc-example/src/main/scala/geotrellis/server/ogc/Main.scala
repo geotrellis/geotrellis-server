@@ -104,9 +104,9 @@ object Main
           }
 
           def logOptState[A](
-              opt: Option[A],
-              upLog: String,
-              downLog: String
+            opt: Option[A],
+            upLog: String,
+            downLog: String
           ): IO[Unit] = opt.fold(logger.info(downLog))(_ => logger.info(upLog))
 
           def createServer: Resource[IO, Server[IO]] =

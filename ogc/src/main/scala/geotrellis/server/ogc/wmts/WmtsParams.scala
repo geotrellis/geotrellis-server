@@ -36,9 +36,9 @@ object WmtsParams {
   val wmtsVersion = "1.0.0"
 
   final case class GetCapabilities(
-      version: String,
-      format: Option[String],
-      updateSequence: Option[String]
+    version: String,
+    format: Option[String],
+    updateSequence: Option[String]
   ) extends WmtsParams
 
   object GetCapabilities {
@@ -48,14 +48,14 @@ object WmtsParams {
   }
 
   case class GetTile(
-      version: String,
-      layer: String,
-      style: String,
-      format: OutputFormat,
-      tileMatrixSet: String,
-      tileMatrix: String,
-      tileRow: Int,
-      tileCol: Int
+    version: String,
+    layer: String,
+    style: String,
+    format: OutputFormat,
+    tileMatrixSet: String,
+    tileMatrix: String,
+    tileRow: Int,
+    tileCol: Int
   ) extends WmtsParams {
     def toQuery: Query = withName(layer)
   }
