@@ -27,5 +27,5 @@ class AzureRangeReaderProvider extends RangeReaderProvider {
     case null        => false
   }) || uri.getAuthority.endsWith(".blob.core.windows.net")
 
-  def rangeReader(uri: URI): AzureRangeReader = AzureRangeReader(AzureURI(uri), AzureBlobServiceClientProducer.get())
+  def rangeReader(uri: URI): AzureRangeReader = AzureRangeReader(AzureURI.fromURI(uri), AzureBlobServiceClientProducer.get())
 }
