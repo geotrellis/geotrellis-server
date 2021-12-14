@@ -49,36 +49,36 @@ object PersistenceServer extends IOApp {
 
   val createServer = {
     for {
-      conf           <- ExampleConf.loadResourceF[IO](None)
-      _              <- Resource.eval {
-                          logger.info(
-                            s"Initializing persistence demo at ${conf.http.interface}:${conf.http.port}/"
-                          )
-                        }
+      conf <- ExampleConf.loadResourceF[IO](None)
+      _ <- Resource.eval {
+        logger.info(
+          s"Initializing persistence demo at ${conf.http.interface}:${conf.http.port}/"
+        )
+      }
       // This hashmap has a [MamlStore] implementation
-      mamlStore       = new ConcurrentLinkedHashMap.Builder[UUID, Expression]()
-                          .maximumWeightedCapacity(1000)
-                          .build()
+      mamlStore = new ConcurrentLinkedHashMap.Builder[UUID, Expression]()
+        .maximumWeightedCapacity(1000)
+        .build()
       mamlPersistence = new PersistenceService[
-                          IO,
-                          HashMapMamlStore,
-                          GeoTiffNode
-                        ](
-                          mamlStore
-                        )
-      server         <- BlazeServerBuilder[IO](executionContext)
-                          .enableHttp2(true)
-                          .bindHttp(conf.http.port, conf.http.interface)
-                          .withHttpApp(
-                            Router("/" -> commonMiddleware(mamlPersistence.routes)).orNotFound
-                          )
-                          .resource
+        IO,
+        HashMapMamlStore,
+        GeoTiffNode
+      ](
+        mamlStore
+      )
+      server <- BlazeServerBuilder[IO](executionContext)
+        .enableHttp2(true)
+        .bindHttp(conf.http.port, conf.http.interface)
+        .withHttpApp(
+          Router("/" -> commonMiddleware(mamlPersistence.routes)).orNotFound
+        )
+        .resource
     } yield server
   }
 
   /** The 'main' method for a cats-effect IOApp */
   override def run(args: List[String]): IO[ExitCode] =
     createServer use { _ =>
-      IO { ExitCode.Success }
+      IO(ExitCode.Success)
     }
 }

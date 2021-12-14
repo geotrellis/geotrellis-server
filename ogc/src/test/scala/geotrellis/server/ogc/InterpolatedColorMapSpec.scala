@@ -29,7 +29,7 @@ class InterpolatedColorMapSpec extends AnyFunSpec with Matchers {
     val medColor     = RGBA.fromRGBA(0, 255, 0, 100).int
     val maxColor     = RGBA.fromRGBA(0, 0, 255, 100).int
     val clippedColor = RGBA.fromRGBA(0, 0, 0, 0).int
-    val poles        =
+    val poles =
       Map[Double, Int](
         -100.0 -> minColor,
         0.0    -> medColor,

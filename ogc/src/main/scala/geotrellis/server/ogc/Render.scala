@@ -29,7 +29,7 @@ object Render {
   def rgb(raster: Raster[MultibandTile], crs: CRS, maybeStyle: Option[OgcStyle], format: OutputFormat, hists: List[Histogram[Double]]): Array[Byte] =
     maybeStyle match {
       case Some(style) => style.renderRaster(raster, crs, format, hists)
-      case None        =>
+      case None =>
         format match {
           case format: OutputFormat.Png => OutputFormat.Png(Some(RgbPngEncoding)).render(raster.tile.color())
           case OutputFormat.Jpg         => raster.tile.color().renderJpg.bytes
@@ -40,7 +40,7 @@ object Render {
   def rgba(raster: Raster[MultibandTile], crs: CRS, maybeStyle: Option[OgcStyle], format: OutputFormat, hists: List[Histogram[Double]]): Array[Byte] =
     maybeStyle match {
       case Some(style) => style.renderRaster(raster, crs, format, hists)
-      case None        =>
+      case None =>
         format match {
           case format: OutputFormat.Png => OutputFormat.Png(Some(RgbaPngEncoding)).render(raster.tile.withNoData(0d.some).color())
           case OutputFormat.Jpg         => raster.tile.color().renderJpg.bytes
@@ -49,15 +49,15 @@ object Render {
     }
 
   def singleband(
-    raster: Raster[MultibandTile],
-    crs: CRS,
-    maybeStyle: Option[OgcStyle],
-    format: OutputFormat,
-    hists: List[Histogram[Double]]
+      raster: Raster[MultibandTile],
+      crs: CRS,
+      maybeStyle: Option[OgcStyle],
+      format: OutputFormat,
+      hists: List[Histogram[Double]]
   ): Array[Byte] =
     maybeStyle match {
       case Some(style) => style.renderRaster(raster, crs, format, hists)
-      case None        =>
+      case None =>
         format match {
           case format: OutputFormat.Png => format.render(raster.tile.band(bandIndex = 0))
           case OutputFormat.Jpg         => raster.tile.band(bandIndex = 0).renderJpg.bytes
@@ -66,10 +66,10 @@ object Render {
     }
 
   def multiband(
-    raster: Raster[MultibandTile],
-    crs: CRS,
-    maybeStyle: Option[OgcStyle],
-    format: OutputFormat,
-    hists: List[Histogram[Double]]
+      raster: Raster[MultibandTile],
+      crs: CRS,
+      maybeStyle: Option[OgcStyle],
+      format: OutputFormat,
+      hists: List[Histogram[Double]]
   ): Array[Byte] = rgba(raster, crs, maybeStyle, format, hists)
 }

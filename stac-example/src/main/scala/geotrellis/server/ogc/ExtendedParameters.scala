@@ -25,7 +25,7 @@ import cats.instances.option._
 object ExtendedParameters {
   val extendedParametersBinding: Option[ParamMap => Option[Expression => Expression]] = Option { p =>
     (FocalParameters.extendedParametersBinding, RGBParameters.extendedParametersBinding).tupled.flatMap { case (l, r) =>
-      (l(p), r(p)).mapN { _ andThen _ }
+      (l(p), r(p)).mapN(_ andThen _)
     }
   }
 }

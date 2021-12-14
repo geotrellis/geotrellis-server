@@ -35,13 +35,12 @@ import opengis.wms.BoundingBox
 
 import java.time.ZonedDateTime
 
-/** This trait and its implementing types should be jointly sufficient, along with a WMS 'GetMap'
-  *  (or a WMTS 'GetTile' or a WCS 'GetCoverage' etc etc) request to produce a visual layer
-  *  (represented more fully by [[OgcLayer]].
-  *  This type represents *merely* that there is some backing by which valid OGC layers
-  *  can be realized. Its purpose is to provide the appropriate level of abstraction for OGC
-  *  services to conveniently reuse the same data about underlying imagery
-  */
+/**
+ * This trait and its implementing types should be jointly sufficient, along with a WMS 'GetMap' (or a WMTS 'GetTile' or a WCS 'GetCoverage' etc etc)
+ * request to produce a visual layer (represented more fully by [[OgcLayer]]. This type represents *merely* that there is some backing by which valid
+ * OGC layers can be realized. Its purpose is to provide the appropriate level of abstraction for OGC services to conveniently reuse the same data
+ * about underlying imagery
+ */
 trait OgcSource {
   def name: String
   def title: String
@@ -81,18 +80,19 @@ trait RasterOgcSource extends OgcSource {
   def toLayer(crs: CRS, style: Option[OgcStyle], temporalSequence: List[OgcTime]): SimpleOgcLayer
 }
 
-/** An imagery source with a [[RasterSource]] that defines its capacities
-  */
+/**
+ * An imagery source with a [[RasterSource]] that defines its capacities
+ */
 case class SimpleSource(
-  name: String,
-  title: String,
-  source: RasterSource,
-  defaultStyle: Option[String],
-  styles: List[OgcStyle],
-  resampleMethod: ResampleMethod,
-  overviewStrategy: OverviewStrategy,
-  timeMetadataKey: Option[String],
-  timeFormat: OgcTimeFormat
+    name: String,
+    title: String,
+    source: RasterSource,
+    defaultStyle: Option[String],
+    styles: List[OgcStyle],
+    resampleMethod: ResampleMethod,
+    overviewStrategy: OverviewStrategy,
+    timeMetadataKey: Option[String],
+    timeFormat: OgcTimeFormat
 ) extends RasterOgcSource {
   val timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest
   lazy val time: OgcTime          = source.time(timeMetadataKey).format(timeFormat).sorted
@@ -106,31 +106,31 @@ object SimpleSource {
 }
 
 case class GeoTrellisOgcSource(
-  name: String,
-  title: String,
-  sourceUri: String,
-  defaultStyle: Option[String],
-  styles: List[OgcStyle],
-  resampleMethod: ResampleMethod,
-  overviewStrategy: OverviewStrategy,
-  timeMetadataKey: Option[String],
-  timeFormat: OgcTimeFormat,
-  timeDefault: OgcTimeDefault
+    name: String,
+    title: String,
+    sourceUri: String,
+    defaultStyle: Option[String],
+    styles: List[OgcStyle],
+    resampleMethod: ResampleMethod,
+    overviewStrategy: OverviewStrategy,
+    timeMetadataKey: Option[String],
+    timeFormat: OgcTimeFormat,
+    timeDefault: OgcTimeDefault
 ) extends RasterOgcSource {
 
   def toLayer(crs: CRS, style: Option[OgcStyle], temporalSequence: List[OgcTime]): SimpleOgcLayer = {
     val src =
       temporalSequence.headOption match {
-        case Some(t) if t.nonEmpty                              => sourceForTime(t)
+        case Some(t) if t.nonEmpty => sourceForTime(t)
         case _ if temporalSequence.isEmpty && source.isTemporal =>
           lazy val sorted = source.times.sorted
-          val time        = timeDefault match {
+          val time = timeDefault match {
             case OgcTimeDefault.Oldest   => sorted.head
             case OgcTimeDefault.Newest   => sorted.last
             case OgcTimeDefault.Time(dt) => dt
           }
           sourceForTime(time)
-        case _                                                  => source
+        case _ => source
       }
     SimpleOgcLayer(name, title, crs, src, style, resampleMethod, overviewStrategy)
   }
@@ -157,27 +157,26 @@ case class GeoTrellisOgcSource(
     if (!source.isTemporal) OgcTimeEmpty
     else OgcTimePositions(source.times).format(timeFormat).sorted
 
-  /** If temporal, try to match in the following order:
-    *
-    * OgcTimeInterval behavior
-    *  1. To the closest time in known valid source times
-    *  2. To time.start
-    *  3. To the passed interval.start
-    *
-    *  OgcTimePosition:
-    * 1. finds the exact match
-    *
-    *  @note If case 3 is matched, read queries to the returned
-    *        RasterSource may return zero results.
-    *
-    * @param interval
-    * @return
-    */
+  /**
+   * If temporal, try to match in the following order:
+   *
+   * OgcTimeInterval behavior
+   *   1. To the closest time in known valid source times 2. To time.start 3. To the passed interval.start
+   *
+   * OgcTimePosition:
+   *   1. finds the exact match
+   *
+   * @note
+   *   If case 3 is matched, read queries to the returned RasterSource may return zero results.
+   *
+   * @param interval
+   * @return
+   */
   def sourceForTime(interval: OgcTime): GeoTrellisRasterSource =
     if (source.isTemporal) {
       (time match {
         case OgcTimeEmpty => None
-        case _            =>
+        case _ =>
           source.times
             .find { t =>
               interval match {
@@ -196,13 +195,13 @@ case class GeoTrellisOgcSource(
 }
 
 case class MapAlgebraSourceMetadata(
-  name: SourceName,
-  crs: CRS,
-  bandCount: Int,
-  cellType: CellType,
-  gridExtent: GridExtent[Long],
-  resolutions: List[CellSize],
-  sources: Map[String, RasterMetadata]
+    name: SourceName,
+    crs: CRS,
+    bandCount: Int,
+    cellType: CellType,
+    gridExtent: GridExtent[Long],
+    resolutions: List[CellSize],
+    sources: Map[String, RasterMetadata]
 ) extends RasterMetadata {
 
   /** MapAlgebra metadata usually doesn't contain a metadata that is common for all RasterSources */
@@ -210,21 +209,21 @@ case class MapAlgebraSourceMetadata(
   def attributesForBand(band: Int): Map[String, String] = Map.empty
 }
 
-/** A complex layer, constructed from an [[Expression]] and one or more [[RasterSource]]
-  *  mappings which allow evaluation of said [[Expression]]
-  */
+/**
+ * A complex layer, constructed from an [[Expression]] and one or more [[RasterSource]] mappings which allow evaluation of said [[Expression]]
+ */
 case class MapAlgebraSource(
-  name: String,
-  title: String,
-  ogcSources: Map[String, RasterOgcSource],
-  algebra: Expression,
-  defaultStyle: Option[String],
-  styles: List[OgcStyle],
-  resampleMethod: ResampleMethod,
-  overviewStrategy: OverviewStrategy,
-  timeFormat: OgcTimeFormat,
-  timeDefault: OgcTimeDefault,
-  targetCellType: Option[CellType]
+    name: String,
+    title: String,
+    ogcSources: Map[String, RasterOgcSource],
+    algebra: Expression,
+    defaultStyle: Option[String],
+    styles: List[OgcStyle],
+    resampleMethod: ResampleMethod,
+    overviewStrategy: OverviewStrategy,
+    timeFormat: OgcTimeFormat,
+    timeDefault: OgcTimeDefault,
+    targetCellType: Option[CellType]
 ) extends OgcSource {
   // each of the underlying ogcSources uses it's own timeMetadataKey
   val timeMetadataKey: Option[String] = None

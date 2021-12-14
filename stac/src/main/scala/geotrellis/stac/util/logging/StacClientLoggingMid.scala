@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package geotrellis.server.ogc.stac.util.logging
+package geotrellis.stac.util.logging
 
 import cats.effect.Sync
 import cats.syntax.flatMap._
@@ -34,6 +34,8 @@ final class StacClientLoggingMid[F[_]: Sync] extends StreamingStacClientF[Mid[F,
 
   def search(filter: SearchFilters): Stream[F, StacItem] = Stream.empty
 
+  def search(filter: Option[SearchFilters]): Stream[F, StacItem] = Stream.empty
+
   def collections: Stream[F, StacCollection] = Stream.empty
 
   def items(collectionId: NonEmptyString): Stream[F, StacItem] = Stream.empty
@@ -41,32 +43,32 @@ final class StacClientLoggingMid[F[_]: Sync] extends StreamingStacClientF[Mid[F,
   def collection(collectionId: NonEmptyString): Mid[F, StacCollection] =
     res =>
       logger.trace(s"collections collectionId: $collectionId") >>
-      res.flatTap(collection => logger.trace(s"retrieved collection: ${collection.asJson}"))
+        res.flatTap(collection => logger.trace(s"retrieved collection: ${collection.asJson}"))
 
   def collectionCreate(collection: StacCollection): Mid[F, StacCollection] =
     res =>
       logger.trace(s"collectionCreate of collection: $collection") >>
-      res.flatTap(collection => logger.trace(s"created collection: ${collection.asJson}"))
+        res.flatTap(collection => logger.trace(s"created collection: ${collection.asJson}"))
 
   def item(collectionId: NonEmptyString, itemId: NonEmptyString): Mid[F, ETag[StacItem]] =
     res =>
       logger.trace(s"item by collectionId: $collectionId and itemId: $itemId") >>
-      res.flatTap(item => logger.trace(s"retrieved item: ${item.asJson}"))
+        res.flatTap(item => logger.trace(s"retrieved item: ${item.asJson}"))
 
   def itemCreate(collectionId: NonEmptyString, item: StacItem): Mid[F, ETag[StacItem]] =
     res =>
       logger.trace(s"itemCreate for collectionId: $collectionId and item: $item") >>
-      res.flatTap(item => logger.trace(s"created item: ${item.asJson}"))
+        res.flatTap(item => logger.trace(s"created item: ${item.asJson}"))
 
   def itemUpdate(collectionId: NonEmptyString, item: ETag[StacItem]): Mid[F, ETag[StacItem]] =
     res =>
       logger.trace(s"itemUpdate for collectionId: $collectionId and item: $item") >>
-      res.flatTap(item => logger.trace(s"retrieved item: ${item.asJson}"))
+        res.flatTap(item => logger.trace(s"retrieved item: ${item.asJson}"))
 
   def itemPatch(collectionId: NonEmptyString, itemId: NonEmptyString, patch: ETag[Json]): Mid[F, ETag[StacItem]] =
     res =>
       logger.trace(s"itemPath for collectionId: $collectionId, itemId: $itemId and patch: $patch") >>
-      res.flatTap(item => logger.trace(s"retrieved item: ${item.asJson}"))
+        res.flatTap(item => logger.trace(s"retrieved item: ${item.asJson}"))
 
   def itemDelete(collectionId: NonEmptyString, itemId: NonEmptyString): Mid[F, Either[String, String]] =
     res => logger.trace(s"itemDelete for collectionId: $collectionId and itemId: $itemId") >> res

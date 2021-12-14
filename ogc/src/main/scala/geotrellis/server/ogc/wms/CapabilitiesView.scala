@@ -38,9 +38,12 @@ import scalaxb.DataRecord.{__NoneXMLWriter, DataWriter}
 import java.net.URL
 import scala.xml.Elem
 
-/** @param model Model of layers we can report
-  * @param serviceUrl URL where this service can be reached with addition of `?request=` query parameter
-  */
+/**
+ * @param model
+ *   Model of layers we can report
+ * @param serviceUrl
+ *   URL where this service can be reached with addition of `?request=` query parameter
+ */
 case class CapabilitiesView[F[_]: Functor: Apply: Monad](model: WmsModel[F], serviceUrl: URL, extendedCapabilities: List[DataRecord[Elem]] = Nil) {
   import CapabilitiesView._
 
@@ -173,7 +176,7 @@ object CapabilitiesView {
   }
 
   implicit class RasterSourceMethods(val source: OgcSource) {
-    def toLayer(parentProjections: List[CRS]): Layer = {
+    def toLayer(parentProjections: List[CRS]): Layer =
       Layer(
         Name = source.name.some,
         Title = source.title,
@@ -182,12 +185,12 @@ object CapabilitiesView {
         // extra CRS that is supported by this layer
         CRS = (parentProjections ++ source.nativeCrs).distinct.map { crs =>
           crs.epsgCode
-            .map { code => s"EPSG:$code" }
+            .map(code => s"EPSG:$code")
             .getOrElse(throw new java.lang.Exception(s"Unable to construct EPSG code from $crs"))
         },
         EX_GeographicBoundingBox = {
           val llre = source match {
-            case mas: MapAlgebraSource           =>
+            case mas: MapAlgebraSource =>
               mas.sourcesList
                 .map { rs =>
                   ReprojectRasterExtent(
@@ -198,7 +201,7 @@ object CapabilitiesView {
                   )
                 }
                 .reduce { (re1, re2) =>
-                  val e  = re1.extent combine re2.extent
+                  val e = re1.extent combine re2.extent
                   val cs =
                     if (re1.cellSize.resolution < re2.cellSize.resolution)
                       re1.cellSize
@@ -215,15 +218,15 @@ object CapabilitiesView {
               )
           }
 
-          /** TODO: replace with source.extentIn(LatLng)
-            * see: https://github.com/locationtech/geotrellis/issues/3258
-            */
+          /**
+           * TODO: replace with source.extentIn(LatLng) see: https://github.com/locationtech/geotrellis/issues/3258
+           */
           val Extent(xmin, ymin, xmax, ymax) = llre.extent
           EX_GeographicBoundingBox(xmin, xmax, ymin, ymax).some
         },
         BoundingBox = Nil,
         Dimension = source.time match {
-          case tp @ OgcTimePositions(nel)          =>
+          case tp @ OgcTimePositions(nel) =>
             Dimension(
               tp.toString,
               Map(
@@ -241,7 +244,7 @@ object CapabilitiesView {
                 "@default" -> DataRecord(source.timeDefault.selectTime(NonEmptyList.of(start, end)).toInstant.toString)
               )
             ) :: Nil
-          case OgcTimeEmpty                        => Nil
+          case OgcTimeEmpty => Nil
         },
         Attribution = None,
         AuthorityURL = Nil,
@@ -255,16 +258,15 @@ object CapabilitiesView {
         Layer = Nil,
         attributes = Map("@queryable" -> DataRecord("1"))
       )
-    }
   }
 
   def modelAsLayer[F[_]: Monad](parentLayerMeta: WmsParentLayerMeta, model: WmsModel[F]): F[Layer] = {
     val bboxAndLayers = model.sources.store map { sources =>
-      val bboxes  = sources map { source =>
+      val bboxes = sources map { source =>
         val llre = source match {
-          case mas: MapAlgebraSource           =>
+          case mas: MapAlgebraSource =>
             mas.sourcesList
-              .map { rs => ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(mas.resampleMethod)) }
+              .map(rs => ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(mas.resampleMethod)))
               .reduce { (re1, re2) =>
                 val e  = re1.extent combine re2.extent
                 val cs = if (re1.cellSize.resolution < re2.cellSize.resolution) re1.cellSize else re2.cellSize
@@ -275,11 +277,10 @@ object CapabilitiesView {
             ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(rasterOgcLayer.resampleMethod))
         }
 
-        /** TODO: replace with
-          * val llExtents = model.sources.store.map(_.extentIn(LatLng))
-          * val llExtent = llExtents.tail.fold(llExtents.head)(_ combine _)
-          * see: https://github.com/locationtech/geotrellis/issues/3258
-          */
+        /**
+         * TODO: replace with val llExtents = model.sources.store.map(_.extentIn(LatLng)) val llExtent = llExtents.tail.fold(llExtents.head)(_ combine
+         * _) see: https://github.com/locationtech/geotrellis/issues/3258
+         */
         llre.extent
 
       }
@@ -320,7 +321,7 @@ object CapabilitiesView {
                 "@units" -> DataRecord("ISO8601")
               )
             ) :: Nil
-          case ti: OgcTimeInterval  =>
+          case ti: OgcTimeInterval =>
             Dimension(
               ti.toString,
               Map(
@@ -328,7 +329,7 @@ object CapabilitiesView {
                 "@units" -> DataRecord("ISO8601")
               )
             ) :: Nil
-          case OgcTimeEmpty         => Nil
+          case OgcTimeEmpty => Nil
         },
         Attribution = None,
         AuthorityURL = Nil,

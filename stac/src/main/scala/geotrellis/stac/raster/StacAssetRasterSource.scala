@@ -27,9 +27,9 @@ import cats.syntax.flatMap._
 import cats.instances.option._
 
 class StacAssetRasterSource(
-  val asset: StacItemAsset,
-  private[geotrellis] val targetCellType: Option[TargetCellType],
-  @transient underlyingRS: => Option[RasterSource]
+    val asset: StacItemAsset,
+    private[geotrellis] val targetCellType: Option[TargetCellType],
+    @transient underlyingRS: => Option[RasterSource]
 ) extends RasterSource {
   @transient private lazy val underlying = underlyingRS.getOrElse(RasterSource(asset.href))
 
@@ -44,10 +44,10 @@ class StacAssetRasterSource(
   def metadata: StacItemAssetMetadata                   = StacItemAssetMetadata(name, crs, bandCount, cellType, gridExtent, resolutions, asset)
 
   def reprojection(
-    targetCRS: CRS,
-    resampleTarget: ResampleTarget,
-    method: ResampleMethod,
-    strategy: OverviewStrategy
+      targetCRS: CRS,
+      resampleTarget: ResampleTarget,
+      method: ResampleMethod,
+      strategy: OverviewStrategy
   ): StacAssetReprojectRasterSource =
     StacAssetReprojectRasterSource(asset, targetCRS, resampleTarget, method, strategy, targetCellType = targetCellType, underlyingRS = underlyingRS)
 
@@ -68,8 +68,8 @@ class StacAssetRasterSource(
 
 object StacAssetRasterSource {
   def apply(
-    asset: StacItemAsset,
-    targetCellType: Option[TargetCellType] = None,
-    underlyingRS: => Option[RasterSource] = None
+      asset: StacItemAsset,
+      targetCellType: Option[TargetCellType] = None,
+      underlyingRS: => Option[RasterSource] = None
   ): StacAssetRasterSource = new StacAssetRasterSource(asset, targetCellType, underlyingRS)
 }

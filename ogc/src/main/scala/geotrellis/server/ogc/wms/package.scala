@@ -35,14 +35,12 @@ import scala.xml.{Elem, NamespaceBinding, NodeSeq}
 
 package object wms {
 
-  /** Default scope generates an incorrect XML file (in the incorrect scope, prefixes all XML elements with `wms:` prefix.
-    *
-    * val defaultScope = scalaxb.toScope(Some("ogc") -> "http://www.opengis.net/ogc",
-    * Some("wms") -> "http://www.opengis.net/wms",
-    * Some("xlink") -> "http://www.w3.org/1999/xlink",
-    * Some("xs") -> "http://www.w3.org/2001/XMLSchema",
-    * Some("xsi") -> "http://www.w3.org/2001/XMLSchema-instance")
-    */
+  /**
+   * Default scope generates an incorrect XML file (in the incorrect scope, prefixes all XML elements with `wms:` prefix.
+   *
+   * val defaultScope = scalaxb.toScope(Some("ogc") -> "http://www.opengis.net/ogc", Some("wms") -> "http://www.opengis.net/wms", Some("xlink") ->
+   * "http://www.w3.org/1999/xlink", Some("xs") -> "http://www.w3.org/2001/XMLSchema", Some("xsi") -> "http://www.w3.org/2001/XMLSchema-instance")
+   */
   val wmsScope: NamespaceBinding = scalaxb.toScope(
     None          -> "http://www.opengis.net/wms",
     Some("ogc")   -> "http://www.opengis.net/ogc",
@@ -64,13 +62,13 @@ package object wms {
     def toOnlineResource: OnlineResource =
       OnlineResource(
         Map(
-          "@{http://www.w3.org/1999/xlink}type"    -> Option(
+          "@{http://www.w3.org/1999/xlink}type" -> Option(
             DataRecord(xlink.TypeType.fromString(that.`type`, scope = toScope(Some("xlink") -> "http://www.w3.org/1999/xlink")))
           ),
-          "@{http://www.w3.org/1999/xlink}href"    -> Option(DataRecord(new URI(that.href))),
-          "@{http://www.w3.org/1999/xlink}role"    -> that.role.map(v => DataRecord(new URI(v))),
-          "@{http://www.w3.org/1999/xlink}title"   -> that.title.map(v => DataRecord(v)),
-          "@{http://www.w3.org/1999/xlink}show"    -> that.show.map(v =>
+          "@{http://www.w3.org/1999/xlink}href"  -> Option(DataRecord(new URI(that.href))),
+          "@{http://www.w3.org/1999/xlink}role"  -> that.role.map(v => DataRecord(new URI(v))),
+          "@{http://www.w3.org/1999/xlink}title" -> that.title.map(v => DataRecord(v)),
+          "@{http://www.w3.org/1999/xlink}show" -> that.show.map(v =>
             DataRecord(xlink.ShowType.fromString(v, scope = scalaxb.toScope(Some("xlink") -> "http://www.w3.org/1999/xlink")))
           ),
           "@{http://www.w3.org/1999/xlink}actuate" -> that.actuate.map(v =>

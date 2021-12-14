@@ -41,10 +41,10 @@ import scala.collection.JavaConverters._
 /** A grab bag of [[ConfigReader]] instances necessary to read the configuration */
 package object conf {
 
-  /** Starting 0.11.0 https://github.com/pureconfig/pureconfig/blob/bfc74ce436297b2a9da091e04d362be61108a3cf/CHANGELOG.md#0110-may-9-2019
-    * The default transformation in FieldCoproductHint changed
-    * from converting class names to lower case to converting them to kebab case.
-    */
+  /**
+   * Starting 0.11.0 https://github.com/pureconfig/pureconfig/blob/bfc74ce436297b2a9da091e04d362be61108a3cf/CHANGELOG.md#0110-may-9-2019 The default
+   * transformation in FieldCoproductHint changed from converting class names to lower case to converting them to kebab case.
+   */
   implicit def coproductHint[T] =
     new FieldCoproductHint[T]("type") {
       override def fieldValue(name: String): String = name.toLowerCase
@@ -73,18 +73,18 @@ package object conf {
       ColorRamp(colors.map(java.lang.Long.decode(_).toInt))
     }
 
-  /** HOCON doesn't naturally handle unquoted strings which contain decimals ('.') very well.
-    *  As a result, some special configuration handling is required here to allow unquoted
-    *  strings specifically when we know we're trying to decode a ColorMap.
-    *
-    * @note It is currently difficult to handle double-keyed maps. A workaround
-    * has been provided, but it only works with doubles that explicitly decimal
-    * pad to tenths (0.0 is OK, 0 is to be avoided)
-    */
+  /**
+   * HOCON doesn't naturally handle unquoted strings which contain decimals ('.') very well. As a result, some special configuration handling is
+   * required here to allow unquoted strings specifically when we know we're trying to decode a ColorMap.
+   *
+   * @note
+   *   It is currently difficult to handle double-keyed maps. A workaround has been provided, but it only works with doubles that explicitly decimal
+   *   pad to tenths (0.0 is OK, 0 is to be avoided)
+   */
   implicit val mapDoubleIntReader: ConfigReader[Map[Double, Int]] =
     ConfigReader[Map[String, ConfigValue]].map { cmap =>
       val numericMap = cmap
-        .flatMap({ case (k, v) =>
+        .flatMap { case (k, v) =>
           v.valueType match {
             case ConfigValueType.OBJECT =>
               val confmap = v.asInstanceOf[ConfigObject].asScala
@@ -95,15 +95,15 @@ package object conf {
               }
             case ConfigValueType.STRING =>
               List(k -> v.unwrapped.asInstanceOf[String])
-            case _                      =>
+            case _ =>
               List(k -> v.toString)
           }
-        })
-        .map({ case (k, v) =>
+        }
+        .map { case (k, v) =>
           val key   = k.toDouble
           val value = java.lang.Long.decode(v).toInt
           key -> value
-        })
+        }
       numericMap
     }
 
@@ -117,7 +117,7 @@ package object conf {
       ClipDefinition.fromString(str) match {
         case Some(cd) =>
           Right(cd)
-        case None     =>
+        case None =>
           Left(CannotConvert(str, "ClipDefinition", s"$str is not a valid ClipDefinition"))
       }
     }
@@ -173,7 +173,7 @@ package object conf {
 
   implicit val overviewStrategyReader: ConfigReader[OverviewStrategy] = {
     def parse(strategy: String, input: String): OverviewStrategy =
-      Auto(Try { input.split(s"$strategy-").last.toInt }.getOrElse(0))
+      Auto(Try(input.split(s"$strategy-").last.toInt).getOrElse(0))
 
     def parseAuto(str: String): OverviewStrategy  = parse("auto", str)
     def parseLevel(str: String): OverviewStrategy = parse("level", str)
@@ -188,11 +188,11 @@ package object conf {
   }
 
   implicit val ogcTimeFormatReader: ConfigReader[OgcTimeFormat] =
-    ConfigReader[String].emap { _.asJson.as[OgcTimeFormat].leftMap(e => ExceptionThrown(e.fillInStackTrace())) }
+    ConfigReader[String].emap(_.asJson.as[OgcTimeFormat].leftMap(e => ExceptionThrown(e.fillInStackTrace())))
 
   implicit val ogcTimeDefaultReader: ConfigReader[OgcTimeDefault] =
-    ConfigReader[String].emap { _.asJson.as[OgcTimeDefault].leftMap(e => ExceptionThrown(e.fillInStackTrace())) }
+    ConfigReader[String].emap(_.asJson.as[OgcTimeDefault].leftMap(e => ExceptionThrown(e.fillInStackTrace())))
 
   implicit val cellTypeReader: ConfigReader[CellType] =
-    ConfigReader[String].emap { _.asJson.as[CellType].leftMap(e => ExceptionThrown(e.fillInStackTrace())) }
+    ConfigReader[String].emap(_.asJson.as[CellType].leftMap(e => ExceptionThrown(e.fillInStackTrace())))
 }

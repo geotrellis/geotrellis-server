@@ -43,47 +43,47 @@ class QueryFSpec extends AnyFunSpec with Matchers {
 
       val expected =
         parse("""
-          |{
-          |    "And" : {
-          |        "left" : {
-          |            "And" : {
-          |                "left" : {
-          |                    "Intersects" : {
-          |                        "projectedExtent" : {
-          |                            "extent" : {
-          |                                "xmin" : 0.0,
-          |                                "ymin" : 0.0,
-          |                                "xmax" : 2.0,
-          |                                "ymax" : 2.0
-          |                            },
-          |                            "crs" : "+proj=longlat +datum=WGS84 +no_defs "
-          |                        }
-          |                    }
-          |                },
-          |                "right" : {
-          |                    "Intersects" : {
-          |                        "projectedExtent" : {
-          |                            "extent" : {
-          |                                "xmin" : 1.0,
-          |                                "ymin" : 1.0,
-          |                                "xmax" : 4.0,
-          |                                "ymax" : 4.0
-          |                            },
-          |                            "crs" : "+proj=longlat +datum=WGS84 +no_defs "
-          |                        }
-          |                    }
-          |                }
-          |            }
-          |        },
-          |        "right" : {
-          |            "At" : {
-          |                "time" : "2020-01-01T00:00:01Z",
-          |                "fieldName" : "time"
-          |            }
-          |        }
-          |    }
-          |}
-          |""".stripMargin).valueOr(throw _)
+                |{
+                |    "And" : {
+                |        "left" : {
+                |            "And" : {
+                |                "left" : {
+                |                    "Intersects" : {
+                |                        "projectedExtent" : {
+                |                            "extent" : {
+                |                                "xmin" : 0.0,
+                |                                "ymin" : 0.0,
+                |                                "xmax" : 2.0,
+                |                                "ymax" : 2.0
+                |                            },
+                |                            "crs" : "+proj=longlat +datum=WGS84 +no_defs "
+                |                        }
+                |                    }
+                |                },
+                |                "right" : {
+                |                    "Intersects" : {
+                |                        "projectedExtent" : {
+                |                            "extent" : {
+                |                                "xmin" : 1.0,
+                |                                "ymin" : 1.0,
+                |                                "xmax" : 4.0,
+                |                                "ymax" : 4.0
+                |                            },
+                |                            "crs" : "+proj=longlat +datum=WGS84 +no_defs "
+                |                        }
+                |                    }
+                |                }
+                |            }
+                |        },
+                |        "right" : {
+                |            "At" : {
+                |                "time" : "2020-01-01T00:00:01Z",
+                |                "fieldName" : "time"
+                |            }
+                |        }
+                |    }
+                |}
+                |""".stripMargin).valueOr(throw _)
 
       actual shouldBe expected
     }
@@ -151,11 +151,11 @@ class QueryFSpec extends AnyFunSpec with Matchers {
 
       val store =
         EmptyRasterSource("first", ex1, dt1.some) ::
-        EmptyRasterSource("second", ex2, dt2.some) ::
-        EmptyRasterSource("third", ex3, dt2.some) ::
-        EmptyRasterSource("fourth", ex4, dt3.some) :: Nil
+          EmptyRasterSource("second", ex2, dt2.some) ::
+          EmptyRasterSource("third", ex3, dt2.some) ::
+          EmptyRasterSource("fourth", ex4, dt3.some) :: Nil
 
-      val query  = (intersects(ex2) and intersects(ex3)) and at(dt2)
+      val query = (intersects(ex2) and intersects(ex3)) and at(dt2)
       // scheme.cata(RasterSourceRepository.algebra[EmptyRasterSource]).apply(query)(store)
       val result = RasterSourceRepository.eval(query)(store)
 
@@ -168,7 +168,7 @@ class QueryFSpec extends AnyFunSpec with Matchers {
 
       val jsonQuery = query.asJson
       // scheme.hylo(RasterSourceRepository.algebra[EmptyRasterSource], QueryF.coalgebraJson).apply(jsonQuery)(store)
-      val hresult   = RasterSourceRepository.eval(jsonQuery)(store)
+      val hresult = RasterSourceRepository.eval(jsonQuery)(store)
 
       hresult shouldBe result
     }

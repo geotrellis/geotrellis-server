@@ -28,9 +28,9 @@ import cats.implicits._
 import cats.data.{NonEmptyList => NEL}
 
 case class ResourceTile(
-  name: String,
-  resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
-  overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
+    name: String,
+    resampleMethod: ResampleMethod = ResampleMethod.DEFAULT,
+    overviewStrategy: OverviewStrategy = OverviewStrategy.DEFAULT
 ) {
   def uri: String = s"gtiff+file://${getClass.getResource(s"/$name").getFile}"
 }
@@ -42,7 +42,7 @@ object ResourceTile extends RasterSourceUtils {
     new ExtentReification[IO, ResourceTile] {
 
       def extentReification(
-        self: ResourceTile
+          self: ResourceTile
       ): (Extent, Option[CellSize]) => IO[ProjectedRaster[MultibandTile]] =
         (extent: Extent, cellSize: Option[CellSize]) => {
           val rs = getRasterSource(self.uri)
@@ -70,7 +70,7 @@ object ResourceTile extends RasterSourceUtils {
     new HasRasterExtents[IO, ResourceTile] {
 
       def rasterExtents(
-        self: ResourceTile
+          self: ResourceTile
       ): IO[NEL[RasterExtent]] =
         IO {
           val rs = RasterSource(self.uri)

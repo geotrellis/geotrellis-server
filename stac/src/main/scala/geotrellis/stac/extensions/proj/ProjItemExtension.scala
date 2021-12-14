@@ -25,11 +25,11 @@ import io.circe.generic.extras.{ConfiguredJsonCodec, JsonKey}
 
 @ConfiguredJsonCodec
 case class ProjItemExtension(
-  @JsonKey("proj:epsg") epsgCode: Option[Int],
-  @JsonKey("proj:wkt2") wktString: Option[String],
-  @JsonKey("proj:geometry") geometry: Option[Geometry],
-  @JsonKey("proj:transform") transform: Option[ProjTransform],
-  @JsonKey("proj:shape") shape: Option[ProjShape]
+    @JsonKey("proj:epsg") epsgCode: Option[Int],
+    @JsonKey("proj:wkt2") wktString: Option[String],
+    @JsonKey("proj:geometry") geometry: Option[Geometry],
+    @JsonKey("proj:transform") transform: Option[ProjTransform],
+    @JsonKey("proj:shape") shape: Option[ProjShape]
 )
 
 object ProjItemExtension {

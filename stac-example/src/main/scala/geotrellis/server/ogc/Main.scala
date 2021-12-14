@@ -82,110 +82,108 @@ object Main
           .orNone
 
         (publicUrlReq, interfaceOpt, portOpt, configPathOpt).mapN { (publicUrl, interface, port, configPath) =>
-          {
-            loggerSync.info(ansi"%green{Locally binding services to ${interface}:${port}}")
-            loggerSync.info(ansi"%green{Advertising services at ${publicUrl}}")
-            configPath match {
-              case Some(path) => loggerSync.info(ansi"%green{Layer and style configurations loaded from ${path}.}")
-              case None       => loggerSync.info(ansi"%red{Warning}: No configuration path provided. Loading defaults.")
-            }
+          loggerSync.info(ansi"%green{Locally binding services to ${interface}:${port}}")
+          loggerSync.info(ansi"%green{Advertising services at ${publicUrl}}")
+          configPath match {
+            case Some(path) => loggerSync.info(ansi"%green{Layer and style configurations loaded from ${path}.}")
+            case None       => loggerSync.info(ansi"%red{Warning}: No configuration path provided. Loading defaults.")
+          }
 
-            /** Server endpoints pool. */
-            implicit val executionContext: ExecutionContext =
-              ExecutionContext.fromExecutor(
-                Executors.newCachedThreadPool(
-                  new ThreadFactoryBuilder()
-                    .setNameFormat("raster-io-%d")
-                    .build()
+          /** Server endpoints pool. */
+          implicit val executionContext: ExecutionContext =
+            ExecutionContext.fromExecutor(
+              Executors.newCachedThreadPool(
+                new ThreadFactoryBuilder()
+                  .setNameFormat("raster-io-%d")
+                  .build()
+              )
+            )
+
+          implicit val cs: ContextShift[IO] = IO.contextShift(executionContext)
+          implicit val timer: Timer[IO]     = IO.timer(executionContext)
+
+          val commonMiddleware: HttpMiddleware[IO] = { (routes: HttpRoutes[IO]) => CORS(routes) }
+
+          def logOptState[A](opt: Option[A], upLog: String, downLog: String): IO[Unit] =
+            opt.fold(logger.info(downLog))(_ => logger.info(upLog))
+
+          def createServer: Resource[IO, Server[IO]] =
+            for {
+              conf <- Conf.loadResourceF[IO](configPath)
+              /** MosaicRasterSources pool init for the graceful shutdown. */
+              // blockingPool <- Resource.make(IO.delay(BlockingThreadPool.pool))(p => IO.delay(p.shutdown()))
+              /** Uses server pool. */
+              http4sClient <- Http4sBackend.usingDefaultBlazeClientBuilder[IO](Blocker.liftExecutionContext(executionContext), executionContext)
+              simpleSources = conf.layers.values.collect { case rsc: RasterSourceConf => rsc.toLayer }.toList
+              _ <- Resource.eval(
+                logOptState(
+                  conf.wms,
+                  ansi"%green{WMS configuration detected}, starting Web Map Service",
+                  ansi"%red{No WMS configuration detected}, unable to start Web Map Service"
                 )
               )
+              wmsModel = conf.wms.map { svc =>
+                WmsModel[IO](
+                  svc.serviceMetadata,
+                  svc.parentLayerMeta,
+                  svc.layerSources(simpleSources, http4sClient),
+                  ExtendedParameters.extendedParametersBinding
+                )
+              }
+              _ <- Resource.eval(
+                logOptState(
+                  conf.wmts,
+                  ansi"%green{WMTS configuration detected}, starting Web Map Tiling Service",
+                  ansi"%red{No WMTS configuration detected}, unable to start Web Map Tiling Service"
+                )
+              )
+              wmtsModel = conf.wmts.map { svc =>
+                WmtsModel[IO](
+                  svc.serviceMetadata,
+                  svc.tileMatrixSets,
+                  svc.layerSources(simpleSources, http4sClient)
+                )
+              }
+              _ <- Resource.eval(
+                logOptState(
+                  conf.wcs,
+                  ansi"%green{WCS configuration detected}, starting Web Coverage Service",
+                  ansi"%red{No WCS configuration detected}, unable to start Web Coverage Service"
+                )
+              )
+              wcsModel = conf.wcs.map { svc =>
+                WcsModel[IO](
+                  svc.serviceMetadata,
+                  svc.layerSources(simpleSources, http4sClient),
+                  svc.supportedProjections,
+                  ExtendedParameters.extendedParametersBinding
+                )
+              }
 
-            implicit val cs: ContextShift[IO] = IO.contextShift(executionContext)
-            implicit val timer: Timer[IO]     = IO.timer(executionContext)
+              ogcService = new OgcService[IO](
+                wmsModel,
+                wcsModel,
+                wmtsModel,
+                new URL(publicUrl)
+              )
+              server <- BlazeServerBuilder[IO](executionContext)
+                .withIdleTimeout(Duration.Inf)
+                .withResponseHeaderTimeout(Duration.Inf)
+                .enableHttp2(true)
+                .bindHttp(port, interface)
+                .withHttpApp(
+                  Router(
+                    "/" -> commonMiddleware(ogcService.routes)
+                  ).orNotFound
+                )
+                .resource
+            } yield server
 
-            val commonMiddleware: HttpMiddleware[IO] = { (routes: HttpRoutes[IO]) => CORS(routes) }
-
-            def logOptState[A](opt: Option[A], upLog: String, downLog: String): IO[Unit] =
-              opt.fold(logger.info(downLog))(_ => logger.info(upLog))
-
-            def createServer: Resource[IO, Server[IO]] =
-              for {
-                conf         <- Conf.loadResourceF[IO](configPath)
-                /** MosaicRasterSources pool init for the graceful shutdown. */
-                // blockingPool <- Resource.make(IO.delay(BlockingThreadPool.pool))(p => IO.delay(p.shutdown()))
-                /** Uses server pool. */
-                http4sClient <- Http4sBackend.usingDefaultBlazeClientBuilder[IO](Blocker.liftExecutionContext(executionContext), executionContext)
-                simpleSources = conf.layers.values.collect { case rsc: RasterSourceConf => rsc.toLayer }.toList
-                _            <- Resource.eval(
-                                  logOptState(
-                                    conf.wms,
-                                    ansi"%green{WMS configuration detected}, starting Web Map Service",
-                                    ansi"%red{No WMS configuration detected}, unable to start Web Map Service"
-                                  )
-                                )
-                wmsModel      = conf.wms.map { svc =>
-                                  WmsModel[IO](
-                                    svc.serviceMetadata,
-                                    svc.parentLayerMeta,
-                                    svc.layerSources(simpleSources, http4sClient),
-                                    ExtendedParameters.extendedParametersBinding
-                                  )
-                                }
-                _            <- Resource.eval(
-                                  logOptState(
-                                    conf.wmts,
-                                    ansi"%green{WMTS configuration detected}, starting Web Map Tiling Service",
-                                    ansi"%red{No WMTS configuration detected}, unable to start Web Map Tiling Service"
-                                  )
-                                )
-                wmtsModel     = conf.wmts.map { svc =>
-                                  WmtsModel[IO](
-                                    svc.serviceMetadata,
-                                    svc.tileMatrixSets,
-                                    svc.layerSources(simpleSources, http4sClient)
-                                  )
-                                }
-                _            <- Resource.eval(
-                                  logOptState(
-                                    conf.wcs,
-                                    ansi"%green{WCS configuration detected}, starting Web Coverage Service",
-                                    ansi"%red{No WCS configuration detected}, unable to start Web Coverage Service"
-                                  )
-                                )
-                wcsModel      = conf.wcs.map { svc =>
-                                  WcsModel[IO](
-                                    svc.serviceMetadata,
-                                    svc.layerSources(simpleSources, http4sClient),
-                                    svc.supportedProjections,
-                                    ExtendedParameters.extendedParametersBinding
-                                  )
-                                }
-
-                ogcService = new OgcService[IO](
-                               wmsModel,
-                               wcsModel,
-                               wmtsModel,
-                               new URL(publicUrl)
-                             )
-                server    <- BlazeServerBuilder[IO](executionContext)
-                               .withIdleTimeout(Duration.Inf)
-                               .withResponseHeaderTimeout(Duration.Inf)
-                               .enableHttp2(true)
-                               .bindHttp(port, interface)
-                               .withHttpApp(
-                                 Router(
-                                   "/" -> commonMiddleware(ogcService.routes)
-                                 ).orNotFound
-                               )
-                               .resource
-              } yield server
-
-            createServer
-              .use(_ => IO.never)
-              .as(ExitCode.Success)
-              .void
-              .unsafeRunSync
-          }
+          createServer
+            .use(_ => IO.never)
+            .as(ExitCode.Success)
+            .void
+            .unsafeRunSync
         }
       }
     )

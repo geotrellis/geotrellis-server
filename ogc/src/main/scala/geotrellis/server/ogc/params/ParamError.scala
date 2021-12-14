@@ -33,7 +33,7 @@ object ParamError {
 
   final case class MissingMultiParam(fields: Seq[String]) extends ParamError {
     def errorMessage = {
-      val fs = fields.map { f => s"'${f}'" }.mkString(",")
+      val fs = fields.map(f => s"'${f}'").mkString(",")
       s"""Parameters must include one of [${fs}], but none found."""
     }
   }

@@ -27,13 +27,13 @@ import java.net.URI
 
 /** A collection of tile matrices; most commonly forming a pyramid of different resolutions */
 case class GeotrellisTileMatrixSet(
-  identifier: String,
-  supportedCrs: CRS,
-  title: Option[String] = None,
-  `abstract`: Option[String] = None,
-  boundingBox: Option[Extent] = None,
-  wellKnownScaleSet: Option[String] = None,
-  tileMatrix: List[GeotrellisTileMatrix]
+    identifier: String,
+    supportedCrs: CRS,
+    title: Option[String] = None,
+    `abstract`: Option[String] = None,
+    boundingBox: Option[Extent] = None,
+    wellKnownScaleSet: Option[String] = None,
+    tileMatrix: List[GeotrellisTileMatrix]
 ) {
   def toXml: TileMatrixSet = {
     val ret = TileMatrixSet(

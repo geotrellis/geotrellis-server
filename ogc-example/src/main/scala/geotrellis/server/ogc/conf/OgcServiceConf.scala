@@ -23,10 +23,10 @@ import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
 import geotrellis.store.query.Repository
 import geotrellis.proj4.CRS
 
-/** Each service has its own unique configuration requirements (see the below instances)
-  *  but share certain basic behaviors related to layer management. This trait encodes
-  *  those expectations
-  */
+/**
+ * Each service has its own unique configuration requirements (see the below instances) but share certain basic behaviors related to layer management.
+ * This trait encodes those expectations
+ */
 sealed trait OgcServiceConf {
   def layerDefinitions: List[OgcSourceConf]
   def layerSources(rasterOgcSources: List[RasterOgcSource]): Repository[OgcSource] = {
@@ -38,21 +38,21 @@ sealed trait OgcServiceConf {
 
 /** WMS Service configuration */
 case class WmsConf(
-  parentLayerMeta: WmsParentLayerMeta,
-  serviceMetadata: opengis.wms.Service,
-  layerDefinitions: List[OgcSourceConf]
+    parentLayerMeta: WmsParentLayerMeta,
+    serviceMetadata: opengis.wms.Service,
+    layerDefinitions: List[OgcSourceConf]
 ) extends OgcServiceConf
 
 /** WMTS Service configuration */
 case class WmtsConf(
-  serviceMetadata: ows.ServiceMetadata,
-  layerDefinitions: List[OgcSourceConf],
-  tileMatrixSets: List[GeotrellisTileMatrixSet]
+    serviceMetadata: ows.ServiceMetadata,
+    layerDefinitions: List[OgcSourceConf],
+    tileMatrixSets: List[GeotrellisTileMatrixSet]
 ) extends OgcServiceConf
 
 /** WCS Service configuration */
 case class WcsConf(
-  serviceMetadata: ows.ServiceMetadata,
-  layerDefinitions: List[OgcSourceConf],
-  supportedProjections: List[CRS]
+    serviceMetadata: ows.ServiceMetadata,
+    layerDefinitions: List[OgcSourceConf],
+    supportedProjections: List[CRS]
 ) extends OgcServiceConf

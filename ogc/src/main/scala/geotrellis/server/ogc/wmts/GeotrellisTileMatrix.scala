@@ -26,11 +26,11 @@ import opengis.wmts.TileMatrix
 
 /** Relates Geotrellis Extent and TileLayout to a corresponding OGC Tile Matrix */
 case class GeotrellisTileMatrix(
-  identifier: String,
-  extent: Extent,
-  tileLayout: TileLayout,
-  title: Option[String] = None,
-  `abstract`: Option[String] = None
+    identifier: String,
+    extent: Extent,
+    tileLayout: TileLayout,
+    title: Option[String] = None,
+    `abstract`: Option[String] = None
 ) {
   val layout: LayoutDefinition = LayoutDefinition(extent, tileLayout)
   require(layout.cellSize.width == layout.cellSize.height, s"Layout definition cell size width must be same as height: ${layout.cellSize}")
@@ -41,7 +41,7 @@ case class GeotrellisTileMatrix(
     WebMercator -> 1
   )
 
-  def toXml(crs: CRS): TileMatrix = {
+  def toXml(crs: CRS): TileMatrix =
     projectionMetersPerUnit.get(crs) match {
       case Some(metersPerUnit) =>
         val scaleDenominator = layout.cellSize.width / 0.00028 * metersPerUnit
@@ -61,5 +61,4 @@ case class GeotrellisTileMatrix(
       case None =>
         throw new Exception(s"Invalid CRS: ${crs}")
     }
-  }
 }

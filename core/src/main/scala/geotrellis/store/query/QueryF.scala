@@ -86,7 +86,7 @@ object QueryF {
     def onNumber(value: JsonNumber): QueryF[Json]  = QueryF.Nothing()
     def onString(value: String): QueryF[Json]      = QueryF.Nothing()
     def onArray(value: Vector[Json]): QueryF[Json] = QueryF.Nothing()
-    def onObject(value: JsonObject): QueryF[Json]  =
+    def onObject(value: JsonObject): QueryF[Json] =
       value.asJson
         .as[QueryF[Json]]
         .getOrElse(QueryF.Nothing[Json]())

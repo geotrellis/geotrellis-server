@@ -45,8 +45,8 @@ import scala.concurrent.duration._
 import scala.xml.Elem
 
 class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
-  wmsModel: WmsModel[F],
-  serviceUrl: URL
+    wmsModel: WmsModel[F],
+    serviceUrl: URL
 ) extends Http4sDsl[F] {
   val logger = Logger[F]
 
@@ -55,9 +55,9 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
       None,
       "target".some,
       DataRecord("all").toXML ++
-      DataRecord("data").toXML ++
-      DataRecord("nodata").toXML ++
-      DataRecord(None, "default".some, "all").toXML
+        DataRecord("data").toXML ++
+        DataRecord("nodata").toXML ++
+        DataRecord(None, "default".some, "all").toXML
     )
 
     val focalHillshade: Elem = ExtendedElement(
@@ -74,13 +74,13 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
       targetCells
     )
 
-    val channels            = "Red" :: "Green" :: "Blue" :: Nil
+    val channels = "Red" :: "Green" :: "Blue" :: Nil
     def clamp(band: String) =
       DataRecord(
         None,
         s"Clamp$band".some,
         DataRecord(s"clampMin$band").toXML ++
-        DataRecord(s"clampMax$band").toXML
+          DataRecord(s"clampMax$band").toXML
       )
 
     def normalize(band: String) =
@@ -88,9 +88,9 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
         None,
         s"Normalize$band".some,
         DataRecord(s"normalizeOldMin$band").toXML ++
-        DataRecord(s"normalizeOldMax$band").toXML ++
-        DataRecord(s"normalizeNewMin$band").toXML ++
-        DataRecord(s"normalizeNewMax$band").toXML
+          DataRecord(s"normalizeOldMax$band").toXML ++
+          DataRecord(s"normalizeNewMin$band").toXML ++
+          DataRecord(s"normalizeNewMax$band").toXML
       )
 
     def rescale(band: String) =
@@ -98,7 +98,7 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
         None,
         s"Rescale$band".some,
         DataRecord(s"rescaleNewMin$band").toXML ++
-        DataRecord(s"rescaleNewMax$band").toXML
+          DataRecord(s"rescaleNewMax$band").toXML
       )
 
     val rgbOps = channels.flatMap { b =>
@@ -131,7 +131,7 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
       .maximumSize(500)
       .build[GetMapParams, Raster[MultibandTile]]()
 
-  def responseFor(req: Request[F]): F[Response[F]] = {
+  def responseFor(req: Request[F]): F[Response[F]] =
     WmsParams(req.multiParams) match {
       case Invalid(errors) =>
         val msg = ParamError.generateErrorMessage(errors.toList)
@@ -156,13 +156,12 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
           GetFeatureInfo[F](wmsModel, rasterCache)
             .build(wmsReq)
             .flatMap {
-              case Right(f)                          =>
+              case Right(f) =>
                 Ok(f.render(wmsReq.infoFormat, wmsReq.crs, wmsReq.cellSize)).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.infoFormat))))
               case Left(e: LayerNotDefinedException) =>
                 NotFound(e.render(wmsReq.infoFormat)).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.infoFormat))))
-              case Left(e: InvalidPointException)    =>
+              case Left(e: InvalidPointException) =>
                 BadRequest(e.render(wmsReq.infoFormat)).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.infoFormat))))
             }
     }
-  }
 }

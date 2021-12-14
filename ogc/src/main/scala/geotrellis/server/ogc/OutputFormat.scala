@@ -58,7 +58,7 @@ object OutputFormat {
         case None    => "image/png"
       }
 
-    def render(tile: Tile): Array[Byte] = {
+    def render(tile: Tile): Array[Byte] =
       encoding match {
         case None =>
           val nd = noDataValue(tile.cellType)
@@ -75,7 +75,6 @@ object OutputFormat {
         case Some(encoding) =>
           tile.renderPng(encoding).bytes
       }
-    }
 
     def render(tile: Tile, cm: ColorMap): Array[Byte] = {
       val encoder = encoding match {

@@ -28,8 +28,8 @@ package object persistence {
   implicit val inMemMamlStore: MamlStore[IO, ConcurrentLinkedHashMap[UUID, Expression]] =
     new MamlStore[IO, ConcurrentLinkedHashMap[UUID, Expression]] {
       def getMaml(self: ConcurrentLinkedHashMap[UUID, Expression], key: UUID): IO[Option[Expression]] =
-        IO { Option(self.get(key)) }
+        IO(Option(self.get(key)))
 
-      def putMaml(self: ConcurrentLinkedHashMap[UUID, Expression], key: UUID, maml: Expression): IO[Unit] = IO { self.put(key, maml) }
+      def putMaml(self: ConcurrentLinkedHashMap[UUID, Expression], key: UUID, maml: Expression): IO[Unit] = IO(self.put(key, maml))
     }
 }

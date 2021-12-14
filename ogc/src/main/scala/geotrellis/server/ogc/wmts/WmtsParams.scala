@@ -26,7 +26,7 @@ import Validated._
 
 import scala.util.Try
 
-abstract sealed class WmtsParams {
+sealed abstract class WmtsParams {
   val version: String
 }
 
@@ -36,9 +36,9 @@ object WmtsParams {
   val wmtsVersion = "1.0.0"
 
   final case class GetCapabilities(
-    version: String,
-    format: Option[String],
-    updateSequence: Option[String]
+      version: String,
+      format: Option[String],
+      updateSequence: Option[String]
   ) extends WmtsParams
 
   object GetCapabilities {
@@ -48,14 +48,14 @@ object WmtsParams {
   }
 
   case class GetTile(
-    version: String,
-    layer: String,
-    style: String,
-    format: OutputFormat,
-    tileMatrixSet: String,
-    tileMatrix: String,
-    tileRow: Int,
-    tileCol: Int
+      version: String,
+      layer: String,
+      style: String,
+      format: OutputFormat,
+      tileMatrixSet: String,
+      tileMatrix: String,
+      tileRow: Int,
+      tileCol: Int
   ) extends WmtsParams {
     def toQuery: Query = withName(layer)
   }
@@ -71,8 +71,8 @@ object WmtsParams {
           val style         = params.validatedParam("style")
           val tileMatrixSet = params.validatedParam("tilematrixset")
           val tileMatrix    = params.validatedParam("tilematrix")
-          val tileRow       = params.validatedParam[Int]("tilerow", { s => Try(s.toInt).toOption })
-          val tileCol       = params.validatedParam[Int]("tilecol", { s => Try(s.toInt).toOption })
+          val tileRow       = params.validatedParam[Int]("tilerow", s => Try(s.toInt).toOption)
+          val tileCol       = params.validatedParam[Int]("tilecol", s => Try(s.toInt).toOption)
 
           val format =
             params
@@ -80,7 +80,7 @@ object WmtsParams {
               .andThen { f =>
                 OutputFormat.fromString(f) match {
                   case Some(format) => Valid(format).toValidatedNel
-                  case None         =>
+                  case None =>
                     Invalid(ParamError.UnsupportedFormatError(f)).toValidatedNel
                 }
               }

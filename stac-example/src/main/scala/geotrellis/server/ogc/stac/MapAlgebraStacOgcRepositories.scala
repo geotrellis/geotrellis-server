@@ -31,9 +31,9 @@ import io.chrisdavenport.log4cats.Logger
 import sttp.client3.SttpBackend
 
 case class MapAlgebraStacOgcRepository[F[_]: Functor](
-  mapAlgebraSourceConf: MapAlgebraSourceConf,
-  ogcSourceConfs: List[OgcSourceConf],
-  repository: RepositoryM[F, List, OgcSource]
+    mapAlgebraSourceConf: MapAlgebraSourceConf,
+    ogcSourceConfs: List[OgcSourceConf],
+    repository: RepositoryM[F, List, OgcSource]
 ) extends RepositoryM[F, List, OgcSource] {
   private val names = ogcSourceConfs.map(_.name).distinct
 
@@ -49,18 +49,17 @@ case class MapAlgebraStacOgcRepository[F[_]: Functor](
 }
 
 case class MapAlgebraStacOgcRepositories[F[_]: Sync: Logger](
-  mapAlgebraConfLayers: List[MapAlgebraSourceConf],
-  ogcLayers: List[OgcSourceConf],
-  client: SttpBackend[F, Any]
+    mapAlgebraConfLayers: List[MapAlgebraSourceConf],
+    ogcLayers: List[OgcSourceConf],
+    client: SttpBackend[F, Any]
 ) extends RepositoryM[F, List, OgcSource] {
   def store: F[List[OgcSource]] =
     find(query.withNames(mapAlgebraConfLayers.map(_.name).toSet))
 
-  /** At first, choose stacLayers that fit the query, because after that we'll erase their name.
-    * GT Server layer conf names != the STAC Layer name
-    * conf names can be different for the same STAC Layer name.
-    * A name is unique per the STAC layer and an asset.
-    */
+  /**
+   * At first, choose stacLayers that fit the query, because after that we'll erase their name. GT Server layer conf names != the STAC Layer name conf
+   * names can be different for the same STAC Layer name. A name is unique per the STAC layer and an asset.
+   */
   def find(query: Query): F[List[OgcSource]] =
     StacOgcRepositories
       .eval(query)(mapAlgebraConfLayers)
@@ -71,10 +70,10 @@ case class MapAlgebraStacOgcRepositories[F[_]: Sync: Logger](
         /** Get all ogc layers that are required for the MAML expression evaluation */
         val ogcLayersFiltered = ogcLayers.filter(l => layerNames.contains(l.name))
         val stacLayers        = ogcLayersFiltered.collect { case ssc: StacSourceConf => ssc }
-        val rasterLayers      =
+        val rasterLayers =
           if (stacLayers.nonEmpty) ogcLayersFiltered.collect { case ssc: RasterSourceConf => ssc.toLayer }
           else Nil
-        val repositories      = OgcSourceRepository(rasterLayers).toF[F] |+| StacOgcRepositories[F](stacLayers, client)
+        val repositories = OgcSourceRepository(rasterLayers).toF[F] |+| StacOgcRepositories[F](stacLayers, client)
 
         MapAlgebraStacOgcRepository[F](conf, ogcLayersFiltered, repositories)
       }

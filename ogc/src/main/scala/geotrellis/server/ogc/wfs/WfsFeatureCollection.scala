@@ -43,7 +43,7 @@ import java.net.URI
 import scala.xml.{Elem, NodeSeq}
 
 object WfsFeatureCollection {
-  def toXML[G <: Geometry](features: Seq[Feature[G, Json]], crs: CRS, cellSize: CellSize): Elem = {
+  def toXML[G <: Geometry](features: Seq[Feature[G, Json]], crs: CRS, cellSize: CellSize): Elem =
     scalaxb
       .toXML[FeatureCollectionType](
         obj = apply(features, crs, cellSize),
@@ -53,7 +53,6 @@ object WfsFeatureCollection {
         typeAttribute = false
       )
       .asInstanceOf[Elem]
-  }
 
   private def jsonXML(j: Json): NodeSeq =
     j.asObject match {
@@ -62,25 +61,25 @@ object WfsFeatureCollection {
           .map { case (k, v) =>
             v.asObject match {
               case Some(obj) => jsonXML(obj.asJson)
-              case _         =>
+              case _ =>
                 scala.xml.XML
                   .loadString(s"<$k>${v.noSpaces}</$k>")
             }
           }
           .foldLeft(NodeSeq.Empty)(_ ++ _)
-      case _         => DataRecord(j.noSpaces).nested
+      case _ => DataRecord(j.noSpaces).nested
     }
 
   private def propertiesXML[G <: Geometry](f: Feature[G, Json]): NodeSeq = jsonXML(f.data)
 
-  def apply[G <: Geometry](features: Seq[Feature[G, Json]], crs: CRS, cellSize: CellSize): FeatureCollectionType = {
+  def apply[G <: Geometry](features: Seq[Feature[G, Json]], crs: CRS, cellSize: CellSize): FeatureCollectionType =
     FeatureCollectionType(
       standardObjectPropertiesSequence1 = StandardObjectPropertiesSequence(),
       featureMember = features.map { feature =>
         val polygons = feature.geom match {
           case p: Polygon       => p :: Nil
           case mp: MultiPolygon => mp.polygons.toList
-          case po: Point        =>
+          case po: Point =>
             val (x, y)         = po.getX -> po.getY
             val CellSize(w, h) = cellSize
             Polygon(
@@ -90,7 +89,7 @@ object WfsFeatureCollection {
               (x - w, y + h),
               (x - w, y - h)
             ) :: Nil
-          case _                => Nil
+          case _ => Nil
         }
 
         opengis.gml.FeaturePropertyType(
@@ -121,7 +120,7 @@ object WfsFeatureCollection {
                                         linearringtypeoption = GmlDataRecord(
                                           CoordinatesType(
                                             polygon.getExteriorRing.getCoordinates
-                                              .map { c => s"${c.getX},${c.getY}" }
+                                              .map(c => s"${c.getX},${c.getY}")
                                               .toList
                                               .mkString(" "),
                                             attributes = Map(
@@ -151,5 +150,4 @@ object WfsFeatureCollection {
         )
       }
     )
-  }
 }

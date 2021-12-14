@@ -31,36 +31,36 @@ import cats.syntax.semigroup._
 
 /** This class holds all the information necessary to construct a response to a WMS request */
 case class WmsModel[F[_]: Monad](
-  serviceMeta: opengis.wms.Service,
-  parentLayerMeta: WmsParentLayerMeta,
-  sources: RepositoryM[F, List, OgcSource],
-  extendedParametersBinding: Option[ParamMap => Option[Expression => Expression]] = None
+    serviceMeta: opengis.wms.Service,
+    parentLayerMeta: WmsParentLayerMeta,
+    sources: RepositoryM[F, List, OgcSource],
+    extendedParametersBinding: Option[ParamMap => Option[Expression => Expression]] = None
 ) {
 
   def time: F[OgcTime] = sources.store.map(_.map(_.time)).map(_.reduce(_ |+| _))
 
-  /** Take a specific request for a map and combine it with the relevant [[OgcSource]]
-    *  to produce an [[OgcLayer]]
-    */
-  def getLayer(p: GetMapParams): F[List[OgcLayer]] = {
+  /**
+   * Take a specific request for a map and combine it with the relevant [[OgcSource]] to produce an [[OgcLayer]]
+   */
+  def getLayer(p: GetMapParams): F[List[OgcLayer]] =
     parentLayerMeta.supportedProjections
       .find(_ == p.crs)
       .fold[F[List[OgcLayer]]](List.empty[OgcLayer].pure[F]) { supportedCrs =>
         sources.find(p.toQuery).map { sources =>
           sources map { source =>
             val styleName: Option[String] = p.styles.headOption.filterNot(_.isEmpty).orElse(source.defaultStyle)
-            val style: Option[OgcStyle]   = styleName.flatMap { name =>
+            val style: Option[OgcStyle] = styleName.flatMap { name =>
               source.styles.find(_.name == name)
             }
             source match {
-              case rs: RasterOgcSource   => rs.toLayer(supportedCrs, style, p.time :: Nil)
+              case rs: RasterOgcSource => rs.toLayer(supportedCrs, style, p.time :: Nil)
               case mas: MapAlgebraSource =>
                 val (name, title, algebra, resampleMethod, overviewStrategy) =
                   (mas.name, mas.title, mas.algebra, mas.resampleMethod, mas.overviewStrategy)
-                val simpleLayers                                             = mas.sources.mapValues { rs =>
+                val simpleLayers = mas.sources.mapValues { rs =>
                   SimpleOgcLayer(name, title, supportedCrs, rs, style, resampleMethod, overviewStrategy)
                 }
-                val extendedParameters                                       = extendedParametersBinding.flatMap(_.apply(p.params))
+                val extendedParameters = extendedParametersBinding.flatMap(_.apply(p.params))
                 MapAlgebraOgcLayer(
                   name,
                   title,
@@ -76,5 +76,4 @@ case class WmsModel[F[_]: Monad](
           }
         }
       }
-  }
 }

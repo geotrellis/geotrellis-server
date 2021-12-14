@@ -30,15 +30,16 @@ import cats.data.NonEmptyList
 import cats.effect.{ContextShift, IO}
 import geotrellis.store.util.BlockingThreadPool
 
-/** Single threaded instance of a reader for reading windows out of collections
-  * of rasters
-  *
-  * @param sources The underlying [[RasterSource]]s that you'll use for data access
-  * @param crs The crs to reproject all [[RasterSource]]s to anytime we need information about their data
-  * Since MosaicRasterSources represent collections of [[RasterSource]]s, we don't know in advance
-  * whether they'll have the same CRS. crs allows specifying the CRS on read instead of
-  * having to make sure at compile time that you're threading CRSes through everywhere correctly.
-  */
+/**
+ * Single threaded instance of a reader for reading windows out of collections of rasters
+ *
+ * @param sources
+ *   The underlying [[RasterSource]]s that you'll use for data access
+ * @param crs
+ *   The crs to reproject all [[RasterSource]]s to anytime we need information about their data Since MosaicRasterSources represent collections of
+ *   [[RasterSource]]s, we don't know in advance whether they'll have the same CRS. crs allows specifying the CRS on read instead of having to make
+ *   sure at compile time that you're threading CRSes through everywhere correctly.
+ */
 abstract class MosaicRasterSourceIO extends RasterSource {
 
   implicit lazy val cs: ContextShift[IO] = IO.contextShift(BlockingThreadPool.executionContext)
@@ -53,12 +54,12 @@ abstract class MosaicRasterSourceIO extends RasterSource {
 
   val targetCellType = None
 
-  /** The bandCount of the first [[RasterSource]] in sources
-    *
-    * If this value is larger than the bandCount of later [[RasterSource]]s in sources,
-    * reads of all bands will fail. It is a client's responsibility to construct
-    * mosaics that can be read.
-    */
+  /**
+   * The bandCount of the first [[RasterSource]] in sources
+   *
+   * If this value is larger than the bandCount of later [[RasterSource]]s in sources, reads of all bands will fail. It is a client's responsibility
+   * to construct mosaics that can be read.
+   */
   def bandCount: Int = sources.head.bandCount
 
   def cellType: CellType =
@@ -78,10 +79,12 @@ abstract class MosaicRasterSourceIO extends RasterSource {
 
   def attributesForBand(band: Int): Map[String, String] = Map.empty
 
-  /** All available resolutions for all RasterSources in this MosaicRasterSourceFixed
-    *
-    * @see [[geotrellis.raster.RasterSource.resolutions]]
-    */
+  /**
+   * All available resolutions for all RasterSources in this MosaicRasterSourceFixed
+   *
+   * @see
+   *   [[geotrellis.raster.RasterSource.resolutions]]
+   */
   def resolutions: List[CellSize] =
     sourcesIO
       .parTraverse(_.flatMap { rs =>
@@ -92,16 +95,17 @@ abstract class MosaicRasterSourceIO extends RasterSource {
       .map(_.reduce)
       .unsafeRunSync()
 
-  /** Create a new MosaicRasterSourceFixed with sources transformed according to the provided
-    * crs, options, and strategy, and a new crs
-    *
-    * @see [[geotrellis.raster.RasterSource.reproject]]
-    */
+  /**
+   * Create a new MosaicRasterSourceFixed with sources transformed according to the provided crs, options, and strategy, and a new crs
+   *
+   * @see
+   *   [[geotrellis.raster.RasterSource.reproject]]
+   */
   def reprojection(
-    targetCRS: CRS,
-    resampleTarget: ResampleTarget = DefaultTarget,
-    method: ResampleMethod = ResampleMethod.DEFAULT,
-    strategy: OverviewStrategy = OverviewStrategy.DEFAULT
+      targetCRS: CRS,
+      resampleTarget: ResampleTarget = DefaultTarget,
+      method: ResampleMethod = ResampleMethod.DEFAULT,
+      strategy: OverviewStrategy = OverviewStrategy.DEFAULT
   ): RasterSource =
     MosaicRasterSourceIO
       .instance(
@@ -125,18 +129,19 @@ abstract class MosaicRasterSourceIO extends RasterSource {
 
   def read(bounds: GridBounds[Long], bands: Seq[Int]): Option[Raster[MultibandTile]] = {
 
-    /** The passed bounds are relative to the [[MosaicRasterSourceIO]] bounds.
-      * However, each [[RasterSource]] has its own [[GridBounds]].
-      * Before passing [[GridBounds]] into each underlying [[RasterSource]]
-      * we need to map them into the each [[RasterSource]] relative grid space.
-      *
-      * This is done by calculating the relative offset using each [[RasterSource]]
-      * underlying [[Extent]].
-      *
-      * @param gb     global bounds, relative to the [[MosaicRasterSourceIO]]
-      * @param extent extent of the [[RasterSource]]
-      * @return       relative to the extent [[GridBounds]]
-      */
+    /**
+     * The passed bounds are relative to the [[MosaicRasterSourceIO]] bounds. However, each [[RasterSource]] has its own [[GridBounds]]. Before
+     * passing [[GridBounds]] into each underlying [[RasterSource]] we need to map them into the each [[RasterSource]] relative grid space.
+     *
+     * This is done by calculating the relative offset using each [[RasterSource]] underlying [[Extent]].
+     *
+     * @param gb
+     *   global bounds, relative to the [[MosaicRasterSourceIO]]
+     * @param extent
+     *   extent of the [[RasterSource]]
+     * @return
+     *   relative to the extent [[GridBounds]]
+     */
     def relativeGridBounds(gb: GridBounds[Long], extent: Extent): GridBounds[Long] = {
       val GridBounds(colMin, rowMin, colMax, rowMax) = gb
       val (sourceColOffset, sourceRowOffset)         = gridExtent.mapToGrid(extent.xmin, extent.ymax)
@@ -162,9 +167,9 @@ abstract class MosaicRasterSourceIO extends RasterSource {
   }
 
   def resample(
-    resampleTarget: ResampleTarget,
-    method: ResampleMethod,
-    strategy: OverviewStrategy
+      resampleTarget: ResampleTarget,
+      method: ResampleMethod,
+      strategy: OverviewStrategy
   ): RasterSource =
     MosaicRasterSourceIO
       .instance(
@@ -188,15 +193,16 @@ abstract class MosaicRasterSourceIO extends RasterSource {
 
 object MosaicRasterSourceIO {
 
-  /** This instance method allows to create an instance of the MosaicRasterSource.
-    * It assumes that all raster sources are known, and the GridExtent is also known.
-    */
+  /**
+   * This instance method allows to create an instance of the MosaicRasterSource. It assumes that all raster sources are known, and the GridExtent is
+   * also known.
+   */
   def instance(
-    sourcesList: NonEmptyList[RasterSource],
-    targetCRS: CRS,
-    targetGridExtent: GridExtent[Long],
-    sourceName: SourceName,
-    stacAttributes: Map[String, String]
+      sourcesList: NonEmptyList[RasterSource],
+      targetCRS: CRS,
+      targetGridExtent: GridExtent[Long],
+      sourceName: SourceName,
+      stacAttributes: Map[String, String]
   ): MosaicRasterSourceIO =
     new MosaicRasterSourceIO {
       val sources: NonEmptyList[RasterSource]      = sourcesList
@@ -206,14 +212,15 @@ object MosaicRasterSourceIO {
       override val attributes: Map[String, String] = stacAttributes
     }
 
-  /** This instance method allows to create an instance of the MosaicRasterSourceFixed.
-    * It computes the MosaicRasterSourceFixed basing on the input sourcesList.
-    */
+  /**
+   * This instance method allows to create an instance of the MosaicRasterSourceFixed. It computes the MosaicRasterSourceFixed basing on the input
+   * sourcesList.
+   */
   def instance(
-    sourcesList: NonEmptyList[RasterSource],
-    targetCRS: CRS,
-    sourceName: SourceName,
-    stacAttributes: Map[String, String]
+      sourcesList: NonEmptyList[RasterSource],
+      targetCRS: CRS,
+      sourceName: SourceName,
+      stacAttributes: Map[String, String]
   ): MosaicRasterSourceIO = {
     val combinedExtent     = sourcesList.map(_.extent).toList.reduce(_ combine _)
     val minCellSize        = sourcesList.map(_.cellSize).toList.maxBy(_.resolution)
@@ -232,11 +239,11 @@ object MosaicRasterSourceIO {
     apply(sourcesList, targetCRS, targetGridExtent, EmptyName)
 
   def apply(
-    sourcesList: NonEmptyList[RasterSource],
-    targetCRS: CRS,
-    targetGridExtent: GridExtent[Long],
-    rasterSourceName: SourceName
-  ): MosaicRasterSourceIO = {
+      sourcesList: NonEmptyList[RasterSource],
+      targetCRS: CRS,
+      targetGridExtent: GridExtent[Long],
+      rasterSourceName: SourceName
+  ): MosaicRasterSourceIO =
     new MosaicRasterSourceIO {
       val name         = rasterSourceName
       lazy val sources = sourcesList.map(cs.shift >> IO(_)).parTraverse(_.map(_.reprojectToGrid(targetCRS, gridExtent))).unsafeRunSync()
@@ -244,12 +251,11 @@ object MosaicRasterSourceIO {
 
       val gridExtent: GridExtent[Long] = targetGridExtent
     }
-  }
 
   def apply(sourcesList: NonEmptyList[RasterSource], targetCRS: CRS): MosaicRasterSourceIO =
     apply(sourcesList, targetCRS, EmptyName)
 
-  def apply(sourcesList: NonEmptyList[RasterSource], targetCRS: CRS, rasterSourceName: SourceName): MosaicRasterSourceIO = {
+  def apply(sourcesList: NonEmptyList[RasterSource], targetCRS: CRS, rasterSourceName: SourceName): MosaicRasterSourceIO =
     new MosaicRasterSourceIO {
       val name    = rasterSourceName
       val sources = sourcesList.map(cs.shift >> IO(_)).parTraverse(_.map(_.reprojectToGrid(targetCRS, sourcesList.head.gridExtent))).unsafeRunSync()
@@ -261,5 +267,4 @@ object MosaicRasterSourceIO {
         GridExtent[Long](combinedExtent, minCellSize)
       }
     }
-  }
 }

@@ -56,7 +56,7 @@ object GetFeatureInfoException {
   implicit def invalidPointExceptionEncoder[T <: GetFeatureInfoException]: Encoder[T] =
     Encoder.encodeJson.contramap { e =>
       Map(
-        "version"    -> e.version.asJson,
+        "version" -> e.version.asJson,
         "exceptions" -> List(
           "code"    -> e.code,
           "locator" -> "noLocator",

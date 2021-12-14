@@ -37,11 +37,10 @@ import scala.language.reflectiveCalls
 class Http4sStacClientSpec extends IOSpec {
   def withClient[F[_]: ContextShift: ConcurrentEffect: Logger4Cats](implicit ec: ExecutionContext) =
     new {
-      def apply[T](f: SttpStacClient[F] => F[T]): F[T] = {
+      def apply[T](f: SttpStacClient[F] => F[T]): F[T] =
         Http4sBackend.usingDefaultBlazeClientBuilder[F](Blocker.liftExecutionContext(executionContext), executionContext).use { client =>
           f(SttpStacClient(client, uri"http://localhost:9090/"))
         }
-      }
     }
 
   describe("Http4sStacClientSpec") {

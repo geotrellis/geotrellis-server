@@ -28,8 +28,8 @@ trait MamlStore[F[_], A] {
 object MamlStore {
   def apply[F[_], A](implicit ev: MamlStore[F, A]) = ev
 
-  /**  This exception should be thrown when a MAML expression can't be
-    *   found in a putative MamlStore implementer
-    */
+  /**
+   * This exception should be thrown when a MAML expression can't be found in a putative MamlStore implementer
+   */
   case class ExpressionNotFound(key: UUID) extends Exception(s"No expression found at $key")
 }

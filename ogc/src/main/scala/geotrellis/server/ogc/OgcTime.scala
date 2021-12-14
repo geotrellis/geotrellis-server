@@ -32,7 +32,7 @@ sealed trait OgcTime {
 
 object OgcTime {
   implicit val ogcTimeMonoid: Monoid[OgcTime] = new Monoid[OgcTime] {
-    def empty: OgcTime                           = OgcTimeEmpty
+    def empty: OgcTime = OgcTimeEmpty
     def combine(l: OgcTime, r: OgcTime): OgcTime =
       (l, r) match {
         case (l: OgcTimePositions, r: OgcTimePositions)  => l |+| r
@@ -55,7 +55,7 @@ object OgcTime {
     /** Reformat OgcTime if possible. */
     def format(format: OgcTimeFormat): OgcTime =
       format match {
-        case OgcTimeFormat.Interval  =>
+        case OgcTimeFormat.Interval =>
           self match {
             case interval: OgcTimeInterval   => interval
             case positions: OgcTimePositions => positions.toOgcTimeInterval
@@ -67,7 +67,7 @@ object OgcTime {
             case positions: OgcTimePositions => positions
             case _                           => self
           }
-        case OgcTimeFormat.Default   => self
+        case OgcTimeFormat.Default => self
       }
 
     def strictTimeMatch(dt: ZonedDateTime): Boolean =
@@ -79,8 +79,8 @@ object OgcTime {
 
     def sorted: OgcTime =
       self match {
-        case OgcTimeEmpty                          => OgcTimeEmpty
-        case OgcTimePositions(list)                => OgcTimePositions(list.sorted)
+        case OgcTimeEmpty           => OgcTimeEmpty
+        case OgcTimePositions(list) => OgcTimePositions(list.sorted)
         case OgcTimeInterval(start, end, interval) =>
           val List(s, e) = List(start, end).sorted
           OgcTimeInterval(s, e, interval)
@@ -126,9 +126,9 @@ object OgcTimePositions {
     OgcTimePositions((l.list ::: r.list).distinct.sorted)
   }
 
-  def apply(timePeriod: ZonedDateTime): OgcTimePositions             = OgcTimePositions(NonEmptyList(timePeriod, Nil))
-  def apply(timeString: String): OgcTimePositions                    = apply(ZonedDateTime.parse(timeString))
-  def apply(times: List[ZonedDateTime]): OgcTime                     =
+  def apply(timePeriod: ZonedDateTime): OgcTimePositions = OgcTimePositions(NonEmptyList(timePeriod, Nil))
+  def apply(timeString: String): OgcTimePositions        = apply(ZonedDateTime.parse(timeString))
+  def apply(times: List[ZonedDateTime]): OgcTime =
     times match {
       case head :: tail => OgcTimePositions(NonEmptyList(head, tail))
       case _            => OgcTimeEmpty
@@ -138,24 +138,23 @@ object OgcTimePositions {
   def parse(times: List[String]): Try[OgcTime] = Try(apply(times.map(ZonedDateTime.parse)))
 }
 
-/** Represents the TimeInterval used in TimeSequence requests
-  *
-  * If end is provided, a TimeInterval is assumed. Otherwise, a TimePosition.
-  *
-  * @param start The start time for this TimePosition or TimeInterval
-  * @param end The end time for this TimeInterval. If None, a TimePosition is assumed from the
-  *              start param.
-  * @param interval ISO 8601:2000 provides a syntax for expressing time periods: the designator P,
-  *                 followed by a number of years Y, months M, days D, a time designator T, number
-  *                 of hours H, minutes M, and seconds S. Unneeded elements may be omitted. Here are
-  *                 a few examples:
-  *                 EXAMPLE 1 - P1Y, 1 year
-  *                 EXAMPLE 2 - P1M10D, 1 month plus 10 days
-  *                 EXAMPLE 3 - PT2H, 2 hours
-  *
-  *                 @note This param is not validated. It is up to the user to ensure that it is
-  *                       encoded directly
-  */
+/**
+ * Represents the TimeInterval used in TimeSequence requests
+ *
+ * If end is provided, a TimeInterval is assumed. Otherwise, a TimePosition.
+ *
+ * @param start
+ *   The start time for this TimePosition or TimeInterval
+ * @param end
+ *   The end time for this TimeInterval. If None, a TimePosition is assumed from the start param.
+ * @param interval
+ *   ISO 8601:2000 provides a syntax for expressing time periods: the designator P, followed by a number of years Y, months M, days D, a time
+ *   designator T, number of hours H, minutes M, and seconds S. Unneeded elements may be omitted. Here are a few examples: EXAMPLE 1 - P1Y, 1 year
+ *   EXAMPLE 2 - P1M10D, 1 month plus 10 days EXAMPLE 3 - PT2H, 2 hours
+ *
+ * @note
+ *   This param is not validated. It is up to the user to ensure that it is encoded directly
+ */
 final case class OgcTimeInterval(start: ZonedDateTime, end: ZonedDateTime, interval: Option[PeriodDuration]) extends OgcTime {
   def toTimePositions: Option[OgcTimePositions] =
     interval.flatMap { pd =>
@@ -178,10 +177,10 @@ object OgcTimeInterval {
   /** Safe [[PeriodDuration]] parser. */
   private def periodDurationParse(string: String): Option[PeriodDuration] = Try(PeriodDuration.parse(string)).toOption
 
-  /** Merge two OgcTimeInterval instances
-    * This semigroup instance destroys the interval. If you need to retain interval when combining
-    *  instances, perform this operation yourself.
-    */
+  /**
+   * Merge two OgcTimeInterval instances This semigroup instance destroys the interval. If you need to retain interval when combining instances,
+   * perform this operation yourself.
+   */
   implicit val ogcTimeIntervalSemigroup: Semigroup[OgcTimeInterval] = { (l, r) =>
     val times = List(l.start, l.end, r.start, r.end).sorted
     OgcTimeInterval(times.head, times.last, if (l.interval == r.interval) l.interval else None)

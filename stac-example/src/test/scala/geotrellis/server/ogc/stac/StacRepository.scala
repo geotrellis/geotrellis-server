@@ -36,7 +36,7 @@ case class StacRepository[F[_]: Sync](client: SttpStacClient[F]) extends Reposit
           .search(filter)
           .compile
           .toList
-          .map { _.flatMap { _.assets.values.map(a => RasterSource(a.href)) } }
+          .map(_.flatMap(_.assets.values.map(a => RasterSource(a.href))))
       }
       .toList
       .sequence

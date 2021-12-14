@@ -45,8 +45,8 @@ package object ogc {
     def toMillis: Long = {
       val p = self.getPeriod
       p.getYears.toLong * 365 * 24 * 3600 * 1000 +
-      p.getMonths.toLong * 30 * 24 * 3600 * 1000 +
-      p.getDays * 24 * 3600 * 100 + self.getDuration.toMillis
+        p.getMonths.toLong * 30 * 24 * 3600 * 1000 +
+        p.getDays * 24 * 3600 * 100 + self.getDuration.toMillis
     }
   }
 }

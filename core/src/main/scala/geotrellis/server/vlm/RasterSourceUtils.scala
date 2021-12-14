@@ -26,7 +26,7 @@ import scala.util.Try
 
 trait RasterSourceUtils {
   implicit val uriEncoder: Encoder[URI] = Encoder.encodeString.contramap[URI](_.toString)
-  implicit val uriDecoder: Decoder[URI] = Decoder[String].emap { str => Right(URI.create(str)) }
+  implicit val uriDecoder: Decoder[URI] = Decoder[String].emap(str => Right(URI.create(str)))
 
   implicit val resampleMethodEncoder: Encoder[ResampleMethod] =
     Encoder.encodeString.contramap[ResampleMethod] {
@@ -68,7 +68,7 @@ trait RasterSourceUtils {
 
   implicit val overviewStrategyDecoder: Decoder[OverviewStrategy] = {
     def parse(strategy: String, input: String): OverviewStrategy =
-      Auto(Try { input.split(s"$strategy-").last.toInt }.getOrElse(0))
+      Auto(Try(input.split(s"$strategy-").last.toInt).getOrElse(0))
 
     def parseAuto(str: String): OverviewStrategy  = parse("auto", str)
     def parseLevel(str: String): OverviewStrategy = parse("level", str)

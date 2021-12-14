@@ -38,25 +38,25 @@ import geotrellis.store.query.withName
 import com.github.blemale.scaffeine.Cache
 
 case class GetMap[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
-  model: WmsModel[F],
-  tileCache: Cache[GetMapParams, Array[Byte]],
-  histoCache: Cache[OgcLayer, Interpreted[List[Histogram[Double]]]]
+    model: WmsModel[F],
+    tileCache: Cache[GetMapParams, Array[Byte]],
+    histoCache: Cache[OgcLayer, Interpreted[List[Histogram[Double]]]]
 ) {
   def build(params: GetMapParams): F[Either[GetMapException, Array[Byte]]] = {
-    val re                                           = RasterExtent(params.boundingBox, params.width, params.height)
+    val re = RasterExtent(params.boundingBox, params.width, params.height)
     val res: F[Either[GetMapException, Array[Byte]]] = model
       .getLayer(params)
       .flatMap { layers =>
         layers
           .map { layer =>
             val evalExtent = layer match {
-              case sl: SimpleOgcLayer     => LayerExtent.withCellType(sl, sl.source.cellType)
+              case sl: SimpleOgcLayer => LayerExtent.withCellType(sl, sl.source.cellType)
               case ml: MapAlgebraOgcLayer =>
                 LayerExtent(ml.algebra.pure[F], ml.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F], ml.targetCellType)
             }
 
             val evalHisto = layer match {
-              case sl: SimpleOgcLayer     => LayerHistogram.concurrent(sl, 512)
+              case sl: SimpleOgcLayer => LayerHistogram.concurrent(sl, 512)
               case ml: MapAlgebraOgcLayer =>
                 LayerHistogram(ml.algebra.pure[F], ml.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F], 512)
             }
@@ -64,12 +64,12 @@ case class GetMap[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
             // TODO: remove this once GeoTiffRasterSource would be threadsafe
             // ETA 6/22/2020: we're pretending everything is fine
             val histIO = for {
-              cached <- Sync[F].delay { histoCache.getIfPresent(layer) }
-              hist   <- cached match {
-                          case Some(h) => h.pure[F]
-                          case None    => evalHisto
-                        }
-              _      <- Sync[F].delay { histoCache.put(layer, hist) }
+              cached <- Sync[F].delay(histoCache.getIfPresent(layer))
+              hist <- cached match {
+                case Some(h) => h.pure[F]
+                case None    => evalHisto
+              }
+              _ <- Sync[F].delay(histoCache.put(layer, hist))
             } yield hist
 
             val res: F[Either[GetMapException, Array[Byte]]] = (evalExtent(re.extent, re.cellSize.some), histIO).parMapN {
@@ -81,9 +81,9 @@ case class GetMap[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
                 val rendered = Raster(mbtile, re.extent).render(params.crs, layer.style, params.format, hists)
                 tileCache.put(params, rendered)
                 Right(rendered).pure[F].widen
-              case Right(Invalid(errs))          => // maml-specific errors
+              case Right(Invalid(errs)) => // maml-specific errors
                 Logger[F].debug(errs.toList.toString).as(Left(GetMapBadRequest(errs.asJson.spaces2))).widen
-              case Left(err)                     => // exceptions
+              case Left(err) => // exceptions
                 Logger[F].error(err.stackTraceString).as(Left(GetMapInternalServerError(err.stackTraceString))).widen
             }
 
@@ -104,11 +104,11 @@ case class GetMap[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
                       val tile   = ArrayTile.empty(IntUserDefinedNoDataCellType(0), 1, 1)
                       val raster = Raster(MultibandTile(tile, tile, tile), params.boundingBox)
                       Right(raster.render(params.crs, None, params.format, Nil)).pure[F].widen
-                    case _       =>
+                    case _ =>
                       Left(GetMapBadRequest(s"Layer ($layerName) not found or CRS (${params.crs}) not supported")).pure[F].widen
                   }
                 }
-            case None            =>
+            case None =>
               Left(GetMapBadRequest(s"Layer not found (no layer name provided in request)")).pure[F].widen
           })
       }

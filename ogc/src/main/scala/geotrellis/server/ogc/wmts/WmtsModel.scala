@@ -30,18 +30,18 @@ import cats.instances.option._
 
 /** This class holds all the information necessary to construct a response to a WMTS request */
 case class WmtsModel[F[_]: Monad](
-  serviceMetadata: ows.ServiceMetadata,
-  matrices: List[GeotrellisTileMatrixSet],
-  sources: RepositoryM[F, List, OgcSource]
+    serviceMetadata: ows.ServiceMetadata,
+    matrices: List[GeotrellisTileMatrixSet],
+    sources: RepositoryM[F, List, OgcSource]
 ) {
 
   val matrixSetLookup: Map[String, GeotrellisTileMatrixSet] =
-    matrices.map { tileMatrixSet => tileMatrixSet.identifier -> tileMatrixSet }.toMap
+    matrices.map(tileMatrixSet => tileMatrixSet.identifier -> tileMatrixSet).toMap
 
-  /** Take a specific request for a map and combine it with the relevant [[OgcSource]]
-    *  to produce a [[TiledOgcLayer]]
-    */
-  def getLayer(p: GetTile): F[List[TiledOgcLayer]]          = {
+  /**
+   * Take a specific request for a map and combine it with the relevant [[OgcSource]] to produce a [[TiledOgcLayer]]
+   */
+  def getLayer(p: GetTile): F[List[TiledOgcLayer]] = {
     (
       getMatrixCrs(p.tileMatrixSet),
       getMatrixLayoutDefinition(p.tileMatrixSet, p.tileMatrix)
@@ -59,7 +59,7 @@ case class WmtsModel[F[_]: Monad](
                 SimpleTiledOgcLayer(name, title, crs, layout, rs, style, resampleMethod, overviewStrategy)
               }
               MapAlgebraTiledOgcLayer(name, title, crs, layout, simpleLayers, algebra, style, resampleMethod, overviewStrategy)
-            case ss: SimpleSource      =>
+            case ss: SimpleSource =>
               SimpleTiledOgcLayer(ss.name, ss.title, crs, layout, ss.source, style, ss.resampleMethod, ss.overviewStrategy)
           }
         }
