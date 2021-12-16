@@ -19,6 +19,7 @@ package geotrellis.server.ogc
 import cats.data.NonEmptyList
 import cats.{Monoid, Semigroup}
 import cats.syntax.semigroup._
+import io.circe.{Decoder, Encoder}
 import jp.ne.opt.chronoscala.Imports._
 import org.threeten.extra.PeriodDuration
 
@@ -46,6 +47,9 @@ object OgcTime {
         case (l, _)                                      => l
       }
   }
+
+  implicit def ogcTimeDecoder[T <: OgcTime]: Decoder[OgcTime] = Decoder.decodeString.map(fromString)
+  implicit def ogcTimeEncoder[T <: OgcTime]: Encoder[OgcTime] = Encoder.encodeString.contramap(_.toString)
 
   def fromString(str: String): OgcTime =
     Try(OgcTimeInterval.fromString(str)).getOrElse(OgcTimePositions(str.split(",").toList))

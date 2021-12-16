@@ -59,7 +59,8 @@ case class StacSourceConf(
   timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest,
   fetchTimePositions: Boolean = false,
   withGDAL: Boolean = false,
-  parallelMosaic: Boolean = false
+  parallelMosaic: Boolean = false,
+  buildMosaic: Boolean = true
 ) extends OgcSourceConf {
 
   /** By default the search would happen across collections. */

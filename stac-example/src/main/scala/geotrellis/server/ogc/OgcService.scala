@@ -45,6 +45,8 @@ class OgcService[F[_]: Concurrent: Parallel: Logger](
   def isWcsReq(key: String, value: String)  = key.toLowerCase == "service" && value.toLowerCase == "wcs"
   def isWmsReq(key: String, value: String)  = key.toLowerCase == "service" && value.toLowerCase == "wms"
   def isWmtsReq(key: String, value: String) = key.toLowerCase == "service" && value.toLowerCase == "wmts"
+  def isWmsReqGetFeatureInfoExtended(key: String, value: String) =
+    key.toLowerCase == "request" && value.toLowerCase == "getfeatureinfoextended"
 
   def routes: HttpRoutes[F] =
     HttpRoutes.of[F] {
@@ -57,6 +59,11 @@ class OgcService[F[_]: Concurrent: Parallel: Logger](
         logger.trace(s"WMS: $req")
         wmsView
           .map(_.responseFor(req))
+          .getOrElse(NotFound())
+      case req @ POST -> Root if req.params.exists((isWmsReq _).tupled) && req.params.exists((isWmsReqGetFeatureInfoExtended _).tupled) =>
+        logger.trace(s"POST::WMS: $req")
+        wmsView
+          .map(_.getFetureInfoExtended(req))
           .getOrElse(NotFound())
       case req @ GET -> Root if req.params.exists((isWmtsReq _).tupled) =>
         logger.trace(s"WMTS: $req")

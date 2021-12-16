@@ -29,6 +29,7 @@ import cats.data.{NonEmptyList => NEL, Validated, ValidatedNel}
 import cats.syntax.apply._
 import cats.syntax.traverse._
 import cats.syntax.option._
+import geotrellis.store.query.vector.ProjectedGeometry
 
 import scala.util.Try
 import java.net.URI
@@ -71,7 +72,7 @@ case class GetCoverageWcsParams(
 ) extends WcsParams {
 
   def toQuery: Query = {
-    val query = withName(identifier) and intersects(ProjectedExtent(extent, crs))
+    val query = withName(identifier) and intersects(ProjectedGeometry(extent, crs))
     temporalSequence.headOption match {
       // For now, since a RasterSource maps 1 to 1 to OgcSource, we only create a
       // temporal filter on the first TimeInterval in the list. Revisit when we are

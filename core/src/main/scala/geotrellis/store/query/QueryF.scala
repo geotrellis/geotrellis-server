@@ -16,16 +16,18 @@
 
 package geotrellis.store.query
 
-import geotrellis.vector.ProjectedExtent
+import geotrellis.vector.{Geometry, ProjectedExtent}
 import io.circe._
 import io.circe.syntax._
 import io.circe.generic.JsonCodec
 import cats.Functor
 import cats.data.NonEmptySet
+import geotrellis.store.query.vector.ProjectedGeometry
 import higherkindness.droste.scheme
 import higherkindness.droste.{Algebra, Coalgebra}
 import higherkindness.droste.syntax.fix._
 import higherkindness.droste.syntax.unfix._
+
 import java.time.ZonedDateTime
 
 @JsonCodec sealed trait QueryF[A]
@@ -35,9 +37,9 @@ object QueryF {
   /** Tree leaves */
   @JsonCodec case class Or[A](left: A, right: A)                                                       extends QueryF[A]
   @JsonCodec case class And[A](left: A, right: A)                                                      extends QueryF[A]
-  @JsonCodec case class Intersects[A](projectedExtent: ProjectedExtent)                                extends QueryF[A]
-  @JsonCodec case class Contains[A](projectedExtent: ProjectedExtent)                                  extends QueryF[A]
-  @JsonCodec case class Covers[A](projectedExtent: ProjectedExtent)                                    extends QueryF[A]
+  @JsonCodec case class Intersects[A](projectedGeometry: ProjectedGeometry)                            extends QueryF[A]
+  @JsonCodec case class Contains[A](projectedGeometry: ProjectedGeometry)                              extends QueryF[A]
+  @JsonCodec case class Covers[A](projectedGeometry: ProjectedGeometry)                                extends QueryF[A]
   @JsonCodec case class At[A](time: ZonedDateTime, fieldName: String = "time")                         extends QueryF[A]
   @JsonCodec case class Between[A](from: ZonedDateTime, to: ZonedDateTime, fieldName: String = "time") extends QueryF[A]
   @JsonCodec case class WithName[A](name: String)                                                      extends QueryF[A]
@@ -52,9 +54,9 @@ object QueryF {
   def all: Query                                                 = All().fix
   def withName(name: String): Query                              = WithName(name).fix
   def withNames(names: Set[String]): Query                       = WithNames(names).fix
-  def intersects(projectedExtent: ProjectedExtent): Query        = Intersects(projectedExtent).fix
-  def contains(projectedExtent: ProjectedExtent): Query          = Contains(projectedExtent).fix
-  def covers(projectedExtent: ProjectedExtent): Query            = Covers(projectedExtent).fix
+  def intersects(projectedGeometry: ProjectedGeometry): Query    = Intersects(projectedGeometry).fix
+  def contains(projectedGeometry: ProjectedGeometry): Query      = Contains(projectedGeometry).fix
+  def covers(projectedGeometry: ProjectedGeometry): Query        = Covers(projectedGeometry).fix
   def at(time: ZonedDateTime, fieldName: String = "time"): Query = At(time, fieldName).fix
 
   def between(from: ZonedDateTime, to: ZonedDateTime, fieldName: String = "time"): Query =

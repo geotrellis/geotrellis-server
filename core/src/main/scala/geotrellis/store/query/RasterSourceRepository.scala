@@ -53,9 +53,9 @@ object RasterSourceRepository {
       case At(t, fn) => _.filter(_.metadata.attributes.get(fn).map(ZonedDateTime.parse).fold(false)(_ == t))
       case Between(t1, t2, fn) =>
         _.filter(_.metadata.attributes.get(fn).map(ZonedDateTime.parse).fold(false)(current => t1 <= current && current < t2))
-      case Intersects(e) => _.filter(_.projectedExtent.intersects(e))
-      case Covers(e)     => _.filter(_.projectedExtent.covers(e))
-      case Contains(e)   => _.filter(_.projectedExtent.covers(e))
+      case Intersects(e) => _.filter(_.projectedGeometry.intersects(e))
+      case Covers(e)     => _.filter(_.projectedGeometry.covers(e))
+      case Contains(e)   => _.filter(_.projectedGeometry.covers(e))
       case And(e1, e2) =>
         list =>
           val left = e1(list); left intersect e2(left)
