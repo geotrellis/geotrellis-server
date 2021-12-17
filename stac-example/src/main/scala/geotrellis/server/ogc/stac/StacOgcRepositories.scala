@@ -64,7 +64,9 @@ case class StacOgcRepository[F[_]: Sync](
             items.flatMap { item =>
               item.assets
                 .get(stacSourceConf.asset)
-                .map(itemAsset => StacAssetRasterSource(StacItemAsset(itemAsset.withGDAL(stacSourceConf.withGDAL), item)))
+                .map(itemAsset =>
+                  StacAssetRasterSource(StacItemAsset(itemAsset.withAzureSupport(stacSourceConf.withGDAL).withGDAL(stacSourceConf.withGDAL), item))
+                )
             }
 
           summary match {

@@ -22,10 +22,15 @@ import geotrellis.util.RangeReaderProvider
 import java.net.URI
 
 class AzureRangeReaderProvider extends RangeReaderProvider {
+  def canProcess(uri: URI): Boolean = AzureRangeReaderProvider.canProcess(uri)
+
+  def rangeReader(uri: URI): AzureRangeReader = AzureRangeReader(AzureURI.fromURI(uri), AzureBlobServiceClientProducer.get())
+}
+
+object AzureRangeReaderProvider {
+  def canProcess(uri: String): Boolean = canProcess(new URI(uri))
   def canProcess(uri: URI): Boolean = (uri.getScheme match {
     case str: String => SCHEMES contains str.toLowerCase
     case null        => false
   }) || uri.getAuthority.endsWith(".blob.core.windows.net")
-
-  def rangeReader(uri: URI): AzureRangeReader = AzureRangeReader(AzureURI.fromURI(uri), AzureBlobServiceClientProducer.get())
 }

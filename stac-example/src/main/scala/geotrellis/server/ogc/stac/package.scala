@@ -19,6 +19,7 @@ package geotrellis.server.ogc
 import geotrellis.stac._
 import geotrellis.server.ogc.utils._
 import geotrellis.store.query._
+import geotrellis.store.azure
 import geotrellis.raster.{EmptyName, RasterSource, SourceName, StringName}
 import geotrellis.raster.geotiff.GeoTiffPath
 import com.azavea.stac4s.{StacAsset, StacExtent, TemporalExtent}
@@ -35,7 +36,9 @@ import cats.syntax.applicative._
 import cats.syntax.functor._
 import cats.syntax.option._
 import eu.timepit.refined.types.string.NonEmptyString
+import geotrellis.store.azure.util.{AzureRangeReaderProvider, AzureURI}
 
+import java.net.URI
 import java.time.ZoneOffset
 
 package object stac {
@@ -62,6 +65,8 @@ package object stac {
   implicit class StacAssetOps(val self: StacAsset) extends AnyVal {
     def hrefGDAL(withGDAL: Boolean): String    = if (withGDAL) s"gdal+${self.href}" else s"${GeoTiffPath.PREFIX}${self.href}"
     def withGDAL(withGDAL: Boolean): StacAsset = self.copy(href = hrefGDAL(withGDAL))
+    def withAzureSupport(withGDAL: Boolean): StacAsset =
+      if (withGDAL && AzureRangeReaderProvider.canProcess(self.href)) self.copy(href = AzureURI.fromString(self.href).toString) else self
   }
 
   implicit class QueryMapOps(val left: Map[String, List[SQuery]]) extends AnyVal {
