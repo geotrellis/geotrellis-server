@@ -58,7 +58,7 @@ package object query {
 
   implicit class RasterSourceOps(self: RasterSource) {
     def projectedExtent: ProjectedExtent     = ProjectedExtent(self.extent, self.crs)
-    def projectedGeometry: ProjectedGeometry = ProjectedGeometry.fromProjectedExtent(projectedExtent)
+    def projectedGeometry: ProjectedGeometry = ProjectedGeometry(projectedExtent)
   }
 
   implicit class ProjectedExtentOps(val self: ProjectedExtent) extends AnyVal {

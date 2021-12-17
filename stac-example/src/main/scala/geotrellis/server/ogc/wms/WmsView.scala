@@ -133,8 +133,6 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
       .maximumSize(500)
       .build[GetMapParams, Raster[MultibandTile]]()
 
-  // rasterCache: Cache[(String, Extent), MultibandTile]
-
   private lazy val rasterCacheFeatureInfoExtended: Cache[(String, Extent), MultibandTile] =
     Scaffeine()
       .recordStats()

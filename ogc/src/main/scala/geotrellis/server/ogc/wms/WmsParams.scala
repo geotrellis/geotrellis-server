@@ -226,9 +226,6 @@ object WmsParams {
 
     def toQuery: Query = {
       val layer = if (layers.nonEmpty) withNames(layers.toSet) else nothing
-      // TODO: introduce the IntersectsGeometry Expression node
-      // 37.21533655421058739,-78.43002874647086742,41.98951320092755424,-73.81543460605084306
-      // println(ProjectedExtent(multiPoint.extent, crs))
       val query = layer and intersects(projectedGeometry)
       time.foldLeft(query) { case (q, t) =>
         t match {
@@ -239,36 +236,6 @@ object WmsParams {
       }
     }
   }
-
-  /*MultiPoint(Point(-92.57195151202102, 40.179898602102476))
-
-  GetFeatureInfoExtendedParams(
-    "1.3.0",
-    List("NLCD 2011"),
-    MultiPoint(Point(-92.57195151202102, 40.179898602102476)),
-    LatLng,
-    None
-  )*/
-
-  /*
-  {
-  "version" : "1.3.0",
-  "layers" : [
-    "NLCD 2011"
-  ],
-  "multiPoint" : {
-    "type" : "MultiPoint",
-    "coordinates" : [
-      [
-        -92.57195151202102,
-        40.179898602102476
-      ]
-    ]
-  },
-  "crs" : "+proj=longlat +datum=WGS84 +no_defs ",
-  "time" : null
-}
-   */
 
   object GetFeatureInfoExtendedParams {
     implicit private val config: Configuration = Configuration.default.copy(transformConstructorNames = _.toLowerCase)

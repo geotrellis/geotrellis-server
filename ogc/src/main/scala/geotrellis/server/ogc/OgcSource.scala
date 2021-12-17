@@ -60,7 +60,7 @@ trait OgcSource {
   def isTemporal: Boolean = timeMetadataKey.nonEmpty && time.nonEmpty
 
   def nativeProjectedExtent: ProjectedExtent     = ProjectedExtent(nativeExtent, nativeCrs.head)
-  def nativeProjectedGeometry: ProjectedGeometry = ProjectedGeometry.fromProjectedExtent(nativeProjectedExtent)
+  def nativeProjectedGeometry: ProjectedGeometry = ProjectedGeometry(nativeProjectedExtent)
   def projectedExtent: ProjectedExtent           = nativeProjectedExtent
   def projectedGeometry: ProjectedGeometry       = nativeProjectedGeometry
 }

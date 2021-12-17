@@ -135,8 +135,8 @@ object SearchFiltersQuery {
         }
       case At(t, _)           => SearchFilters(datetime = TemporalExtent(t.toInstant, t.toInstant).some).some
       case Between(t1, t2, _) => SearchFilters(datetime = TemporalExtent(t1.toInstant, t2.toInstant).some).some
-      case Intersects(e)      => SearchFilters(intersects = e.reproject(LatLng).geom.some).some
-      case Covers(e)          => SearchFilters(bbox = e.reproject(LatLng).geom.extent.toTwoDimBbox.some).some
+      case Intersects(e)      => SearchFilters(intersects = e.reproject(LatLng).geometry.some).some
+      case Covers(e)          => SearchFilters(bbox = e.reproject(LatLng).geometry.extent.toTwoDimBbox.some).some
       case And(l, r)          => import IntersectionSemigroup._; l |+| r
       case Or(l, r)           => import UnionSemigroup._; l |+| r
       // unsupported nodes
