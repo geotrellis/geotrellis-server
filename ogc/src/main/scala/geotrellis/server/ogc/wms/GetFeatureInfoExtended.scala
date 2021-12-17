@@ -35,7 +35,6 @@ import com.azavea.maml.error.MamlError
 import io.chrisdavenport.log4cats.Logger
 import io.circe._
 import io.circe.syntax._
-import shapeless.tag.@@
 import com.azavea.maml.eval.ConcurrentInterpreter
 import geotrellis.raster.{io => _, _}
 import geotrellis.vector.{io => _, _}
@@ -63,7 +62,6 @@ case class GetFeatureInfoExtended[F[_]: Logger: Parallel: Concurrent: Applicativ
           val (evalExtent, cs) = layer match {
             case sl: SimpleOgcLayer =>
               val CellSize(w, h) = sl.source.gridExtent.toRasterExtent.reproject(sl.source.crs, sl.crs).cellSize
-              // (LayerExtent.withCellType(sl, sl.source.cellType), CellSize(w * 10, h * 10)) // increase the cellSize to help with the prescsion
               (LayerExtent.withCellType(sl, sl.source.cellType), CellSize(w, h))
             case ml: MapAlgebraOgcLayer =>
               // TODO: how to get the source resolution?

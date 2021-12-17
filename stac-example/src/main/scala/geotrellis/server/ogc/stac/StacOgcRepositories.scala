@@ -33,7 +33,6 @@ import com.azavea.stac4s.api.client.{Query => _, _}
 import cats.data.NonEmptyList
 import cats.effect.Sync
 import cats.syntax.applicative._
-import cats.syntax.functor._
 import cats.syntax.apply._
 import cats.syntax.option._
 import cats.syntax.semigroup._
@@ -47,9 +46,7 @@ case class StacOgcRepository[F[_]: Sync](
 ) extends RepositoryM[F, List, OgcSource] {
   def store: F[List[OgcSource]] = find(query.all)
 
-  def find(query: Query): F[List[OgcSource]] = if (stacSourceConf.buildMosaic) findMosaic(query) else findSeparated(query)
-
-  private def findMosaic(query: Query): F[List[OgcSource]] = {
+  def find(query: Query): F[List[OgcSource]] = {
 
     /** Replace the actual conf name with the STAC Layer name. */
     val filters: Option[SearchFilters] =
@@ -117,29 +114,6 @@ case class StacOgcRepository[F[_]: Sync](
               source.map(stacSourceConf.toLayer).toList
           }
         }
-    }
-  }
-
-  /** Collects no Collection summaries, treats each item as an individual RasterSource. */
-  private def findSeparated(query: Query): F[List[OgcSource]] = {
-
-    /** Replace the actual conf name with the STAC Layer name. */
-    val filters: Option[SearchFilters] =
-      SearchFilters
-        .eval(stacSourceConf.searchCriteria)(query.overrideName(stacSourceConf.searchName))
-        .map(_.copy(limit = stacSourceConf.pageLimit))
-
-    filters.fold(List.empty[OgcSource].pure[F]) { filter =>
-      val items = stacSourceConf.assetLimit.fold(client.search(filter))(limit => client.search(filter).take(limit.value))
-      items.compile.toList.map { items =>
-        items
-          .flatMap { item =>
-            item.assets
-              .get(stacSourceConf.asset)
-              .map(itemAsset => StacAssetRasterSource(StacItemAsset(itemAsset.withGDAL(stacSourceConf.withGDAL), item)))
-          }
-          .map(stacSourceConf.toLayer)
-      }
     }
   }
 }
