@@ -27,6 +27,7 @@ import org.http4s.scalaxml._
 import org.http4s._
 import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
+import io.circe.syntax._
 import cats.effect._
 import cats.Parallel
 import cats.syntax.flatMap._

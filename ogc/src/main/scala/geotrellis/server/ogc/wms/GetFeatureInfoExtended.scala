@@ -18,7 +18,7 @@ package geotrellis.server.ogc.wms
 
 import cats.data.{NonEmptyList, Validated}
 import geotrellis.server.LayerExtent
-import geotrellis.server.ogc.{MapAlgebraOgcLayer, SimpleOgcLayer}
+import geotrellis.server.ogc.{FeatureCollection, MapAlgebraOgcLayer, SimpleOgcLayer}
 import geotrellis.server.ogc.wms.WmsParams.GetFeatureInfoExtendedParams
 import geotrellis.server.utils.throwableExtensions
 import cats.data.Validated.{Invalid, Valid}
@@ -33,14 +33,13 @@ import cats.syntax.traverse._
 import cats.syntax.applicativeError._
 import com.azavea.maml.error.MamlError
 import io.chrisdavenport.log4cats.Logger
+import io.circe._
 import io.circe.syntax._
-import io.circe.Json
+import shapeless.tag.@@
 import com.azavea.maml.eval.ConcurrentInterpreter
-import geotrellis.raster._
+import geotrellis.raster.{io => _, _}
 import geotrellis.vector.{io => _, _}
 import com.github.blemale.scaffeine.Cache
-import geotrellis.proj4.LatLng
-import geotrellis.vector.io.json.JsonFeatureCollection
 import opengis.wms._
 import opengis._
 import scalaxb._
@@ -50,7 +49,7 @@ case class GetFeatureInfoExtended[F[_]: Logger: Parallel: Concurrent: Applicativ
   // cache rasters by the asset name and point
   rasterCache: Cache[(String, Extent), MultibandTile]
 ) {
-  def build(params: GetFeatureInfoExtendedParams): F[Either[GetFeatureInfoException, JsonFeatureCollection]] =
+  def build(params: GetFeatureInfoExtendedParams): F[Either[GetFeatureInfoException, FeatureCollection[Geometry, Json]]] =
     // TODO: replace map / flatMap + sequence calls with traverse
     // NOTE: that requires a little bit of work with implicits, since Parallel and Traverse both in scope may cause implicits ambiguity for Functor and Monad
     model
@@ -102,7 +101,7 @@ case class GetFeatureInfoExtended[F[_]: Logger: Parallel: Concurrent: Applicativ
       }
       .map(_.sequence)
       .nested
-      .map(JsonFeatureCollection(_))
+      .map(FeatureCollection(_))
       .value
 
   def featureFromRaster(
