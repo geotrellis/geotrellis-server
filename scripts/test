@@ -19,5 +19,8 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     else
         echo "Executing Scala test suite"
         ./sbt "++${SCALA_VERSION}" scalafmtCheck scalafmtSbtCheck test
+
+        echo "Build GeoTrellis Server STAC Example assembly"
+        ./sbt "++${SCALA_VERSION}" stac-example/assembly
     fi
 fi

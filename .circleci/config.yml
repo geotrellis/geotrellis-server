@@ -18,6 +18,9 @@ jobs:
       SCALA_VERSION: << parameters.scala-version >>
     steps:
       - checkout
+      # https://circleci.com/docs/2.0/building-docker-images/
+      - setup_remote_docker:
+          docker_layer_caching: false
       - restore_cache:
           keys:
             - sbt-cache-{{ checksum "project/Dependencies.scala" }}
@@ -41,6 +44,9 @@ jobs:
       SCALA_VERSION: << parameters.scala-version >>
     steps:
       - checkout
+      # https://circleci.com/docs/2.0/building-docker-images/
+      - setup_remote_docker:
+          docker_layer_caching: false
       - restore_cache:
           keys:
             - sbt-cache-{{ checksum "project/Dependencies.scala" }}
@@ -51,6 +57,9 @@ jobs:
               --recv-keys "0x${GPG_KEY_ID}" && \
             echo "${GPG_KEY}" | base64 -d > signing_key.asc && \
             gpg --import signing_key.asc
+      - run:
+          name: Executing cibuild
+          command: ./scripts/cibuild
       - run:
           name: Executing cipublish
           command: ./scripts/cipublish

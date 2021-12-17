@@ -9,7 +9,7 @@ fi
 function usage() {
     echo -n \
         "Usage: $(basename "$0")
-Publish artifacts to Sonatype.
+Publish artifacts.
 "
 }
 
@@ -22,6 +22,15 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
             ./sbt ";++${SCALA_VERSION};compile;sonatypeOpen ${CIRCLE_BUILD_NUM};publish;sonatypeRelease"
         else
             ./sbt ";++${SCALA_VERSION};compile;publish"
+        fi
+
+        echo "Publishing artifacts to quay.io"
+        docker login -u "${QUAY_USER}" -p "${QUAY_PASSWORD}" quay.io
+        docker tag "geotrellis-server-stac:${GIT_COMMIT}" "quay.io/geotrellis/geotrellis-server-stac:${GIT_COMMIT}"
+        docker push "quay.io/geotrellis/geotrellis-server-stac:${GIT_COMMIT}"
+        if [[ "${CIRCLE_BRANCH}" =~ ^master$ ]]; then
+            docker tag "geotrellis:${GIT_COMMIT}" "quay.io/geotrellis/geotrellis-server-stac:latest"
+            docker push "quay.io/geotrellis/geotrellis-server-stac:latest"
         fi
     fi
 fi

@@ -1,0 +1,7 @@
+version: '2.3'
+services:
+  server:
+    image: "geotrellis-server-stac:${GIT_COMMIT}"
+    build:
+      context: .
+      dockerfile: Dockerfile
