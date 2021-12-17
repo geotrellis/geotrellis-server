@@ -16,7 +16,6 @@
 
 package geotrellis.server.ogc.wms
 
-import geotrellis.store.query
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.params._
 import geotrellis.proj4.{CRS, LatLng}
@@ -218,7 +217,8 @@ object WmsParams {
     layers: List[String],
     multiPoint: MultiPoint,
     crs: CRS = LatLng,
-    time: Option[OgcTime] = None
+    time: Option[OgcTime] = None,
+    cellSize: Option[CellSize] = None
   ) {
     def projectedGeometry: ProjectedGeometry = ProjectedGeometry(multiPoint, crs)
 

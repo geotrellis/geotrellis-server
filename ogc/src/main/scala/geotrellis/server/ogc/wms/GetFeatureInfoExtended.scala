@@ -61,11 +61,18 @@ case class GetFeatureInfoExtended[F[_]: Logger: Parallel: Concurrent: Applicativ
 
           val (evalExtent, cs) = layer match {
             case sl: SimpleOgcLayer =>
-              val CellSize(w, h) = sl.source.gridExtent.toRasterExtent.reproject(sl.source.crs, sl.crs).cellSize
-              (LayerExtent.withCellType(sl, sl.source.cellType), CellSize(w, h))
+              val cs = params.cellSize.getOrElse(sl.source.gridExtent.toRasterExtent.reproject(sl.source.crs, sl.crs).cellSize)
+              (LayerExtent.withCellType(sl, sl.source.cellType), cs)
             case ml: MapAlgebraOgcLayer =>
-              // TODO: how to get the source resolution?
-              (LayerExtent(ml.algebra.pure[F], ml.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F], ml.targetCellType), CellSize(0.1, 0.1))
+              val cs = params.cellSize.getOrElse(
+                ml.parameters.values.toList
+                  .map { o =>
+                    val source = o.source
+                    source.gridExtent.toRasterExtent().reproject(source.crs, o.crs).cellSize
+                  }
+                  .minBy(_.resolution)
+              )
+              (LayerExtent(ml.algebra.pure[F], ml.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F], ml.targetCellType), cs)
           }
 
           // generate tiny extents for the evalExtent, buffer to avoid border collisions
