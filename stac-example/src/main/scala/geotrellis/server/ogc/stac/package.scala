@@ -65,8 +65,8 @@ package object stac {
   implicit class StacAssetOps(val self: StacAsset) extends AnyVal {
     def hrefGDAL(withGDAL: Boolean): String    = if (withGDAL) s"gdal+${self.href}" else s"${GeoTiffPath.PREFIX}${self.href}"
     def withGDAL(withGDAL: Boolean): StacAsset = self.copy(href = hrefGDAL(withGDAL))
-    def withAzureSupport(withGDAL: Boolean): StacAsset =
-      if (withGDAL && AzureRangeReaderProvider.canProcess(self.href)) self.copy(href = AzureURI.fromString(self.href).toString) else self
+    def withAzureSupport(toWASBS: Boolean): StacAsset =
+      if (toWASBS && AzureRangeReaderProvider.canProcess(self.href)) self.copy(href = AzureURI.fromString(self.href).toString) else self
   }
 
   implicit class QueryMapOps(val left: Map[String, List[SQuery]]) extends AnyVal {

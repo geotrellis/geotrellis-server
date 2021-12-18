@@ -65,7 +65,7 @@ case class StacOgcRepository[F[_]: Sync](
               item.assets
                 .get(stacSourceConf.asset)
                 .map(itemAsset =>
-                  StacAssetRasterSource(StacItemAsset(itemAsset.withAzureSupport(stacSourceConf.withGDAL).withGDAL(stacSourceConf.withGDAL), item))
+                  StacAssetRasterSource(StacItemAsset(itemAsset.withAzureSupport(stacSourceConf.toWASBS).withGDAL(stacSourceConf.withGDAL), item))
                 )
             }
 

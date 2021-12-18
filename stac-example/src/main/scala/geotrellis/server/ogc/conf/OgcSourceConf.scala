@@ -59,8 +59,12 @@ case class StacSourceConf(
   timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest,
   fetchTimePositions: Boolean = false,
   withGDAL: Boolean = false,
+  withVSIAZ: Boolean = false,
   parallelMosaic: Boolean = false
 ) extends OgcSourceConf {
+
+  /** flag used to convert https azure URI into wasbs:// URIs to smooth GDAL integration */
+  val toWASBS: Boolean = withGDAL && withVSIAZ
 
   /** By default the search would happen across collections. */
   def searchCriteria: StacSearchCriteria =
