@@ -30,6 +30,7 @@ import geotrellis.stac.raster.StacCollectionSource
 import pureconfig.ConfigReader
 
 import scala.util.Try
+import scala.util.matching.Regex
 
 // This sumtype corresponds to the in-config representation of a source
 sealed trait OgcSourceConf {
@@ -45,7 +46,7 @@ case class StacSourceConf(
   collection: Option[String],
   title: String,
   source: String,
-  asset: String,
+  asset: Regex,
   assetLimit: Option[NonNegInt],
   pageLimit: Option[NonNegInt],
   defaultStyle: Option[String],
@@ -59,8 +60,12 @@ case class StacSourceConf(
   timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest,
   fetchTimePositions: Boolean = false,
   withGDAL: Boolean = false,
+  withVSIAZ: Boolean = false,
   parallelMosaic: Boolean = false
 ) extends OgcSourceConf {
+
+  /** flag used to convert https azure URI into wasbs:// URIs to smooth GDAL integration */
+  val toWASBS: Boolean = withGDAL && withVSIAZ
 
   /** By default the search would happen across collections. */
   def searchCriteria: StacSearchCriteria =

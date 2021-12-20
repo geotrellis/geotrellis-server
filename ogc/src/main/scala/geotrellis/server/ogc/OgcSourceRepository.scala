@@ -57,9 +57,9 @@ object OgcSourceRepository {
             case OgcTimeEmpty => true
           }
         }
-      case Intersects(e) => _.filter(_.nativeProjectedExtent.intersects(e))
-      case Covers(e)     => _.filter(_.nativeProjectedExtent.covers(e))
-      case Contains(e)   => _.filter(_.nativeProjectedExtent.covers(e))
+      case Intersects(e) => _.filter(_.nativeProjectedGeometry.intersects(e))
+      case Covers(e)     => _.filter(_.nativeProjectedGeometry.covers(e))
+      case Contains(e)   => _.filter(_.nativeProjectedGeometry.covers(e))
       case And(e1, e2) =>
         list =>
           val left = e1(list); left intersect e2(left)

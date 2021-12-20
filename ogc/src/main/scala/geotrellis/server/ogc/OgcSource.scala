@@ -25,11 +25,11 @@ import geotrellis.server.ogc.wms.CapabilitiesView
 import geotrellis.server.ogc.utils._
 import geotrellis.store.{AttributeStore, GeoTrellisPath, GeoTrellisRasterSource}
 import geotrellis.vector.{Extent, ProjectedExtent}
-
 import cats.data.{NonEmptyList => NEL}
 import cats.syntax.option._
 import cats.syntax.semigroup._
 import com.azavea.maml.ast.Expression
+import geotrellis.store.query.vector.ProjectedGeometry
 import jp.ne.opt.chronoscala.Imports._
 import opengis.wms.BoundingBox
 
@@ -59,8 +59,10 @@ trait OgcSource {
   def timeDefault: OgcTimeDefault
   def isTemporal: Boolean = timeMetadataKey.nonEmpty && time.nonEmpty
 
-  def nativeProjectedExtent: ProjectedExtent = ProjectedExtent(nativeExtent, nativeCrs.head)
-  def projectedExtent: ProjectedExtent       = nativeProjectedExtent
+  def nativeProjectedExtent: ProjectedExtent     = ProjectedExtent(nativeExtent, nativeCrs.head)
+  def nativeProjectedGeometry: ProjectedGeometry = ProjectedGeometry(nativeProjectedExtent)
+  def projectedExtent: ProjectedExtent           = nativeProjectedExtent
+  def projectedGeometry: ProjectedGeometry       = nativeProjectedGeometry
 }
 
 trait RasterOgcSource extends OgcSource {

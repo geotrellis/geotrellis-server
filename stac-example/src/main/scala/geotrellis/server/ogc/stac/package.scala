@@ -35,10 +35,18 @@ import cats.syntax.applicative._
 import cats.syntax.functor._
 import cats.syntax.option._
 import eu.timepit.refined.types.string.NonEmptyString
+import geotrellis.store.azure.util.{AzureRangeReaderProvider, AzureURI}
 
 import java.time.ZoneOffset
+import scala.util.matching.Regex
 
 package object stac {
+
+  implicit class AssetsMapOps(val assets: Map[String, StacAsset]) extends AnyVal {
+
+    /** Returns the first asset that matches selector Regex */
+    def select(selector: Regex): Option[StacAsset] = assets.find { case (k, _) => selector.findFirstIn(k).nonEmpty }.map(_._2)
+  }
 
   implicit class StacExtentionOps(val self: StacExtent) extends AnyVal {
 
@@ -62,6 +70,8 @@ package object stac {
   implicit class StacAssetOps(val self: StacAsset) extends AnyVal {
     def hrefGDAL(withGDAL: Boolean): String    = if (withGDAL) s"gdal+${self.href}" else s"${GeoTiffPath.PREFIX}${self.href}"
     def withGDAL(withGDAL: Boolean): StacAsset = self.copy(href = hrefGDAL(withGDAL))
+    def withAzureSupport(toWASBS: Boolean): StacAsset =
+      if (toWASBS && AzureRangeReaderProvider.canProcess(self.href)) self.copy(href = AzureURI.fromString(self.href).toString) else self
   }
 
   implicit class QueryMapOps(val left: Map[String, List[SQuery]]) extends AnyVal {

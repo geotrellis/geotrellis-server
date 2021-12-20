@@ -29,11 +29,12 @@ stac-lc8-red-us = {
   type = "stacsourceconf"
   name = "stac-lc8-red-us" // OGC Layer name
   with-gdal = true // to use gdal to access stac assets
+  with-vsiaz = false // force https => wasbs URIs covnersions (works with GDAL = true only) 
   title = "Landsat LayerUS Red"
   // GT Server can use the STAC Collection as a source or the STAC Layer
   layer = "layer-us" // STAC Layer
   collection = "landsat-8-l1" // STAC Collection
-  asset = "B4" // STAC Asset to read
+  asset = "^B4$" // STAC Asset to read, it is a regex selector, selects the first matching STAC Asset
   asset-limit = 1000 // Max assets returned by STAC search endpoint requests
   page-limit = 30 // is not set by default, the size of a page returned by the each search request
   source = "http://localhost:9090/" // Path to the STAC API endpoint

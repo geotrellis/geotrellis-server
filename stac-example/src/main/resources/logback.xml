@@ -11,6 +11,9 @@
   <logger name="org.http4s" level="${HTTP4S_LOG_LEVEL:-WARN}"/>
   <logger name="org.http4s.blaze.channel.nio1" level="${BLAZE_NIO_LOG_LEVEL:-WARN}"/>
   <logger name="software.amazon.awssdk" level="${AWS_SDK_LOG_LEVEL:-WARN}"/>
+  <logger name="com.azure.core.implementation.jackson" level="ERROR"/>
+  <logger name="reactor.netty" level="ERROR"/>
+  <logger name="io.netty" level="ERROR"/>
   <logger name="geotrellis.raster.effects" level="${GT_MOSAIC_LOG_LEVEL:-DEBUG}" />
   <logger name="geotrellis.stac.util.logging.StacClientLoggingMid" level="${GT_STAC_CLIENT_LOG_LEVEL:-INFO}"/>
   <logger name="geotrellis.stac.util.logging.StreamingStacClientLoggingMid" level="${GT_STREAMING_STAC_CLIENT_LOG_LEVEL:-INFO}"/>

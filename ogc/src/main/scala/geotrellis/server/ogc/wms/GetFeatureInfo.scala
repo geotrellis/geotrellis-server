@@ -47,7 +47,7 @@ case class GetFeatureInfo[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
 ) {
   def build(params: GetFeatureInfoParams): F[Either[GetFeatureInfoException, Feature[Geometry, Json]]] = {
     val re = params.rasterExtent
-    val res = model
+    def res: F[Option[Either[GetFeatureInfoException, Feature[Geometry, Json]]]] = model
       .getLayer(params.toGetMapParamsQuery)
       .flatMap { layers =>
         layers

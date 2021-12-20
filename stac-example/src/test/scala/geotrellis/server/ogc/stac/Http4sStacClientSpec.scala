@@ -26,7 +26,8 @@ import eu.timepit.refined.types.string.NonEmptyString
 import geotrellis.IOSpec
 import geotrellis.proj4.CRS
 import geotrellis.server.ogc.stac
-import geotrellis.vector.{Extent, ProjectedExtent}
+import geotrellis.store.query.vector.ProjectedGeometry
+import geotrellis.vector.Extent
 import io.chrisdavenport.log4cats.{Logger => Logger4Cats}
 import sttp.client3.UriContext
 import sttp.client3.http4s.Http4sBackend
@@ -74,7 +75,7 @@ class Http4sStacClientSpec extends IOSpec {
             and(
               withName("layer-us"),
               intersects(
-                ProjectedExtent(
+                ProjectedGeometry(
                   Extent(73.99023507871507, 50.266557802094795, 73.99281921403175, 50.267377974106765),
                   CRS.fromEpsgCode(4326)
                 )

@@ -19,14 +19,15 @@ package geotrellis.server.ogc.wms
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.utils._
 import geotrellis.server.ogc.params.ParamError
-import geotrellis.server.ogc.wms.WmsParams.{GetCapabilitiesParams, GetFeatureInfoParams, GetMapParams}
-import geotrellis.vector.{io => _}
-
+import geotrellis.server.ogc.wms.WmsParams.{GetCapabilitiesParams, GetFeatureInfoExtendedParams, GetFeatureInfoParams, GetMapParams}
+import geotrellis.vector.{io => _, Extent}
 import geotrellis.raster.{io => _, _}
 import com.azavea.maml.error._
 import org.http4s.scalaxml._
 import org.http4s._
+import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
+import io.circe.syntax._
 import cats.effect._
 import cats.Parallel
 import cats.syntax.flatMap._
@@ -37,6 +38,7 @@ import io.chrisdavenport.log4cats.Logger
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
 import opengis._
+import org.http4s.circe.jsonOf
 import org.http4s.headers.`Content-Type`
 import scalaxb._
 
@@ -131,6 +133,15 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
       .maximumSize(500)
       .build[GetMapParams, Raster[MultibandTile]]()
 
+  private lazy val rasterCacheFeatureInfoExtended: Cache[(String, Extent), MultibandTile] =
+    Scaffeine()
+      .recordStats()
+      .expireAfterWrite(1.hour)
+      .maximumSize(500)
+      .build[(String, Extent), MultibandTile]()
+
+  implicit val getFeatureInfoExtendedParamsDecoder = jsonOf[F, GetFeatureInfoExtendedParams]
+
   def responseFor(req: Request[F]): F[Response[F]] =
     WmsParams(req.multiParams) match {
       case Invalid(errors) =>
@@ -164,4 +175,18 @@ class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
                 BadRequest(e.render(wmsReq.infoFormat)).map(_.putHeaders(`Content-Type`(ToMediaType(wmsReq.infoFormat))))
             }
     }
+
+  def getFetureInfoExtended(req: Request[F]): F[Response[F]] =
+    logger.debug(ansi"%bold{GetFeatureInfoExtended: ${req.uri}}") >>
+      req.as[GetFeatureInfoExtendedParams].flatMap { params =>
+        GetFeatureInfoExtended[F](wmsModel, rasterCacheFeatureInfoExtended)
+          .build(params)
+          .flatMap {
+            case Right(f) => Ok(f.asJson)
+            case Left(e: LayerNotDefinedException) =>
+              NotFound(e.render(InfoFormat.Json)).map(_.putHeaders(`Content-Type`(ToMediaType(InfoFormat.Json))))
+            case Left(e: InvalidPointException) =>
+              BadRequest(e.render(InfoFormat.Json)).map(_.putHeaders(`Content-Type`(ToMediaType(InfoFormat.Json))))
+          }
+      }
 }

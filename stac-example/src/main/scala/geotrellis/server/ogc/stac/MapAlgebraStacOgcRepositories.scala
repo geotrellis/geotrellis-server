@@ -53,8 +53,7 @@ case class MapAlgebraStacOgcRepositories[F[_]: Sync: Logger](
   ogcLayers: List[OgcSourceConf],
   client: SttpBackend[F, Any]
 ) extends RepositoryM[F, List, OgcSource] {
-  def store: F[List[OgcSource]] =
-    find(query.withNames(mapAlgebraConfLayers.map(_.name).toSet))
+  def store: F[List[OgcSource]] = find(query.withNames(mapAlgebraConfLayers.map(_.name).toSet))
 
   /**
    * At first, choose stacLayers that fit the query, because after that we'll erase their name. GT Server layer conf names != the STAC Layer name conf

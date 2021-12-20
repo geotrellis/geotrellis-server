@@ -18,14 +18,18 @@ package geotrellis.server.ogc.wms
 
 import geotrellis.server.ogc._
 import geotrellis.server.ogc.params._
-import geotrellis.proj4.CRS
+import geotrellis.proj4.{CRS, LatLng}
 import geotrellis.store.query._
-import geotrellis.vector.{Extent, ProjectedExtent}
+import geotrellis.vector.{io => _, _}
 import cats.syntax.apply._
 import cats.syntax.option._
 import cats.data.{Validated, ValidatedNel}
 import Validated._
 import geotrellis.raster.{CellSize, RasterExtent}
+import geotrellis.store.query.vector.ProjectedGeometry
+import io.circe.Codec
+import io.circe.generic.extras.Configuration
+import io.circe.generic.extras.semiauto.deriveConfiguredCodec
 
 import scala.util.Try
 
@@ -63,7 +67,7 @@ object WmsParams {
   ) extends WmsParams {
     def toQuery: Query = {
       val layer = layers.headOption.map(withName).getOrElse(nothing)
-      val query = layer and intersects(ProjectedExtent(boundingBox, crs))
+      val query = layer and intersects(ProjectedGeometry(boundingBox, crs))
       time match {
         case timeInterval: OgcTimeInterval => query and between(timeInterval.start, timeInterval.end)
         case OgcTimePositions(list)        => query and list.toList.map(at(_)).reduce(_ or _)
@@ -205,6 +209,37 @@ object WmsParams {
           case (_, getMap) => Invalid(ParamError.InvalidValue("getMap", getMap.toString, Nil)).toValidatedNel
         }
     }
+  }
+
+  /** An extended version, can be passed via POST request, does not perform mosaics, operates with bulk requests. */
+  case class GetFeatureInfoExtendedParams(
+    version: String,
+    layers: List[String],
+    multiPoint: MultiPoint,
+    crs: CRS = LatLng,
+    time: Option[OgcTime] = None,
+    cellSize: Option[CellSize] = None
+  ) {
+    def projectedGeometry: ProjectedGeometry = ProjectedGeometry(multiPoint, crs)
+
+    def getTime: OgcTime = time.getOrElse(OgcTimeEmpty)
+
+    def toQuery: Query = {
+      val layer = if (layers.nonEmpty) withNames(layers.toSet) else nothing
+      val query = layer and intersects(projectedGeometry)
+      time.foldLeft(query) { case (q, t) =>
+        t match {
+          case timeInterval: OgcTimeInterval => query and between(timeInterval.start, timeInterval.end)
+          case OgcTimePositions(list)        => query and list.toList.map(at(_)).reduce(_ or _)
+          case OgcTimeEmpty                  => q
+        }
+      }
+    }
+  }
+
+  object GetFeatureInfoExtendedParams {
+    implicit private val config: Configuration = Configuration.default.copy(transformConstructorNames = _.toLowerCase, useDefaults = true)
+    implicit val getFeatureInfoExtendedParamsCodec: Codec[GetFeatureInfoExtendedParams] = deriveConfiguredCodec
   }
 
   def apply(queryParams: Map[String, Seq[String]]): ValidatedNel[ParamError, WmsParams] = {

@@ -18,14 +18,13 @@ package geotrellis.store.query
 
 import geotrellis.proj4.LatLng
 import geotrellis.vector.{Extent, ProjectedExtent}
-
 import cats.syntax.either._
 import cats.syntax.option._
 import _root_.io.circe.parser._
 import _root_.io.circe.syntax._
+import geotrellis.store.query.vector.ProjectedGeometry
 
 import java.time.{ZoneOffset, ZonedDateTime}
-
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -33,8 +32,8 @@ class QueryFSpec extends AnyFunSpec with Matchers {
   describe("QueryF evaluation specs") {
     def dtFromMonth(month: Int): ZonedDateTime = ZonedDateTime.of(2020, month, 1, 0, 0, 1, 0, ZoneOffset.UTC)
 
-    val extent  = ProjectedExtent(Extent(0, 0, 2, 2), LatLng)
-    val extent2 = ProjectedExtent(Extent(1, 1, 4, 4), LatLng)
+    val extent  = ProjectedGeometry(Extent(0, 0, 2, 2), LatLng)
+    val extent2 = ProjectedGeometry(Extent(1, 1, 4, 4), LatLng)
     val dt      = dtFromMonth(1)
 
     it("should convert AST into json") {
@@ -44,44 +43,86 @@ class QueryFSpec extends AnyFunSpec with Matchers {
       val expected =
         parse("""
                 |{
-                |    "And" : {
-                |        "left" : {
-                |            "And" : {
-                |                "left" : {
-                |                    "Intersects" : {
-                |                        "projectedExtent" : {
-                |                            "extent" : {
-                |                                "xmin" : 0.0,
-                |                                "ymin" : 0.0,
-                |                                "xmax" : 2.0,
-                |                                "ymax" : 2.0
-                |                            },
-                |                            "crs" : "+proj=longlat +datum=WGS84 +no_defs "
-                |                        }
-                |                    }
-                |                },
-                |                "right" : {
-                |                    "Intersects" : {
-                |                        "projectedExtent" : {
-                |                            "extent" : {
-                |                                "xmin" : 1.0,
-                |                                "ymin" : 1.0,
-                |                                "xmax" : 4.0,
-                |                                "ymax" : 4.0
-                |                            },
-                |                            "crs" : "+proj=longlat +datum=WGS84 +no_defs "
-                |                        }
-                |                    }
-                |                }
+                |  "And": {
+                |    "left": {
+                |      "And": {
+                |        "left": {
+                |          "Intersects": {
+                |            "projectedGeometry": {
+                |              "geometry": {
+                |                "type": "Polygon",
+                |                "coordinates": [
+                |                  [
+                |                    [
+                |                      0,
+                |                      0
+                |                    ],
+                |                    [
+                |                      0,
+                |                      2
+                |                    ],
+                |                    [
+                |                      2,
+                |                      2
+                |                    ],
+                |                    [
+                |                      2,
+                |                      0
+                |                    ],
+                |                    [
+                |                      0,
+                |                      0
+                |                    ]
+                |                  ]
+                |                ]
+                |              },
+                |              "crs": "+proj=longlat +datum=WGS84 +no_defs "
                 |            }
+                |          }
                 |        },
-                |        "right" : {
-                |            "At" : {
-                |                "time" : "2020-01-01T00:00:01Z",
-                |                "fieldName" : "time"
+                |        "right": {
+                |          "Intersects": {
+                |            "projectedGeometry": {
+                |              "geometry": {
+                |                "type": "Polygon",
+                |                "coordinates": [
+                |                  [
+                |                    [
+                |                      1,
+                |                      1
+                |                    ],
+                |                    [
+                |                      1,
+                |                      4
+                |                    ],
+                |                    [
+                |                      4,
+                |                      4
+                |                    ],
+                |                    [
+                |                      4,
+                |                      1
+                |                    ],
+                |                    [
+                |                      1,
+                |                      1
+                |                    ]
+                |                  ]
+                |                ]
+                |              },
+                |              "crs": "+proj=longlat +datum=WGS84 +no_defs "
                 |            }
+                |          }
                 |        }
+                |      }
+                |    },
+                |    "right": {
+                |      "At": {
+                |        "time": "2020-01-01T00:00:01Z",
+                |        "fieldName": "time"
+                |      }
                 |    }
+                |  }
                 |}
                 |""".stripMargin).valueOr(throw _)
 
@@ -92,44 +133,86 @@ class QueryFSpec extends AnyFunSpec with Matchers {
       val json =
         parse("""
                 |{
-                |    "And" : {
+                |  "And" : {
+                |    "left" : {
+                |      "And" : {
                 |        "left" : {
-                |            "And" : {
-                |                "left" : {
-                |                    "Intersects" : {
-                |                        "projectedExtent" : {
-                |                            "extent" : {
-                |                                "xmin" : 0.0,
-                |                                "ymin" : 0.0,
-                |                                "xmax" : 2.0,
-                |                                "ymax" : 2.0
-                |                            },
-                |                            "crs" : "+proj=longlat +datum=WGS84 +no_defs "
-                |                        }
-                |                    }
-                |                },
-                |                "right" : {
-                |                    "Intersects" : {
-                |                        "projectedExtent" : {
-                |                            "extent" : {
-                |                                "xmin" : 1.0,
-                |                                "ymin" : 1.0,
-                |                                "xmax" : 4.0,
-                |                                "ymax" : 4.0
-                |                            },
-                |                            "crs" : "+proj=longlat +datum=WGS84 +no_defs "
-                |                        }
-                |                    }
-                |                }
+                |          "Intersects" : {
+                |            "projectedGeometry" : {
+                |              "geometry" : {
+                |                "type" : "Polygon",
+                |                "coordinates" : [
+                |                  [
+                |                    [
+                |                      0.0,
+                |                      0.0
+                |                    ],
+                |                    [
+                |                      0.0,
+                |                      2.0
+                |                    ],
+                |                    [
+                |                      2.0,
+                |                      2.0
+                |                    ],
+                |                    [
+                |                      2.0,
+                |                      0.0
+                |                    ],
+                |                    [
+                |                      0.0,
+                |                      0.0
+                |                    ]
+                |                  ]
+                |                ]
+                |              },
+                |              "crs" : "+proj=longlat +datum=WGS84 +no_defs "
                 |            }
+                |          }
                 |        },
                 |        "right" : {
-                |            "At" : {
-                |                "time" : "2020-01-01T00:00:01Z",
-                |                "fieldName" : "time"
+                |          "Intersects" : {
+                |            "projectedGeometry" : {
+                |              "geometry" : {
+                |                "type" : "Polygon",
+                |                "coordinates" : [
+                |                  [
+                |                    [
+                |                      1.0,
+                |                      1.0
+                |                    ],
+                |                    [
+                |                      1.0,
+                |                      4.0
+                |                    ],
+                |                    [
+                |                      4.0,
+                |                      4.0
+                |                    ],
+                |                    [
+                |                      4.0,
+                |                      1.0
+                |                    ],
+                |                    [
+                |                      1.0,
+                |                      1.0
+                |                    ]
+                |                  ]
+                |                ]
+                |              },
+                |              "crs" : "+proj=longlat +datum=WGS84 +no_defs "
                 |            }
+                |          }
                 |        }
+                |      }
+                |    },
+                |    "right" : {
+                |      "At" : {
+                |        "time" : "2020-01-01T00:00:01Z",
+                |        "fieldName" : "time"
+                |      }
                 |    }
+                |  }
                 |}
                 |""".stripMargin).valueOr(throw _)
 
@@ -155,7 +238,7 @@ class QueryFSpec extends AnyFunSpec with Matchers {
           EmptyRasterSource("third", ex3, dt2.some) ::
           EmptyRasterSource("fourth", ex4, dt3.some) :: Nil
 
-      val query = (intersects(ex2) and intersects(ex3)) and at(dt2)
+      val query = (intersects(ProjectedGeometry(ex2)) and intersects(ProjectedGeometry(ex3))) and at(dt2)
       // scheme.cata(RasterSourceRepository.algebra[EmptyRasterSource]).apply(query)(store)
       val result = RasterSourceRepository.eval(query)(store)
 

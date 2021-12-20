@@ -18,6 +18,7 @@ package geotrellis.store
 
 import cats.Id
 import geotrellis.raster.RasterSource
+import geotrellis.store.query.vector.ProjectedGeometry
 import geotrellis.vector.ProjectedExtent
 import higherkindness.droste.data.Fix
 import io.circe.{Decoder, Encoder}
@@ -47,16 +48,17 @@ package object query {
   def all: Query                                                 = QueryF.all
   def withName(name: String): Query                              = QueryF.withName(name)
   def withNames(names: Set[String]): Query                       = QueryF.withNames(names)
-  def intersects(projectedExtent: ProjectedExtent): Query        = QueryF.intersects(projectedExtent)
-  def contains(projectedExtent: ProjectedExtent): Query          = QueryF.contains(projectedExtent)
-  def covers(projectedExtent: ProjectedExtent): Query            = QueryF.covers(projectedExtent)
+  def intersects(projectedGeometry: ProjectedGeometry): Query    = QueryF.intersects(projectedGeometry)
+  def contains(projectedGeometry: ProjectedGeometry): Query      = QueryF.contains(projectedGeometry)
+  def covers(projectedGeometry: ProjectedGeometry): Query        = QueryF.covers(projectedGeometry)
   def at(time: ZonedDateTime, fieldName: String = "time"): Query = QueryF.at(time, fieldName)
 
   def between(from: ZonedDateTime, to: ZonedDateTime, fieldName: String = "time"): Query =
     QueryF.between(from, to, fieldName)
 
   implicit class RasterSourceOps(self: RasterSource) {
-    def projectedExtent: ProjectedExtent = ProjectedExtent(self.extent, self.crs)
+    def projectedExtent: ProjectedExtent     = ProjectedExtent(self.extent, self.crs)
+    def projectedGeometry: ProjectedGeometry = ProjectedGeometry(projectedExtent)
   }
 
   implicit class ProjectedExtentOps(val self: ProjectedExtent) extends AnyVal {

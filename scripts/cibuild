@@ -6,6 +6,12 @@ if [[ -n "${GEOTRELLIS_SERVER_DEBUG}" ]]; then
     set -x
 fi
 
+if [[ -n "${GIT_COMMIT}" ]]; then
+    GIT_COMMIT="${GIT_COMMIT:0:7}"
+else
+    GIT_COMMIT="$(git rev-parse --short HEAD)"
+fi
+
 function usage() {
     echo -n \
         "Usage: $(basename "$0")
@@ -18,5 +24,10 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         usage
     else
         ./scripts/test
+
+        echo "Building Scala container images"
+        pushd ./stac-example
+        GIT_COMMIT="${GIT_COMMIT}" docker-compose -f docker-compose.ci.yml build server
+        popd
     fi
 fi
