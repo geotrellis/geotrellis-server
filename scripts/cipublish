@@ -34,7 +34,7 @@ if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
         docker login -u "${QUAY_USER}" -p "${QUAY_PASSWORD}" quay.io
         docker tag "geotrellis-server-stac:${GIT_COMMIT}" "quay.io/geotrellis/geotrellis-server-stac:${GIT_COMMIT}"
         docker push "quay.io/geotrellis/geotrellis-server-stac:${GIT_COMMIT}"
-        if [[ "${CIRCLE_BRANCH}" =~ ^master$ ]]; then
+        if [[ "${CIRCLE_BRANCH}" =~ ^main$ ]]; then
             docker tag "geotrellis:${GIT_COMMIT}" "quay.io/geotrellis/geotrellis-server-stac:latest"
             docker push "quay.io/geotrellis/geotrellis-server-stac:latest"
         fi
