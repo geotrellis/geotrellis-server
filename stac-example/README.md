@@ -29,6 +29,7 @@ stac-lc8-red-us = {
   type = "stacsourceconf"
   name = "stac-lc8-red-us" // OGC Layer name
   with-gdal = true // to use gdal to access stac assets
+  with-vsiaz = false // force https => wasbs URIs covnersions (works with GDAL = true only) 
   title = "Landsat LayerUS Red"
   // GT Server can use the STAC Collection as a source or the STAC Layer
   layer = "layer-us" // STAC Layer
