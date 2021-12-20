@@ -19,7 +19,6 @@ package geotrellis.server.ogc
 import geotrellis.stac._
 import geotrellis.server.ogc.utils._
 import geotrellis.store.query._
-import geotrellis.store.azure
 import geotrellis.raster.{EmptyName, RasterSource, SourceName, StringName}
 import geotrellis.raster.geotiff.GeoTiffPath
 import com.azavea.stac4s.{StacAsset, StacExtent, TemporalExtent}
@@ -38,10 +37,16 @@ import cats.syntax.option._
 import eu.timepit.refined.types.string.NonEmptyString
 import geotrellis.store.azure.util.{AzureRangeReaderProvider, AzureURI}
 
-import java.net.URI
 import java.time.ZoneOffset
+import scala.util.matching.Regex
 
 package object stac {
+
+  implicit class AssetsMapOps(val assets: Map[String, StacAsset]) extends AnyVal {
+
+    /** Returns the first asset that matches selector Regex */
+    def select(selector: Regex): Option[StacAsset] = assets.find { case (k, _) => selector.findFirstIn(k).nonEmpty }.map(_._2)
+  }
 
   implicit class StacExtentionOps(val self: StacExtent) extends AnyVal {
 

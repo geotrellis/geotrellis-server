@@ -238,7 +238,7 @@ object WmsParams {
   }
 
   object GetFeatureInfoExtendedParams {
-    implicit private val config: Configuration = Configuration.default.copy(transformConstructorNames = _.toLowerCase)
+    implicit private val config: Configuration = Configuration.default.copy(transformConstructorNames = _.toLowerCase, useDefaults = true)
     implicit val getFeatureInfoExtendedParamsCodec: Codec[GetFeatureInfoExtendedParams] = deriveConfiguredCodec
   }
 

@@ -63,7 +63,7 @@ case class StacOgcRepository[F[_]: Sync](
           val rasterSources =
             items.flatMap { item =>
               item.assets
-                .get(stacSourceConf.asset)
+                .select(stacSourceConf.asset)
                 .map(itemAsset =>
                   StacAssetRasterSource(StacItemAsset(itemAsset.withAzureSupport(stacSourceConf.toWASBS).withGDAL(stacSourceConf.withGDAL), item))
                 )
