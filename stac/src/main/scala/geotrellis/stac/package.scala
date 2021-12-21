@@ -30,7 +30,7 @@ import io.circe.syntax._
 import io.circe.generic.extras.Configuration
 
 package object stac {
-  implicit lazy val configuration: Configuration = Configuration.default.withSnakeCaseMemberNames
+  implicit lazy val configuration: Configuration = Configuration.default.withSnakeCaseMemberNames.withDefaults
 
   implicit class ExtentOps(val self: Extent) extends AnyVal {
     def toTwoDimBbox: TwoDimBbox = {
