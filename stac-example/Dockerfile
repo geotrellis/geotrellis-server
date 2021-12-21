@@ -1,4 +1,4 @@
-FROM openjdk:11-jre-slim
+FROM quay.io/azavea/openjdk-gdal:3.1-jdk11-slim
 
 COPY ./target/scala-2.12/geotrellis-server-stac-example.jar /var/lib/geotrellis-server/
 
