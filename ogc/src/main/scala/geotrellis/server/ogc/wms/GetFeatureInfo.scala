@@ -94,7 +94,7 @@ case class GetFeatureInfo[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
       Right(
         Feature(
           Point(raster.rasterExtent.gridToMap(params.i, params.j)),
-          raster.tile.bands.zipWithIndex.map { case (b, i) => s"band-$i-pixel-value" -> b.getDouble(params.i, params.j) }.toMap.asJson
+          raster.tile.bands.zipWithIndex.map { case (b, i) => s"band-$i-value" -> b.getDouble(params.i, params.j) }.toMap.asJson
         )
       )
   }

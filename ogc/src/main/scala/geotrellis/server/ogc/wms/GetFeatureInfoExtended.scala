@@ -114,6 +114,6 @@ case class GetFeatureInfoExtended[F[_]: Logger: Parallel: Concurrent: Applicativ
     p: Point
   ): Either[GetFeatureInfoException, Feature[Geometry, Json]] = {
     val (c, r) = raster.rasterExtent.mapToGrid(p)
-    Right(Feature(p, raster.tile.bands.zipWithIndex.map { case (b, i) => s"band-$i-pixel-value" -> b.getDouble(c, r) }.toMap.asJson))
+    Right(Feature(p, raster.tile.bands.zipWithIndex.map { case (b, i) => s"band-$i-value" -> b.getDouble(c, r) }.toMap.asJson))
   }
 }

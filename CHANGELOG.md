@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Changed
 - STAC Assets regex selectors support [#388](https://github.com/geotrellis/geotrellis-server/pull/388)
+- GetFeatureInfo and GetFeatureInfoExtended pixel values field name change [#389](https://github.com/geotrellis/geotrellis-server/pull/389)
 
 ## [4.5.0] - 2021-07-10
 
