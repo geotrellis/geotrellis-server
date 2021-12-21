@@ -41,6 +41,13 @@ object ProjTransform {
 
   def apply(transform: List[Double]): Either[String, ProjTransform] = apply(transform.toArray)
 
-  implicit val enProjGDALTransform: Encoder[ProjTransform]  = Encoder.encodeList[Double].contramap(_.toList)
-  implicit val decProjGDALTransform: Decoder[ProjTransform] = Decoder.decodeList[Double].emap(ProjTransform.apply)
+  implicit val enProjGDALTransform: Encoder[ProjTransform] = Encoder.encodeList[Double].contramap(_.toList)
+  implicit val decProjGDALTransform: Decoder[ProjTransform] = Decoder.decodeList[Double].emap { list =>
+    val transform = if (list.length > 6) {
+      // handle rasterio affine transform
+      val List(a, b, c, d, e, f) = list.take(6)
+      List(c, a, b, f, d, e)
+    } else list
+    apply(transform)
+  }
 }
