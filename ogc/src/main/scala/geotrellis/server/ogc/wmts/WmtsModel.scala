@@ -61,6 +61,8 @@ case class WmtsModel[F[_]: Monad](
               MapAlgebraTiledOgcLayer(name, title, crs, layout, simpleLayers, algebra, style, resampleMethod, overviewStrategy)
             case ss: SimpleSource =>
               SimpleTiledOgcLayer(ss.name, ss.title, crs, layout, ss.source, style, ss.resampleMethod, ss.overviewStrategy)
+            case gos: GeoTrellisOgcSource =>
+              SimpleTiledOgcLayer(gos.name, gos.title, crs, layout, gos.source, style, gos.resampleMethod, gos.overviewStrategy)
           }
         }
       }
