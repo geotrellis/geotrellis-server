@@ -29,7 +29,7 @@ import org.http4s.circe._
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import cats.data._
 import Validated._
 import cats._
@@ -38,7 +38,7 @@ import cats.implicits._
 
 import java.net.URLDecoder
 
-class NdviService[F[_]: Sync: Logger: Parallel, T: Encoder: Decoder: TmsReification[F, *]](
+class NdviService[F[_]: Concurrent: Logger: Parallel, T: Encoder: Decoder: TmsReification[F, *]](
   interpreter: Interpreter[F]
 ) extends Http4sDsl[F] {
   val logger = Logger[F]
@@ -77,7 +77,7 @@ class NdviService[F[_]: Sync: Logger: Parallel, T: Encoder: Decoder: TmsReificat
           ) +& NirQueryParamMatcher(nir) =>
         val paramMap = Map("red" -> red, "nir" -> nir)
 
-        eval(paramMap, z, x, y).attempt flatMap {
+        eval(paramMap, z, x, y).attempt.flatMap {
           case Right(Valid(mbtile)) =>
             // Image results have multiple bands. We need to pick one
             Ok(mbtile.band(0).renderPng(ColorRamps.Viridis).bytes)

@@ -64,7 +64,9 @@ abstract class MosaicRasterSourceF[F[_]: Monad: Parallel] extends RasterSourceF[
     cellTypes >>= { _.tail.foldLeft(cellTypes.map(_.head))((l, r) => (l, r.pure[F]).mapN(_ union _)) }
   }
 
-  /** All available RasterSources metadata. */
+  /**
+   * All available RasterSources metadata.
+   */
   def metadata: F[MosaicMetadata] = (
     name.pure[F],
     crs,
@@ -155,8 +157,8 @@ object MosaicRasterSourceF {
   // Option[Raster[_]]s later
   implicit val rasterSemigroup: Semigroup[Raster[MultibandTile]] = { (l: Raster[MultibandTile], r: Raster[MultibandTile]) =>
     val targetRE =
-      RasterExtent(l.rasterExtent.extent combine r.rasterExtent.extent, List(l.rasterExtent.cellSize, r.rasterExtent.cellSize).maxBy(_.resolution))
-    l.resample(targetRE) merge r.resample(targetRE)
+      RasterExtent(l.rasterExtent.extent.combine(r.rasterExtent.extent), List(l.rasterExtent.cellSize, r.rasterExtent.cellSize).maxBy(_.resolution))
+    l.resample(targetRE).merge(r.resample(targetRE))
   }
 
   implicit def gridExtentSemigroup[N: Integral]: Semigroup[GridExtent[N]] = { (l: GridExtent[N], r: GridExtent[N]) =>
@@ -166,8 +168,8 @@ object MosaicRasterSourceF {
       throw GeoAttrsError(s"illegal cellheights: ${l.cellheight} and ${r.cellheight}")
 
     val newExtent = l.extent.combine(r.extent)
-    val newRows   = Integral[N].fromDouble(math.round(newExtent.height / l.cellheight).toDouble)
-    val newCols   = Integral[N].fromDouble(math.round(newExtent.width / l.cellwidth).toDouble)
+    val newRows = Integral[N].fromDouble(math.round(newExtent.height / l.cellheight).toDouble)
+    val newCols = Integral[N].fromDouble(math.round(newExtent.width / l.cellwidth).toDouble)
     new GridExtent[N](newExtent, l.cellwidth, l.cellheight, newCols, newRows)
   }
 
@@ -183,9 +185,9 @@ object MosaicRasterSourceF {
   ): MosaicRasterSourceF[F] =
     new MosaicRasterSourceF[F] {
       val sources: F[NonEmptyList[RasterSourceF[F]]] = sourcesList
-      val crs: F[CRS]                                = targetCRS
-      def gridExtent: F[GridExtent[Long]]            = targetGridExtent
-      val name: SourceName                           = sourceName
+      val crs: F[CRS] = targetCRS
+      def gridExtent: F[GridExtent[Long]] = targetGridExtent
+      val name: SourceName = sourceName
     }
 
   /**
@@ -197,13 +199,15 @@ object MosaicRasterSourceF {
     targetCRS: F[CRS],
     sourceName: SourceName = EmptyName
   ): MosaicRasterSourceF[F] = {
-    val combinedExtent     = sourcesList >>= { _.parTraverse(_.extent).map(_.toList.reduce(_ combine _)) }
-    val minCellSize        = sourcesList >>= { _.parTraverse(_.cellSize).map(_.toList.maxBy(_.resolution)) }
+    val combinedExtent = sourcesList >>= { _.parTraverse(_.extent).map(_.toList.reduce(_ combine _)) }
+    val minCellSize = sourcesList >>= { _.parTraverse(_.cellSize).map(_.toList.maxBy(_.resolution)) }
     val combinedGridExtent = (combinedExtent, minCellSize).mapN(GridExtent[Long])
     instanceGridExtent(sourcesList, targetCRS, combinedGridExtent, sourceName)
   }
 
-  /** All apply methods reproject the input sourcesList to the targetGridExtent */
+  /**
+   * All apply methods reproject the input sourcesList to the targetGridExtent
+   */
   def applyGridExtent[F[_]: Monad: Parallel](
     sourcesList: F[NonEmptyList[RasterSourceF[F]]],
     targetCRS: F[CRS],
@@ -233,7 +237,7 @@ object MosaicRasterSourceF {
       val crs: F[CRS] = targetCRS
       def gridExtent: F[GridExtent[Long]] = {
         val combinedExtent: F[Extent] = sources.flatMap(_.parTraverse(_.extent).map(_.reduceLeft(_ combine _)))
-        val minCellSize: F[CellSize]  = sources.flatMap(_.parTraverse(_.cellSize).map(_.toList.maxBy(_.resolution)))
+        val minCellSize: F[CellSize] = sources.flatMap(_.parTraverse(_.cellSize).map(_.toList.maxBy(_.resolution)))
         (combinedExtent, minCellSize).mapN(GridExtent[Long])
       }
     }

@@ -23,16 +23,18 @@ import cats.data.{NonEmptyList => NEL}
 object SampleUtils {
   val logger = org.log4s.getLogger
 
-  /** Sample imagery within the provided extent */
+  /**
+   * Sample imagery within the provided extent
+   */
   final def sampleRasterExtent(uberExtent: Extent, cs: CellSize, maxCells: Int): (Extent, Extent, Extent, Extent) = {
     logger.trace(s"Finding sample extent for UberExtent $uberExtent for $cs with a maximum sample of $maxCells cells")
-    val sampleWidth  = math.sqrt(maxCells.toDouble) * cs.width
+    val sampleWidth = math.sqrt(maxCells.toDouble) * cs.width
     val sampleHeight = math.sqrt(maxCells.toDouble) * cs.height
 
     logger.trace(s"orig height: ${uberExtent.height}, width: ${uberExtent.width}")
     logger.trace(s"ideal sample height: $sampleHeight, ideal sample width: $sampleWidth")
     // Sanity check here - if the desired sample extent is larger than the source extent, just use the source extent
-    val widthDelta  = (if (sampleWidth > uberExtent.width) uberExtent.width else sampleWidth) / 2
+    val widthDelta = (if (sampleWidth > uberExtent.width) uberExtent.width else sampleWidth) / 2
     val heightDelta = (if (sampleHeight > uberExtent.height) uberExtent.height else sampleHeight) / 2
 
     val tl = Extent(uberExtent.xmin, uberExtent.ymax - heightDelta, uberExtent.xmin + widthDelta, uberExtent.ymax)
@@ -45,12 +47,14 @@ object SampleUtils {
     (tl, tr, bl, br)
   }
 
-  /** Choose the largest cellsize with the minCells amount */
+  /**
+   * Choose the largest cellsize with the minCells amount
+   */
   final def chooseLargestCellSize(rasterExtents: NEL[RasterExtent], minCells: Int): CellSize =
     rasterExtents.reduceLeft { (chosenRE: RasterExtent, nextRE: RasterExtent) =>
       val (chosenCS, nextCS) = chosenRE.cellSize -> nextRE.cellSize
-      val chosenSize         = chosenCS.height * chosenCS.width
-      val nextSize           = nextCS.height * nextCS.width
+      val chosenSize = chosenCS.height * chosenCS.width
+      val nextSize = nextCS.height * nextCS.width
 
       if (nextSize > chosenSize && nextRE.size > minCells)
         nextRE
@@ -58,12 +62,14 @@ object SampleUtils {
         chosenRE
     }.cellSize
 
-  /** Choose the largest cellsize */
+  /**
+   * Choose the largest cellsize
+   */
   final def chooseLargestCellSize(nativeCellSizes: NEL[CellSize]): CellSize =
     nativeCellSizes
       .reduceLeft { (chosenCS: CellSize, nextCS: CellSize) =>
         val chosenSize = chosenCS.height * chosenCS.width
-        val nextSize   = nextCS.height * nextCS.width
+        val nextSize = nextCS.height * nextCS.width
 
         if (nextSize > chosenSize)
           nextCS
@@ -71,12 +77,14 @@ object SampleUtils {
           chosenCS
       }
 
-  /** Choose the smallest cellsize */
+  /**
+   * Choose the smallest cellsize
+   */
   final def chooseSmallestCellSize(nativeCellSizes: NEL[CellSize]): CellSize =
     nativeCellSizes
       .reduceLeft { (chosenCS: CellSize, nextCS: CellSize) =>
         val chosenSize = chosenCS.height * chosenCS.width
-        val nextSize   = nextCS.height * nextCS.width
+        val nextSize = nextCS.height * nextCS.width
 
         if (nextSize < chosenSize)
           nextCS
@@ -86,7 +94,7 @@ object SampleUtils {
 
   final def intersectExtents(extents: NEL[Extent]): Option[Extent] =
     extents.tail.foldLeft(Option(extents.head)) {
-      case (Some(ex1), ex2) => ex1 intersection ex2
+      case (Some(ex1), ex2) => ex1.intersection(ex2)
       case _                => None
     }
 
@@ -97,6 +105,6 @@ object SampleUtils {
     }
 
   final def unionExtents(extents: NEL[Extent]): Option[Extent] =
-    Some(extents.tail.foldLeft(extents.head)((ex1, ex2) => ex1 combine ex2))
+    Some(extents.tail.foldLeft(extents.head)((ex1, ex2) => ex1.combine(ex2)))
 
 }

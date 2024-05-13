@@ -20,14 +20,18 @@ import geotrellis.server.ogc.style._
 
 import geotrellis.raster.render.{ColorMap, ColorRamp}
 
-/** The trait implemented by different style configuration options */
+/**
+ * The trait implemented by different style configuration options
+ */
 sealed trait StyleConf {
   def name: String
   def title: String
   def toStyle: OgcStyle
 }
 
-/** Styling in which a color scheme is known but not the values that these colors should map to */
+/**
+ * Styling in which a color scheme is known but not the values that these colors should map to
+ */
 final case class ColorRampConf(
   name: String,
   title: String,
@@ -42,7 +46,9 @@ final case class ColorRampConf(
     ColorRampStyle(name, title, colors, stops, minRender, maxRender, clampWithColor, legends)
 }
 
-/** Styling in which both a color scheme and the data-to-color mapping is known */
+/**
+ * Styling in which both a color scheme and the data-to-color mapping is known
+ */
 final case class ColorMapConf(
   name: String,
   title: String,

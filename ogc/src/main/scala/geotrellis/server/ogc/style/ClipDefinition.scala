@@ -20,10 +20,10 @@ import org.log4s._
 import cats.syntax.option._
 
 abstract class ClipDefinition(repr: String) extends Product with Serializable
-case object ClipNone                        extends ClipDefinition("clip-none")
-case object ClipLeft                        extends ClipDefinition("clip-left")
-case object ClipRight                       extends ClipDefinition("clip-right")
-case object ClipBoth                        extends ClipDefinition("clip-both")
+case object ClipNone extends ClipDefinition("clip-none")
+case object ClipLeft extends ClipDefinition("clip-left")
+case object ClipRight extends ClipDefinition("clip-right")
+case object ClipBoth extends ClipDefinition("clip-both")
 
 object ClipDefinition {
   private val logger = getLogger

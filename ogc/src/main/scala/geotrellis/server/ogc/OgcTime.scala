@@ -27,7 +27,7 @@ import java.time.{Duration, ZonedDateTime}
 import scala.util.Try
 
 sealed trait OgcTime {
-  def isEmpty: Boolean  = false
+  def isEmpty: Boolean = false
   def nonEmpty: Boolean = !isEmpty
 }
 
@@ -56,7 +56,9 @@ object OgcTime {
 
   implicit class OgcTimeOps(val self: OgcTime) extends AnyVal {
 
-    /** Reformat OgcTime if possible. */
+    /**
+     * Reformat OgcTime if possible.
+     */
     def format(format: OgcTimeFormat): OgcTime =
       format match {
         case OgcTimeFormat.Interval =>
@@ -94,17 +96,21 @@ object OgcTime {
 }
 
 case object OgcTimeEmpty extends OgcTime {
-  override val isEmpty: Boolean  = true
+  override val isEmpty: Boolean = true
   override val nonEmpty: Boolean = !isEmpty
 
   implicit val ogcTimeEmptySemigroup: Semigroup[OgcTimeEmpty.type] = { (l, _) => l }
 }
 
-/** Represents the TimePosition used in TimeSequence requests */
+/**
+ * Represents the TimePosition used in TimeSequence requests
+ */
 final case class OgcTimePositions(list: NonEmptyList[ZonedDateTime]) extends OgcTime {
   def sorted: NonEmptyList[ZonedDateTime] = list.sorted
 
-  /** Compute (if possible) the period of the [[ZonedDateTime]] lists. */
+  /**
+   * Compute (if possible) the period of the [[ZonedDateTime]] lists.
+   */
   def computeIntervalPeriod: Option[PeriodDuration] = {
     val periods =
       sorted.toList
@@ -121,7 +127,7 @@ final case class OgcTimePositions(list: NonEmptyList[ZonedDateTime]) extends Ogc
 
   def toOgcTimeInterval: OgcTimeInterval = OgcTimeInterval(sorted.head, sorted.last, computeIntervalPeriod)
 
-  def toList: List[String]      = list.toList.map(_.toInstant.toString)
+  def toList: List[String] = list.toList.map(_.toInstant.toString)
   override def toString: String = toList.mkString(", ")
 }
 
@@ -131,7 +137,7 @@ object OgcTimePositions {
   }
 
   def apply(timePeriod: ZonedDateTime): OgcTimePositions = OgcTimePositions(NonEmptyList(timePeriod, Nil))
-  def apply(timeString: String): OgcTimePositions        = apply(ZonedDateTime.parse(timeString))
+  def apply(timeString: String): OgcTimePositions = apply(ZonedDateTime.parse(timeString))
   def apply(times: List[ZonedDateTime]): OgcTime =
     times match {
       case head :: tail => OgcTimePositions(NonEmptyList(head, tail))
@@ -178,7 +184,9 @@ final case class OgcTimeInterval(start: ZonedDateTime, end: ZonedDateTime, inter
 
 object OgcTimeInterval {
 
-  /** Safe [[PeriodDuration]] parser. */
+  /**
+   * Safe [[PeriodDuration]] parser.
+   */
   private def periodDurationParse(string: String): Option[PeriodDuration] = Try(PeriodDuration.parse(string)).toOption
 
   /**

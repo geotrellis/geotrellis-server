@@ -61,7 +61,7 @@ case class StacOgcSource(
 
   override def extentIn(crs: CRS): Extent = projectedExtent.reproject(crs).extent
 
-  override def projectedExtent: ProjectedExtent     = stacSource.projectedExtent
+  override def projectedExtent: ProjectedExtent = stacSource.projectedExtent
   override lazy val attributes: Map[String, String] = stacSource.attributes
 
   def toLayer(crs: CRS, style: Option[OgcStyle], temporalSequence: List[OgcTime]): SimpleOgcLayer =

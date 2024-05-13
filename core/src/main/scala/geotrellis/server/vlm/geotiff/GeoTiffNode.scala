@@ -47,7 +47,7 @@ object GeoTiffNode extends RasterSourceUtils {
   implicit def cogNodeRasterExtents[F[_]: Sync]: HasRasterExtents[F, GeoTiffNode] = { self =>
     Sync[F].delay {
       val rs = RasterSource(s"${self.uri}")
-      NonEmptyList.fromListUnsafe(rs.resolutions map {
+      NonEmptyList.fromListUnsafe(rs.resolutions.map {
         RasterExtent(rs.extent, _)
       })
     }
@@ -69,7 +69,7 @@ object GeoTiffNode extends RasterSourceUtils {
         (z: Int, x: Int, y: Int) =>
           Sync[F].delay {
             val layout = tmsLevels(z)
-            val key    = SpatialKey(x, y)
+            val key = SpatialKey(x, y)
             val raster = Raster(
               RasterSource(self.uri.toString)
                 .reproject(targetCRS)

@@ -64,10 +64,14 @@ case class StacSourceConf(
   parallelMosaic: Boolean = false
 ) extends OgcSourceConf {
 
-  /** flag used to convert https azure URI into wasbs:// URIs to smooth GDAL integration */
+  /**
+   * flag used to convert https azure URI into wasbs:// URIs to smooth GDAL integration
+   */
   val toWASBS: Boolean = withGDAL && withVSIAZ
 
-  /** By default the search would happen across collections. */
+  /**
+   * By default the search would happen across collections.
+   */
   def searchCriteria: StacSearchCriteria =
     (collection, layer) match {
       case (None, Some(_)) => ByLayer
@@ -102,7 +106,7 @@ case class StacSourceConf(
 object StacSourceConf {
   implicit val crsReader: ConfigReader[CRS] =
     ConfigReader[String].map { str =>
-      Try(CRS.fromName(str)).toOption orElse Try(CRS.fromString(str)).toOption match {
+      Try(CRS.fromName(str)).toOption.orElse(Try(CRS.fromString(str)).toOption) match {
         case Some(crs) => crs
         case None      => throw new Exception(s"Invalid Proj4 String: $str")
       }

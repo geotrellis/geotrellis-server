@@ -25,7 +25,9 @@ import cats.syntax.functor._
 import geotrellis.store.query.RepositoryM
 import geotrellis.proj4.CRS
 
-/** This class holds all the information necessary to construct a response to a WCS request */
+/**
+ * This class holds all the information necessary to construct a response to a WCS request
+ */
 case class WcsModel[F[_]: Functor](
   serviceMetadata: ows.ServiceMetadata,
   sources: RepositoryM[F, List, OgcSource],
@@ -39,7 +41,9 @@ case class WcsModel[F[_]: Functor](
         case rs: RasterOgcSource => rs.toLayer(p.crs, None, p.temporalSequence)
         case mas: MapAlgebraSource =>
           val (name, title, algebra, resampleMethod, overviewStrategy) = (mas.name, mas.title, mas.algebra, mas.resampleMethod, mas.overviewStrategy)
-          val simpleLayers       = mas.sources.mapValues(rs => SimpleOgcLayer(name, title, p.crs, rs, None, resampleMethod, overviewStrategy))
+          val simpleLayers = mas.sources.map { case (key, rs) =>
+            key -> SimpleOgcLayer(name, title, p.crs, rs, None, resampleMethod, overviewStrategy)
+          }
           val extendedParameters = extendedParametersBinding.flatMap(_.apply(p.params))
           MapAlgebraOgcLayer(
             name,

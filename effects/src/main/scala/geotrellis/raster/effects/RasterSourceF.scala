@@ -31,7 +31,9 @@ import cats.instances.list._
 
 abstract class RasterSourceF[F[_]: Monad] extends RasterMetadataF[F] with Serializable {
 
-  /** All available RasterSource metadata */
+  /**
+   * All available RasterSource metadata
+   */
   def metadata: F[_ <: RasterMetadata]
 
   protected def reprojection(

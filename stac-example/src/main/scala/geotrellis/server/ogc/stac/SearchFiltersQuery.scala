@@ -39,10 +39,12 @@ import eu.timepit.refined.cats._
 import eu.timepit.refined.types.numeric.NonNegInt
 import eu.timepit.refined.types.string.NonEmptyString
 
-/** SearchFilters Query evaluation */
+/**
+ * SearchFilters Query evaluation
+ */
 object SearchFiltersQuery {
   // overcome diverging implicit expansion
-  implicit private val nonNegIntOrder: Order[NonNegInt]       = refTypeOrder
+  implicit private val nonNegIntOrder: Order[NonNegInt] = refTypeOrder
   implicit private val nonNegIntOrdering: Ordering[NonNegInt] = nonNegIntOrder.toOrdering
 
   object IntersectionSemigroup {
@@ -75,8 +77,8 @@ object SearchFiltersQuery {
         collections = (left.collections |+| right.collections).distinct,
         items = (left.items |+| right.items).distinct,
         limit = List(left.limit, right.limit).min,
-        next = right.next,
-        query = left.query.deepMerge(right.query)
+        query = left.query.deepMerge(right.query),
+        paginationBody = right.paginationBody
       )
     }
   }
@@ -111,8 +113,8 @@ object SearchFiltersQuery {
         collections = (left.collections |+| right.collections).distinct,
         items = (left.items |+| right.items).distinct,
         limit = List(left.limit, right.limit).min,
-        next = right.next,
-        query = left.query.deepMerge(right.query)
+        query = left.query.deepMerge(right.query),
+        paginationBody = right.paginationBody
       )
     }
   }
@@ -138,7 +140,7 @@ object SearchFiltersQuery {
       case Intersects(e)      => SearchFilters(intersects = e.reproject(LatLng).geometry.some).some
       case Covers(e)          => SearchFilters(bbox = e.reproject(LatLng).geometry.extent.toTwoDimBbox.some).some
       case And(l, r)          => import IntersectionSemigroup._; l |+| r
-      case Or(l, r)           => import UnionSemigroup._; l |+| r
+      case Or(l, r) => import UnionSemigroup._; l |+| r
       // unsupported nodes
       case _ => SearchFilters().some
     }

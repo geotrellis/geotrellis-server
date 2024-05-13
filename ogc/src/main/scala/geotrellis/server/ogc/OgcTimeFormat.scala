@@ -20,20 +20,28 @@ import io.circe.Codec
 import io.circe.generic.extras.Configuration
 import io.circe.generic.extras.semiauto.deriveEnumerationCodec
 
-/** ADT to change [[OgcTime]] internal representation */
+/**
+ * ADT to change [[OgcTime]] internal representation
+ */
 sealed trait OgcTimeFormat
 
 object OgcTimeFormat {
 
-  /** Represent [[OgcTime]] as [[OgcTimePositions]]. */
+  /**
+   * Represent [[OgcTime]] as [[OgcTimePositions]].
+   */
   case object Positions extends OgcTimeFormat
 
-  /** Represent [[OgcTime]] as [[OgcTimeInterval]]. */
+  /**
+   * Represent [[OgcTime]] as [[OgcTimeInterval]].
+   */
   case object Interval extends OgcTimeFormat
 
-  /** Don't change the internal [[OgcTime]] representation. */
+  /**
+   * Don't change the internal [[OgcTime]] representation.
+   */
   case object Default extends OgcTimeFormat
 
-  implicit private val config: Configuration            = Configuration.default.copy(transformConstructorNames = _.toLowerCase)
+  implicit private val config: Configuration = Configuration.default.copy(transformConstructorNames = _.toLowerCase)
   implicit val ogcTimeFormatCodec: Codec[OgcTimeFormat] = deriveEnumerationCodec
 }

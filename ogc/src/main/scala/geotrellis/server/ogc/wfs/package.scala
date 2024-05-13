@@ -22,12 +22,12 @@ import scala.xml.{Elem, NamespaceBinding, NodeSeq, XML}
 
 package object wfs {
   val wfsScope: NamespaceBinding = scalaxb.toScope(
-    None          -> "http://www.opengis.net/wfs",
-    Some("gml")   -> "http://www.opengis.net/gml",
-    Some("ows")   -> "http://www.opengis.net/ows/1.1",
-    Some("ogc")   -> "http://www.opengis.net/ogc",
+    None -> "http://www.opengis.net/wfs",
+    Some("gml") -> "http://www.opengis.net/gml",
+    Some("ows") -> "http://www.opengis.net/ows/1.1",
+    Some("ogc") -> "http://www.opengis.net/ogc",
     Some("xlink") -> "http://www.w3.org/1999/xlink",
-    Some("xsi")   -> "http://www.w3.org/2001/XMLSchema-instance"
+    Some("xsi") -> "http://www.w3.org/2001/XMLSchema-instance"
   )
 
   implicit class ElemOps(val elem: Elem) extends AnyVal {

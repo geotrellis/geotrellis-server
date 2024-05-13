@@ -36,18 +36,18 @@ class StacAssetResampleRasterSource(
   private[geotrellis] val targetCellType: Option[TargetCellType],
   @transient underlyingRS: => Option[RasterSource]
 ) extends RasterSource {
-  @transient private lazy val underlying          = underlyingRS.getOrElse(RasterSource(asset.href))
+  @transient private lazy val underlying = underlyingRS.getOrElse(RasterSource(asset.href))
   @transient private lazy val underlyingResampled = underlying.resample(resampleTarget, resampleMethod, strategy)
 
   lazy val gridExtent: GridExtent[Long] = resampleTarget(asset.gridExtent.getOrElse(underlying.gridExtent))
 
-  def metadata: StacItemAssetMetadata                   = StacItemAssetMetadata(name, crs, bandCount, cellType, gridExtent, resolutions, asset)
-  val name: SourceName                                  = asset.href
-  def crs: CRS                                          = asset.crs.getOrElse(underlying.crs)
-  def bandCount: Int                                    = asset.bandCount.getOrElse(underlyingResampled.bandCount)
-  def cellType: CellType                                = underlyingResampled.cellType
-  def resolutions: List[CellSize]                       = underlyingResampled.resolutions
-  def attributes: Map[String, String]                   = asset.item.properties.toMap
+  def metadata: StacItemAssetMetadata = StacItemAssetMetadata(name, crs, bandCount, cellType, gridExtent, resolutions, asset)
+  val name: SourceName = asset.href
+  def crs: CRS = asset.crs.getOrElse(underlying.crs)
+  def bandCount: Int = asset.bandCount.getOrElse(underlyingResampled.bandCount)
+  def cellType: CellType = underlyingResampled.cellType
+  def resolutions: List[CellSize] = underlyingResampled.resolutions
+  def attributes: Map[String, String] = asset.item.properties.toMap
   def attributesForBand(band: Int): Map[String, String] = Map.empty
 
   def reprojection(

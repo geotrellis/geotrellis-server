@@ -22,12 +22,13 @@ import geotrellis.server.vlm.geotiff._
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap
 import com.azavea.maml.ast.Expression
 import cats.effect._
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.http4s._
 import org.http4s.server._
-import org.http4s.server.blaze.BlazeServerBuilder
+import org.http4s.blaze.server.BlazeServerBuilder
 import org.http4s.server.middleware.{CORS, CORSConfig}
 import org.http4s.syntax.kleisli._
+import cats.syntax.option._
 
 import java.util.UUID
 import scala.concurrent.duration._
@@ -35,13 +36,13 @@ import scala.concurrent.duration._
 object PersistenceServer extends IOApp {
   implicit val logger = Slf4jLogger.getLogger[IO]
 
-  private val corsConfig = CORSConfig(
-    anyOrigin = true,
-    anyMethod = false,
-    allowedMethods = Some(Set("GET")),
-    allowCredentials = true,
-    maxAge = 1.day.toSeconds
-  )
+  private val corsConfig =
+    CORSConfig.default
+      .withAnyOrigin(true)
+      .withAnyMethod(false)
+      .withAllowedMethods(Set(Method.GET).some)
+      .withAllowCredentials(true)
+      .withMaxAge(1.day)
 
   private val commonMiddleware: HttpMiddleware[IO] = { (routes: HttpRoutes[IO]) =>
     CORS(routes)
@@ -66,7 +67,7 @@ object PersistenceServer extends IOApp {
       ](
         mamlStore
       )
-      server <- BlazeServerBuilder[IO](executionContext)
+      server <- BlazeServerBuilder[IO]
         .enableHttp2(true)
         .bindHttp(conf.http.port, conf.http.interface)
         .withHttpApp(
@@ -76,9 +77,11 @@ object PersistenceServer extends IOApp {
     } yield server
   }
 
-  /** The 'main' method for a cats-effect IOApp */
+  /**
+   * The 'main' method for a cats-effect IOApp
+   */
   override def run(args: List[String]): IO[ExitCode] =
-    createServer use { _ =>
+    createServer.use { _ =>
       IO(ExitCode.Success)
     }
 }

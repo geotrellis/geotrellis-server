@@ -22,7 +22,7 @@ import geotrellis.server.ogc.{FeatureCollection, MapAlgebraOgcLayer, SimpleOgcLa
 import geotrellis.server.ogc.wms.WmsParams.GetFeatureInfoExtendedParams
 import geotrellis.server.utils.throwableExtensions
 import cats.data.Validated.{Invalid, Valid}
-import cats.effect.Concurrent
+import cats.effect.{Async, Concurrent}
 import cats.{ApplicativeThrow, Parallel}
 import cats.syntax.nested._
 import cats.syntax.functor._
@@ -32,7 +32,7 @@ import cats.syntax.flatMap._
 import cats.syntax.traverse._
 import cats.syntax.applicativeError._
 import com.azavea.maml.error.MamlError
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import io.circe._
 import io.circe.syntax._
 import com.azavea.maml.eval.ConcurrentInterpreter
@@ -43,7 +43,7 @@ import opengis.wms._
 import opengis._
 import scalaxb._
 
-case class GetFeatureInfoExtended[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
+case class GetFeatureInfoExtended[F[_]: Logger: Parallel: Async: ApplicativeThrow](
   model: WmsModel[F],
   // cache rasters by the asset name and point
   rasterCache: Cache[(String, Extent), MultibandTile]
@@ -56,7 +56,7 @@ case class GetFeatureInfoExtended[F[_]: Logger: Parallel: Concurrent: Applicativ
       .flatMap { layers =>
         layers.flatMap { layer =>
           // TODO: move it into GeoTrellis
-          val mp     = params.multiPoint
+          val mp = params.multiPoint
           val points = (0 until mp.getNumPoints).map(idx => mp.getGeometryN(idx).asInstanceOf[Point])
 
           val (evalExtent, cs) = layer match {

@@ -67,10 +67,10 @@ object WmsParams {
   ) extends WmsParams {
     def toQuery: Query = {
       val layer = layers.headOption.map(withName).getOrElse(nothing)
-      val query = layer and intersects(ProjectedGeometry(boundingBox, crs))
+      val query = layer.and(intersects(ProjectedGeometry(boundingBox, crs)))
       time match {
-        case timeInterval: OgcTimeInterval => query and between(timeInterval.start, timeInterval.end)
-        case OgcTimePositions(list)        => query and list.toList.map(at(_)).reduce(_ or _)
+        case timeInterval: OgcTimeInterval => query.and(between(timeInterval.start, timeInterval.end))
+        case OgcTimePositions(list)        => query.and(list.toList.map(at(_)).reduce(_ or _))
         case OgcTimeEmpty                  => query
       }
     }
@@ -87,7 +87,7 @@ object WmsParams {
         .andThen { version =>
           val layers = params.validatedParam[List[String]]("layers", s => s.split(",").toList.some)
           val styles = params.validatedParam[List[String]]("styles", s => s.split(",").toList.some)
-          val crs    = params.validatedParam("crs", s => Try(CRS.fromName(s)).toOption)
+          val crs = params.validatedParam("crs", s => Try(CRS.fromName(s)).toOption)
 
           val bbox = crs.andThen { crs =>
             params.validatedParam(
@@ -103,9 +103,9 @@ object WmsParams {
             )
           }
 
-          val width  = params.validatedParam[Int]("width", s => Try(s.toInt).toOption)
+          val width = params.validatedParam[Int]("width", s => Try(s.toInt).toOption)
           val height = params.validatedParam[Int]("height", s => Try(s.toInt).toOption)
-          val time   = params.validatedOgcTime("time")
+          val time = params.validatedOgcTime("time")
 
           val format =
             params
@@ -156,7 +156,7 @@ object WmsParams {
   object GetFeatureInfoParams {
     def build(params: ParamMap): ValidatedNel[ParamError, WmsParams] = {
 
-      val getMap: ValidatedNel[ParamError, WmsParams]    = GetMapParams.build(params)
+      val getMap: ValidatedNel[ParamError, WmsParams] = GetMapParams.build(params)
       val versionParam: ValidatedNel[ParamError, String] = params.validatedVersion(wmsVersion)
       (versionParam, getMap).tupled
         .andThen {
@@ -211,7 +211,9 @@ object WmsParams {
     }
   }
 
-  /** An extended version, can be passed via POST request, does not perform mosaics, operates with bulk requests. */
+  /**
+   * An extended version, can be passed via POST request, does not perform mosaics, operates with bulk requests.
+   */
   case class GetFeatureInfoExtendedParams(
     version: String,
     layers: List[String],
@@ -226,11 +228,11 @@ object WmsParams {
 
     def toQuery: Query = {
       val layer = if (layers.nonEmpty) withNames(layers.toSet) else nothing
-      val query = layer and intersects(projectedGeometry)
+      val query = layer.and(intersects(projectedGeometry))
       time.foldLeft(query) { case (q, t) =>
         t match {
-          case timeInterval: OgcTimeInterval => query and between(timeInterval.start, timeInterval.end)
-          case OgcTimePositions(list)        => query and list.toList.map(at(_)).reduce(_ or _)
+          case timeInterval: OgcTimeInterval => query.and(between(timeInterval.start, timeInterval.end))
+          case OgcTimePositions(list)        => query.and(list.toList.map(at(_)).reduce(_ or _))
           case OgcTimeEmpty                  => q
         }
       }
@@ -245,8 +247,8 @@ object WmsParams {
   def apply(queryParams: Map[String, Seq[String]]): ValidatedNel[ParamError, WmsParams] = {
     val params = ParamMap(queryParams)
 
-    val serviceParam         = params.validatedParam("service", validValues = Set("wms"))
-    val requestParam         = params.validatedParam("request", validValues = Set("getcapabilities", "getmap", "getfeatureinfo"))
+    val serviceParam = params.validatedParam("service", validValues = Set("wms"))
+    val requestParam = params.validatedParam("request", validValues = Set("getcapabilities", "getmap", "getfeatureinfo"))
     val firstStageValidation = (serviceParam, requestParam).mapN { case (_, b) => b }
 
     firstStageValidation.andThen {

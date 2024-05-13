@@ -30,7 +30,9 @@ case class ParamMap(params: Map[String, Seq[String]]) {
   def getParams(field: String): Option[List[String]] =
     _params.get(field).map(_.toList)
 
-  /** Get a field that must appear only once, otherwise error */
+  /**
+   * Get a field that must appear only once, otherwise error
+   */
   def validatedParam(field: String): ValidatedNel[ParamError, String] =
     (getParams(field) match {
       case Some(v :: Nil) => Valid(v)
@@ -38,7 +40,9 @@ case class ParamMap(params: Map[String, Seq[String]]) {
       case None           => Invalid(ParamError.MissingParam(field))
     }).toValidatedNel
 
-  /** Get a field that must appear only once, otherwise error */
+  /**
+   * Get a field that must appear only once, otherwise error
+   */
   def validatedOptionalParam(field: String): ValidatedNel[ParamError, Option[String]] =
     (getParams(field) match {
       case None           => Valid(Option.empty[String])
@@ -68,7 +72,9 @@ case class ParamMap(params: Map[String, Seq[String]]) {
       case None    => Valid(None)
     }).toValidatedNel
 
-  /** Get a field that must appear only once, parse the value successfully, otherwise error */
+  /**
+   * Get a field that must appear only once, parse the value successfully, otherwise error
+   */
   def validatedParam[T](field: String, parseValue: String => Option[T]): ValidatedNel[ParamError, T] =
     (getParams(field) match {
       case Some(v :: Nil) =>
@@ -80,7 +86,9 @@ case class ParamMap(params: Map[String, Seq[String]]) {
       case None    => Invalid(ParamError.MissingParam(field))
     }).toValidatedNel
 
-  /** Get a field that must appear only once, and should be one of a list of values, otherwise error */
+  /**
+   * Get a field that must appear only once, and should be one of a list of values, otherwise error
+   */
   def validatedParam(field: String, validValues: Set[String]): ValidatedNel[ParamError, String] =
     (getParams(field) match {
       case Some(v :: Nil) if validValues.contains(v.toLowerCase) => Valid(v.toLowerCase)
@@ -104,7 +112,7 @@ case class ParamMap(params: Map[String, Seq[String]]) {
             Valid(default)
           case Some(versions :: Nil) =>
             val requestedVersions = versions.split(",")
-            val intersection      = requestedVersions.toSet & supportedVersions
+            val intersection = requestedVersions.toSet & supportedVersions
             if (intersection.isEmpty) {
               Invalid(ParamError.NoSupportedVersionError(requestedVersions.toList, supportedVersions.toList))
             } else {

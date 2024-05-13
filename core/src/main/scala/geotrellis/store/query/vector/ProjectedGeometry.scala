@@ -25,8 +25,8 @@ case class ProjectedGeometry(geometry: Geometry, crs: CRS) {
   def reproject(dest: CRS): ProjectedGeometry = ProjectedGeometry(geometry.reproject(crs, dest), dest)
 
   def intersects(that: ProjectedGeometry): Boolean = geometry.intersects(that.reproject(crs).geometry)
-  def covers(that: ProjectedGeometry): Boolean     = geometry.covers(that.reproject(crs).geometry)
-  def contains(that: ProjectedGeometry): Boolean   = geometry.contains(that.reproject(crs).geometry)
+  def covers(that: ProjectedGeometry): Boolean = geometry.covers(that.reproject(crs).geometry)
+  def contains(that: ProjectedGeometry): Boolean = geometry.contains(that.reproject(crs).geometry)
 
   def toProjectedExtent: ProjectedExtent = ProjectedExtent(geometry.extent, crs)
 }

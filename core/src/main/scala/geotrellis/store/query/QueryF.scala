@@ -34,35 +34,41 @@ import java.time.ZonedDateTime
 
 object QueryF {
 
-  /** Tree leaves */
-  @JsonCodec case class Or[A](left: A, right: A)                                                       extends QueryF[A]
-  @JsonCodec case class And[A](left: A, right: A)                                                      extends QueryF[A]
-  @JsonCodec case class Intersects[A](projectedGeometry: ProjectedGeometry)                            extends QueryF[A]
-  @JsonCodec case class Contains[A](projectedGeometry: ProjectedGeometry)                              extends QueryF[A]
-  @JsonCodec case class Covers[A](projectedGeometry: ProjectedGeometry)                                extends QueryF[A]
-  @JsonCodec case class At[A](time: ZonedDateTime, fieldName: String = "time")                         extends QueryF[A]
+  /**
+   * Tree leaves
+   */
+  @JsonCodec case class Or[A](left: A, right: A) extends QueryF[A]
+  @JsonCodec case class And[A](left: A, right: A) extends QueryF[A]
+  @JsonCodec case class Intersects[A](projectedGeometry: ProjectedGeometry) extends QueryF[A]
+  @JsonCodec case class Contains[A](projectedGeometry: ProjectedGeometry) extends QueryF[A]
+  @JsonCodec case class Covers[A](projectedGeometry: ProjectedGeometry) extends QueryF[A]
+  @JsonCodec case class At[A](time: ZonedDateTime, fieldName: String = "time") extends QueryF[A]
   @JsonCodec case class Between[A](from: ZonedDateTime, to: ZonedDateTime, fieldName: String = "time") extends QueryF[A]
-  @JsonCodec case class WithName[A](name: String)                                                      extends QueryF[A]
-  @JsonCodec case class WithNames[A](names: Set[String])                                               extends QueryF[A]
-  @JsonCodec case class Nothing[A]()                                                                   extends QueryF[A]
-  @JsonCodec case class All[A]()                                                                       extends QueryF[A]
+  @JsonCodec case class WithName[A](name: String) extends QueryF[A]
+  @JsonCodec case class WithNames[A](names: Set[String]) extends QueryF[A]
+  @JsonCodec case class Nothing[A]() extends QueryF[A]
+  @JsonCodec case class All[A]() extends QueryF[A]
 
-  /** Build Tree syntax */
-  def or(left: Query, right: Query): Query                       = Or(left, right).fix
-  def and(left: Query, right: Query): Query                      = And(left, right).fix
-  def nothing: Query                                             = Nothing().fix
-  def all: Query                                                 = All().fix
-  def withName(name: String): Query                              = WithName(name).fix
-  def withNames(names: Set[String]): Query                       = WithNames(names).fix
-  def intersects(projectedGeometry: ProjectedGeometry): Query    = Intersects(projectedGeometry).fix
-  def contains(projectedGeometry: ProjectedGeometry): Query      = Contains(projectedGeometry).fix
-  def covers(projectedGeometry: ProjectedGeometry): Query        = Covers(projectedGeometry).fix
+  /**
+   * Build Tree syntax
+   */
+  def or(left: Query, right: Query): Query = Or(left, right).fix
+  def and(left: Query, right: Query): Query = And(left, right).fix
+  def nothing: Query = Nothing().fix
+  def all: Query = All().fix
+  def withName(name: String): Query = WithName(name).fix
+  def withNames(names: Set[String]): Query = WithNames(names).fix
+  def intersects(projectedGeometry: ProjectedGeometry): Query = Intersects(projectedGeometry).fix
+  def contains(projectedGeometry: ProjectedGeometry): Query = Contains(projectedGeometry).fix
+  def covers(projectedGeometry: ProjectedGeometry): Query = Covers(projectedGeometry).fix
   def at(time: ZonedDateTime, fieldName: String = "time"): Query = At(time, fieldName).fix
 
   def between(from: ZonedDateTime, to: ZonedDateTime, fieldName: String = "time"): Query =
     Between(from, to, fieldName).fix
 
-  /** Pattern functor for QueryF */
+  /**
+   * Pattern functor for QueryF
+   */
   implicit val queryFFunctor: Functor[QueryF] = new Functor[QueryF] {
     def map[A, B](fa: QueryF[A])(f: A => B): QueryF[B] =
       fa match {
@@ -83,10 +89,10 @@ object QueryF {
   val algebraJson: Algebra[QueryF, Json] = Algebra(_.asJson)
 
   val unfolder: Json.Folder[QueryF[Json]] = new Json.Folder[QueryF[Json]] {
-    def onNull: QueryF[Json]                       = QueryF.Nothing()
-    def onBoolean(value: Boolean): QueryF[Json]    = QueryF.Nothing()
-    def onNumber(value: JsonNumber): QueryF[Json]  = QueryF.Nothing()
-    def onString(value: String): QueryF[Json]      = QueryF.Nothing()
+    def onNull: QueryF[Json] = QueryF.Nothing()
+    def onBoolean(value: Boolean): QueryF[Json] = QueryF.Nothing()
+    def onNumber(value: JsonNumber): QueryF[Json] = QueryF.Nothing()
+    def onString(value: String): QueryF[Json] = QueryF.Nothing()
     def onArray(value: Vector[Json]): QueryF[Json] = QueryF.Nothing()
     def onObject(value: JsonObject): QueryF[Json] =
       value.asJson
@@ -96,7 +102,9 @@ object QueryF {
 
   val coalgebraJson: Coalgebra[QueryF, Json] = Coalgebra(_.foldWith(unfolder))
 
-  /** Coalgebras that replace certain nodes */
+  /**
+   * Coalgebras that replace certain nodes
+   */
   def coalgebraOverrideName(name: String): Coalgebra[QueryF, Query] =
     Coalgebra {
       case WithName(_)  => WithName(name)
@@ -132,9 +140,9 @@ object QueryF {
       case _                => true
     }
 
-  def asJson(query: Query): Json                      = scheme.cata(algebraJson).apply(query)
-  def fromJson(json: Json): Query                     = scheme.ana(coalgebraJson).apply(json)
-  def isTemporal(query: Query): Boolean               = scheme.cata(algebraIsTemporal).apply(query)
-  def isUniversal(query: Query): Boolean              = scheme.cata(algebraIsUniversal).apply(query)
+  def asJson(query: Query): Json = scheme.cata(algebraJson).apply(query)
+  def fromJson(json: Json): Query = scheme.ana(coalgebraJson).apply(json)
+  def isTemporal(query: Query): Boolean = scheme.cata(algebraIsTemporal).apply(query)
+  def isUniversal(query: Query): Boolean = scheme.cata(algebraIsUniversal).apply(query)
   def overrideName(query: Query, name: String): Query = scheme.ana(coalgebraOverrideName(name)).apply(query)
 }

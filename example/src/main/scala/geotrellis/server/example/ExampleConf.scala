@@ -34,5 +34,5 @@ object ExampleConf {
       .fromConfig(ConfigFactory.load(configPath.getOrElse("application.conf")))
       .loadF[F, ExampleConf]
 
-  def loadResourceF[F[_]: Sync](configPath: Option[String]): Resource[F, ExampleConf] = Resource.liftF(loadF[F](configPath))
+  def loadResourceF[F[_]: Sync](configPath: Option[String]): Resource[F, ExampleConf] = Resource.eval(loadF[F](configPath))
 }

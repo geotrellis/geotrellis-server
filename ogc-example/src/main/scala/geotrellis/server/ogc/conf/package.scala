@@ -38,7 +38,9 @@ import pureconfig.generic.auto._
 import scala.util.{Success, Try}
 import scala.collection.JavaConverters._
 
-/** A grab bag of [[ConfigReader]] instances necessary to read the configuration */
+/**
+ * A grab bag of [[ConfigReader]] instances necessary to read the configuration
+ */
 package object conf {
 
   /**
@@ -53,7 +55,7 @@ package object conf {
   implicit val circeJsonReader: ConfigReader[Json] =
     ConfigReader[ConfigValue].emap { cv =>
       val renderOptions = ConfigRenderOptions.concise().setJson(true)
-      val jsonString    = cv.render(renderOptions)
+      val jsonString = cv.render(renderOptions)
       parse(jsonString) match {
         case Left(parsingFailure) => Left(CannotConvert(jsonString, "json", parsingFailure.getMessage))
         case Right(json)          => Right(json)
@@ -89,7 +91,7 @@ package object conf {
             case ConfigValueType.OBJECT =>
               val confmap = v.asInstanceOf[ConfigObject].asScala
               confmap.map { case (ck, cv) =>
-                val key   = k + "." + ck
+                val key = k + "." + ck
                 val value = cv.unwrapped.asInstanceOf[String]
                 key -> value
               }
@@ -100,7 +102,7 @@ package object conf {
           }
         }
         .map { case (k, v) =>
-          val key   = k.toDouble
+          val key = k.toDouble
           val value = java.lang.Long.decode(v).toInt
           key -> value
         }
@@ -175,7 +177,7 @@ package object conf {
     def parse(strategy: String, input: String): OverviewStrategy =
       Auto(Try(input.split(s"$strategy-").last.toInt).getOrElse(0))
 
-    def parseAuto(str: String): OverviewStrategy  = parse("auto", str)
+    def parseAuto(str: String): OverviewStrategy = parse("auto", str)
     def parseLevel(str: String): OverviewStrategy = parse("level", str)
 
     ConfigReader[String].map {

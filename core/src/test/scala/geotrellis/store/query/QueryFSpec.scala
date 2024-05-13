@@ -32,12 +32,12 @@ class QueryFSpec extends AnyFunSpec with Matchers {
   describe("QueryF evaluation specs") {
     def dtFromMonth(month: Int): ZonedDateTime = ZonedDateTime.of(2020, month, 1, 0, 0, 1, 0, ZoneOffset.UTC)
 
-    val extent  = ProjectedGeometry(Extent(0, 0, 2, 2), LatLng)
+    val extent = ProjectedGeometry(Extent(0, 0, 2, 2), LatLng)
     val extent2 = ProjectedGeometry(Extent(1, 1, 4, 4), LatLng)
-    val dt      = dtFromMonth(1)
+    val dt = dtFromMonth(1)
 
     it("should convert AST into json") {
-      val query  = (intersects(extent) and intersects(extent2)) and at(dt)
+      val query = intersects(extent).and(intersects(extent2)).and(at(dt))
       val actual = query.asJson
 
       val expected =
@@ -216,21 +216,21 @@ class QueryFSpec extends AnyFunSpec with Matchers {
                 |}
                 |""".stripMargin).valueOr(throw _)
 
-      val expected = (intersects(extent) and intersects(extent2)) and at(dt)
-      val actual   = json.as[Query].valueOr(throw _)
+      val expected = intersects(extent).and(intersects(extent2)).and(at(dt))
+      val actual = json.as[Query].valueOr(throw _)
 
       actual shouldBe expected
     }
 
     it("should filter raster sources catalog both using JSON and direct AST query representations") {
       def dtFromMonth(month: Int): ZonedDateTime = ZonedDateTime.of(2020, month, 1, 0, 0, 1, 0, ZoneOffset.UTC)
-      val dt1                                    = dtFromMonth(1)
-      val dt2                                    = dtFromMonth(2)
-      val dt3                                    = dtFromMonth(3)
-      val ex1                                    = ProjectedExtent(Extent(0, 0, 2, 2), LatLng)
-      val ex2                                    = ProjectedExtent(Extent(1, 1, 4, 4), LatLng)
-      val ex3                                    = ProjectedExtent(Extent(2, 2, 5, 5), LatLng)
-      val ex4                                    = ProjectedExtent(Extent(6, 6, 10, 10), LatLng)
+      val dt1 = dtFromMonth(1)
+      val dt2 = dtFromMonth(2)
+      val dt3 = dtFromMonth(3)
+      val ex1 = ProjectedExtent(Extent(0, 0, 2, 2), LatLng)
+      val ex2 = ProjectedExtent(Extent(1, 1, 4, 4), LatLng)
+      val ex3 = ProjectedExtent(Extent(2, 2, 5, 5), LatLng)
+      val ex4 = ProjectedExtent(Extent(6, 6, 10, 10), LatLng)
 
       val store =
         EmptyRasterSource("first", ex1, dt1.some) ::
@@ -238,14 +238,14 @@ class QueryFSpec extends AnyFunSpec with Matchers {
           EmptyRasterSource("third", ex3, dt2.some) ::
           EmptyRasterSource("fourth", ex4, dt3.some) :: Nil
 
-      val query = (intersects(ProjectedGeometry(ex2)) and intersects(ProjectedGeometry(ex3))) and at(dt2)
+      val query = intersects(ProjectedGeometry(ex2)).and(intersects(ProjectedGeometry(ex3))).and(at(dt2))
       // scheme.cata(RasterSourceRepository.algebra[EmptyRasterSource]).apply(query)(store)
       val result = RasterSourceRepository.eval(query)(store)
 
       result shouldBe EmptyRasterSource("second", ex2, dt2.some) :: EmptyRasterSource("third", ex3, dt2.some) :: Nil
 
       val repository = RasterSourceRepository(store)
-      val rresult    = repository.find(query)
+      val rresult = repository.find(query)
 
       rresult shouldBe result
 

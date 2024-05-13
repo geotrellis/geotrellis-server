@@ -29,6 +29,6 @@ case class StacItemAssetMetadata(
   resolutions: List[CellSize],
   stacItemAsset: StacItemAsset
 ) extends RasterMetadata {
-  def attributes: Map[String, String]                   = stacItemAsset.item.properties.toMap
+  def attributes: Map[String, String] = stacItemAsset.item.properties.toMap
   def attributesForBand(band: Int): Map[String, String] = Map.empty
 }

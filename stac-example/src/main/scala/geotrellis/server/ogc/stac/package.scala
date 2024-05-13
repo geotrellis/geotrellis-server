@@ -44,13 +44,17 @@ package object stac {
 
   implicit class AssetsMapOps(val assets: Map[String, StacAsset]) extends AnyVal {
 
-    /** Returns the first asset that matches selector Regex */
+    /**
+     * Returns the first asset that matches selector Regex
+     */
     def select(selector: Regex): Option[StacAsset] = assets.find { case (k, _) => selector.findFirstIn(k).nonEmpty }.map(_._2)
   }
 
   implicit class StacExtentionOps(val self: StacExtent) extends AnyVal {
 
-    /** [[StacExtent]]s with no temporal component are valid. */
+    /**
+     * [[StacExtent]]s with no temporal component are valid.
+     */
     def ogcTime: Option[OgcTime] =
       self.temporal.interval.headOption.map { case TemporalExtent(start, end) => List(start, end).flatten.map(_.atZone(ZoneOffset.UTC)) }.map {
         case fst :: Nil        => OgcTimeInterval(fst)
@@ -68,7 +72,7 @@ package object stac {
   }
 
   implicit class StacAssetOps(val self: StacAsset) extends AnyVal {
-    def hrefGDAL(withGDAL: Boolean): String    = if (withGDAL) s"gdal+${self.href}" else s"${GeoTiffPath.PREFIX}${self.href}"
+    def hrefGDAL(withGDAL: Boolean): String = if (withGDAL) s"gdal+${self.href}" else s"${GeoTiffPath.PREFIX}${self.href}"
     def withGDAL(withGDAL: Boolean): StacAsset = self.copy(href = hrefGDAL(withGDAL))
     def withAzureSupport(toWASBS: Boolean): StacAsset =
       if (toWASBS && AzureRangeReaderProvider.canProcess(self.href)) self.copy(href = AzureURI.fromString(self.href).toString) else self
@@ -117,7 +121,9 @@ package object stac {
         }
       } else self
 
-    /** Collects all RasterSources attributes and prefixing each result Map key with the RasterSource name. */
+    /**
+     * Collects all RasterSources attributes and prefixing each result Map key with the RasterSource name.
+     */
     def attributesByName: Map[String, String] =
       self.foldMap { rs =>
         rs.name match {

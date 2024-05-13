@@ -49,26 +49,30 @@ case class GeoTiffReprojectRasterSource[F[_]: Monad: UnsafeLift](
   def name: GeoTiffPath = dataPath
 
   // memoize tiff, not useful only in a local fs case
-  @transient lazy val tiff: MultibandGeoTiff     = GeoTiffReader.readMultiband(RangeReader(dataPath.value), streaming = true)
+  @transient lazy val tiff: MultibandGeoTiff = GeoTiffReader.readMultiband(RangeReader(dataPath.value), streaming = true)
   @transient lazy val tiffF: F[MultibandGeoTiff] = Option(baseTiff).flatten.getOrElse(UnsafeLift[F].apply(tiff))
 
-  def bandCount: F[Int]            = tiffF.map(_.bandCount)
-  def cellType: F[CellType]        = dstCellType.fold(tiffF.map(_.cellType))(_.pure[F])
-  def tags: F[Tags]                = tiffF.map(_.tags)
+  def bandCount: F[Int] = tiffF.map(_.bandCount)
+  def cellType: F[CellType] = dstCellType.fold(tiffF.map(_.cellType))(_.pure[F])
+  def tags: F[Tags] = tiffF.map(_.tags)
   def metadata: F[GeoTiffMetadata] = (name.pure[F], crs, bandCount, cellType, gridExtent, resolutions, tags).mapN(GeoTiffMetadata)
 
-  /** Returns the GeoTiff head tags. */
+  /**
+   * Returns the GeoTiff head tags.
+   */
   def attributes: F[Map[String, String]] = tags.map(_.headTags)
 
-  /** Returns the GeoTiff per band tags. */
+  /**
+   * Returns the GeoTiff per band tags.
+   */
   def attributesForBand(band: Int): F[Map[String, String]] = tags.map(_.bandTags.lift(band).getOrElse(Map.empty))
 
-  lazy val crs: F[CRS]                                   = Monad[F].pure(targetCRS)
-  protected lazy val baseCRS: F[CRS]                     = tiffF.map(_.crs)
+  lazy val crs: F[CRS] = Monad[F].pure(targetCRS)
+  protected lazy val baseCRS: F[CRS] = tiffF.map(_.crs)
   protected lazy val baseGridExtent: F[GridExtent[Long]] = tiffF.map(_.rasterExtent.toGridType[Long])
 
   // TODO: remove transient notation with Proj4 1.1 release
-  @transient protected lazy val transform     = (baseCRS, crs).mapN((baseCRS, crs) => Transform(baseCRS, crs))
+  @transient protected lazy val transform = (baseCRS, crs).mapN((baseCRS, crs) => Transform(baseCRS, crs))
   @transient protected lazy val backTransform = (crs, baseCRS).mapN((crs, baseCRS) => Transform(crs, baseCRS))
 
   override lazy val gridExtent: F[GridExtent[Long]] = {
@@ -118,7 +122,7 @@ case class GeoTiffReprojectRasterSource[F[_]: Monad: UnsafeLift](
           val geoTiffTile = closestTiffOverview.tile.asInstanceOf[GeoTiffMultibandTile]
           val intersectingWindows = {
             for {
-              queryPixelBounds  <- bounds
+              queryPixelBounds <- bounds
               targetPixelBounds <- queryPixelBounds.intersection(gridBounds)
             } yield {
               val targetExtent = gridExtent.extentFor(targetPixelBounds)
@@ -134,7 +138,7 @@ case class GeoTiffReprojectRasterSource[F[_]: Monad: UnsafeLift](
 
               // A tmp workaround for https://github.com/locationtech/proj4j/pull/29
               // Stacktrace details: https://github.com/geotrellis/geotrellis-contrib/pull/206#pullrequestreview-260115791
-              val sourceExtent      = Proj4Transform.synchronized(bufferedTargetExtent.reprojectAsPolygon(backTransform, 0.001).getEnvelopeInternal)
+              val sourceExtent = Proj4Transform.synchronized(bufferedTargetExtent.reprojectAsPolygon(backTransform, 0.001).getEnvelopeInternal)
               val sourcePixelBounds = closestTiffOverview.rasterExtent.gridBoundsFor(sourceExtent)
               (sourcePixelBounds, targetRasterExtent)
             }
@@ -144,8 +148,8 @@ case class GeoTiffReprojectRasterSource[F[_]: Monad: UnsafeLift](
             .crop(intersectingWindows.keys.toSeq, bands.toArray)
             .map { case (sourcePixelBounds, tile) =>
               val targetRasterExtent = intersectingWindows(sourcePixelBounds)
-              val sourceRaster       = Raster(tile, closestTiffOverview.rasterExtent.extentFor(sourcePixelBounds))
-              val rr                 = implicitly[RasterRegionReproject[MultibandTile]]
+              val sourceRaster = Raster(tile, closestTiffOverview.rasterExtent.extentFor(sourcePixelBounds))
+              val rr = implicitly[RasterRegionReproject[MultibandTile]]
               rr.regionReproject(
                 sourceRaster,
                 baseCRS,

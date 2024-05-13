@@ -66,35 +66,36 @@ object WmtsParams {
       val versionParam = params.validatedVersion(wmtsVersion)
 
       versionParam
-        .andThen { version: String =>
-          val layer         = params.validatedParam("layer")
-          val style         = params.validatedParam("style")
-          val tileMatrixSet = params.validatedParam("tilematrixset")
-          val tileMatrix    = params.validatedParam("tilematrix")
-          val tileRow       = params.validatedParam[Int]("tilerow", s => Try(s.toInt).toOption)
-          val tileCol       = params.validatedParam[Int]("tilecol", s => Try(s.toInt).toOption)
+        .andThen {
+          version: String =>
+            val layer = params.validatedParam("layer")
+            val style = params.validatedParam("style")
+            val tileMatrixSet = params.validatedParam("tilematrixset")
+            val tileMatrix = params.validatedParam("tilematrix")
+            val tileRow = params.validatedParam[Int]("tilerow", s => Try(s.toInt).toOption)
+            val tileCol = params.validatedParam[Int]("tilecol", s => Try(s.toInt).toOption)
 
-          val format =
-            params
-              .validatedParam("format")
-              .andThen { f =>
-                OutputFormat.fromString(f) match {
-                  case Some(format) => Valid(format).toValidatedNel
-                  case None =>
-                    Invalid(ParamError.UnsupportedFormatError(f)).toValidatedNel
+            val format =
+              params
+                .validatedParam("format")
+                .andThen { f =>
+                  OutputFormat.fromString(f) match {
+                    case Some(format) => Valid(format).toValidatedNel
+                    case None =>
+                      Invalid(ParamError.UnsupportedFormatError(f)).toValidatedNel
+                  }
                 }
-              }
 
-          (layer, style, tileMatrixSet, tileMatrix, format, tileRow, tileCol).mapN {
-            case (layer, style, tileMatrixSet, tileMatrix, format, tileRow, tileCol) =>
-              GetTile(version, layer, style, format, tileMatrixSet, tileMatrix, tileRow, tileCol)
-          }
+            (layer, style, tileMatrixSet, tileMatrix, format, tileRow, tileCol).mapN {
+              case (layer, style, tileMatrixSet, tileMatrix, format, tileRow, tileCol) =>
+                GetTile(version, layer, style, format, tileMatrixSet, tileMatrix, tileRow, tileCol)
+            }
         }
     }
   }
 
   def apply(queryParams: Map[String, Seq[String]]): ValidatedNel[ParamError, WmtsParams] = {
-    val params       = ParamMap(queryParams)
+    val params = ParamMap(queryParams)
     val serviceParam = params.validatedParam("service", validValues = Set("wmts"))
     val requestParam = params.validatedParam("request", validValues = Set("getcapabilities", "gettile"))
 

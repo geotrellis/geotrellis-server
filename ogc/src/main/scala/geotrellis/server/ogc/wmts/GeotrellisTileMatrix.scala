@@ -24,7 +24,9 @@ import geotrellis.vector.Extent
 import opengis.ows._
 import opengis.wmts.TileMatrix
 
-/** Relates Geotrellis Extent and TileLayout to a corresponding OGC Tile Matrix */
+/**
+ * Relates Geotrellis Extent and TileLayout to a corresponding OGC Tile Matrix
+ */
 case class GeotrellisTileMatrix(
   identifier: String,
   extent: Extent,
@@ -37,7 +39,7 @@ case class GeotrellisTileMatrix(
 
   val projectionMetersPerUnit: Map[CRS, Double] = Map(
     // meters per unit on equator
-    LatLng      -> 6378137.0 * 2.0 * math.Pi / 360.0,
+    LatLng -> 6378137.0 * 2.0 * math.Pi / 360.0,
     WebMercator -> 1
   )
 
@@ -47,7 +49,7 @@ case class GeotrellisTileMatrix(
         val scaleDenominator = layout.cellSize.width / 0.00028 * metersPerUnit
         TileMatrix(
           Title = title.map(LanguageStringType(_)).toList,
-          Abstract = `abstract`.map(LanguageStringType(_)).toList,
+          AbstractValue = `abstract`.map(LanguageStringType(_)).toList,
           Keywords = Nil,
           Identifier = CodeType(identifier),
           ScaleDenominator = scaleDenominator,

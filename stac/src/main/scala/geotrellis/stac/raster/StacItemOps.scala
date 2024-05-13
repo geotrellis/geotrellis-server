@@ -28,10 +28,10 @@ import com.azavea.stac4s.extensions.ExtensionResult
 import cats.syntax.apply._
 
 case class StacItemOps(self: StacItem) {
-  def eoExtension: ExtensionResult[EOItemExtension]     = self.getExtensionFields[EOItemExtension]
+  def eoExtension: ExtensionResult[EOItemExtension] = self.getExtensionFields[EOItemExtension]
   def projExtension: ExtensionResult[ProjItemExtension] = self.getExtensionFields[ProjItemExtension]
 
-  private def eoExtensionOption: Option[EOItemExtension]     = eoExtension.toOption
+  private def eoExtensionOption: Option[EOItemExtension] = eoExtension.toOption
   private def projExtensionOption: Option[ProjItemExtension] = projExtension.toOption
 
   def bandCount: Option[Int] = eoExtensionOption.map(_.bands.length)
@@ -47,7 +47,7 @@ case class StacItemOps(self: StacItem) {
 
   // geometry can be taken from the proj extension or projected from the LatLng geometry
   def getGeometry: Option[Geometry] = projExtensionOption.flatMap(_.geometry).orElse(crs.map(self.geometry.reproject(LatLng, _)))
-  def getExtent: Option[Extent]     = getGeometry.map(geom => Extent(geom.getEnvelopeInternal))
+  def getExtent: Option[Extent] = getGeometry.map(geom => Extent(geom.getEnvelopeInternal))
 
   def transform: Option[ProjTransform] = projExtensionOption.flatMap(_.transform)
 
@@ -64,6 +64,6 @@ case class StacItemOps(self: StacItem) {
       .orElse(gsd.map(d => CellSize(d, d)))
 
   def gridExtent: Option[GridExtent[Long]] = (getExtent, cellSize).mapN(GridExtent.apply[Long])
-  def rasterExtent: Option[RasterExtent]   = gridExtent.map(_.toRasterExtent)
+  def rasterExtent: Option[RasterExtent] = gridExtent.map(_.toRasterExtent)
   def dimensions: Option[Dimensions[Long]] = projExtensionOption.flatMap(_.shape).map(_.toDimensions)
 }

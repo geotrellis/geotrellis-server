@@ -34,13 +34,13 @@ import cats.syntax.traverse._
 import cats.syntax.flatMap._
 import cats.instances.option._
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 
 import scala.concurrent.duration._
 
-class GetCoverage[F[_]: Concurrent: Parallel: Logger](wcsModel: WcsModel[F]) {
+class GetCoverage[F[_]: Async: Parallel: Logger](wcsModel: WcsModel[F]) {
   def renderLayers(params: GetCoverageWcsParams): F[Option[Array[Byte]]] = {
-    val e  = params.extent
+    val e = params.extent
     val cs = params.cellSize
     wcsModel
       .getLayers(params)
@@ -52,7 +52,7 @@ class GetCoverage[F[_]: Concurrent: Parallel: Logger](wcsModel: WcsModel[F]) {
               LayerExtent(mal.algebra.pure[F], mal.parameters.pure[F], ConcurrentInterpreter.DEFAULT[F], mal.targetCellType)
           }
           .traverse { eval =>
-            eval(e, cs) map {
+            eval(e, cs).map {
               case Valid(mbtile) =>
                 val bytes = Raster(mbtile, e).render(params.crs, None, params.format, Nil)
                 requestCache.put(params, bytes)

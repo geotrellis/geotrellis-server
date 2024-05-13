@@ -59,7 +59,7 @@ object RangeReaderUtils {
           new HttpRangeReader(new URL(uri), false)
 
         case "s3" =>
-          val s3Uri    = new AmazonS3URI(java.net.URLDecoder.decode(uri, "UTF-8"))
+          val s3Uri = new AmazonS3URI(java.net.URLDecoder.decode(uri, "UTF-8"))
           val s3Client = S3ClientProducer.get()
           S3RangeReader(s3Uri.getBucket, s3Uri.getKey, s3Client)
 

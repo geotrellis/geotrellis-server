@@ -20,20 +20,19 @@ import geotrellis.server.ogc.{OutputFormat, ToMediaType}
 import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.ows.OwsDataRecord
 import geotrellis.server.utils._
-
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
 import org.http4s.scalaxml._
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
 import cats.effect._
-import cats.Parallel
+import cats.{ApplicativeThrow, Parallel}
 import cats.data.Validated
 import cats.syntax.apply._
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.option._
 import cats.syntax.applicativeError._
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import opengis.ows.{AllowedValues, AnyValue, DomainType, ValueType}
 import opengis._
 import org.http4s.headers.`Content-Type`
@@ -41,7 +40,7 @@ import scalaxb._
 
 import java.net._
 
-class WcsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
+class WcsView[F[_]: Async: Parallel: ApplicativeThrow: Logger](
   wcsModel: WcsModel[F],
   serviceUrl: URL
 ) extends Http4sDsl[F] {
@@ -158,12 +157,12 @@ class WcsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
       case Validated.Valid(wcsParams) =>
         wcsParams match {
           case _: GetCapabilitiesWcsParams =>
-            logger.debug(ansi"%bold{GetCapabilities: $serviceUrl}") *>
+            (logger.debug(ansi"%bold{GetCapabilities: $serviceUrl}") *>
               new CapabilitiesView[F](
                 wcsModel,
                 serviceUrl,
                 extendedParameters ::: extendedRGBParameters
-              ).toXML flatMap { Ok(_) }
+              ).toXML).flatMap { Ok(_) }
 
           case p: DescribeCoverageWcsParams =>
             logger.debug(ansi"%bold{DescribeCoverage: ${req.uri}}") *>
@@ -171,10 +170,10 @@ class WcsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
 
           case p: GetCoverageWcsParams =>
             for {
-              _           <- logger.debug(ansi"%bold{GetCoverage: ${req.uri}}")
+              _ <- logger.debug(ansi"%bold{GetCoverage: ${req.uri}}")
               getCoverage <- getCoverage.build(p).attempt
-              result      <- handleError(getCoverage, p.format)
-              _           <- logger.debug(s"getcoverage result: $result")
+              result <- handleError(getCoverage, p.format)
+              _ <- logger.debug(s"getcoverage result: $result")
             } yield result
         }
     }

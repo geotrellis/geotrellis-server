@@ -22,11 +22,10 @@ import com.azavea.maml.ast._
 import com.azavea.maml.error._
 import com.azavea.maml.eval.ConcurrentInterpreter
 import cats.effect._
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import org.openjdk.jmh.annotations._
 
-import scala.concurrent.ExecutionContext
 import java.net.URI
 
 @BenchmarkMode(Array(Mode.AverageTime))
@@ -34,7 +33,7 @@ import java.net.URI
 class TmsReificationBench {
 
   implicit val logger       = Slf4jLogger.getLogger[IO]
-  implicit var contextShift = IO.contextShift(ExecutionContext.global)
+  import cats.effect.unsafe.implicits.global
 
   // NDVI
   val ast: Expression =
@@ -56,13 +55,13 @@ class TmsReificationBench {
 
   @Benchmark
   def geotiffLayerTms: Interpreted[MultibandTile] = {
-    val eval = LayerTms(IO(ast), IO(geotiffVars), ConcurrentInterpreter.DEFAULT[IO])
+    val eval = LayerTms(IO(ast), IO(geotiffVars), ConcurrentInterpreter.DEFAULT[IO], None)
     eval(9, 454, 200).unsafeRunSync
   }
 
   @Benchmark
   def gdalLayerTms: Interpreted[MultibandTile] = {
-    val eval = LayerTms(IO(ast), IO(gdalVars), ConcurrentInterpreter.DEFAULT[IO])
+    val eval = LayerTms(IO(ast), IO(gdalVars), ConcurrentInterpreter.DEFAULT[IO], None)
     eval(9, 454, 200).unsafeRunSync
   }
 }

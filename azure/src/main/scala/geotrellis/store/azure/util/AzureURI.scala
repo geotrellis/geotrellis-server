@@ -25,7 +25,7 @@ import java.net.URI
 
 case class AzureURI(uri: URI) {
   def getContainer: String = uri.getUserInfo
-  def getAccount: String   = uri.getAuthority.split("@").last.split("\\.").head
+  def getAccount: String = uri.getAuthority.split("@").last.split("\\.").head
   def getPath: String = {
     val path = uri.getPath
     if (path.startsWith("/")) path.drop(1) else path
@@ -44,7 +44,7 @@ object AzureURI {
     if (List("wasbs", "wasb") contains uri.getScheme) AzureURI(uri)
     else {
       // get URI path, remove the first slash
-      val path  = uri.getPath
+      val path = uri.getPath
       val npath = (if (path.startsWith("/")) path.tail else path).split("/")
       // the first item in the path is the container
       val container = npath.head
@@ -54,7 +54,7 @@ object AzureURI {
     }
   def fromString(uri: String): AzureURI = fromURI(new URI(uri))
 
-  implicit def uriToAzureUri(uri: URI): AzureURI       = fromURI(uri)
+  implicit def uriToAzureUri(uri: URI): AzureURI = fromURI(uri)
   implicit def stringToAzureUri(uri: String): AzureURI = fromString(uri)
-  implicit def azureUriToUri(uri: AzureURI): URI       = uri.uri
+  implicit def azureUriToUri(uri: AzureURI): URI = uri.uri
 }

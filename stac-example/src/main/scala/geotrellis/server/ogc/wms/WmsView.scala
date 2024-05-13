@@ -29,12 +29,12 @@ import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
 import io.circe.syntax._
 import cats.effect._
-import cats.Parallel
+import cats.{ApplicativeThrow, Parallel}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.option._
 import cats.data.Validated._
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
 import opengis._
@@ -46,7 +46,7 @@ import java.net.URL
 import scala.concurrent.duration._
 import scala.xml.Elem
 
-class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
+class WmsView[F[_]: Async: Parallel: ApplicativeThrow: Logger](
   wmsModel: WmsModel[F],
   serviceUrl: URL
 ) extends Http4sDsl[F] {

@@ -52,9 +52,9 @@ case class FocalParameters(azimuth: Option[Double], altitude: Option[Double], zF
 
 object FocalParameters {
   def fromParams(params: ParamMap): Validated[NonEmptyList[ParamError], Option[FocalParameters]] = {
-    val azimuth: Validated[NonEmptyList[ParamError], Option[Double]]  = params.validatedOptionalParamDouble("azimuth")
+    val azimuth: Validated[NonEmptyList[ParamError], Option[Double]] = params.validatedOptionalParamDouble("azimuth")
     val altitude: Validated[NonEmptyList[ParamError], Option[Double]] = params.validatedOptionalParamDouble("altitude")
-    val zFactor: Validated[NonEmptyList[ParamError], Option[Double]]  = params.validatedOptionalParamDouble("zfactor")
+    val zFactor: Validated[NonEmptyList[ParamError], Option[Double]] = params.validatedOptionalParamDouble("zfactor")
     val target: Validated[NonEmptyList[ParamError], Option[TargetCell]] = params
       .validatedOptionalParam("target")
       .andThen { f =>

@@ -44,19 +44,13 @@ case class RGBParameters(
         case r :: g :: b :: Nil =>
           val id: Expression => Expression = identity
           val rmap =
-            clampRed.map(_.bind).getOrElse(id) andThen
-              normalizeRed.map(_.bind).getOrElse(id) andThen
-              rescaleRed.map(_.bind).getOrElse(id)
+            clampRed.map(_.bind).getOrElse(id).andThen(normalizeRed.map(_.bind).getOrElse(id)).andThen(rescaleRed.map(_.bind).getOrElse(id))
 
           val gmap =
-            clampGreen.map(_.bind).getOrElse(id) andThen
-              normalizeGreen.map(_.bind).getOrElse(id) andThen
-              rescaleGreen.map(_.bind).getOrElse(id)
+            clampGreen.map(_.bind).getOrElse(id).andThen(normalizeGreen.map(_.bind).getOrElse(id)).andThen(rescaleGreen.map(_.bind).getOrElse(id))
 
           val bmap =
-            clampBlue.map(_.bind).getOrElse(id) andThen
-              normalizeBlue.map(_.bind).getOrElse(id) andThen
-              rescaleBlue.map(_.bind).getOrElse(id)
+            clampBlue.map(_.bind).getOrElse(id).andThen(normalizeBlue.map(_.bind).getOrElse(id)).andThen(rescaleBlue.map(_.bind).getOrElse(id))
 
           e.copy(children = rmap(r) :: gmap(g) :: bmap(b) :: Nil)
         case _ => e

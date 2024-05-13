@@ -21,7 +21,9 @@ import scalaxb.{CanWriteXML, DataRecord}
 
 import scala.reflect.{classTag, ClassTag}
 
-/** A function that reduces boilerplate by generating a namespace and a key for a common ows [[DataRecord]] */
+/**
+ * A function that reduces boilerplate by generating a namespace and a key for a common ows [[DataRecord]]
+ */
 object OwsDataRecord {
   def apply[T: CanWriteXML: ClassTag](value: T): DataRecord[T] =
     apply[T](classTag[T].toString.split("\\.").lastOption.flatMap(_.split("Type").headOption), value)

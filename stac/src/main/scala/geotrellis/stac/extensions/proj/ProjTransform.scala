@@ -24,8 +24,8 @@ import scala.util.Try
 
 case class ProjTransform(upx: Double, xres: Double, xskew: Double, upy: Double, yskew: Double, yres: Double) {
   def toArray: Array[Double] = Array(upx, xres, xskew, upy, yskew, yres)
-  def toList: List[Double]   = toArray.toList
-  def cellSize: CellSize     = CellSize(math.abs(xres), math.abs(yres))
+  def toList: List[Double] = toArray.toList
+  def cellSize: CellSize = CellSize(math.abs(xres), math.abs(yres))
 }
 
 object ProjTransform {

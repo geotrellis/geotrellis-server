@@ -4,25 +4,14 @@ import de.heikoseeberger.sbtheader._
 
 import Dependencies._
 
-scalaVersion             := scalaVer
+scalaVersion := scalaVer
 ThisBuild / scalaVersion := scalaVer
+ThisBuild / libraryDependencySchemes += "org.typelevel" %% "cats-parse" % VersionScheme.Always
 
 val currentYear = java.time.Year.now.getValue.toString
 
 lazy val commonSettings = Seq(
-  // We are overriding the default behavior of sbt-git which, by default,
-  // only appends the `-SNAPSHOT` suffix if there are uncommitted
-  // changes in the workspace.
-  version := {
-    if (git.gitHeadCommit.value.isEmpty) "0.0.1-SNAPSHOT"
-    else if (git.gitDescribedVersion.value.isEmpty)
-      git.gitHeadCommit.value.get.substring(0, 7) + "-SNAPSHOT"
-    else if (git.gitCurrentTags.value.isEmpty || git.gitUncommittedChanges.value)
-      git.gitDescribedVersion.value.get + "-SNAPSHOT"
-    else
-      git.gitDescribedVersion.value.get
-  },
-  scalaVersion       := scalaVer,
+  scalaVersion := scalaVer,
   crossScalaVersions := crossScalaVer,
   scalacOptions := Seq(
     "-deprecation",
@@ -35,33 +24,33 @@ lazy val commonSettings = Seq(
     "-language:existentials",
     "-language:experimental.macros",
     "-feature",
-    "-Ypartial-unification",
     "-Xmacro-settings:materialize-derivations"
     // "-Yrangepos",            // required by SemanticDB compiler plugin
     // "-Ywarn-unused-import",  // required by `RemoveUnused` rule
   ),
-  resolvers ++= Seq(
-    Resolver
-      .bintrayRepo("bkirwi", "maven"), // Required for `decline` dependency
+  scalacOptions ++= (if (priorTo213(scalaVersion.value)) Seq("-Ypartial-unification") else Seq("-Ymacro-annotations")),
+  resolvers ++= Resolver.sonatypeOssRepos("releases") ++ Resolver.sonatypeOssRepos("snapshots") ++ Seq(
+    Resolver.bintrayRepo("bkirwi", "maven"), // Required for `decline` dependency
     Resolver.bintrayRepo("azavea", "maven"),
     Resolver.bintrayRepo("azavea", "geotrellis"),
-    Resolver.sonatypeRepo("releases"),
-    Resolver.sonatypeRepo("snapshots"),
-    "osgeo-snapshots" at "https://repo.osgeo.org/repository/snapshot/",
-    "osgeo-releases" at "https://repo.osgeo.org/repository/release/",
-    "eclipse-releases" at "https://repo.eclipse.org/content/groups/releases",
-    "eclipse-snapshots" at "https://repo.eclipse.org/content/groups/snapshots",
-    "jitpack" at "https://jitpack.io"
+    "osgeo-snapshots".at("https://repo.osgeo.org/repository/snapshot/"),
+    "osgeo-releases".at("https://repo.osgeo.org/repository/release/"),
+    "eclipse-releases".at("https://repo.eclipse.org/content/groups/releases"),
+    "eclipse-snapshots".at("https://repo.eclipse.org/content/groups/snapshots"),
+    "jitpack".at("https://jitpack.io")
+  ),
+  libraryDependencies ++= (
+    if (priorTo213(scalaVersion.value)) Seq(compilerPlugin(macrosParadise cross CrossVersion.full))
+    else Nil
   ),
   addCompilerPlugin(kindProjector cross CrossVersion.full),
-  addCompilerPlugin(macrosParadise cross CrossVersion.full),
   addCompilerPlugin(semanticdbScalac cross CrossVersion.full),
   shellPrompt := { s =>
     Project.extract(s).currentProject.id + " > "
   },
-  run / fork              := true,
-  outputStrategy          := Some(StdoutOutput),
-  assembly / test         := {},
+  run / fork := true,
+  outputStrategy := Some(StdoutOutput),
+  assembly / test := {},
   Compile / doc / sources := (Compile / doc / sources).value,
   assembly / assemblyMergeStrategy := {
     case "reference.conf"   => MergeStrategy.concat
@@ -101,21 +90,21 @@ lazy val commonSettings = Seq(
 )
 
 lazy val noPublishSettings = Seq(
-  publish         := {},
-  publishLocal    := {},
+  publish := {},
+  publishLocal := {},
   publishArtifact := false
 )
 
 lazy val publishSettings = Seq(
-  organization         := "com.azavea.geotrellis",
-  organizationName     := "GeoTrellis",
+  organization := "com.azavea.geotrellis",
+  organizationName := "GeoTrellis",
   organizationHomepage := Some(new URL("https://geotrellis.io/")),
+  homepage := Some(url("https://github.com/geotrellis/geotrellis-server")),
   description := "GeoTrellis Server is a set of components designed to simplify viewing, processing, and serving raster data from arbitrary sources with an emphasis on doing so in a functional style.",
   Test / publishArtifact := false
-) ++ sonatypeSettings ++ credentialSettings
+) ++ sonatypeSettings
 
 lazy val sonatypeSettings = Seq(
-  publishMavenStyle   := true,
   sonatypeProfileName := "com.azavea",
   sonatypeProjectHosting := Some(
     GitHubHosting(
@@ -146,32 +135,16 @@ lazy val sonatypeSettings = Seq(
   ),
   licenses := Seq(
     "Apache-2.0" -> url("https://www.apache.org/licenses/LICENSE-2.0.txt")
-  ),
-  publishTo := sonatypePublishTo.value
-)
-
-lazy val credentialSettings = Seq(
-  credentials += Credentials(
-    "GnuPG Key ID",
-    "gpg",
-    System.getenv().get("GPG_KEY_ID"),
-    "ignored"
-  ),
-  credentials += Credentials(
-    "Sonatype Nexus Repository Manager",
-    "oss.sonatype.org",
-    System.getenv().get("SONATYPE_USERNAME"),
-    System.getenv().get("SONATYPE_PASSWORD")
   )
 )
 
 lazy val root = project
   .in(file("."))
+  .aggregate(core, example, ogc, opengis, `ogc-example`, effects, stac, `stac-example`, azure)
   .settings(name := "geotrellis-server")
   .settings(commonSettings)
   .settings(publishSettings)
   .settings(noPublishSettings)
-  .aggregate(core, example, ogc, opengis, `ogc-example`, effects, stac, `stac-example`, azure)
 
 lazy val core = project
   .settings(moduleName := "geotrellis-server-core")
@@ -202,7 +175,7 @@ lazy val example = project
   .settings(noPublishSettings)
   .dependsOn(core)
   .settings(
-    moduleName                 := "geotrellis-server-example",
+    moduleName := "geotrellis-server-example",
     assembly / assemblyJarName := "geotrellis-server-example.jar",
     libraryDependencies ++= Seq(
       http4sDsl.value,
@@ -248,23 +221,23 @@ lazy val opengis = project
     )
   )
   .settings(
-    Compile / scalaxb / scalaxbDispatchVersion     := dispatchVer,
-    Compile / scalaxb / scalaxbPackageName         := "generated",
+    Compile / scalaxb / scalaxbDispatchVersion := dispatchVer,
+    Compile / scalaxb / scalaxbPackageName := "generated",
     Compile / scalaxb / scalaxbProtocolPackageName := Some("opengis"),
     Compile / scalaxb / scalaxbPackageNames := Map(
-      uri("http://www.w3.org/1999/xlink")           -> "xlink",
-      uri("http://www.opengis.net/wms")             -> "opengis.wms",
-      uri("http://www.opengis.net/ogc")             -> "opengis.ogc",
-      uri("http://www.opengis.net/wmts/1.0")        -> "opengis.wmts",
-      uri("http://www.opengis.net/ows/1.1")         -> "opengis.ows",
-      uri("http://www.opengis.net/ows")             -> "opengis.sld.ows",
-      uri("http://www.opengis.net/wcs/1.1.1")       -> "opengis.wcs",
-      uri("http://www.opengis.net/gml")             -> "opengis.gml",
-      uri("http://www.opengis.net/filter")          -> "opengis.filter",
-      uri("http://www.opengis.net/se")              -> "opengis.se",
-      uri("http://www.opengis.net/sld")             -> "opengis.sld",
-      uri("http://www.opengis.net/wfs")             -> "opengis.wfs",
-      uri("http://www.w3.org/2001/SMIL20/")         -> "opengis.gml.smil",
+      uri("http://www.w3.org/1999/xlink") -> "xlink",
+      uri("http://www.opengis.net/wms") -> "opengis.wms",
+      uri("http://www.opengis.net/ogc") -> "opengis.ogc",
+      uri("http://www.opengis.net/wmts/1.0") -> "opengis.wmts",
+      uri("http://www.opengis.net/ows/1.1") -> "opengis.ows",
+      uri("http://www.opengis.net/ows") -> "opengis.sld.ows",
+      uri("http://www.opengis.net/wcs/1.1.1") -> "opengis.wcs",
+      uri("http://www.opengis.net/gml") -> "opengis.gml",
+      uri("http://www.opengis.net/filter") -> "opengis.filter",
+      uri("http://www.opengis.net/se") -> "opengis.se",
+      uri("http://www.opengis.net/sld") -> "opengis.sld",
+      uri("http://www.opengis.net/wfs") -> "opengis.wfs",
+      uri("http://www.w3.org/2001/SMIL20/") -> "opengis.gml.smil",
       uri("http://www.w3.org/2001/SMIL20/Language") -> "opengis.gml.smil"
     )
   )
@@ -325,7 +298,7 @@ lazy val `ogc-example` = project
   .settings(
     docker / dockerfile := {
       // The assembly task generates a fat JAR file
-      val artifact: File     = assembly.value
+      val artifact: File = assembly.value
       val artifactTargetPath = s"/app/${artifact.name}"
 
       new Dockerfile {
@@ -427,3 +400,9 @@ lazy val bench = project
   .settings(commonSettings)
   .settings(noPublishSettings)
   .enablePlugins(JmhPlugin)
+
+def priorTo213(scalaVersion: String): Boolean =
+  CrossVersion.partialVersion(scalaVersion) match {
+    case Some((2, minor)) if minor < 13 => true
+    case _                              => false
+  }

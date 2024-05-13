@@ -48,7 +48,7 @@ class CapabilitiesView[F[_]: Monad](wmtsModel: WmtsModel[F], serviceUrl: URL) {
         Title = LanguageStringType(
           wmtsModel.serviceMetadata.identification.title
         ) :: Nil,
-        Abstract = LanguageStringType(
+        AbstractValue = LanguageStringType(
           wmtsModel.serviceMetadata.identification.description
         ) :: Nil,
         Keywords = KeywordsType(
@@ -146,7 +146,7 @@ class CapabilitiesView[F[_]: Monad](wmtsModel: WmtsModel[F], serviceUrl: URL) {
       OperationsMetadata(Operation = getCapabilities :: getTile :: getFeatureInfo :: Nil)
     }
 
-    val layers         = modelAsLayers(wmtsModel)
+    val layers = modelAsLayers(wmtsModel)
     val tileMatrixSets = wmtsModel.matrices.map(_.toXml)
 
     // that's how layers metadata is generated
@@ -203,7 +203,7 @@ object CapabilitiesView {
 
       LayerType(
         Title = LanguageStringType(self.title) :: Nil,
-        Abstract = Nil,
+        AbstractValue = Nil,
         Keywords = Nil,
         WGS84BoundingBox = boundingBox(wgs84extent) :: Nil,
         Identifier = CodeType(self.name),
@@ -213,7 +213,7 @@ object CapabilitiesView {
         Style = self.styles.map { style =>
           Style(
             Title = LanguageStringType(style.title) :: Nil,
-            Abstract = LanguageStringType(style.title) :: Nil,
+            AbstractValue = LanguageStringType(style.title) :: Nil,
             Identifier = CodeType(style.name),
             Keywords = Nil,
             LegendURL = Nil
@@ -236,7 +236,7 @@ object CapabilitiesView {
   def modelAsLayers[F[_]: Monad](wmtsModel: WmtsModel[F]): F[List[DataRecord[LayerType]]] =
     wmtsModel.sources.store
       .map { sources =>
-        sources map { src =>
+        sources.map { src =>
           DataRecord(
             "wms".some,
             "Layer".some,

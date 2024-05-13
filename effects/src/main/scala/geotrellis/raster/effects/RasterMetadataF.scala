@@ -30,15 +30,15 @@ abstract class RasterMetadataF[F[_]: Monad] {
   def crs: F[CRS]
   def bandCount: F[Int]
   def cellType: F[CellType]
-  def size: F[Long]                   = (cols, rows).mapN(_ * _)
-  def dimensions: F[(Long, Long)]     = (cols, rows).mapN((c, r) => (c, r))
+  def size: F[Long] = (cols, rows).mapN(_ * _)
+  def dimensions: F[(Long, Long)] = (cols, rows).mapN((c, r) => (c, r))
   def gridBounds: F[GridBounds[Long]] = (cols, rows).mapN { case (c, r) => GridBounds(0, 0, c - 1, r - 1) }
-  def cellSize: F[CellSize]           = gridExtent.map(_.cellSize)
+  def cellSize: F[CellSize] = gridExtent.map(_.cellSize)
   def gridExtent: F[GridExtent[Long]]
   def resolutions: F[List[CellSize]]
   def extent: F[Extent] = gridExtent.map(_.extent)
-  def cols: F[Long]     = gridExtent.map(_.cols)
-  def rows: F[Long]     = gridExtent.map(_.rows)
+  def cols: F[Long] = gridExtent.map(_.cols)
+  def rows: F[Long] = gridExtent.map(_.rows)
 
   /**
    * Return the "base" metadata, usually it is a zero band metadata, a metadata that is valid for the entire source and for the zero band

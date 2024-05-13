@@ -25,9 +25,11 @@ import cats.effect._
 import cats.implicits._
 import cats.data.Validated._
 import geotrellis.raster.{io => _, _}
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 
-/** Provides methods for producing TMS tiles */
+/**
+ * Provides methods for producing TMS tiles
+ */
 object LayerTms {
 
   /**
@@ -62,13 +64,15 @@ object LayerTms {
         s"Retrieved parameters for TMS ($z, $x, $y): ${paramMap.toString}"
       )
       vars = Vars.varsWithBuffer(expr)
-      params <- vars.toList.parTraverse { case (varName, (_, buffer)) =>
-        val eval =
-          implicitly[TmsReification[F, T]]
-            .tmsReification(paramMap(varName), buffer)
-        eval(z, x, y).map(varName -> _)
-      } map { _.toMap }
-      reified <- Expression.bindParams(expr, params.mapValues(RasterLit(_))) match {
+      params <- vars.toList
+        .parTraverse { case (varName, (_, buffer)) =>
+          val eval =
+            implicitly[TmsReification[F, T]]
+              .tmsReification(paramMap(varName), buffer)
+          eval(z, x, y).map(varName -> _)
+        }
+        .map { _.toMap }
+      reified <- Expression.bindParams(expr, params.map { case (key, value) => key -> RasterLit(value) }) match {
         case Valid(expression) => interpreter(expression)
         case Invalid(errors)   => throw new Exception(errors.map(_.repr).reduce)
       }
@@ -84,7 +88,9 @@ object LayerTms {
     interpreter: Interpreter[F]
   ): (Int, Int, Int) => F[Interpreted[MultibandTile]] = apply[F, T](getParams.map(mkExpr(_)), getParams, interpreter, None)
 
-  /** Provide an expression and expect arguments to fulfill its needs */
+  /**
+   * Provide an expression and expect arguments to fulfill its needs
+   */
   def curried[F[_]: Logger: Parallel: Monad, T: TmsReification[F, *]](
     expr: Expression,
     interpreter: Interpreter[F],
@@ -95,7 +101,9 @@ object LayerTms {
       eval(z, x, y)
     }
 
-  /** The identity endpoint (for simple display of raster) */
+  /**
+   * The identity endpoint (for simple display of raster)
+   */
   def concurrent[F[_]: Logger: Parallel: Monad: Concurrent, T: TmsReification[F, *]](
     getExpression: F[Expression],
     getParams: F[Map[String, T]],
@@ -103,7 +111,9 @@ object LayerTms {
   ): (Int, Int, Int) => F[Interpreted[MultibandTile]] =
     apply(getExpression, getParams, interpreter, None)
 
-  /** The identity endpoint (for simple display of raster) */
+  /**
+   * The identity endpoint (for simple display of raster)
+   */
   def withCellType[F[_]: Logger: Parallel: Monad: Concurrent, T: TmsReification[F, *]](
     param: T,
     cellType: CellType

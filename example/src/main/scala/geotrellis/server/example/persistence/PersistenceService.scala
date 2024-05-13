@@ -24,7 +24,7 @@ import com.azavea.maml.ast.codec.tree._
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.circe._
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import io.circe._
 import io.circe.parser._
 import io.circe.syntax._
@@ -37,7 +37,7 @@ import cats.ApplicativeError
 import java.util.UUID
 import scala.util.Try
 
-class PersistenceService[F[_]: Sync: Logger: ApplicativeError[*[_], Throwable], S: MamlStore[F, *], T: TmsReification[F, *]: Decoder](
+class PersistenceService[F[_]: Concurrent: Logger: ApplicativeError[*[_], Throwable], S: MamlStore[F, *], T: TmsReification[F, *]: Decoder](
   val store: S
 ) extends Http4sDsl[F] {
   val logger = Logger[F]
@@ -68,13 +68,13 @@ class PersistenceService[F[_]: Sync: Logger: ApplicativeError[*[_], Throwable], 
             s"Attempting to store expression (${req.bodyText}) at key ($key)"
           )
           res <- MamlStore[F, S].putMaml(store, key, expr)
-        } yield res).attempt flatMap {
+        } yield res).attempt.flatMap {
           case Right(created) =>
             Created()
           case Left(InvalidMessageBodyFailure(_, _)) | Left(MalformedMessageBodyFailure(_, _)) =>
-            req.bodyText.compile.toList flatMap { reqBody =>
+            req.bodyText.compile.toList.flatMap { reqBody =>
               BadRequest(s"""Unable to parse ${reqBody
-                .mkString("")} as a MAML expression""")
+                  .mkString("")} as a MAML expression""")
             }
           case Left(err) =>
             logger.debug(err.toString)
@@ -83,14 +83,14 @@ class PersistenceService[F[_]: Sync: Logger: ApplicativeError[*[_], Throwable], 
 
       case req @ GET -> Root / IdVar(key) =>
         logger.info(s"Attempting to retrieve expression at key ($key)")
-        MamlStore[F, S].getMaml(store, key) flatMap {
+        MamlStore[F, S].getMaml(store, key).flatMap {
           case Some(expr) => Ok(expr.asJson)
           case None       => NotFound()
         }
 
       case req @ GET -> Root / IdVar(key) / "parameters" =>
         logger.info(s"Attempting to retrieve expression parameters at key ($key)")
-        MamlStore[F, S].getMaml(store, key) flatMap {
+        MamlStore[F, S].getMaml(store, key).flatMap {
           case Some(expr) => Ok(Vars.vars(expr).asJson)
           case None       => NotFound()
         }

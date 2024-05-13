@@ -28,7 +28,9 @@ import cats.syntax.functor._
 import cats.syntax.apply._
 import cats.instances.option._
 
-/** This class holds all the information necessary to construct a response to a WMTS request */
+/**
+ * This class holds all the information necessary to construct a response to a WMTS request
+ */
 case class WmtsModel[F[_]: Monad](
   serviceMetadata: ows.ServiceMetadata,
   matrices: List[GeotrellisTileMatrixSet],
@@ -45,9 +47,9 @@ case class WmtsModel[F[_]: Monad](
     (
       getMatrixCrs(p.tileMatrixSet),
       getMatrixLayoutDefinition(p.tileMatrixSet, p.tileMatrix)
-    ) traverseN { (crs, layout) =>
+    ).traverseN { (crs, layout) =>
       sources.find(p.toQuery).map { sources =>
-        sources map { source =>
+        sources.map { source =>
           val style: Option[OgcStyle] = source.styles.find(_.name == p.style)
 
           source match {
@@ -55,8 +57,8 @@ case class WmtsModel[F[_]: Monad](
               val (name, title, algebra, resampleMethod, overviewStrategy) =
                 (mas.name, mas.title, mas.algebra, mas.resampleMethod, mas.overviewStrategy)
 
-              val simpleLayers = mas.sources.mapValues { rs =>
-                SimpleTiledOgcLayer(name, title, crs, layout, rs, style, resampleMethod, overviewStrategy)
+              val simpleLayers = mas.sources.map { case (key, rs) =>
+                key -> SimpleTiledOgcLayer(name, title, crs, layout, rs, style, resampleMethod, overviewStrategy)
               }
               MapAlgebraTiledOgcLayer(name, title, crs, layout, simpleLayers, algebra, style, resampleMethod, overviewStrategy)
             case ss: SimpleSource =>
@@ -65,12 +67,12 @@ case class WmtsModel[F[_]: Monad](
         }
       }
     }
-  } map { _ getOrElse Nil }
+  }.map { _.getOrElse(Nil) }
 
   def getMatrixLayoutDefinition(tileMatrixSetId: String, tileMatrixId: String): Option[LayoutDefinition] =
     for {
       matrixSet <- matrixSetLookup.get(tileMatrixSetId)
-      matrix    <- matrixSet.tileMatrix.find(_.identifier == tileMatrixId)
+      matrix <- matrixSet.tileMatrix.find(_.identifier == tileMatrixId)
     } yield matrix.layout
 
   def getMatrixCrs(tileMatrixSetId: String): Option[CRS] =

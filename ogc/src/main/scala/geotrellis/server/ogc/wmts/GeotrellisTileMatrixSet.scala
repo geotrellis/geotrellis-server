@@ -25,7 +25,9 @@ import opengis.wmts.TileMatrixSet
 
 import java.net.URI
 
-/** A collection of tile matrices; most commonly forming a pyramid of different resolutions */
+/**
+ * A collection of tile matrices; most commonly forming a pyramid of different resolutions
+ */
 case class GeotrellisTileMatrixSet(
   identifier: String,
   supportedCrs: CRS,
@@ -38,7 +40,7 @@ case class GeotrellisTileMatrixSet(
   def toXml: TileMatrixSet = {
     val ret = TileMatrixSet(
       Title = title.map(LanguageStringType(_)).toList,
-      Abstract = `abstract`.map(LanguageStringType(_)).toList,
+      AbstractValue = `abstract`.map(LanguageStringType(_)).toList,
       Keywords = Nil,
       Identifier = CodeType(identifier),
       TileMatrix = tileMatrix.map(_.toXml(supportedCrs)),

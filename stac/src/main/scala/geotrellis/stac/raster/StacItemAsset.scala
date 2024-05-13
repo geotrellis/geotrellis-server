@@ -24,23 +24,23 @@ import geotrellis.stac.extensions.proj.ProjTransform
 import geotrellis.vector.{Extent, Geometry}
 
 case class StacItemAsset(itemAsset: StacAsset, item: StacItem) {
-  def href: String           = itemAsset.href
+  def href: String = itemAsset.href
   def bandCount: Option[Int] = item.bandCount
-  def crs: Option[CRS]       = itemAsset.crs orElse item.crs
+  def crs: Option[CRS] = itemAsset.crs.orElse(item.crs)
 
   // geometry can be taken from the proj extension or projected from the LatLng geometry
-  def getGeometry: Option[Geometry] = itemAsset.getGeometry orElse item.getGeometry
-  def getExtent: Option[Extent]     = itemAsset.getExtent orElse item.getExtent
+  def getGeometry: Option[Geometry] = itemAsset.getGeometry.orElse(item.getGeometry)
+  def getExtent: Option[Extent] = itemAsset.getExtent.orElse(item.getExtent)
 
-  def transform: Option[ProjTransform] = itemAsset.transform orElse item.transform
+  def transform: Option[ProjTransform] = itemAsset.transform.orElse(item.transform)
 
   // https://github.com/radiantearth/stac-spec/blob/v1.0.0-rc.1/item-spec/common-metadata.md#gsd
-  def gsd: Option[Double] = itemAsset.gsd orElse item.gsd
+  def gsd: Option[Double] = itemAsset.gsd.orElse(item.gsd)
 
   // the cellSize can be extracted from the transform object or derived from the given extent and shape
-  def cellSize: Option[CellSize] = itemAsset.cellSize orElse item.cellSize
+  def cellSize: Option[CellSize] = itemAsset.cellSize.orElse(item.cellSize)
 
-  def gridExtent: Option[GridExtent[Long]] = itemAsset.gridExtent orElse item.gridExtent
-  def rasterExtent: Option[RasterExtent]   = itemAsset.rasterExtent orElse item.rasterExtent
-  def dimensions: Option[Dimensions[Long]] = itemAsset.dimensions orElse item.dimensions
+  def gridExtent: Option[GridExtent[Long]] = itemAsset.gridExtent.orElse(item.gridExtent)
+  def rasterExtent: Option[RasterExtent] = itemAsset.rasterExtent.orElse(item.rasterExtent)
+  def dimensions: Option[Dimensions[Long]] = itemAsset.dimensions.orElse(item.dimensions)
 }

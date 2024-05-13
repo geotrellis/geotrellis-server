@@ -33,15 +33,15 @@ class StacAssetRasterSource(
 ) extends RasterSource {
   @transient private lazy val underlying = underlyingRS.getOrElse(RasterSource(asset.href))
 
-  val name: SourceName                                  = asset.href
-  def crs: CRS                                          = asset.crs.getOrElse(underlying.crs)
-  def bandCount: Int                                    = asset.bandCount.getOrElse(underlying.bandCount)
-  def cellType: CellType                                = underlying.cellType
-  def gridExtent: GridExtent[Long]                      = asset.gridExtent.getOrElse(underlying.gridExtent)
-  def resolutions: List[CellSize]                       = underlying.resolutions
-  def attributes: Map[String, String]                   = asset.item.properties.toMap
+  val name: SourceName = asset.href
+  def crs: CRS = asset.crs.getOrElse(underlying.crs)
+  def bandCount: Int = asset.bandCount.getOrElse(underlying.bandCount)
+  def cellType: CellType = underlying.cellType
+  def gridExtent: GridExtent[Long] = asset.gridExtent.getOrElse(underlying.gridExtent)
+  def resolutions: List[CellSize] = underlying.resolutions
+  def attributes: Map[String, String] = asset.item.properties.toMap
   def attributesForBand(band: Int): Map[String, String] = Map.empty
-  def metadata: StacItemAssetMetadata                   = StacItemAssetMetadata(name, crs, bandCount, cellType, gridExtent, resolutions, asset)
+  def metadata: StacItemAssetMetadata = StacItemAssetMetadata(name, crs, bandCount, cellType, gridExtent, resolutions, asset)
 
   def reprojection(
     targetCRS: CRS,

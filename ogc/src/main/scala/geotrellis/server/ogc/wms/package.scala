@@ -42,11 +42,11 @@ package object wms {
    * "http://www.w3.org/1999/xlink", Some("xs") -> "http://www.w3.org/2001/XMLSchema", Some("xsi") -> "http://www.w3.org/2001/XMLSchema-instance")
    */
   val wmsScope: NamespaceBinding = scalaxb.toScope(
-    None          -> "http://www.opengis.net/wms",
-    Some("ogc")   -> "http://www.opengis.net/ogc",
+    None -> "http://www.opengis.net/wms",
+    Some("ogc") -> "http://www.opengis.net/ogc",
     Some("xlink") -> "http://www.w3.org/1999/xlink",
-    Some("xs")    -> "http://www.w3.org/2001/XMLSchema",
-    Some("xsi")   -> "http://www.w3.org/2001/XMLSchema-instance"
+    Some("xs") -> "http://www.w3.org/2001/XMLSchema",
+    Some("xsi") -> "http://www.w3.org/2001/XMLSchema-instance"
   )
 
   implicit class withLegendModelMethods(that: LegendModel) {
@@ -65,8 +65,8 @@ package object wms {
           "@{http://www.w3.org/1999/xlink}type" -> Option(
             DataRecord(xlink.TypeType.fromString(that.`type`, scope = toScope(Some("xlink") -> "http://www.w3.org/1999/xlink")))
           ),
-          "@{http://www.w3.org/1999/xlink}href"  -> Option(DataRecord(new URI(that.href))),
-          "@{http://www.w3.org/1999/xlink}role"  -> that.role.map(v => DataRecord(new URI(v))),
+          "@{http://www.w3.org/1999/xlink}href" -> Option(DataRecord(new URI(that.href))),
+          "@{http://www.w3.org/1999/xlink}role" -> that.role.map(v => DataRecord(new URI(v))),
           "@{http://www.w3.org/1999/xlink}title" -> that.title.map(v => DataRecord(v)),
           "@{http://www.w3.org/1999/xlink}show" -> that.show.map(v =>
             DataRecord(xlink.ShowType.fromString(v, scope = scalaxb.toScope(Some("xlink") -> "http://www.w3.org/1999/xlink")))

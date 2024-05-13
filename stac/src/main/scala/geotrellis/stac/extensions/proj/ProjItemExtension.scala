@@ -35,6 +35,6 @@ case class ProjItemExtension(
 object ProjItemExtension {
   implicit val eq: Eq[ProjItemExtension] = Eq.fromUniversalEquals
 
-  implicit lazy val itemExtension: ItemExtension[ProjItemExtension]           = ItemExtension.instance
+  implicit lazy val itemExtension: ItemExtension[ProjItemExtension] = ItemExtension.instance
   implicit lazy val stacAssetExtension: StacAssetExtension[ProjItemExtension] = StacAssetExtension.instance
 }

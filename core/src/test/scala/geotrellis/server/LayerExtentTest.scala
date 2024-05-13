@@ -27,11 +27,11 @@ import org.scalatest.matchers.should.Matchers
 class LayerExtentTest extends AnyFunSuite with Matchers {
 
   test("ability to read a selected extent") {
-    val rt   = ResourceTile("8x8.tif")
+    val rt = ResourceTile("8x8.tif")
     val eval = LayerExtent.identity[IO, ResourceTile](rt)
     // We'll sample such that the bottom row (from 56 to 64) are excised from the result
-    val sampled   = eval(Extent(0, 1, 8, 8), CellSize(1, 1).some).unsafeRunSync
-    val sample    = sampled.toOption.get.band(0).toArray()
+    val sampled = eval(Extent(0, 1, 8, 8), CellSize(1, 1).some).unsafeRunSync
+    val sample = sampled.toOption.get.band(0).toArray()
     val sampleSum = sample.sum
     assert(sampleSum == 1596, s"Expected sum of 1596, got $sampleSum")
   }

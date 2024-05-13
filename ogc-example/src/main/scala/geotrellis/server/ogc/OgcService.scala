@@ -24,12 +24,12 @@ import org.http4s._
 import org.http4s.dsl.Http4sDsl
 import cats.Parallel
 import cats.effect._
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import org.log4s.getLogger
 
 import java.net.URL
 
-class OgcService[F[_]: Concurrent: Parallel: Logger](
+class OgcService[F[_]: Async: Parallel: Logger](
   wmsModel: Option[WmsModel[F]],
   wcsModel: Option[WcsModel[F]],
   wmtsModel: Option[WmtsModel[F]],
@@ -37,13 +37,13 @@ class OgcService[F[_]: Concurrent: Parallel: Logger](
 ) extends Http4sDsl[F] {
   val logger = getLogger
 
-  val wcsView  = wcsModel.map(new WcsView(_, serviceUrl))
-  val wmsView  = wmsModel.map(new WmsView(_, serviceUrl))
+  val wcsView = wcsModel.map(new WcsView(_, serviceUrl))
+  val wmsView = wmsModel.map(new WmsView(_, serviceUrl))
   val wmtsView = wmtsModel.map(new WmtsView(_, serviceUrl))
 
   // Predicates for choosing a service
-  def isWcsReq(key: String, value: String)  = key.toLowerCase == "service" && value.toLowerCase == "wcs"
-  def isWmsReq(key: String, value: String)  = key.toLowerCase == "service" && value.toLowerCase == "wms"
+  def isWcsReq(key: String, value: String) = key.toLowerCase == "service" && value.toLowerCase == "wcs"
+  def isWmsReq(key: String, value: String) = key.toLowerCase == "service" && value.toLowerCase == "wms"
   def isWmtsReq(key: String, value: String) = key.toLowerCase == "service" && value.toLowerCase == "wmts"
 
   def routes: HttpRoutes[F] =

@@ -22,6 +22,6 @@ import pureconfig.generic.auto._
 case class AzureConfig(storageConnectionString: String)
 
 object AzureConfig {
-  lazy val conf: AzureConfig                                              = ConfigSource.default.at("geotrellis.azure").loadOrThrow[AzureConfig]
+  lazy val conf: AzureConfig = ConfigSource.default.at("geotrellis.azure").loadOrThrow[AzureConfig]
   implicit def cassandraConfigToClass(obj: AzureConfig.type): AzureConfig = conf
 }
