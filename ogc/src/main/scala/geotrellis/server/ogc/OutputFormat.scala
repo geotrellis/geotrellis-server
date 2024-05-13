@@ -27,7 +27,7 @@ sealed trait OutputFormat
 
 object OutputFormat {
   case object GeoTiff extends OutputFormat { override def toString = "image/geotiff" }
-  case object Jpg     extends OutputFormat { override def toString = "image/jpeg"    }
+  case object Jpg extends OutputFormat { override def toString = "image/jpeg" }
 
   object Png {
     final val PngEncodingRx = """image/png(?:;encoding=(\w+))?""".r
@@ -42,7 +42,7 @@ object OutputFormat {
       }
 
     def stringToEncodding(enc: String): Option[PngColorEncoding] =
-      Option(enc) map {
+      Option(enc).map {
         case "rgba"  => RgbaPngEncoding
         case "greya" => GreyaPngEncoding
         case "rgb"   => RgbPngEncoding(None)

@@ -42,7 +42,7 @@ class CoverageView[F[_]: Functor](wcsModel: WcsModel[F], serviceUrl: URL, identi
   def toXML: F[Elem] = {
     val sources = if (identifiers == Nil) wcsModel.sources.store else wcsModel.sources.find(withNames(identifiers.toSet))
     val sourcesMap: F[Map[String, List[OgcSource]]] = sources.map(_.groupBy(_.name))
-    val coverageTypeMap                             = sourcesMap.map(_.mapValues(CoverageView.sourceDescription(wcsModel.supportedProjections, _)))
+    val coverageTypeMap = sourcesMap.map(_.map { case (key, value) => key -> CoverageView.sourceDescription(wcsModel.supportedProjections, value) })
     coverageTypeMap.map { coverageType =>
       scalaxb
         .toXML[CoverageDescriptions](
@@ -71,7 +71,7 @@ object CoverageView {
             )
           }
           .reduce { (re1, re2) =>
-            val e = re1.extent combine re2.extent
+            val e = re1.extent.combine(re2.extent)
             val cs =
               if (re1.cellSize.resolution < re2.cellSize.resolution)
                 re1.cellSize
@@ -89,10 +89,10 @@ object CoverageView {
     }
 
   def sourceDescription(supportedProjections: List[CRS], sources: List[OgcSource]): CoverageDescriptionType = {
-    val source           = sources.head
-    val nativeCrs        = source.nativeCrs.head
-    val re               = source.nativeRE
-    val ex               = re.extent
+    val source = sources.head
+    val nativeCrs = source.nativeCrs.head
+    val re = source.nativeRE
+    val ex = re.extent
     val Dimensions(w, h) = re.dimensions
 
     /**
@@ -126,7 +126,7 @@ object CoverageView {
 
     CoverageDescriptionType(
       Title = LanguageStringType(source.title) :: Nil,
-      Abstract = Nil,
+      AbstractValue = Nil,
       Keywords = Nil,
       Identifier = source.name,
       Metadata = Nil,
@@ -137,7 +137,7 @@ object CoverageView {
               LowerCorner = 0d :: 0d :: Nil,
               UpperCorner = w.toDouble :: h.toDouble :: Nil,
               attributes = Map(
-                "@crs"        -> DataRecord(new URI("urn:ogc:def:crs:OGC::imageCRS")),
+                "@crs" -> DataRecord(new URI("urn:ogc:def:crs:OGC::imageCRS")),
                 "@dimensions" -> DataRecord(BigInt(2))
               )
             )
@@ -149,7 +149,7 @@ object CoverageView {
                   LowerCorner = lex.ymin :: lex.xmin :: Nil,
                   UpperCorner = lex.ymax :: lex.xmax :: Nil,
                   attributes = Map(
-                    "@crs"        -> DataRecord(new URI(URN.unsafeFromCrs(crs))),
+                    "@crs" -> DataRecord(new URI(URN.unsafeFromCrs(crs))),
                     "@dimensions" -> DataRecord(BigInt(2))
                   )
                 )
@@ -169,7 +169,7 @@ object CoverageView {
                   LowerCorner = lex.ymin :: lex.xmin :: Nil,
                   UpperCorner = lex.ymax :: lex.xmax :: Nil,
                   attributes = Map(
-                    "@crs"        -> DataRecord(new URI(URN.unsafeFromCrs(crs))),
+                    "@crs" -> DataRecord(new URI(URN.unsafeFromCrs(crs))),
                     "@dimensions" -> DataRecord(BigInt(2))
                   )
                 )
@@ -181,7 +181,7 @@ object CoverageView {
                   LowerCorner = lex.xmin :: lex.ymin :: Nil,
                   UpperCorner = lex.xmax :: lex.ymax :: Nil,
                   attributes = Map(
-                    "@crs"        -> DataRecord(new URI(URN.unsafeFromCrs(crs))),
+                    "@crs" -> DataRecord(new URI(URN.unsafeFromCrs(crs))),
                     "@dimensions" -> DataRecord(BigInt(2))
                   )
                 )

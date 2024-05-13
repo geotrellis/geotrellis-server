@@ -20,10 +20,11 @@ import geotrellis.server.example._
 import geotrellis.server.vlm.geotiff.GeoTiffNode
 
 import cats.effect._
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import cats.syntax.option._
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.http4s._
 import org.http4s.server._
-import org.http4s.server.blaze.BlazeServerBuilder
+import org.http4s.blaze.server.BlazeServerBuilder
 import org.http4s.server.middleware.{CORS, CORSConfig}
 import org.http4s.syntax.kleisli._
 import com.azavea.maml.eval._
@@ -34,19 +35,19 @@ object NdviServer extends IOApp {
 
   implicit val logger = Slf4jLogger.getLogger[IO]
 
-  private val corsConfig = CORSConfig(
-    anyOrigin = true,
-    anyMethod = false,
-    allowedMethods = Some(Set("GET")),
-    allowCredentials = true,
-    maxAge = 1.day.toSeconds
-  )
+  private val corsConfig =
+    CORSConfig.default
+      .withAnyOrigin(true)
+      .withAnyMethod(false)
+      .withAllowedMethods(Set(Method.GET).some)
+      .withAllowCredentials(true)
+      .withMaxAge(1.day)
 
   private val commonMiddleware: HttpMiddleware[IO] = { (routes: HttpRoutes[IO]) =>
     CORS(routes)
   }
 
-  val createServer: Resource[IO, Server[IO]] = {
+  val createServer: Resource[IO, Server] = {
     for {
       conf <- ExampleConf.loadResourceF[IO](None)
       _ <- Resource.eval {
@@ -57,7 +58,7 @@ object NdviServer extends IOApp {
       mamlNdviRendering = new NdviService[IO, GeoTiffNode](
         ConcurrentInterpreter.DEFAULT
       )
-      server <- BlazeServerBuilder[IO](executionContext)
+      server <- BlazeServerBuilder[IO]
         .enableHttp2(true)
         .bindHttp(conf.http.port, conf.http.interface)
         .withHttpApp(
@@ -67,7 +68,9 @@ object NdviServer extends IOApp {
     } yield server
   }
 
-  /** The 'main' method for a cats-effect IOApp */
+  /**
+   * The 'main' method for a cats-effect IOApp
+   */
   override def run(args: List[String]): IO[ExitCode] =
     createServer.use(_ => IO.never).as(ExitCode.Success)
 }

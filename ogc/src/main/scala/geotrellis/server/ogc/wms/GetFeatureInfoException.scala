@@ -38,7 +38,7 @@ sealed trait GetFeatureInfoException extends java.lang.Exception {
           ServiceException = ServiceExceptionType(
             msg,
             Map(
-              "@code"    -> DataRecord(code),
+              "@code" -> DataRecord(code),
               "@locator" -> DataRecord("noLocator")
             )
           ) :: Nil,
@@ -58,9 +58,9 @@ object GetFeatureInfoException {
       Map(
         "version" -> e.version.asJson,
         "exceptions" -> List(
-          "code"    -> e.code,
+          "code" -> e.code,
           "locator" -> "noLocator",
-          "text"    -> e.msg
+          "text" -> e.msg
         ).asJson
       ).asJson
     }

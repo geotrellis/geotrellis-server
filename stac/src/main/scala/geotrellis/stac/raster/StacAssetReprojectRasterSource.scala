@@ -38,10 +38,10 @@ class StacAssetReprojectRasterSource(
   private[geotrellis] val targetCellType: Option[TargetCellType] = None,
   @transient underlyingRS: => Option[RasterSource] = None
 ) extends RasterSource {
-  @transient private lazy val underlying            = underlyingRS.getOrElse(RasterSource(asset.href))
+  @transient private lazy val underlying = underlyingRS.getOrElse(RasterSource(asset.href))
   @transient private lazy val underlyingReprojected = underlying.reproject(crs, resampleTarget, resampleMethod, strategy)
 
-  protected lazy val baseCRS: CRS                     = asset.crs.getOrElse(underlying.crs)
+  protected lazy val baseCRS: CRS = asset.crs.getOrElse(underlying.crs)
   protected lazy val baseGridExtent: GridExtent[Long] = asset.gridExtent.getOrElse(underlying.gridExtent)
 
   // TODO: remove transient notation with Proj4 1.1 release
@@ -58,12 +58,12 @@ class StacAssetReprojectRasterSource(
     resampleTarget(reprojectedRasterExtent)
   }
 
-  def metadata: StacItemAssetMetadata                   = StacItemAssetMetadata(name, crs, bandCount, cellType, gridExtent, resolutions, asset)
-  val name: SourceName                                  = asset.href
-  def bandCount: Int                                    = asset.bandCount.getOrElse(underlyingReprojected.bandCount)
-  def cellType: CellType                                = underlyingReprojected.cellType
-  def resolutions: List[CellSize]                       = underlyingReprojected.resolutions
-  def attributes: Map[String, String]                   = asset.item.properties.toMap
+  def metadata: StacItemAssetMetadata = StacItemAssetMetadata(name, crs, bandCount, cellType, gridExtent, resolutions, asset)
+  val name: SourceName = asset.href
+  def bandCount: Int = asset.bandCount.getOrElse(underlyingReprojected.bandCount)
+  def cellType: CellType = underlyingReprojected.cellType
+  def resolutions: List[CellSize] = underlyingReprojected.resolutions
+  def attributes: Map[String, String] = asset.item.properties.toMap
   def attributesForBand(band: Int): Map[String, String] = Map.empty
 
   def reprojection(

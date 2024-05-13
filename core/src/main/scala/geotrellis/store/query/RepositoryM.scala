@@ -27,7 +27,7 @@ trait RepositoryM[M[_], G[_], T] { self =>
 
   def mapK[F[_]](f: M ~> F): RepositoryM[F, G, T] =
     new RepositoryM[F, G, T] {
-      def store: F[G[T]]              = f(self.store)
+      def store: F[G[T]] = f(self.store)
       def find(query: Query): F[G[T]] = f(self.find(query))
     }
 }
@@ -35,7 +35,7 @@ trait RepositoryM[M[_], G[_], T] { self =>
 object RepositoryM {
   def empty[M[_]: Applicative, G[_]: MonoidK, T]: RepositoryM[M, G, T] =
     new RepositoryM[M, G, T] {
-      def store: M[G[T]]              = MonoidK[G].empty[T].pure[M]
+      def store: M[G[T]] = MonoidK[G].empty[T].pure[M]
       def find(query: Query): M[G[T]] = store
     }
 
@@ -44,7 +44,7 @@ object RepositoryM {
       def empty: RepositoryM[M, G, T] = RepositoryM.empty[M, G, T]
       def combine(l: RepositoryM[M, G, T], r: RepositoryM[M, G, T]): RepositoryM[M, G, T] =
         new RepositoryM[M, G, T] {
-          def store: M[G[T]]              = l.store.map2(r.store)(_ <+> _)
+          def store: M[G[T]] = l.store.map2(r.store)(_ <+> _)
           def find(query: Query): M[G[T]] = l.find(query).map2(r.find(query))(_ <+> _)
         }
     }

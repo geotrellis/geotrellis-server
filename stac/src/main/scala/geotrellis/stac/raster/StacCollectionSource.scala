@@ -22,13 +22,13 @@ import com.azavea.stac4s.{StacCollection, StacExtent}
 
 case class StacCollectionSource(asset: StacCollection, source: RasterSource) extends StacSource[StacCollection] {
   val stacExtent: StacExtent = asset.extent
-  val name: SourceName       = StringName(asset.id)
+  val name: SourceName = StringName(asset.id)
 
   lazy val attributes: Map[String, String] =
     asset.asJson.asObject
       .map(_.toMap)
       .getOrElse(Map.empty)
-      .mapValues(_.toString)
+      .map { case (key, value) => key -> value.toString }
 
   override def toString: String = s"StacCollectionSource($name, $asset, $source)"
 }

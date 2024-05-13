@@ -26,12 +26,12 @@ import geotrellis.raster.{EmptyName, MosaicRasterSource, RasterSource}
 import geotrellis.server.ogc.OgcSource
 import geotrellis.server.ogc.conf.{OgcSourceConf, StacSourceConf}
 import geotrellis.raster.effects.MosaicRasterSourceIO
-
 import sttp.client3.SttpBackend
 import sttp.client3.UriContext
 import com.azavea.stac4s.api.client.{Query => _, _}
 import cats.data.NonEmptyList
 import cats.effect.Sync
+import cats.effect.unsafe.IORuntime
 import cats.syntax.applicative._
 import cats.syntax.apply._
 import cats.syntax.option._
@@ -39,7 +39,9 @@ import cats.syntax.semigroup._
 import cats.instances.list._
 import higherkindness.droste.{scheme, Algebra}
 
-/** Sync is required to compile [[fs2.Stream]] */
+/**
+ * Sync is required to compile [[fs2.Stream]]
+ */
 case class StacOgcRepository[F[_]: Sync](
   stacSourceConf: StacSourceConf,
   client: StreamingStacClientFS2[F]
@@ -48,16 +50,20 @@ case class StacOgcRepository[F[_]: Sync](
 
   def find(query: Query): F[List[OgcSource]] = {
 
-    /** Replace the actual conf name with the STAC Layer name. */
+    /**
+     * Replace the actual conf name with the STAC Layer name.
+     */
     val filters: Option[SearchFilters] =
       SearchFilters
         .eval(stacSourceConf.searchCriteria)(query.overrideName(stacSourceConf.searchName))
         .map(_.copy(limit = stacSourceConf.pageLimit))
 
     filters.fold(List.empty[OgcSource].pure[F]) { filter =>
-      /** Query summary i.e. collection or layer summary and items and perform the matching items search. */
+      /**
+       * Query summary i.e. collection or layer summary and items and perform the matching items search.
+       */
       val summary = client.summary(stacSourceConf.searchName, stacSourceConf.searchCriteria)
-      val items   = stacSourceConf.assetLimit.fold(client.search(filter))(limit => client.search(filter).take(limit.value))
+      val items = stacSourceConf.assetLimit.fold(client.search(filter))(limit => client.search(filter).take(limit.value))
       (summary, items.compile.toList)
         .mapN { case (summary, items) =>
           val rasterSources =
@@ -74,21 +80,27 @@ case class StacOgcRepository[F[_]: Sync](
               val source: Option[StacCollectionSource] = rasterSources match {
                 case head :: Nil => StacCollectionSource(csummary.asset, head).some
                 case head :: _   =>
-                  /** Extra temporal layers filtering (slicing). If the layer is not temporal, no extra filtering (slicing) would be applied. */
+                  /**
+                   * Extra temporal layers filtering (slicing). If the layer is not temporal, no extra filtering (slicing) would be applied.
+                   */
                   val sources =
                     rasterSources.timeSlice(query, stacSourceConf.timeDefault, stacSourceConf.ignoreTime, stacSourceConf.datetimeField.some)
-                  val commonCrs          = if (sources.flatMap(_.asset.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
+                  val commonCrs = if (sources.flatMap(_.asset.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
                   val reprojectedSources = sources.map(_.reproject(commonCrs))
-                  val attributes         = reprojectedSources.attributesByName
+                  val attributes = reprojectedSources.attributesByName
 
                   // TODO: Fix the unsafe behavior, requires refactor of all repos and all RasterSources usages
                   val mosaicRasterSource =
                     if (stacSourceConf.parallelMosaic)
-                      MosaicRasterSourceIO.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, csummary.sourceName, attributes)
+                      MosaicRasterSourceIO.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, csummary.sourceName, attributes)(
+                        IORuntime.global
+                      )
                     else
                       MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, csummary.sourceName, attributes)
 
-                  /** In case some of the RasterSources are not from the STAC collection, we'd need to expand the [[StacCollectionSource]] extent. */
+                  /**
+                   * In case some of the RasterSources are not from the STAC collection, we'd need to expand the [[StacCollectionSource]] extent.
+                   */
                   StacCollectionSource(csummary.asset.expandExtentToInclude(mosaicRasterSource.extent), mosaicRasterSource).some
                 case _ => None
               }
@@ -98,16 +110,20 @@ case class StacOgcRepository[F[_]: Sync](
               val source: Option[RasterSource] = rasterSources match {
                 case head :: Nil => head.some
                 case head :: _   =>
-                  /** Extra temporal layers filtering (slicing). If the layer is not temporal, no extra filtering (slicing) would be applied. */
+                  /**
+                   * Extra temporal layers filtering (slicing). If the layer is not temporal, no extra filtering (slicing) would be applied.
+                   */
                   val sources =
                     rasterSources.timeSlice(query, stacSourceConf.timeDefault, stacSourceConf.ignoreTime, stacSourceConf.datetimeField.some)
-                  val commonCrs          = if (sources.flatMap(_.asset.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
+                  val commonCrs = if (sources.flatMap(_.asset.crs).distinct.size == 1) head.crs else stacSourceConf.commonCrs
                   val reprojectedSources = sources.map(_.reproject(commonCrs))
-                  val attributes         = reprojectedSources.attributesByName
+                  val attributes = reprojectedSources.attributesByName
 
                   // TODO: Fix the unsafe behavior, requires refactor of all repos and all RasterSources usages
                   if (stacSourceConf.parallelMosaic)
-                    MosaicRasterSourceIO.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, EmptyName, attributes).some
+                    MosaicRasterSourceIO
+                      .instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, EmptyName, attributes)(IORuntime.global)
+                      .some
                   else
                     MosaicRasterSource.instance(NonEmptyList.fromListUnsafe(reprojectedSources), commonCrs, EmptyName, attributes).some
                 case _ => None
@@ -146,7 +162,7 @@ object StacOgcRepositories {
       case WithNames(names) => _.filter(c => names.contains(c.name))
       case And(e1, e2) =>
         list =>
-          val left = e1(list); left intersect e2(left)
+          val left = e1(list); left.intersect(e2(left))
       case Or(e1, e2) => list => e1(list) ++ e2(list)
       case _          => identity
     }

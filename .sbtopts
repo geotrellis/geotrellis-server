@@ -1,5 +1,5 @@
--J-Xmx2G
--J-Xms1G
+-J-Xmx4G
+-J-Xms2G
 -J-Xss5M
 -J-XX:+UseG1GC
 -Djava.awt.headless=true

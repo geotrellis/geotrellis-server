@@ -30,8 +30,8 @@ package object ogc {
   implicit val ZonedDateTimeOrder: Order[ZonedDateTime] = Order.fromOrdering[ZonedDateTime]
 
   implicit class ExtentOps(val self: Extent) extends AnyVal {
-    def swapXY: Extent                             = Extent(xmin = self.ymin, ymin = self.xmin, xmax = self.ymax, ymax = self.xmax)
-    def buffer(cellSize: CellSize): Extent         = self.buffer(cellSize.width / 2, cellSize.height / 2)
+    def swapXY: Extent = Extent(xmin = self.ymin, ymin = self.xmin, xmax = self.ymax, ymax = self.xmax)
+    def buffer(cellSize: CellSize): Extent = self.buffer(cellSize.width / 2, cellSize.height / 2)
     def buffer(cellSize: Option[CellSize]): Extent = cellSize.fold(self)(buffer)
   }
 

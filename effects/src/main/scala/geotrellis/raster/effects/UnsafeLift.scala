@@ -22,7 +22,9 @@ import cats.effect.IO
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-/** Type class that allows to handle unsafe calls */
+/**
+ * Type class that allows to handle unsafe calls
+ */
 trait UnsafeLift[F[_]] {
   def apply[A](value: => A): F[A]
 }

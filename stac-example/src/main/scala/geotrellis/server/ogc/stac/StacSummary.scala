@@ -19,5 +19,5 @@ package geotrellis.server.ogc.stac
 import com.azavea.stac4s.StacCollection
 
 sealed trait StacSummary
-case object EmptySummary                            extends StacSummary
+case object EmptySummary extends StacSummary
 case class CollectionSummary(asset: StacCollection) extends StacSummary

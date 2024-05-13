@@ -36,7 +36,7 @@ class CapabilitiesView[F[_]: Functor](wcsModel: WcsModel[F], serviceUrl: URL, ex
   def toXML: F[Elem] = {
     val serviceIdentification = ServiceIdentification(
       Title = LanguageStringType(wcsModel.serviceMetadata.identification.title) :: Nil,
-      Abstract = LanguageStringType(
+      AbstractValue = LanguageStringType(
         wcsModel.serviceMetadata.identification.description
       ) :: Nil,
       Keywords = KeywordsType(
@@ -230,19 +230,19 @@ class CapabilitiesView[F[_]: Functor](wcsModel: WcsModel[F], serviceUrl: URL, ex
 object CapabilitiesView {
   def coverageSummaries[F[_]: Functor](wcsModel: WcsModel[F]): F[List[CoverageSummaryType]] =
     wcsModel.sources.store.map(_.map { src =>
-      val crs                  = src.nativeCrs.head
-      val wgs84extent          = ReprojectRasterExtent(src.nativeRE, crs, LatLng).extent
+      val crs = src.nativeCrs.head
+      val wgs84extent = ReprojectRasterExtent(src.nativeRE, crs, LatLng).extent
       val uniqueCrs: List[CRS] = (crs :: LatLng :: wcsModel.supportedProjections).distinct
 
       CoverageSummaryType(
         Title = LanguageStringType(src.title) :: Nil,
-        Abstract = Nil,
+        AbstractValue = Nil,
         Keywords = Nil,
         WGS84BoundingBox = WGS84BoundingBoxType(
           LowerCorner = wgs84extent.ymin :: wgs84extent.xmin :: Nil,
           UpperCorner = wgs84extent.ymax :: wgs84extent.xmax :: Nil
         ) :: Nil,
-        SupportedCRS = new URI("urn:ogc:def:crs:OGC::imageCRS") :: (uniqueCrs flatMap { crs => URN.fromCrs(crs).map(new URI(_)) }),
+        SupportedCRS = new URI("urn:ogc:def:crs:OGC::imageCRS") :: (uniqueCrs.flatMap { crs => URN.fromCrs(crs).map(new URI(_)) }),
         SupportedFormat = OutputFormat.all.reverse,
         coveragesummarytypeoption = DataRecord(None, "Identifier".some, src.name)
       )

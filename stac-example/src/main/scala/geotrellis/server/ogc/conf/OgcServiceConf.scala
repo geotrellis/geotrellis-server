@@ -26,7 +26,7 @@ import geotrellis.server.ogc.wms.WmsParentLayerMeta
 import geotrellis.server.ogc.wmts.GeotrellisTileMatrixSet
 import geotrellis.server.ogc.stac._
 import geotrellis.store.query.{Repository, RepositoryM}
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import sttp.client3.SttpBackend
 
 /**
@@ -36,7 +36,7 @@ import sttp.client3.SttpBackend
 sealed trait OgcServiceConf {
   def layerDefinitions: List[OgcSourceConf]
   def layerSources(rasterOgcSources: List[RasterOgcSource]): Repository[OgcSource] = {
-    val rasterLayers     = layerDefinitions.collect { case rsc: RasterSourceConf => rsc.toLayer }
+    val rasterLayers = layerDefinitions.collect { case rsc: RasterSourceConf => rsc.toLayer }
     val mapAlgebraLayers = layerDefinitions.collect { case masc: MapAlgebraSourceConf => masc.modelOpt(rasterOgcSources) }.flatten
 
     OgcSourceRepository(rasterLayers ++ mapAlgebraLayers)
@@ -46,8 +46,8 @@ sealed trait OgcServiceConf {
     rasterOgcSources: List[RasterOgcSource],
     client: SttpBackend[F, Any]
   ): RepositoryM[F, List, OgcSource] = {
-    val ogcLayers            = layerDefinitions.collect { case osc: OgcSourceConf => osc }
-    val stacLayers           = ogcLayers.collect { case ssc: StacSourceConf => ssc }
+    val ogcLayers = layerDefinitions.collect { case osc: OgcSourceConf => osc }
+    val stacLayers = ogcLayers.collect { case ssc: StacSourceConf => ssc }
     val mapAlgebraConfLayers = ogcLayers.collect { case masc: MapAlgebraSourceConf => masc }
 
     layerSources(rasterOgcSources).toF[F] |+|
@@ -56,21 +56,27 @@ sealed trait OgcServiceConf {
   }
 }
 
-/** WMS Service configuration */
+/**
+ * WMS Service configuration
+ */
 case class WmsConf(
   parentLayerMeta: WmsParentLayerMeta,
   serviceMetadata: opengis.wms.Service,
   layerDefinitions: List[OgcSourceConf]
 ) extends OgcServiceConf
 
-/** WMTS Service configuration */
+/**
+ * WMTS Service configuration
+ */
 case class WmtsConf(
   serviceMetadata: ows.ServiceMetadata,
   layerDefinitions: List[OgcSourceConf],
   tileMatrixSets: List[GeotrellisTileMatrixSet]
 ) extends OgcServiceConf
 
-/** WCS Service configuration */
+/**
+ * WCS Service configuration
+ */
 case class WcsConf(
   serviceMetadata: ows.ServiceMetadata,
   layerDefinitions: List[OgcSourceConf],

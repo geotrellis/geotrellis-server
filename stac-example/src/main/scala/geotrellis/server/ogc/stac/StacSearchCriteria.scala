@@ -17,5 +17,5 @@
 package geotrellis.server.ogc.stac
 
 sealed trait StacSearchCriteria
-case object ByLayer      extends StacSearchCriteria
+case object ByLayer extends StacSearchCriteria
 case object ByCollection extends StacSearchCriteria

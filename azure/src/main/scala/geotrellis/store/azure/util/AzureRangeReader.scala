@@ -27,7 +27,7 @@ import java.net.URI
 
 class AzureRangeReader(uri: AzureURI, blobServiceClient: BlobServiceClient) extends RangeReader {
   @transient lazy val blobContainerClient: BlobContainerClient = blobServiceClient.getBlobContainerClient(uri.getContainer)
-  @transient lazy val blobClient: BlobClient                   = blobContainerClient.getBlobClient(uri.getPath)
+  @transient lazy val blobClient: BlobClient = blobContainerClient.getBlobClient(uri.getPath)
 
   val totalLength: Long = blobClient.getProperties.getBlobSize
 

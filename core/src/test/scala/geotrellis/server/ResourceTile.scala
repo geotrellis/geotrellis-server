@@ -60,7 +60,7 @@ object ResourceTile extends RasterSourceUtils {
             }
             .toIO {
               new Exception(
-                s"No tile avail for RasterExtent: RasterExtent(${(extent, cs)})"
+                s"No tile avail for RasterExtent: RasterExtent(${(extent, cellSize)})"
               )
             }
         }
@@ -74,7 +74,7 @@ object ResourceTile extends RasterSourceUtils {
       ): IO[NEL[RasterExtent]] =
         IO {
           val rs = RasterSource(self.uri)
-          rs.resolutions.map(RasterExtent(rs.extent, _)).toNel getOrElse {
+          rs.resolutions.map(RasterExtent(rs.extent, _)).toNel.getOrElse {
             throw new Exception("no resolutions")
           }
         }

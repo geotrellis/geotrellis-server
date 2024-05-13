@@ -30,7 +30,9 @@ import cats.syntax.applicative._
 import cats.syntax.semigroup._
 import cats.syntax.option._
 
-/** This class holds all the information necessary to construct a response to a WMS request */
+/**
+ * This class holds all the information necessary to construct a response to a WMS request
+ */
 case class WmsModel[F[_]: Monad](
   serviceMeta: opengis.wms.Service,
   parentLayerMeta: WmsParentLayerMeta,
@@ -42,7 +44,7 @@ case class WmsModel[F[_]: Monad](
 
   private def getLayer(query: Query, time: OgcTime, supportedCrs: CRS, styles: List[String], params: Option[ParamMap]): F[List[OgcLayer]] =
     sources.find(query).map { sources =>
-      sources map { source =>
+      sources.map { source =>
         val styleName: Option[String] = styles.headOption.filterNot(_.isEmpty).orElse(source.defaultStyle)
         val style: Option[OgcStyle] = styleName.flatMap { name =>
           source.styles.find(_.name == name)
@@ -52,8 +54,8 @@ case class WmsModel[F[_]: Monad](
           case mas: MapAlgebraSource =>
             val (name, title, algebra, resampleMethod, overviewStrategy) =
               (mas.name, mas.title, mas.algebra, mas.resampleMethod, mas.overviewStrategy)
-            val simpleLayers = mas.sources.mapValues { rs =>
-              SimpleOgcLayer(name, title, supportedCrs, rs, style, resampleMethod, overviewStrategy)
+            val simpleLayers = mas.sources.map { case (key, rs) =>
+              key -> SimpleOgcLayer(name, title, supportedCrs, rs, style, resampleMethod, overviewStrategy)
             }
             val extendedParameters = params.flatMap(p => extendedParametersBinding.flatMap(_.apply(p)))
             MapAlgebraOgcLayer(
@@ -79,7 +81,9 @@ case class WmsModel[F[_]: Monad](
       .find(_ == p.crs)
       .fold[F[List[OgcLayer]]](List.empty[OgcLayer].pure[F])(getLayer(p.toQuery, p.time, _, p.styles, p.params.some))
 
-  /** GetFeatureInfoExtended specific only */
+  /**
+   * GetFeatureInfoExtended specific only
+   */
   def getLayer(p: GetFeatureInfoExtendedParams): F[List[OgcLayer]] =
     parentLayerMeta.supportedProjections
       .find(_ == p.crs)

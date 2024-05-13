@@ -46,7 +46,7 @@ class HillshadeSpec extends AnyFunSpec with Matchers {
   describe("HillshadeSpec") {
     ignore("RasterSource reproject hillshade") {
       val uri = "gt+s3://azavea-datahub/catalog?layer=us-ned-tms-epsg3857&zoom=14&band_count=1"
-      val rs  = new GeoTrellisRasterSource(uri)
+      val rs = new GeoTrellisRasterSource(uri)
       val raster =
         rs.reprojectToRegion(
           LatLng,
@@ -65,7 +65,7 @@ class HillshadeSpec extends AnyFunSpec with Matchers {
       val hillshadeProjectedRaster = ProjectedRaster(raster, LatLng)
 
       val interpreter = Interpreter.DEFAULT
-      val res         = interpreter(FocalHillshade(List(RasterLit(hillshadeProjectedRaster)), 315, 45)).as[MultibandTile]
+      val res = interpreter(FocalHillshade(List(RasterLit(hillshadeProjectedRaster)), 315, 45)).as[MultibandTile]
 
       res match {
         case Valid(t)       => GeoTiff(Raster(t, raster.extent), LatLng).write("/tmp/rs-reproject-hillshade.tiff")

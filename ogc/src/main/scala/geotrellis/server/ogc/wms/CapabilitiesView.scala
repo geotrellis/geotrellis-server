@@ -108,7 +108,7 @@ case class CapabilitiesView[F[_]: Functor: Apply: Monad](model: WmsModel[F], ser
       ) :: Nil
     )
 
-    modelAsLayer(model.parentLayerMeta, model) map { layer =>
+    modelAsLayer(model.parentLayerMeta, model).map { layer =>
       val capability = Capability(
         Request = Request(
           GetCapabilities = getCapabilities,
@@ -144,7 +144,7 @@ object CapabilitiesView {
     if (crs.isGeographic)
       BoundingBox(
         Map(
-          "@CRS"  -> s"EPSG:${crs.epsgCode.get}",
+          "@CRS" -> s"EPSG:${crs.epsgCode.get}",
           "@minx" -> extent.ymin,
           "@miny" -> extent.xmin,
           "@maxx" -> extent.ymax,
@@ -156,7 +156,7 @@ object CapabilitiesView {
     else
       BoundingBox(
         Map(
-          "@CRS"  -> s"EPSG:${crs.epsgCode.get}",
+          "@CRS" -> s"EPSG:${crs.epsgCode.get}",
           "@minx" -> extent.xmin,
           "@miny" -> extent.ymin,
           "@maxx" -> extent.xmax,
@@ -180,7 +180,7 @@ object CapabilitiesView {
       Layer(
         Name = source.name.some,
         Title = source.title,
-        Abstract = None,
+        AbstractValue = None,
         KeywordList = None,
         // extra CRS that is supported by this layer
         CRS = (parentProjections ++ source.nativeCrs).distinct.map { crs =>
@@ -201,7 +201,7 @@ object CapabilitiesView {
                   )
                 }
                 .reduce { (re1, re2) =>
-                  val e = re1.extent combine re2.extent
+                  val e = re1.extent.combine(re2.extent)
                   val cs =
                     if (re1.cellSize.resolution < re2.cellSize.resolution)
                       re1.cellSize
@@ -230,8 +230,8 @@ object CapabilitiesView {
             Dimension(
               tp.toString,
               Map(
-                "@name"    -> DataRecord("time"),
-                "@units"   -> DataRecord("ISO8601"),
+                "@name" -> DataRecord("time"),
+                "@units" -> DataRecord("ISO8601"),
                 "@default" -> DataRecord(source.timeDefault.selectTime(nel).toInstant.toString)
               )
             ) :: Nil
@@ -239,8 +239,8 @@ object CapabilitiesView {
             Dimension(
               ti.toString,
               Map(
-                "@name"    -> DataRecord("time"),
-                "@units"   -> DataRecord("ISO8601"),
+                "@name" -> DataRecord("time"),
+                "@units" -> DataRecord("ISO8601"),
                 "@default" -> DataRecord(source.timeDefault.selectTime(NonEmptyList.of(start, end)).toInstant.toString)
               )
             ) :: Nil
@@ -261,14 +261,14 @@ object CapabilitiesView {
   }
 
   def modelAsLayer[F[_]: Monad](parentLayerMeta: WmsParentLayerMeta, model: WmsModel[F]): F[Layer] = {
-    val bboxAndLayers = model.sources.store map { sources =>
-      val bboxes = sources map { source =>
+    val bboxAndLayers = model.sources.store.map { sources =>
+      val bboxes = sources.map { source =>
         val llre = source match {
           case mas: MapAlgebraSource =>
             mas.sourcesList
               .map(rs => ReprojectRasterExtent(rs.gridExtent, rs.crs, LatLng, Options.DEFAULT.copy(mas.resampleMethod)))
               .reduce { (re1, re2) =>
-                val e  = re1.extent combine re2.extent
+                val e = re1.extent.combine(re2.extent)
                 val cs = if (re1.cellSize.resolution < re2.cellSize.resolution) re1.cellSize else re2.cellSize
                 new GridExtent[Long](e, cs)
               }
@@ -284,7 +284,7 @@ object CapabilitiesView {
         llre.extent
 
       }
-      val bbox    = bboxes.tail.fold(bboxes.head)(_ combine _)
+      val bbox = bboxes.tail.fold(bboxes.head)(_ combine _)
       val ogcBbox = EX_GeographicBoundingBox(bbox.xmin, bbox.xmax, bbox.ymin, bbox.ymax).some
       (ogcBbox, sources.map(_.toLayer(parentLayerMeta.supportedProjections)))
     }
@@ -292,7 +292,7 @@ object CapabilitiesView {
       Layer(
         Name = parentLayerMeta.name,
         Title = parentLayerMeta.title,
-        Abstract = parentLayerMeta.description,
+        AbstractValue = parentLayerMeta.description,
         KeywordList = None,
         // All layers are avail at least at this CRS
         // All sublayers would have metadata in this CRS + its own
@@ -317,7 +317,7 @@ object CapabilitiesView {
             Dimension(
               tp.toString,
               Map(
-                "@name"  -> DataRecord("time"),
+                "@name" -> DataRecord("time"),
                 "@units" -> DataRecord("ISO8601")
               )
             ) :: Nil
@@ -325,7 +325,7 @@ object CapabilitiesView {
             Dimension(
               ti.toString,
               Map(
-                "@name"  -> DataRecord("time"),
+                "@name" -> DataRecord("time"),
                 "@units" -> DataRecord("ISO8601")
               )
             ) :: Nil

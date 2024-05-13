@@ -30,27 +30,33 @@ import geotrellis.proj4.CRS
 sealed trait OgcServiceConf {
   def layerDefinitions: List[OgcSourceConf]
   def layerSources(rasterOgcSources: List[RasterOgcSource]): Repository[OgcSource] = {
-    val rasterLayers: List[RasterOgcSource]      = layerDefinitions.collect { case rsc: RasterSourceConf => rsc.toLayer }
+    val rasterLayers: List[RasterOgcSource] = layerDefinitions.collect { case rsc: RasterSourceConf => rsc.toLayer }
     val mapAlgebraLayers: List[MapAlgebraSource] = layerDefinitions.collect { case masc: MapAlgebraSourceConf => masc.model(rasterOgcSources) }
     ogc.OgcSourceRepository(rasterLayers ++ mapAlgebraLayers)
   }
 }
 
-/** WMS Service configuration */
+/**
+ * WMS Service configuration
+ */
 case class WmsConf(
   parentLayerMeta: WmsParentLayerMeta,
   serviceMetadata: opengis.wms.Service,
   layerDefinitions: List[OgcSourceConf]
 ) extends OgcServiceConf
 
-/** WMTS Service configuration */
+/**
+ * WMTS Service configuration
+ */
 case class WmtsConf(
   serviceMetadata: ows.ServiceMetadata,
   layerDefinitions: List[OgcSourceConf],
   tileMatrixSets: List[GeotrellisTileMatrixSet]
 ) extends OgcServiceConf
 
-/** WCS Service configuration */
+/**
+ * WCS Service configuration
+ */
 case class WcsConf(
   serviceMetadata: ows.ServiceMetadata,
   layerDefinitions: List[OgcSourceConf],

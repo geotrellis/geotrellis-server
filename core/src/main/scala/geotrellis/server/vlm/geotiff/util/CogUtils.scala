@@ -35,12 +35,14 @@ object CogUtils {
     for (zoom <- 0 to 64) yield scheme.levelForZoom(zoom).layout
   }.toArray
 
-  /** Read GeoTiff from URI while caching the header bytes in memcache */
+  /**
+   * Read GeoTiff from URI while caching the header bytes in memcache
+   */
   def fromUri(uri: String): IO[GeoTiff[MultibandTile]] = {
     val cacheSize = 1 << 18
     for {
       headerBytes <- RangeReaderUtils.fromUri(uri).map(_.readRange(0, cacheSize))
-      rr          <- RangeReaderUtils.fromUri(uri)
+      rr <- RangeReaderUtils.fromUri(uri)
     } yield {
       val crr = CacheRangeReader(rr, headerBytes)
       GeoTiffReader.readMultiband(crr, streaming = true)
@@ -52,7 +54,7 @@ object CogUtils {
 
   def fetch(uri: String, zoom: Int, x: Int, y: Int, crs: CRS = WebMercator): IO[Raster[MultibandTile]] =
     CogUtils.fromUri(uri).flatMap { tiff =>
-      val transform        = Proj4Transform(tiff.crs, crs)
+      val transform = Proj4Transform(tiff.crs, crs)
       val inverseTransform = Proj4Transform(crs, tiff.crs)
       val tmsTileRE = RasterExtent(
         extent = tmsLevels(zoom).mapTransform.keyToExtent(x, y),
@@ -60,7 +62,7 @@ object CogUtils {
         rows = 256
       )
       val tiffTileRE = ReprojectRasterExtent(tmsTileRE, inverseTransform)
-      val overview   = tiff.getClosestOverview(tiffTileRE.cellSize, Auto(0))
+      val overview = tiff.getClosestOverview(tiffTileRE.cellSize, Auto(0))
 
       cropGeoTiff(overview, tiffTileRE.extent).map { raster =>
         raster.reproject(tmsTileRE, transform, inverseTransform)
@@ -75,9 +77,9 @@ object CogUtils {
   def cropGeoTiff[T <: CellGrid[Int]](tiff: GeoTiff[T], extent: Extent): IO[Raster[T]] =
     IO {
       if (extent.intersects(tiff.extent)) {
-        val bounds     = tiff.rasterExtent.gridBoundsFor(extent)
+        val bounds = tiff.rasterExtent.gridBoundsFor(extent)
         val clipExtent = tiff.rasterExtent.extentFor(bounds)
-        val clip       = tiff.crop(List(bounds)).next._2
+        val clip = tiff.crop(List(bounds)).next._2
         Raster(clip, clipExtent)
       } else {
         throw new java.lang.IllegalArgumentException(

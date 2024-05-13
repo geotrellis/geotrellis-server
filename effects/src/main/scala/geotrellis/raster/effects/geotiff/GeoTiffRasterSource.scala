@@ -43,24 +43,28 @@ case class GeoTiffRasterSource[F[_]: Monad: UnsafeLift](
   def name: GeoTiffPath = dataPath
 
   // memoize tiff, not useful only in a local fs case
-  @transient lazy val tiff: MultibandGeoTiff     = GeoTiffReader.readMultiband(RangeReader(dataPath.value), streaming = true)
+  @transient lazy val tiff: MultibandGeoTiff = GeoTiffReader.readMultiband(RangeReader(dataPath.value), streaming = true)
   @transient lazy val tiffF: F[MultibandGeoTiff] = Option(baseTiff).flatten.getOrElse(UnsafeLift[F].apply(tiff))
 
-  def bandCount: F[Int]            = tiffF.map(_.bandCount)
-  def cellType: F[CellType]        = dstCellType.fold(tiffF.map(_.cellType))(_.pure[F])
-  def tags: F[Tags]                = tiffF.map(_.tags)
+  def bandCount: F[Int] = tiffF.map(_.bandCount)
+  def cellType: F[CellType] = dstCellType.fold(tiffF.map(_.cellType))(_.pure[F])
+  def tags: F[Tags] = tiffF.map(_.tags)
   def metadata: F[GeoTiffMetadata] = (name.pure[F], crs, bandCount, cellType, gridExtent, resolutions, tags).mapN(GeoTiffMetadata)
 
-  /** Returns the GeoTiff head tags. */
+  /**
+   * Returns the GeoTiff head tags.
+   */
   def attributes: F[Map[String, String]] = tags.map(_.headTags)
 
-  /** Returns the GeoTiff per band tags. */
+  /**
+   * Returns the GeoTiff per band tags.
+   */
   def attributesForBand(band: Int): F[Map[String, String]] = tags.map(_.bandTags.lift(band).getOrElse(Map.empty))
 
   def crs: F[CRS] = tiffF.map(_.crs)
 
   lazy val gridExtent: F[GridExtent[Long]] = tiffF.map(_.rasterExtent.toGridType[Long])
-  lazy val resolutions: F[List[CellSize]]  = tiffF.map(tiff => tiff.cellSize :: tiff.overviews.map(_.cellSize))
+  lazy val resolutions: F[List[CellSize]] = tiffF.map(tiff => tiff.cellSize :: tiff.overviews.map(_.cellSize))
 
   def reprojection(
     targetCRS: CRS,
@@ -78,7 +82,7 @@ case class GeoTiffRasterSource[F[_]: Monad: UnsafeLift](
 
   def read(extent: Extent, bands: Seq[Int]): F[Raster[MultibandTile]] =
     (tiffF, gridExtent).tupled >>= { case (tiff, gridExtent) =>
-      val bounds      = gridExtent.gridBoundsFor(extent, clamp = false).toGridType[Int]
+      val bounds = gridExtent.gridBoundsFor(extent, clamp = false).toGridType[Int]
       val geoTiffTile = tiff.tile.asInstanceOf[GeoTiffMultibandTile]
 
       UnsafeLift[F].apply {

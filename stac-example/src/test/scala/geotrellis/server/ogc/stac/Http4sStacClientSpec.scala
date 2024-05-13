@@ -18,7 +18,7 @@ package geotrellis.server.ogc.stac
 
 import cats.data.NonEmptyList
 import cats.data.Validated.Valid
-import cats.effect.{Blocker, ConcurrentEffect, ContextShift, IO}
+import cats.effect.{Async, IO}
 import com.azavea.stac4s.api.client.SttpStacClient
 import com.azavea.stac4s.extensions.layer.LayerItemExtension
 import com.azavea.stac4s.syntax._
@@ -28,18 +28,17 @@ import geotrellis.proj4.CRS
 import geotrellis.server.ogc.stac
 import geotrellis.store.query.vector.ProjectedGeometry
 import geotrellis.vector.Extent
-import io.chrisdavenport.log4cats.{Logger => Logger4Cats}
+import org.typelevel.log4cats.{Logger => Logger4Cats}
 import sttp.client3.UriContext
 import sttp.client3.http4s.Http4sBackend
 
-import scala.concurrent.ExecutionContext
 import scala.language.reflectiveCalls
 
 class Http4sStacClientSpec extends IOSpec {
-  def withClient[F[_]: ContextShift: ConcurrentEffect: Logger4Cats](implicit ec: ExecutionContext) =
+  def withClient[F[_]: Async: Logger4Cats] =
     new {
       def apply[T](f: SttpStacClient[F] => F[T]): F[T] =
-        Http4sBackend.usingDefaultBlazeClientBuilder[F](Blocker.liftExecutionContext(executionContext), executionContext).use { client =>
+        Http4sBackend.usingDefaultBlazeClientBuilder[F]().use { client =>
           f(SttpStacClient(client, uri"http://localhost:9090/"))
         }
     }
@@ -62,7 +61,9 @@ class Http4sStacClientSpec extends IOSpec {
 
     ignore("should handle the collections query") {
       withClient[IO].apply { client =>
-        client.collections.take(30).compile.toList.map { list => println(list); true shouldBe true }
+        client.collections.take(30).compile.toList.map { list =>
+          println(list); true shouldBe true
+        }
       }
     }
 

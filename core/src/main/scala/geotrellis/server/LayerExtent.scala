@@ -28,7 +28,7 @@ import cats.data.Validated._
 import cats.effect._
 import cats.Parallel
 import cats.implicits._
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 
 object LayerExtent {
   def apply[F[_]: Logger: Parallel: Monad, T: ExtentReification[F, *]](
@@ -49,11 +49,13 @@ object LayerExtent {
           s"[LayerExtent] Retrieved Teters for extent ($extent) and cellsize ($cellSize): ${paramMap.toString}"
         )
         vars = Vars.varsWithBuffer(expr)
-        params <- vars.toList.parTraverse { case (varName, (_, buffer)) =>
-          val thingify = implicitly[ExtentReification[F, T]].extentReification(paramMap(varName))
-          thingify(extent, cellSize).map(varName -> _)
-        } map { _.toMap }
-        reified <- Expression.bindParams(expr, params.mapValues(RasterLit(_))) match {
+        params <- vars.toList
+          .parTraverse { case (varName, (_, buffer)) =>
+            val thingify = implicitly[ExtentReification[F, T]].extentReification(paramMap(varName))
+            thingify(extent, cellSize).map(varName -> _)
+          }
+          .map { _.toMap }
+        reified <- Expression.bindParams(expr, params.map { case (key, value) => key -> RasterLit(value) }) match {
           case Valid(expression) => interpreter(expression)
           case Invalid(errors)   => throw new Exception(errors.map(_.repr).reduce)
         }
@@ -69,7 +71,9 @@ object LayerExtent {
     interpreter: Interpreter[F]
   ): (Extent, Option[CellSize]) => F[Interpreted[MultibandTile]] = apply[F, T](getParams.map(mkExpr(_)), getParams, interpreter, None)
 
-  /** Provide an expression and expect arguments to fulfill its needs */
+  /**
+   * Provide an expression and expect arguments to fulfill its needs
+   */
   def curried[F[_]: Logger: Parallel: Monad, T: ExtentReification[F, *]](
     expr: Expression,
     interpreter: Interpreter[F],
@@ -88,7 +92,9 @@ object LayerExtent {
   ): (Extent, Option[CellSize]) => F[Interpreted[MultibandTile]] =
     apply(getExpression, getParams, interpreter, None)
 
-  /** The identity endpoint (for simple display of raster) */
+  /**
+   * The identity endpoint (for simple display of raster)
+   */
   def withCellType[F[_]: Logger: Parallel: Monad: Concurrent, T: ExtentReification[F, *]](
     param: T,
     cellType: CellType

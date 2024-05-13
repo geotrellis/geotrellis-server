@@ -20,7 +20,6 @@ import geotrellis.server.ogc._
 import geotrellis.server.ogc.utils._
 import geotrellis.server.ogc.params.ParamError
 import geotrellis.server.ogc.wms.WmsParams.{GetCapabilitiesParams, GetFeatureInfoParams, GetMapParams}
-
 import geotrellis.raster.{io => _, _}
 import geotrellis.vector.{io => _}
 import com.azavea.maml.error._
@@ -28,12 +27,12 @@ import org.http4s.scalaxml._
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
 import cats.effect._
-import cats.Parallel
+import cats.{ApplicativeThrow, Parallel}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.syntax.option._
 import cats.data.Validated._
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import com.github.blemale.scaffeine.{Cache, Scaffeine}
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
 import opengis._
@@ -44,7 +43,7 @@ import java.net.URL
 import scala.concurrent.duration._
 import scala.xml.Elem
 
-class WmsView[F[_]: Concurrent: Parallel: ApplicativeThrow: Logger](
+class WmsView[F[_]: Async: Parallel: ApplicativeThrow: Logger](
   wmsModel: WmsModel[F],
   serviceUrl: URL
 ) extends Http4sDsl[F] {

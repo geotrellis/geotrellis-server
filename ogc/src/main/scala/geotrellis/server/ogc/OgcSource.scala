@@ -59,10 +59,10 @@ trait OgcSource {
   def timeDefault: OgcTimeDefault
   def isTemporal: Boolean = timeMetadataKey.nonEmpty && time.nonEmpty
 
-  def nativeProjectedExtent: ProjectedExtent     = ProjectedExtent(nativeExtent, nativeCrs.head)
+  def nativeProjectedExtent: ProjectedExtent = ProjectedExtent(nativeExtent, nativeCrs.head)
   def nativeProjectedGeometry: ProjectedGeometry = ProjectedGeometry(nativeProjectedExtent)
-  def projectedExtent: ProjectedExtent           = nativeProjectedExtent
-  def projectedGeometry: ProjectedGeometry       = nativeProjectedGeometry
+  def projectedExtent: ProjectedExtent = nativeProjectedExtent
+  def projectedGeometry: ProjectedGeometry = nativeProjectedGeometry
 }
 
 trait RasterOgcSource extends OgcSource {
@@ -73,10 +73,10 @@ trait RasterOgcSource extends OgcSource {
     reprojected.extent
   }
 
-  lazy val nativeRE: GridExtent[Long]      = source.gridExtent
-  lazy val nativeCrs: Set[CRS]             = Set(source.crs)
-  lazy val nativeExtent: Extent            = source.extent
-  lazy val metadata: RasterMetadata        = source.metadata
+  lazy val nativeRE: GridExtent[Long] = source.gridExtent
+  lazy val nativeCrs: Set[CRS] = Set(source.crs)
+  lazy val nativeExtent: Extent = source.extent
+  lazy val metadata: RasterMetadata = source.metadata
   lazy val attributes: Map[String, String] = metadata.attributes
 
   def toLayer(crs: CRS, style: Option[OgcStyle], temporalSequence: List[OgcTime]): SimpleOgcLayer
@@ -97,7 +97,7 @@ case class SimpleSource(
   timeFormat: OgcTimeFormat
 ) extends RasterOgcSource {
   val timeDefault: OgcTimeDefault = OgcTimeDefault.Oldest
-  lazy val time: OgcTime          = source.time(timeMetadataKey).format(timeFormat).sorted
+  lazy val time: OgcTime = source.time(timeMetadataKey).format(timeFormat).sorted
 
   def toLayer(crs: CRS, style: Option[OgcStyle], temporalSequence: List[OgcTime]): SimpleOgcLayer =
     SimpleOgcLayer(name, title, crs, source, style, resampleMethod, overviewStrategy)
@@ -206,8 +206,10 @@ case class MapAlgebraSourceMetadata(
   sources: Map[String, RasterMetadata]
 ) extends RasterMetadata {
 
-  /** MapAlgebra metadata usually doesn't contain a metadata that is common for all RasterSources */
-  def attributes: Map[String, String]                   = Map.empty
+  /**
+   * MapAlgebra metadata usually doesn't contain a metadata that is common for all RasterSources
+   */
+  def attributes: Map[String, String] = Map.empty
   def attributesForBand(band: Int): Map[String, String] = Map.empty
 }
 
@@ -230,8 +232,8 @@ case class MapAlgebraSource(
   // each of the underlying ogcSources uses it's own timeMetadataKey
   val timeMetadataKey: Option[String] = None
 
-  lazy val sources: Map[String, RasterSource]    = ogcSources.mapValues(_.source)
-  lazy val sourcesList: List[RasterSource]       = sources.values.toList
+  lazy val sources: Map[String, RasterSource] = ogcSources.map { case (key, value) => key -> value.source }
+  lazy val sourcesList: List[RasterSource] = sources.values.toList
   lazy val ogcSourcesList: List[RasterOgcSource] = ogcSources.values.toList
 
   def extentIn(crs: CRS): Extent =
@@ -241,9 +243,9 @@ case class MapAlgebraSource(
 
   def bboxIn(crs: CRS): BoundingBox = {
     val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sourcesList.map(_.reproject(crs)))
-    val extents                               = reprojectedSources.map(_.extent)
-    val extentIntersection                    = SampleUtils.intersectExtents(extents)
-    val cellSize                              = SampleUtils.chooseLargestCellSize(reprojectedSources.map(_.cellSize))
+    val extents = reprojectedSources.map(_.extent)
+    val extentIntersection = SampleUtils.intersectExtents(extents)
+    val cellSize = SampleUtils.chooseLargestCellSize(reprojectedSources.map(_.cellSize))
 
     extentIntersection match {
       case Some(extent) => CapabilitiesView.boundingBox(crs, extent, cellSize)
@@ -259,7 +261,7 @@ case class MapAlgebraSource(
       cellTypes.head,
       nativeRE,
       resolutions,
-      sources.mapValues(_.metadata)
+      sources.map { case (key, value) => key -> value.metadata }
     )
 
   lazy val nativeExtent: Extent =
@@ -270,16 +272,16 @@ case class MapAlgebraSource(
 
   lazy val nativeRE: GridExtent[Long] = {
     val reprojectedSources: NEL[RasterSource] = NEL.fromListUnsafe(sourcesList.map(_.reproject(nativeCrs.head)))
-    val cellSize                              = SampleUtils.chooseSmallestCellSize(reprojectedSources.map(_.cellSize))
+    val cellSize = SampleUtils.chooseSmallestCellSize(reprojectedSources.map(_.cellSize))
 
     new GridExtent[Long](nativeExtent, cellSize)
   }
 
   val time: OgcTime = ogcSources.values.toList.map(_.time).foldLeft[OgcTime](OgcTimeEmpty)(_ |+| _).format(timeFormat).sorted
 
-  val attributes: Map[String, String]  = Map.empty
-  lazy val nativeCrs: Set[CRS]         = ogcSourcesList.flatMap(_.nativeCrs).toSet
-  lazy val minBandCount: Int           = sourcesList.map(_.bandCount).min
-  lazy val cellTypes: Set[CellType]    = sourcesList.map(_.cellType).toSet
+  val attributes: Map[String, String] = Map.empty
+  lazy val nativeCrs: Set[CRS] = ogcSourcesList.flatMap(_.nativeCrs).toSet
+  lazy val minBandCount: Int = sourcesList.map(_.bandCount).min
+  lazy val cellTypes: Set[CellType] = sourcesList.map(_.cellType).toSet
   lazy val resolutions: List[CellSize] = sourcesList.flatMap(_.resolutions).distinct
 }

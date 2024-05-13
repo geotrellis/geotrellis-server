@@ -30,7 +30,7 @@ import cats.effect._
 import cats.data.{NonEmptyList => NEL}
 import cats.syntax.apply._
 import cats.syntax.functor._
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 
 /**
  * OgcLayer instances are sufficient to produce visual rasters as the end product of 'get map' requests. They are produced from a combination of a WMS
@@ -74,7 +74,7 @@ case class MapAlgebraOgcLayer(
 object SimpleOgcLayer {
   implicit def simpleOgcReification[F[_]: Sync: Logger]: ExtentReification[F, SimpleOgcLayer] = {
     self => (extent: Extent, cellSize: Option[CellSize]) =>
-      Logger[F].trace(
+      (Logger[F].trace(
         s"attempting to retrieve layer $self at extent $extent with $cellSize"
       ) *>
         Logger[F].trace(s"Requested extent geojson: ${extent.toGeoJson}") *> {
@@ -98,9 +98,9 @@ object SimpleOgcLayer {
         } <*
         Logger[F].trace(
           s"Successfully retrieved layer $self at extent $extent with f $cellSize"
-        ) map { raster =>
-          ProjectedRaster(raster, self.crs)
-        }
+        )).map { raster =>
+        ProjectedRaster(raster, self.crs)
+      }
   }
 
   implicit def simpleOgcHasRasterExtents[F[_]: Sync]: HasRasterExtents[F, SimpleOgcLayer] = { self =>

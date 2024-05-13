@@ -24,9 +24,9 @@ import geotrellis.raster.{RasterSource, SourceName}
 import geotrellis.vector.{Extent, ProjectedExtent}
 
 trait StacSource[T] {
-  val crs: CRS                         = LatLng
+  val crs: CRS = LatLng
   def projectedExtent: ProjectedExtent = ProjectedExtent(extent, crs)
-  def extent: Extent                   = stacExtent.spatial.toExtent
+  def extent: Extent = stacExtent.spatial.toExtent
 
   def asset: T
   def name: SourceName

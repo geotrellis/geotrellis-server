@@ -62,12 +62,12 @@ case class ColorRampStyle(
     val numStops: Int = stops.getOrElse(colorRamp.colors.length)
 
     // The colors, interpolated (colors added at start and end for out of bounds values)
-    val minColor                        = if (clampWithColor) colorRamp.colors.head else 0x00000000
-    val maxColor                        = if (clampWithColor) colorRamp.colors.last else 0x00000000
+    val minColor = if (clampWithColor) colorRamp.colors.head else 0x00000000
+    val maxColor = if (clampWithColor) colorRamp.colors.last else 0x00000000
     val interpolatedColors: Vector[Int] = minColor +: colorRamp.stops(numStops) :+ maxColor
 
     val interpolatedBreaks: Array[Double] = breaks(hists, interpolatedColors.length) :+ Double.MaxValue
-    val cmap                              = ColorRamp(interpolatedColors).toColorMap(interpolatedBreaks)
+    val cmap = ColorRamp(interpolatedColors).toColorMap(interpolatedBreaks)
 
     format match {
       case format: OutputFormat.Png => format.render(raster.tile.band(bandIndex = 0), cmap)

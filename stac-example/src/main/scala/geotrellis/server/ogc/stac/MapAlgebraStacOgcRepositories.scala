@@ -21,13 +21,12 @@ import geotrellis.server.ogc.conf.{MapAlgebraSourceConf, OgcSourceConf, RasterSo
 import geotrellis.store.query
 import geotrellis.store.query._
 import geotrellis.server.ogc._
-
 import cats.effect.Sync
 import cats.Functor
 import cats.syntax.functor._
 import cats.syntax.semigroup._
 import cats.instances.list._
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import sttp.client3.SttpBackend
 
 case class MapAlgebraStacOgcRepository[F[_]: Functor](
@@ -40,7 +39,9 @@ case class MapAlgebraStacOgcRepository[F[_]: Functor](
   def store: F[List[OgcSource]] = find(query.all)
 
   def find(query: Query): F[List[OgcSource]] =
-    /** Replace the OGC layer name with its STAC Layer name */
+    /**
+     * Replace the OGC layer name with its STAC Layer name
+     */
     repository
       .find(names.map(query.overrideName).fold(nothing)(_ or _))
       .map(_.collect { case rs: RasterOgcSource => rs })
@@ -63,12 +64,16 @@ case class MapAlgebraStacOgcRepositories[F[_]: Sync: Logger](
     StacOgcRepositories
       .eval(query)(mapAlgebraConfLayers)
       .map { conf =>
-        /** Extract layerNames from the MAML expression */
+        /**
+         * Extract layerNames from the MAML expression
+         */
         val layerNames = conf.listParams(conf.algebra)
 
-        /** Get all ogc layers that are required for the MAML expression evaluation */
+        /**
+         * Get all ogc layers that are required for the MAML expression evaluation
+         */
         val ogcLayersFiltered = ogcLayers.filter(l => layerNames.contains(l.name))
-        val stacLayers        = ogcLayersFiltered.collect { case ssc: StacSourceConf => ssc }
+        val stacLayers = ogcLayersFiltered.collect { case ssc: StacSourceConf => ssc }
         val rasterLayers =
           if (stacLayers.nonEmpty) ogcLayersFiltered.collect { case ssc: RasterSourceConf => ssc.toLayer }
           else Nil

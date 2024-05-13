@@ -18,7 +18,7 @@ package geotrellis.server.ogc.wms
 
 import io.circe.syntax._
 import cats.data.Validated.{Invalid, Valid}
-import cats.effect.{Concurrent, Sync}
+import cats.effect.{Async, Concurrent, Sync}
 import cats.{ApplicativeThrow, Parallel}
 import cats.syntax.functor._
 import cats.syntax.applicative._
@@ -27,7 +27,7 @@ import cats.syntax.flatMap._
 import cats.syntax.option._
 import cats.syntax.applicativeError._
 import com.azavea.maml.error.Interpreted
-import io.chrisdavenport.log4cats.Logger
+import org.typelevel.log4cats.Logger
 import com.azavea.maml.eval.ConcurrentInterpreter
 import geotrellis.raster._
 import geotrellis.server.{LayerExtent, LayerHistogram}
@@ -37,7 +37,7 @@ import geotrellis.server.utils.throwableExtensions
 import geotrellis.store.query.withName
 import com.github.blemale.scaffeine.Cache
 
-case class GetMap[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
+case class GetMap[F[_]: Logger: Parallel: Async: ApplicativeThrow](
   model: WmsModel[F],
   tileCache: Cache[GetMapParams, Array[Byte]],
   histoCache: Cache[OgcLayer, Interpreted[List[Histogram[Double]]]]
@@ -72,20 +72,23 @@ case class GetMap[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
               _ <- Sync[F].delay(histoCache.put(layer, hist))
             } yield hist
 
-            val res: F[Either[GetMapException, Array[Byte]]] = (evalExtent(re.extent, re.cellSize.some), histIO).parMapN {
-              case (Valid(mbtile), Valid(hists)) => Valid((mbtile, hists))
-              case (Invalid(errs), _)            => Invalid(errs)
-              case (_, Invalid(errs))            => Invalid(errs)
-            }.attempt flatMap {
-              case Right(Valid((mbtile, hists))) => // success
-                val rendered = Raster(mbtile, re.extent).render(params.crs, layer.style, params.format, hists)
-                tileCache.put(params, rendered)
-                Right(rendered).pure[F].widen
-              case Right(Invalid(errs)) => // maml-specific errors
-                Logger[F].debug(errs.toList.toString).as(Left(GetMapBadRequest(errs.asJson.spaces2))).widen
-              case Left(err) => // exceptions
-                Logger[F].error(err.stackTraceString).as(Left(GetMapInternalServerError(err.stackTraceString))).widen
-            }
+            val res: F[Either[GetMapException, Array[Byte]]] = (evalExtent(re.extent, re.cellSize.some), histIO)
+              .parMapN {
+                case (Valid(mbtile), Valid(hists)) => Valid((mbtile, hists))
+                case (Invalid(errs), _)            => Invalid(errs)
+                case (_, Invalid(errs))            => Invalid(errs)
+              }
+              .attempt
+              .flatMap {
+                case Right(Valid((mbtile, hists))) => // success
+                  val rendered = Raster(mbtile, re.extent).render(params.crs, layer.style, params.format, hists)
+                  tileCache.put(params, rendered)
+                  Right(rendered).pure[F].widen
+                case Right(Invalid(errs)) => // maml-specific errors
+                  Logger[F].debug(errs.toList.toString).as(Left(GetMapBadRequest(errs.asJson.spaces2))).widen
+                case Left(err) => // exceptions
+                  Logger[F].error(err.stackTraceString).as(Left(GetMapInternalServerError(err.stackTraceString))).widen
+              }
 
             res
           }
@@ -101,7 +104,7 @@ case class GetMap[F[_]: Logger: Parallel: Concurrent: ApplicativeThrow](
                 .flatMap {
                   _.headOption match {
                     case Some(_) =>
-                      val tile   = ArrayTile.empty(IntUserDefinedNoDataCellType(0), 1, 1)
+                      val tile = ArrayTile.empty(IntUserDefinedNoDataCellType(0), 1, 1)
                       val raster = Raster(MultibandTile(tile, tile, tile), params.boundingBox)
                       Right(raster.render(params.crs, None, params.format, Nil)).pure[F].widen
                     case _ =>

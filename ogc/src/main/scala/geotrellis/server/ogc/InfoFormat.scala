@@ -24,7 +24,7 @@ sealed trait InfoFormat {
 }
 
 object InfoFormat {
-  case object XML  extends InfoFormat { val name: String = "text/xml"         }
+  case object XML extends InfoFormat { val name: String = "text/xml" }
   case object Json extends InfoFormat { val name: String = "application/json" }
 
   def fromStringUnsafe(str: String): InfoFormat =

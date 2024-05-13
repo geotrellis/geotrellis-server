@@ -21,7 +21,7 @@ import com.azavea.stac4s.api.client.{ETag, SearchFilters, StreamingStacClient, S
 import com.azavea.stac4s.{StacCollection, StacItem}
 import eu.timepit.refined.types.string.NonEmptyString
 import fs2.Stream
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import io.circe.Json
 import io.circe.syntax._
 import tofu.higherKind.Mid

@@ -25,18 +25,19 @@ import cats.implicits._
 import com.monovore.decline._
 import org.http4s._
 import org.http4s.server._
-import org.http4s.server.blaze.BlazeServerBuilder
+import org.http4s.blaze.server.BlazeServerBuilder
 import org.http4s.server.middleware.CORS
 import org.http4s.syntax.kleisli._
 import org.backuity.ansi.AnsiFormatter.FormattedHelper
 import com.google.common.util.concurrent.ThreadFactoryBuilder
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
 import java.net.URL
 import java.util.concurrent.Executors
+import cats.effect.unsafe.implicits.global
 
 object Main
     extends CommandApp(
@@ -95,9 +96,6 @@ object Main
                   .build()
               )
             )
-          implicit val cs: ContextShift[IO] =
-            IO.contextShift(executionContext)
-          implicit val timer: Timer[IO] = IO.timer(executionContext)
 
           val commonMiddleware: HttpMiddleware[IO] = { (routes: HttpRoutes[IO]) =>
             CORS(routes)
@@ -109,7 +107,7 @@ object Main
             downLog: String
           ): IO[Unit] = opt.fold(logger.info(downLog))(_ => logger.info(upLog))
 
-          def createServer: Resource[IO, Server[IO]] =
+          def createServer: Resource[IO, Server] =
             for {
               conf <- Conf.loadResourceF[IO](configPath)
               simpleSources = conf.layers.values.collect { case rsc: RasterSourceConf => rsc.toLayer }.toList
@@ -164,7 +162,8 @@ object Main
                 wmtsModel,
                 new URL(publicUrl)
               )
-              server <- BlazeServerBuilder[IO](executionContext)
+              server <- BlazeServerBuilder[IO]
+                .withExecutionContext(executionContext)
                 .withIdleTimeout(Duration.Inf)
                 .withResponseHeaderTimeout(Duration.Inf)
                 .enableHttp2(true)

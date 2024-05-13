@@ -16,19 +16,17 @@
 
 package geotrellis
 
-import cats.effect.{ContextShift, IO, Timer}
-import geotrellis.store.util.BlockingThreadPool
-import io.chrisdavenport.log4cats.Logger
-import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import cats.effect.IO
+import cats.effect.unsafe.IORuntime
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
 import org.scalatest.funspec.AsyncFunSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{Assertion, Assertions}
 
 trait IOSpec extends AsyncFunSpec with Assertions with Matchers {
-  implicit override val executionContext      = BlockingThreadPool.executionContext
-  implicit val contextShift: ContextShift[IO] = IO.contextShift(executionContext)
-  implicit val timer: Timer[IO]               = IO.timer(executionContext)
-  implicit val logger: Logger[IO]             = Slf4jLogger.getLogger[IO]
+  implicit val runtime: IORuntime = IORuntime.global
+  implicit val logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
   private val itWord = new ItWord
 

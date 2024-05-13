@@ -31,7 +31,9 @@ case class RasterSourceRepository[T <: RasterSource](store: List[T]) extends Rep
 object RasterSourceRepository {
   import geotrellis.store.query.QueryF._
 
-  /** Algebra that can work with List[T] */
+  /**
+   * Algebra that can work with List[T]
+   */
   def algebra[T <: RasterSource]: Algebra[QueryF, List[T] => List[T]] =
     Algebra {
       case Nothing() => _ => Nil
@@ -58,15 +60,19 @@ object RasterSourceRepository {
       case Contains(e)   => _.filter(_.projectedGeometry.covers(e))
       case And(e1, e2) =>
         list =>
-          val left = e1(list); left intersect e2(left)
+          val left = e1(list); left.intersect(e2(left))
       case Or(e1, e2) => list => e1(list) ++ e2(list)
     }
 
-  /** An alias for [[scheme.cata]] since it can confuse people */
+  /**
+   * An alias for [[scheme.cata]] since it can confuse people
+   */
   def eval[T <: RasterSource](query: Query)(list: List[T]): List[T] =
     scheme.cata(algebra[T]).apply(query)(list)
 
-  /** An alias for [[scheme.hylo]] since it can confuse people */
+  /**
+   * An alias for [[scheme.hylo]] since it can confuse people
+   */
   def eval[T <: RasterSource](json: Json)(list: List[T]): List[T] =
     scheme.hylo(algebra[T], QueryF.coalgebraJson).apply(json)(list)
 }

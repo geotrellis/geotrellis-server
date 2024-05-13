@@ -28,8 +28,8 @@ sealed trait OgcTimeDefault {
 }
 
 object OgcTimeDefault {
-  case object Oldest                   extends OgcTimeDefault
-  case object Newest                   extends OgcTimeDefault
+  case object Oldest extends OgcTimeDefault
+  case object Newest extends OgcTimeDefault
   case class Time(time: ZonedDateTime) extends OgcTimeDefault
 
   def fromString(str: String): OgcTimeDefault = str match {

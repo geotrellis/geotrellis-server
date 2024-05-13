@@ -38,7 +38,7 @@ case class StacAssetOps(self: StacAsset) {
       }
 
   def getGeometry: Option[Geometry] = projExtension.flatMap(_.geometry)
-  def getExtent: Option[Extent]     = getGeometry.map(geom => Extent(geom.getEnvelopeInternal))
+  def getExtent: Option[Extent] = getGeometry.map(geom => Extent(geom.getEnvelopeInternal))
 
   def transform: Option[ProjTransform] = projExtension.flatMap(_.transform)
 
@@ -55,6 +55,6 @@ case class StacAssetOps(self: StacAsset) {
       .orElse(gsd.map(d => CellSize(d, d)))
 
   def gridExtent: Option[GridExtent[Long]] = (getExtent, cellSize).mapN(GridExtent.apply[Long])
-  def rasterExtent: Option[RasterExtent]   = gridExtent.map(_.toRasterExtent)
+  def rasterExtent: Option[RasterExtent] = gridExtent.map(_.toRasterExtent)
   def dimensions: Option[Dimensions[Long]] = projExtension.flatMap(_.shape).map(_.toDimensions)
 }

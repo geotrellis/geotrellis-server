@@ -135,9 +135,9 @@ object GTLayerNode {
 
       val reqDiag = cellSize.map(csToDiag)
       val z = self.allMetadata
-        .mapValues { md =>
+        .map { case (key, md) =>
           val mdDiag = csToDiag(md.get.cellSize)
-          mdDiag - reqDiag.getOrElse(mdDiag)
+          (key, mdDiag - reqDiag.getOrElse(mdDiag))
         }
         .filter(_._2 <= 0)
         .map(_._1)

@@ -80,7 +80,7 @@ object WfsFeatureCollection {
           case p: Polygon       => p :: Nil
           case mp: MultiPolygon => mp.polygons.toList
           case po: Point =>
-            val (x, y)         = po.getX -> po.getY
+            val (x, y) = po.getX -> po.getY
             val CellSize(w, h) = cellSize
             Polygon(
               (x - w, y - h),
@@ -125,8 +125,8 @@ object WfsFeatureCollection {
                                               .mkString(" "),
                                             attributes = Map(
                                               "@decimal" -> DataRecord("."),
-                                              "@cs"      -> DataRecord(","),
-                                              "@ts"      -> DataRecord(" ")
+                                              "@cs" -> DataRecord(","),
+                                              "@ts" -> DataRecord(" ")
                                             )
                                           )
                                         ) :: Nil
