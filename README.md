@@ -16,7 +16,7 @@ responsive layers whose transformations can be described in MAML
 
 ### Getting Started with GeoTrellis Server
 
-GeoTrellis Server is currently available for Scala 2.12.
+GeoTrellis Server is currently available for Scala 2.13 and 2.12.
 
 To get started with SBT, simply add the following to your build.sbt file:
 
