@@ -7,6 +7,7 @@ import Dependencies._
 scalaVersion := scalaVer
 ThisBuild / scalaVersion := scalaVer
 ThisBuild / libraryDependencySchemes += "org.typelevel" %% "cats-parse" % VersionScheme.Always
+ThisBuild / versionScheme := Some("early-semver")
 
 val currentYear = java.time.Year.now.getValue.toString
 
