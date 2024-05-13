@@ -71,7 +71,7 @@ object Dependencies {
   val kindProjector = "org.typelevel" %% "kind-projector" % "0.13.3"
   val semanticdbScalac = "org.scalameta" % "semanticdb-scalac" % "4.9.3"
   val log4cats = "org.typelevel" %% "log4cats-slf4j" % "2.7.0"
-  val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % "0.7.0+1-a6158955-SNAPSHOT"
+  val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % "0.7.0"
   val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.17.6"
   val pureConfigCatsEffect = "com.github.pureconfig" %% "pureconfig-cats-effect" % "0.17.6"
   val scaffeine = "com.github.blemale" %% "scaffeine" % "5.2.1"
