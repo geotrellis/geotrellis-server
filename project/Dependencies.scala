@@ -24,6 +24,8 @@ object Dependencies {
   def http4sVer(module: String) = Def.setting {
     val version = module match {
       case "scala-xml" => "0.23.13"
+      case "circe"     => "0.23.27"
+      case "dsl"       => "0.23.27"
       case _           => "0.23.16"
     }
     "org.http4s" %% s"http4s-$module" % version
@@ -34,7 +36,7 @@ object Dependencies {
 
   val dispatchVer = "0.11.3"
   val gtVer = "3.7.1"
-  val stac4sVer = "0.9.0"
+  val stac4sVer = "0.9.1"
   val jaxbApiVer = "2.3.1"
   val refinedVer = "0.11.1"
   val shapelessVer = "2.3.3"
@@ -69,7 +71,7 @@ object Dependencies {
   val http4sXml = http4sVer("scala-xml")
   val jaxbApi = "javax.xml.bind" % "jaxb-api" % jaxbApiVer
   val kindProjector = "org.typelevel" %% "kind-projector" % "0.13.3"
-  val semanticdbScalac = "org.scalameta" % "semanticdb-scalac" % "4.9.3"
+  val semanticdbScalac = "org.scalameta" % "semanticdb-scalac" % "4.9.4"
   val log4cats = "org.typelevel" %% "log4cats-slf4j" % "2.7.0"
   val mamlJvm = "com.azavea.geotrellis" %% "maml-jvm" % "0.7.0"
   val pureConfig = "com.github.pureconfig" %% "pureconfig" % "0.17.6"
