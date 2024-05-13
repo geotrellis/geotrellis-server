@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.6.0] - 2024-05-13
+
 ## Added
 - Add Azure RangeReaders [#386](https://github.com/geotrellis/geotrellis-server/pull/386)
 - Add GetFeatureInfoExtended support [#388](https://github.com/geotrellis/geotrellis-server/pull/388)
@@ -14,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Changed
 - STAC Assets regex selectors support [#388](https://github.com/geotrellis/geotrellis-server/pull/388)
 - GetFeatureInfo and GetFeatureInfoExtended pixel values field name change [#389](https://github.com/geotrellis/geotrellis-server/pull/389)
+- WMTSModel add GeoTrellisOgcSource match item [#395](https://github.com/geotrellis/geotrelis-server/pull/395)
+- Update GeoTrellis Server deps [#396](https://github.com/geotrellis/geotrelis-server/pull/396)
 
 ## [4.5.0] - 2021-07-10
 
@@ -170,7 +174,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Update geotrellis-contrib [#135](https://github.com/geotrellis/geotrellis-server/pull/135)
 
-[Unreleased]: https://github.com/geotrellis/geotrellis-server/compare/4.5.0...HEAD
+[Unreleased]: https://github.com/geotrellis/geotrellis-server/compare/4.6.0...HEAD
+[4.6.0]: https://github.com/geotrellis/geotrellis-server/compare/4.5.0...4.6.0
 [4.5.0]: https://github.com/geotrellis/geotrellis-server/compare/4.4.0...4.5.0
 [4.4.0]: https://github.com/geotrellis/geotrellis-server/compare/4.3.0...4.4.0
 [4.3.0]: https://github.com/geotrellis/geotrellis-server/compare/4.2.0...4.3.0
