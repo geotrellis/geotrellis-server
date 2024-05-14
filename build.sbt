@@ -402,6 +402,17 @@ lazy val bench = project
   .settings(noPublishSettings)
   .enablePlugins(JmhPlugin)
 
+lazy val `stac-simple-example` = project
+  .settings(commonSettings)
+  .settings(noPublishSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.azavea.geotrellis"         %% "geotrellis-stac"                % "4.6.0",
+      "com.softwaremill.sttp.client3" %% "async-http-client-backend-cats" % "3.9.6",
+      "com.softwaremill.sttp.client3" %% "akka-http-backend"              % "3.9.6"
+    )
+  )
+
 def priorTo213(scalaVersion: String): Boolean =
   CrossVersion.partialVersion(scalaVersion) match {
     case Some((2, minor)) if minor < 13 => true
